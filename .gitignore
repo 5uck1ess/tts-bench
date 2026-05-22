@@ -5,3 +5,4 @@ results/
 reference/*.wav
 reference/*.txt
 !reference/.gitkeep
+install.log
