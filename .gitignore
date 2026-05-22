@@ -1,1 +1,7 @@
 .devkit/
+.obsidian/
+venvs/
+results/
+reference/*.wav
+reference/*.txt
+!reference/.gitkeep
