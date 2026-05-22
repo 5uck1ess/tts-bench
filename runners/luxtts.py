@@ -1,5 +1,8 @@
 """LuxTTS runner.
 
+Loads the model once, then does --runs generations back-to-back. Prints one JSON
+line per run on stdout. Writes the WAV from run 0 only.
+
 API is a best guess from the homebase notes — adjust after first run if wrong.
 """
 
@@ -16,6 +19,7 @@ def main() -> int:
     p.add_argument("--device", default="cpu")
     p.add_argument("--reference", default=None)
     p.add_argument("--variant", default=None)
+    p.add_argument("--runs", type=int, default=1)
     args = p.parse_args()
 
     try:
@@ -25,33 +29,48 @@ def main() -> int:
 
         tts = LuxTTS(device=args.device)
         samplerate = 48000  # homebase note: LuxTTS outputs 48 kHz
-
-        t0 = time.perf_counter()
-        first = None
-        chunks = []
-
-        result = tts.tts(args.text, ref_audio=args.reference) if args.reference else tts.tts(args.text)
-        if hasattr(result, "__iter__") and not isinstance(result, (bytes, bytearray, str)):
-            for chunk in result:
-                if first is None:
-                    first = time.perf_counter()
-                chunks.append(np.asarray(chunk))
-        else:
-            first = time.perf_counter()
-            chunks.append(np.asarray(result))
-
-        audio = np.concatenate(chunks) if chunks else np.zeros(0, dtype="float32")
-        sf.write(args.out, audio, samplerate)
-
-        print(json.dumps({
-            "ok": True,
-            "ttfa_ms": (first - t0) * 1000 if first else None,
-            "audio_s": float(len(audio) / samplerate),
-        }))
-        return 0
     except Exception as e:
-        print(json.dumps({"ok": False, "error": f"{type(e).__name__}: {e}"}))
+        print(json.dumps({"ok": False, "run_index": 0,
+                          "error": f"load failed: {type(e).__name__}: {e}"}))
         return 1
+
+    for i in range(args.runs):
+        try:
+            t0 = time.perf_counter()
+            first = None
+            chunks = []
+
+            result = tts.tts(args.text, ref_audio=args.reference) if args.reference else tts.tts(args.text)
+            if hasattr(result, "__iter__") and not isinstance(result, (bytes, bytearray, str)):
+                for chunk in result:
+                    if first is None:
+                        first = time.perf_counter()
+                    chunks.append(np.asarray(chunk))
+            else:
+                first = time.perf_counter()
+                chunks.append(np.asarray(result))
+
+            t_end = time.perf_counter()
+            audio = np.concatenate(chunks) if chunks else np.zeros(0, dtype="float32")
+            audio_s = float(len(audio) / samplerate)
+
+            if i == 0:
+                sf.write(args.out, audio, samplerate)
+
+            print(json.dumps({
+                "ok": True,
+                "run_index": i,
+                "ttfa_ms": (first - t0) * 1000 if first else None,
+                "gen_s": t_end - t0,
+                "audio_s": audio_s,
+            }), flush=True)
+        except Exception as e:
+            print(json.dumps({
+                "ok": False, "run_index": i,
+                "error": f"{type(e).__name__}: {e}",
+            }), flush=True)
+            return 1
+    return 0
 
 
 if __name__ == "__main__":

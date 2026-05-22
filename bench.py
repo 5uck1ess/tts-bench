@@ -1,9 +1,16 @@
-"""Quick TTS bench: time 4 models on 5 prompts, write CSV + WAVs.
+"""Quick TTS bench: cold + warm timings for 4 models on 5 prompts.
+
+Loop order is prompt-outer so for each prompt you see all models back-to-back
+(easier to grab side-by-side clips for video).
+
+Each cell (model × device × prompt) is one subprocess that loads the model once,
+then generates N times. Run 1 = cold (JIT not primed yet). Runs 2..N = warm.
 
 Usage:
-    python bench.py                                      # default voices, all available devices
-    python bench.py --reference my_voice.wav             # clone a voice (also needs my_voice.txt)
-    python bench.py --models pocket --prompts 1,2        # subset
+    python bench.py                                # default voices, all available devices
+    python bench.py --reference my_voice.wav       # clone a voice (also needs my_voice.txt next to it)
+    python bench.py --models pocket --prompts 1,2  # subset
+    python bench.py --runs 5                       # 1 cold + 4 warm per cell (default 3 = 1c + 2w)
 """
 
 import argparse
@@ -48,12 +55,19 @@ def detect_cuda(venv_python: Path) -> bool:
             capture_output=True, text=True, timeout=30,
         )
         return "True" in out.stdout
-    except Exception:
+    except (subprocess.TimeoutExpired, OSError):
         return False
 
 
-def run_one(venv_python, runner, text, out_wav, device, variant, reference) -> dict:
-    cmd = [str(venv_python), str(runner), "--text", text, "--out", str(out_wav), "--device", device]
+def run_cell(venv_python, runner, text, out_wav, device, variant, reference, runs) -> list[dict]:
+    """Run one (model, device, prompt) cell with N runs in a single subprocess.
+
+    Returns a list of dicts — one per run. Each has at minimum: ok, run_index,
+    and on success: ttfa_ms, gen_s, audio_s.
+    """
+    cmd = [str(venv_python), str(runner),
+           "--text", text, "--out", str(out_wav),
+           "--device", device, "--runs", str(runs)]
     if variant:
         cmd += ["--variant", variant]
     if reference:
@@ -61,33 +75,43 @@ def run_one(venv_python, runner, text, out_wav, device, variant, reference) -> d
 
     t0 = time.perf_counter()
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
     except subprocess.TimeoutExpired:
-        return {"ok": False, "error": "timeout 180s", "wall_s": time.perf_counter() - t0}
+        return [{"ok": False, "error": "timeout 300s", "run_index": 0,
+                 "wall_s": time.perf_counter() - t0}]
     wall = time.perf_counter() - t0
 
-    parsed = {"ok": False, "error": "no json line in stdout"}
-    for line in reversed(proc.stdout.strip().splitlines()):
+    parsed = []
+    for line in proc.stdout.splitlines():
         line = line.strip()
-        if line.startswith("{"):
-            try:
-                parsed = json.loads(line)
-            except json.JSONDecodeError as e:
-                parsed = {"ok": False, "error": f"json parse failed: {e}"}
-            break
-    if not parsed.get("ok") and proc.stderr:
-        tail = proc.stderr.strip().splitlines()[-3:]
-        parsed["error"] = (parsed.get("error", "") + " | " + " ".join(tail))[:300]
-    parsed["wall_s"] = wall
+        if not line.startswith("{"):
+            continue
+        try:
+            parsed.append(json.loads(line))
+        except json.JSONDecodeError as e:
+            parsed.append({"ok": False, "error": f"json parse failed: {e}", "run_index": -1})
+
+    if not parsed:
+        tail = " ".join(proc.stderr.strip().splitlines()[-3:])[:300] if proc.stderr else ""
+        return [{"ok": False, "error": f"no json in stdout. stderr: {tail}",
+                 "run_index": 0, "wall_s": wall}]
+
+    # If the runner died partway through, the surviving rows will have ok=False
+    # or fewer than `runs` entries. That's fine — bench just records what came back.
+    parsed[0]["wall_s"] = wall  # only meaningful for the first (cold) row
     return parsed
 
 
 def main() -> int:
-    p = argparse.ArgumentParser(description="Quick TTS bench.")
-    p.add_argument("--reference", default=None, help="Path to a reference wav for cloning (omit for each model's default voice).")
+    p = argparse.ArgumentParser(description="Quick TTS bench (cold + warm).")
+    p.add_argument("--reference", default=None,
+                   help="Reference wav for voice cloning (omit for each model's default voice).")
     p.add_argument("--prompts", default=None, help="Comma-sep prompt ids; default: all 5.")
     p.add_argument("--models", default=None, help="Comma-sep model names; default: all 4.")
-    p.add_argument("--devices", default=None, help="Comma-sep devices to attempt; default: cpu + cuda (auto-detect).")
+    p.add_argument("--devices", default=None,
+                   help="Comma-sep devices to attempt; default: cpu + cuda (auto-detect).")
+    p.add_argument("--runs", type=int, default=3,
+                   help="Generations per cell (run 1 = cold, runs 2..N = warm). Default 3.")
     args = p.parse_args()
 
     if args.prompts:
@@ -99,85 +123,140 @@ def main() -> int:
     requested_models = set(args.models.split(",")) if args.models else None
     requested_devices = set(args.devices.split(",")) if args.devices else None
 
+    # Build the list of cells (model, device, variant, py, runner) to run.
+    cells = []
+    for model_name, py_rel, runner_rel, multilingual, model_devices, variant in MODELS:
+        if requested_models and model_name not in requested_models:
+            continue
+        venv_python = REPO / py_rel
+        if not venv_python.exists():
+            print(f"skip {model_name}: venv not installed ({py_rel})")
+            continue
+        cuda_ok = ("cuda" in model_devices) and detect_cuda(venv_python)
+        for device in model_devices:
+            if device == "cuda" and not cuda_ok:
+                continue
+            if requested_devices and device not in requested_devices:
+                continue
+            cells.append({
+                "model": model_name, "device": device, "variant": variant,
+                "multilingual": multilingual,
+                "venv_python": venv_python, "runner": REPO / runner_rel,
+            })
+
+    if not cells:
+        print("No cells to run. Check --models / --devices and that venvs are installed.")
+        return 2
+
     out_dir = REPO / "results" / datetime.now().strftime("%Y-%m-%d_%H%M")
     out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = out_dir / "results.csv"
     print(f"Output: {out_dir}\n")
+    print(f"Plan: {len(selected_prompts)} prompts × {len(cells)} cells × {args.runs} runs/cell")
+    print()
 
     rows = []
+    fieldnames = ["prompt_id", "model", "device", "variant",
+                  "run_index", "is_cold",
+                  "ttfa_ms", "gen_s", "audio_s", "rtf",
+                  "wall_s", "ok", "error"]
+
     with csv_path.open("w", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=[
-            "model", "device", "prompt_id", "ttfa_ms", "wall_s", "audio_s", "rtf", "ok", "error",
-        ])
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
 
-        for model_name, py_rel, runner_rel, multilingual, model_devices, variant in MODELS:
-            if requested_models and model_name not in requested_models:
-                continue
-
-            venv_python = REPO / py_rel
-            if not venv_python.exists():
-                print(f"skip {model_name}: venv not installed ({py_rel})")
-                continue
-
-            cuda_ok = ("cuda" in model_devices) and detect_cuda(venv_python)
-            for device in model_devices:
-                if device == "cuda" and not cuda_ok:
-                    continue
-                if requested_devices and device not in requested_devices:
+        for prompt_id, text in selected_prompts:
+            print(f"===== Prompt {prompt_id}: {text[:60]}{'...' if len(text) > 60 else ''} =====")
+            for cell in cells:
+                if prompt_id == 5 and not cell["multilingual"]:
                     continue
 
-                for prompt_id, text in selected_prompts:
-                    if prompt_id == 5 and not multilingual:
-                        continue
+                wav = out_dir / f"{cell['model']}_{cell['device']}_p{prompt_id}.wav"
+                label = f"  {cell['model']}/{cell['device']:<4}"
+                print(label, end=" ", flush=True)
 
-                    wav = out_dir / f"{model_name}_{device}_p{prompt_id}.wav"
-                    print(f"  {model_name}/{device}/p{prompt_id} ...", end=" ", flush=True)
+                run_results = run_cell(
+                    cell["venv_python"], cell["runner"],
+                    text, wav, cell["device"], cell["variant"],
+                    args.reference, args.runs,
+                )
 
-                    result = run_one(venv_python, REPO / runner_rel,
-                                     text, wav, device, variant, args.reference)
-
-                    ttfa = result.get("ttfa_ms")
-                    audio_s = result.get("audio_s")
-                    wall = result.get("wall_s", 0) or 0
-                    rtf = (audio_s / wall) if (audio_s and wall) else None
+                for r in run_results:
+                    run_index = r.get("run_index", 0)
+                    ttfa = r.get("ttfa_ms")
+                    gen_s = r.get("gen_s")
+                    audio_s = r.get("audio_s")
+                    rtf = (audio_s / gen_s) if (audio_s and gen_s) else None
 
                     row = {
-                        "model": model_name,
-                        "device": device,
                         "prompt_id": prompt_id,
+                        "model": cell["model"],
+                        "device": cell["device"],
+                        "variant": cell["variant"] or "",
+                        "run_index": run_index,
+                        "is_cold": run_index == 0,
                         "ttfa_ms": round(ttfa, 1) if ttfa else "",
-                        "wall_s": round(wall, 3),
+                        "gen_s": round(gen_s, 4) if gen_s else "",
                         "audio_s": round(audio_s, 3) if audio_s else "",
                         "rtf": round(rtf, 2) if rtf else "",
-                        "ok": result.get("ok", False),
-                        "error": (result.get("error") or "")[:200],
+                        "wall_s": round(r.get("wall_s", 0), 3),
+                        "ok": r.get("ok", False),
+                        "error": (r.get("error") or "")[:200],
                     }
                     writer.writerow(row)
-                    f.flush()
                     rows.append(row)
+                f.flush()
 
-                    if result.get("ok"):
-                        msg = f"ttfa={ttfa:.0f}ms rtf={rtf:.2f}x" if (ttfa and rtf) else "ok"
-                        print(msg)
-                    else:
-                        print(f"FAIL: {row['error'][:80]}")
+                # Inline summary for this cell: cold + warm-avg
+                ok_rows = [r for r in run_results if r.get("ok")]
+                if not ok_rows:
+                    err = run_results[0].get("error", "?")
+                    print(f"FAIL: {err[:80]}")
+                    continue
+                cold = ok_rows[0]
+                warms = ok_rows[1:]
+                cold_msg = f"cold ttfa={cold.get('ttfa_ms', 0):.0f}ms rtf={(cold['audio_s']/cold['gen_s']):.1f}x" if cold.get('gen_s') else "cold ok"
+                if warms:
+                    warm_ttfa = sum(w["ttfa_ms"] for w in warms) / len(warms)
+                    warm_rtf = sum(w["audio_s"]/w["gen_s"] for w in warms) / len(warms)
+                    warm_msg = f"warm-avg ttfa={warm_ttfa:.0f}ms rtf={warm_rtf:.1f}x"
+                    print(f"{cold_msg}  |  {warm_msg}")
+                else:
+                    print(cold_msg)
+            print()
 
-    print(f"\nDone. CSV: {csv_path}")
-
-    print("\n=== Summary (RTF, higher = faster than realtime) ===")
-    header = f"{'model':<14} {'device':<6} " + " ".join(f"{'p' + str(i):>6}" for i in (1, 2, 3, 4, 5))
-    print(header)
-    by_md: dict = {}
-    for r in rows:
-        if not r["ok"]:
-            continue
-        by_md.setdefault((r["model"], r["device"]), {})[r["prompt_id"]] = r["rtf"]
-    for (model, device), pmap in by_md.items():
-        cells = [str(pmap.get(i, "—")) for i in (1, 2, 3, 4, 5)]
-        print(f"{model:<14} {device:<6} " + " ".join(f"{c:>6}" for c in cells))
-
+    print(f"Done. CSV: {csv_path}\n")
+    _print_summary(rows, selected_prompts)
     return 0
+
+
+def _print_summary(rows, prompts):
+    """Per-prompt comparison table: TTFA(cold) and RTF(warm-avg) per (model, device)."""
+    print("=== Per-prompt summary ===\n")
+    for prompt_id, text in prompts:
+        print(f"Prompt {prompt_id}: {text[:60]}{'...' if len(text) > 60 else ''}")
+        print(f"  {'model':<14} {'device':<6} {'TTFA cold':>10} {'TTFA warm':>10} {'RTF cold':>9} {'RTF warm':>9}")
+        cells = {}
+        for r in rows:
+            if r["prompt_id"] != prompt_id or not r["ok"]:
+                continue
+            key = (r["model"], r["device"])
+            cells.setdefault(key, []).append(r)
+        for (model, device), cell_rows in cells.items():
+            cold = next((r for r in cell_rows if r["is_cold"]), None)
+            warms = [r for r in cell_rows if not r["is_cold"]]
+            def fmt_t(r):
+                return f"{r['ttfa_ms']:.0f}ms" if r and r["ttfa_ms"] != "" else "—"
+            def fmt_r(r):
+                return f"{r['rtf']:.1f}x" if r and r["rtf"] != "" else "—"
+            warm_ttfa_avg = (
+                f"{sum(r['ttfa_ms'] for r in warms)/len(warms):.0f}ms" if warms else "—"
+            )
+            warm_rtf_avg = (
+                f"{sum(r['rtf'] for r in warms)/len(warms):.1f}x" if warms else "—"
+            )
+            print(f"  {model:<14} {device:<6} {fmt_t(cold):>10} {warm_ttfa_avg:>10} {fmt_r(cold):>9} {warm_rtf_avg:>9}")
+        print()
 
 
 if __name__ == "__main__":
