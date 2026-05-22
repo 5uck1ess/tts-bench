@@ -20,6 +20,7 @@ def main() -> int:
     p.add_argument("--reference", default=None)
     p.add_argument("--variant", default=None)
     p.add_argument("--runs", type=int, default=1)
+    p.add_argument("--language", default="en")  # accepted for harness uniformity
     args = p.parse_args()
 
     try:

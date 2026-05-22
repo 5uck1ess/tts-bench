@@ -6,3 +6,5 @@ reference/*.wav
 reference/*.txt
 !reference/.gitkeep
 install.log
+__pycache__/
+*.pyc

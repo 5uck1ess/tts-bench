@@ -27,24 +27,24 @@ REPO = Path(__file__).resolve().parent
 
 
 PROMPTS = [
-    (1, "Open the browser and read my email."),
-    (2, "I'll start a new git branch, push the changes, and open a pull request when the tests pass."),
-    (3,
+    (1, "en", "Open the browser and read my email."),
+    (2, "en", "I'll start a new git branch, push the changes, and open a pull request when the tests pass."),
+    (3, "en",
      "The Parakeet TDT zero point six billion parameter model achieves "
      "one point six nine percent word error rate on LibriSpeech test-clean, "
      "beating Whisper Large V3 at two point seven percent while running at "
      "over two thousand times realtime on a single GPU."),
-    (4, "Run pytest tests slash test underscore voice dot py with verbose flag and capture flag set to no."),
-    (5, "Bonjour, je m'appelle Cicero et je vais vous aider avec votre code aujourd'hui."),
+    (4, "en", "Run pytest tests slash test underscore voice dot py with verbose flag and capture flag set to no."),
+    (5, "fr", "Bonjour, je m'appelle Cicero et je vais vous aider avec votre code aujourd'hui."),
 ]
 
 
 # (name, venv_python_relpath, runner_relpath, multilingual?, devices, variant)
 MODELS = [
-    ("pocket",      "venvs/pocket/Scripts/python.exe",  "runners/pocket.py",  True,  ["cpu"],         None),
-    ("neutts_air",  "venvs/neutts/Scripts/python.exe",  "runners/neutts.py",  False, ["cpu", "cuda"], "air"),
-    ("neutts_nano", "venvs/neutts/Scripts/python.exe",  "runners/neutts.py",  True,  ["cpu", "cuda"], "nano"),
-    ("luxtts",      "venvs/luxtts/Scripts/python.exe",  "runners/luxtts.py",  False, ["cpu", "cuda"], None),
+    ("pocket",      "venvs/pocket/Scripts/python.exe",  "runners/pocket_runner.py",  True,  ["cpu"],         None),
+    ("neutts_air",  "venvs/neutts/Scripts/python.exe",  "runners/neutts_runner.py",  False, ["cpu", "cuda"], "air"),
+    ("neutts_nano", "venvs/neutts/Scripts/python.exe",  "runners/neutts_runner.py",  True,  ["cpu", "cuda"], "nano"),
+    ("luxtts",      "venvs/luxtts/Scripts/python.exe",  "runners/luxtts_runner.py",  False, ["cpu", "cuda"], None),
 ]
 
 
@@ -59,7 +59,7 @@ def detect_cuda(venv_python: Path) -> bool:
         return False
 
 
-def run_cell(venv_python, runner, text, out_wav, device, variant, reference, runs) -> list[dict]:
+def run_cell(venv_python, runner, text, out_wav, device, variant, reference, runs, language) -> list[dict]:
     """Run one (model, device, prompt) cell with N runs in a single subprocess.
 
     Returns a list of dicts — one per run. Each has at minimum: ok, run_index,
@@ -67,7 +67,8 @@ def run_cell(venv_python, runner, text, out_wav, device, variant, reference, run
     """
     cmd = [str(venv_python), str(runner),
            "--text", text, "--out", str(out_wav),
-           "--device", device, "--runs", str(runs)]
+           "--device", device, "--runs", str(runs),
+           "--language", language]
     if variant:
         cmd += ["--variant", variant]
     if reference:
@@ -116,7 +117,7 @@ def main() -> int:
 
     if args.prompts:
         wanted = {int(x) for x in args.prompts.split(",")}
-        selected_prompts = [(pid, t) for pid, t in PROMPTS if pid in wanted]
+        selected_prompts = [(pid, lang, t) for pid, lang, t in PROMPTS if pid in wanted]
     else:
         selected_prompts = list(PROMPTS)
 
@@ -165,10 +166,10 @@ def main() -> int:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
 
-        for prompt_id, text in selected_prompts:
-            print(f"===== Prompt {prompt_id}: {text[:60]}{'...' if len(text) > 60 else ''} =====")
+        for prompt_id, lang, text in selected_prompts:
+            print(f"===== Prompt {prompt_id} ({lang}): {text[:60]}{'...' if len(text) > 60 else ''} =====")
             for cell in cells:
-                if prompt_id == 5 and not cell["multilingual"]:
+                if lang != "en" and not cell["multilingual"]:
                     continue
 
                 wav = out_dir / f"{cell['model']}_{cell['device']}_p{prompt_id}.wav"
@@ -178,7 +179,7 @@ def main() -> int:
                 run_results = run_cell(
                     cell["venv_python"], cell["runner"],
                     text, wav, cell["device"], cell["variant"],
-                    args.reference, args.runs,
+                    args.reference, args.runs, lang,
                 )
 
                 for r in run_results:
@@ -233,8 +234,8 @@ def main() -> int:
 def _print_summary(rows, prompts):
     """Per-prompt comparison table: TTFA(cold) and RTF(warm-avg) per (model, device)."""
     print("=== Per-prompt summary ===\n")
-    for prompt_id, text in prompts:
-        print(f"Prompt {prompt_id}: {text[:60]}{'...' if len(text) > 60 else ''}")
+    for prompt_id, lang, text in prompts:
+        print(f"Prompt {prompt_id} ({lang}): {text[:60]}{'...' if len(text) > 60 else ''}")
         print(f"  {'model':<14} {'device':<6} {'TTFA cold':>10} {'TTFA warm':>10} {'RTF cold':>9} {'RTF warm':>9}")
         cells = {}
         for r in rows:
