@@ -1,4 +1,4 @@
-"""Quick TTS bench: cold + warm timings for 4 models on 5 prompts.
+"""Quick TTS bench: cold + warm timings for all installed models on 5 prompts.
 
 Loop order is prompt-outer so for each prompt you see all models back-to-back
 (easier to grab side-by-side clips for video).
@@ -15,15 +15,10 @@ Usage:
 
 import argparse
 import csv
-import json
-import subprocess
 import sys
-import time
 from datetime import datetime
-from pathlib import Path
 
-
-REPO = Path(__file__).resolve().parent
+from harness import REPO, build_cells, run_cell
 
 
 PROMPTS = [
@@ -39,109 +34,14 @@ PROMPTS = [
 ]
 
 
-# (name, venv_dir, runner_relpath, multilingual?, devices, variant, can_clone)
-# can_clone: True = accepts user-supplied reference wav at inference time (zero-shot cloning)
-#            False = predefined voice list only (Kokoro, KittenTTS, Piper)
-MODELS = [
-    # Zero-shot voice cloning candidates
-    ("pocket",      "pocket",     "runners/pocket_runner.py",     True,  ["cpu"],                None,   "gated"),
-    ("neutts_air",  "neutts",     "runners/neutts_runner.py",     False, ["cpu", "cuda", "mps"], "air",  True),
-    ("neutts_nano", "neutts",     "runners/neutts_runner.py",     True,  ["cpu", "cuda", "mps"], "nano", True),
-    ("luxtts",      "luxtts",     "runners/luxtts_runner.py",     False, ["cpu", "cuda", "mps"], None,   True),
-    ("chatterbox",  "chatterbox", "runners/chatterbox_runner.py", False, ["cpu", "cuda", "mps"], None,   True),
-    ("f5tts",       "f5tts",      "runners/f5tts_runner.py",      False, ["cpu", "cuda", "mps"], None,   True),
-    # Predefined-voice-only (no cloning)
-    ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     True,  ["cpu", "cuda", "mps"], None,   False),
-    ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  False, ["cpu"],                None,   False),
-    ("piper",       "piper",      "runners/piper_runner.py",      True,  ["cpu", "cuda"],        None,   False),
-    ("vibevoice",   "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,   False),
-]
-
-
-def venv_python(venv_dir: str) -> Path:
-    """Resolve the python.exe / bin/python path for a venv on this OS."""
-    root = REPO / "venvs" / venv_dir
-    if sys.platform.startswith("win"):
-        return root / "Scripts" / "python.exe"
-    return root / "bin" / "python"
-
-
-def detect_cuda(py: Path) -> bool:
-    try:
-        out = subprocess.run(
-            [str(py), "-c", "import torch; print(torch.cuda.is_available())"],
-            capture_output=True, text=True, timeout=30,
-        )
-        return "True" in out.stdout
-    except (subprocess.TimeoutExpired, OSError):
-        return False
-
-
-def detect_mps(py: Path) -> bool:
-    try:
-        out = subprocess.run(
-            [str(py), "-c",
-             "import torch; b = getattr(torch.backends, 'mps', None); "
-             "print(bool(b and b.is_available()))"],
-            capture_output=True, text=True, timeout=30,
-        )
-        return "True" in out.stdout
-    except (subprocess.TimeoutExpired, OSError):
-        return False
-
-
-def run_cell(venv_python, runner, text, out_wav, device, variant, reference, runs, language) -> list[dict]:
-    """Run one (model, device, prompt) cell with N runs in a single subprocess.
-
-    Returns a list of dicts — one per run. Each has at minimum: ok, run_index,
-    and on success: ttfa_ms, gen_s, audio_s.
-    """
-    cmd = [str(venv_python), str(runner),
-           "--text", text, "--out", str(out_wav),
-           "--device", device, "--runs", str(runs),
-           "--language", language]
-    if variant:
-        cmd += ["--variant", variant]
-    if reference:
-        cmd += ["--reference", str(reference)]
-
-    t0 = time.perf_counter()
-    try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
-    except subprocess.TimeoutExpired:
-        return [{"ok": False, "error": "timeout 300s", "run_index": 0,
-                 "wall_s": time.perf_counter() - t0}]
-    wall = time.perf_counter() - t0
-
-    parsed = []
-    for line in proc.stdout.splitlines():
-        line = line.strip()
-        if not line.startswith("{"):
-            continue
-        try:
-            parsed.append(json.loads(line))
-        except json.JSONDecodeError as e:
-            parsed.append({"ok": False, "error": f"json parse failed: {e}", "run_index": -1})
-
-    if not parsed:
-        tail = " ".join(proc.stderr.strip().splitlines()[-3:])[:300] if proc.stderr else ""
-        return [{"ok": False, "error": f"no json in stdout. stderr: {tail}",
-                 "run_index": 0, "wall_s": wall}]
-
-    # If the runner died partway through, the surviving rows will have ok=False
-    # or fewer than `runs` entries. That's fine — bench just records what came back.
-    parsed[0]["wall_s"] = wall  # only meaningful for the first (cold) row
-    return parsed
-
-
 def main() -> int:
     p = argparse.ArgumentParser(description="Quick TTS bench (cold + warm).")
     p.add_argument("--reference", default=None,
                    help="Reference wav for voice cloning (omit for each model's default voice).")
     p.add_argument("--prompts", default=None, help="Comma-sep prompt ids; default: all 5.")
-    p.add_argument("--models", default=None, help="Comma-sep model names; default: all 4.")
+    p.add_argument("--models", default=None, help="Comma-sep model names; default: all.")
     p.add_argument("--devices", default=None,
-                   help="Comma-sep devices to attempt; default: cpu + cuda (auto-detect).")
+                   help="Comma-sep devices to attempt; default: cpu + cuda + mps (auto-detect).")
     p.add_argument("--runs", type=int, default=3,
                    help="Generations per cell (run 1 = cold, runs 2..N = warm). Default 3.")
     args = p.parse_args()
@@ -155,33 +55,7 @@ def main() -> int:
     requested_models = set(args.models.split(",")) if args.models else None
     requested_devices = set(args.devices.split(",")) if args.devices else None
 
-    # Build the list of cells (model, device, variant, py, runner) to run.
-    cells = []
-    for model_name, venv_dir, runner_rel, multilingual, model_devices, variant, can_clone in MODELS:
-        if requested_models and model_name not in requested_models:
-            continue
-        # If user passed --reference, skip models that can't clone (predefined-voice-only).
-        if args.reference and can_clone is False:
-            continue
-        py = venv_python(venv_dir)
-        if not py.exists():
-            print(f"skip {model_name}: venv not installed ({py})")
-            continue
-        cuda_ok = ("cuda" in model_devices) and detect_cuda(py)
-        mps_ok = ("mps" in model_devices) and detect_mps(py)
-        for device in model_devices:
-            if device == "cuda" and not cuda_ok:
-                continue
-            if device == "mps" and not mps_ok:
-                continue
-            if requested_devices and device not in requested_devices:
-                continue
-            cells.append({
-                "model": model_name, "device": device, "variant": variant,
-                "multilingual": multilingual, "can_clone": can_clone,
-                "venv_python": py, "runner": REPO / runner_rel,
-            })
-
+    cells = build_cells(args.reference, requested_models, requested_devices)
     if not cells:
         print("No cells to run. Check --models / --devices and that venvs are installed.")
         return 2
@@ -190,8 +64,7 @@ def main() -> int:
     out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = out_dir / "results.csv"
     print(f"Output: {out_dir}\n")
-    print(f"Plan: {len(selected_prompts)} prompts × {len(cells)} cells × {args.runs} runs/cell")
-    print()
+    print(f"Plan: {len(selected_prompts)} prompts × {len(cells)} cells × {args.runs} runs/cell\n")
 
     rows = []
     fieldnames = ["prompt_id", "model", "device", "variant", "can_clone",
@@ -213,11 +86,7 @@ def main() -> int:
                 label = f"  {cell['model']}/{cell['device']:<4}"
                 print(label, end=" ", flush=True)
 
-                run_results = run_cell(
-                    cell["venv_python"], cell["runner"],
-                    text, wav, cell["device"], cell["variant"],
-                    args.reference, args.runs, lang,
-                )
+                run_results = run_cell(cell, text, wav, lang, args.runs, args.reference)
 
                 for r in run_results:
                     run_index = r.get("run_index", 0)
@@ -246,7 +115,6 @@ def main() -> int:
                     rows.append(row)
                 f.flush()
 
-                # Inline summary for this cell: cold + warm-avg
                 ok_rows = [r for r in run_results if r.get("ok")]
                 if not ok_rows:
                     err = run_results[0].get("error", "?")

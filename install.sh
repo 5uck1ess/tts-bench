@@ -133,6 +133,19 @@ else
     echo "f5tts: already installed"
 fi
 
+# --- Coqui XTTS-v2 (idiap fork) ---
+echo; cyan "=== Coqui XTTS-v2 (idiap fork) ==="
+if [ ! -x venvs/coqui/bin/python ]; then
+    uv venv venvs/coqui --python 3.11 || die "uv venv coqui"
+    # Original coqui-ai/TTS is archived; idiap/coqui-ai-TTS is the maintained
+    # fork. PyPI package is `coqui-tts` (the old `TTS` name is squatted).
+    uv pip install --python venvs/coqui/bin/python coqui-tts soundfile numpy \
+        || die "uv pip install coqui-tts"
+    green "coqui: ok (XTTS-v2 ~2GB downloads on first use; non-commercial CPML license)"
+else
+    echo "coqui: already installed"
+fi
+
 # --- VibeVoice-Realtime-0.5B (community fork) ---
 echo; cyan "=== VibeVoice-Realtime-0.5B (community fork) ==="
 if [ ! -x venvs/vibevoice/bin/python ]; then

@@ -124,6 +124,17 @@ if (-not (Test-Path "venvs\f5tts\Scripts\python.exe")) {
     Write-Host "f5tts: already installed" -ForegroundColor Gray
 }
 
+Step "Coqui XTTS-v2 (idiap fork)"
+if (-not (Test-Path "venvs\coqui\Scripts\python.exe")) {
+    Invoke-Checked "uv venv coqui" { uv venv venvs\coqui --python 3.11 }
+    # Original coqui-ai/TTS is archived; idiap/coqui-ai-TTS is the maintained fork.
+    # PyPI package name is `coqui-tts` (not `TTS` — the old name is squatted).
+    Invoke-Checked "uv pip install coqui-tts" { uv pip install --python venvs\coqui\Scripts\python.exe coqui-tts soundfile numpy }
+    Write-Host "coqui: ok (XTTS-v2 ~2GB downloads on first use; non-commercial CPML license)" -ForegroundColor Green
+} else {
+    Write-Host "coqui: already installed" -ForegroundColor Gray
+}
+
 Step "VibeVoice-Realtime-0.5B (community fork)"
 if (-not (Test-Path "venvs\vibevoice\Scripts\python.exe")) {
     Invoke-Checked "uv venv vibevoice" { uv venv venvs\vibevoice --python 3.11 }

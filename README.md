@@ -39,6 +39,7 @@ Two tiers measured on the Ryzen 9 9950X3D above. Numbers shown are from short pr
 | [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | 748M / Apache 2.0 | 1.7-1.9s | 0.67-0.70s | 0.88-0.90× | wav + transcript | below realtime on CPU — needs GPU |
 | [ChatterBox-TTS](https://github.com/resemble-ai/chatterbox) (Resemble AI) | ~1.2B / MIT | ~8s | ~8s | **~0.30×** | wav (no transcript) | 1000 diffusion steps — GPU-targeted, community quality leader |
 | [F5-TTS](https://github.com/SWivid/F5-TTS) (v1 Base) | ~330M / MIT | ~48s | ~48s | **~0.05×** | wav + transcript | flow matching, very slow on CPU; needs GPU |
+| [Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS) (idiap fork) | ~750M / CPML 1.0 (non-commercial) | pending | pending | pending | wav (no transcript) | de facto multilingual cloning baseline; ~2GB download on first use; auto-accepts CPML via `COQUI_TOS_AGREED=1` |
 | [LuxTTS](https://github.com/ysharma3501/LuxTTS) (k2-fsa-based) | — | — | — | — | wav | install blocked on Windows (see [Known issues](#known-issues)) |
 
 **Reading the tables:** TTFA = milliseconds until the first audio sample. RTF = `audio_seconds / generation_seconds` (1.0× = realtime, higher = faster than realtime). Non-streaming models (KittenTTS, ChatterBox, F5-TTS) emit full audio in one call so TTFA = gen_s by definition.
@@ -69,7 +70,7 @@ python bench.py
 
 Each model gets its own venv under `venvs/` (isolated dependency trees — NeuTTS's torch needs vs Pocket-TTS's MLX path vs Kokoro's misaki tokenizer don't have to coexist).
 
-### Interactive mode
+### Interactive feel-test
 
 To feel the latency yourself instead of staring at CSV rows:
 
@@ -82,16 +83,39 @@ python speak.py neutts_nano --reference reference/myvoice.wav
 
 Loads the model once, opens a prompt. Type, hear it, repeat. First turn is cold, subsequent are warm — that's what an always-on agent feels like.
 
+### One-shot A/B compare
+
+Run one phrase through every installed model on every available device, hear them back-to-back, see the comparison table:
+
+```powershell
+python compare.py "hello, this is a quick test of every model"
+python compare.py --file reference/reference.txt          # paragraph
+python compare.py "..." --devices cpu                     # CPU only
+python compare.py "..." --reference reference/chris.wav   # cloning models only
+python compare.py "..." --no-play                         # silent batch run
+```
+
+Wavs land in `results/compare/<timestamp>/<model>_<device>.wav` so you can re-listen later.
+
 ### Voice cloning
 
-NeuTTS Air and NeuTTS Nano do *zero-shot reference cloning*: drop a WAV into `reference/` with a matching `.txt` transcript file (same name, e.g. `myvoice.wav` + `myvoice.txt`), then:
+Three flavors of "zero-shot cloning" are supported, with slightly different reference-file requirements:
+
+| Models | Reference needed |
+|---|---|
+| ChatterBox, Coqui XTTS-v2, LuxTTS | wav only — no transcript |
+| NeuTTS Air, NeuTTS Nano, F5-TTS | wav **+** matching `.txt` transcript (same basename, e.g. `myvoice.wav` + `myvoice.txt`). The transcript MUST be the literal words spoken in the wav. |
+| Pocket-TTS (cloning path) | wav, HF accept-terms gated on [`kyutai/pocket-tts`](https://huggingface.co/kyutai/pocket-tts) + `hf auth login` |
+
+Drop the wav (and optional `.txt`) into `reference/`, then:
 
 ```bash
 python bench.py --reference reference/myvoice.wav
-python speak.py neutts_air --reference reference/myvoice.wav
+python compare.py "..." --reference reference/myvoice.wav
+python speak.py chatterbox --reference reference/myvoice.wav
 ```
 
-Pocket-TTS in this bench uses its 26 predefined voices (`anna` for English, `juergen` for German, `estelle` for French, etc.). Its zero-shot cloning path requires accepting the [`kyutai/pocket-tts` model terms on HuggingFace](https://huggingface.co/kyutai/pocket-tts).
+`--reference` auto-skips models that can only use predefined voices (Kokoro, KittenTTS, Piper, VibeVoice).
 
 ---
 
@@ -117,15 +141,23 @@ Both numbers matter for different reasons. Cold matters for "user opens the app 
 
 ## How it works
 
-Three layers, all stdlib in the orchestrator:
+Four layers, all stdlib in the orchestrator:
 
 | Layer | What |
 |---|---|
-| `bench.py` | Orchestrator. Picks (model × device × prompt) cells, spawns one subprocess per cell, parses JSON-line output, writes `results.csv`, prints summary. |
+| `harness.py` | Shared model registry + subprocess plumbing. Defines `MODELS`, builds the list of runnable `(model, device)` cells for the current machine, owns the JSON-line protocol. Imported by everything else. |
+| `bench.py` | Formal benchmark. Loops prompt × cell × runs, writes `results.csv`, prints per-prompt summary. |
+| `compare.py` | One-shot A/B listening tool. Takes one piece of text, runs it through every installed model on every available device, dumps a wav per cell, plays them out loud as they finish, prints a comparison table. |
+| `speak.py` | Interactive REPL. Keeps a single runner subprocess alive across turns so warm-run latency is measurable. Uses `winsound` / `afplay` / `aplay` for playback. |
 | `runners/*.py` | One runner per model. Loads the model in its own venv, generates audio, writes WAV, emits one JSON line per run to stdout. Also supports `--stdin` mode for `speak.py`. |
-| `speak.py` | REPL that keeps a runner subprocess alive across turns. Uses `winsound` / `afplay` / `aplay` for playback. |
 
 Runners communicate via JSON lines so each model can live in its own conflicting dependency tree. The orchestrator never imports any TTS library directly.
+
+### Three tools, three jobs
+
+- **`bench.py`** — numbers. 5 prompts × every model × cold + warm. CSV output. Reach for this when you want hard data.
+- **`compare.py`** — ears. One phrase → every model → audio out loud, side by side. Reach for this when you want to *hear* which model sounds best on your line.
+- **`speak.py`** — feel. REPL that holds one model in memory. Type a prompt, hear it, type the next. Reach for this when you want to feel the warm-run latency of one model interactively.
 
 ---
 
@@ -173,13 +205,25 @@ Done in this round (May 23, 2026):
 - ✓ Kokoro, KittenTTS, Piper (predefined-voice tier)
 - ✓ ChatterBox, F5-TTS (extra cloning models)
 - ✓ VibeVoice-Realtime-0.5B (predefined-voice tier, via the community fork)
+- ✓ Coqui XTTS-v2 (idiap fork) — multilingual cloning baseline
 - ✓ `can_clone` column in `results.csv` so cloning vs predefined is one-dimensional
+- ✓ `harness.py` extracted — shared model registry + subprocess plumbing
+- ✓ `compare.py` added — one-shot A/B listening tool across all installed models × devices, with audio playback
+- ✓ CUDA 12.8 torch wheels installed in GPU-targeted venvs (Blackwell sm_120 floor)
 
 Pending:
 
 - **Mac M4 Pro pass** — `install.sh` + MPS device detection are wired up; bench pending hardware.
-- **RTX 5090 pass** — none of the models in the current table are using the GPU yet. ChatterBox, F5-TTS, and VibeVoice especially need this to be evaluable.
+- **RTX 5090 pass** — formal `bench.py --device cuda` run for all GPU-capable models. CUDA torch is now installed; results pending.
+- **Coqui XTTS-v2 numbers** — venv install in `install.ps1` / `install.sh`; bench numbers pending first run.
 - **LuxTTS on macOS** — should install cleanly per upstream (piper-phonemize macOS wheels exist).
+
+## Considered but skipped
+
+Models that were evaluated for inclusion and intentionally left out, with the reason. The bar is in `harness.py`'s scope: must install cleanly cross-platform in a self-contained venv, run end-to-end on CPU at all (even if slow), and expose a Python API that fits the runner protocol.
+
+- **[Fish Audio S2 / S2-Pro](https://github.com/fishaudio/fish-speech)** (current `main` branch, 4B params). Linux/WSL only per official docs (Windows native unsupported); 24GB VRAM floor; no clean Python API — inference is a 3-stage CLI pipeline (DAC encode → text2semantic → DAC decode) with intermediate `.npy` files; research-license non-commercial. Doesn't fit the harness pattern. Run via the upstream SGLang/vLLM serving setup if you want it.
+- **[Fish Audio S1-mini](https://huggingface.co/fishaudio/s1-mini)** (0.5B distilled S1). Small enough to fit in principle, but the S1 inference code lives at a specific mid-2025 *commit* (no tag) — pre-S2 branch's `v1.5.1` doesn't pair (different `firefly-gan-vq-*` filenames), and `v2.0.0-beta` is S2-only. Pinning to commit `781bf1cd` works, but pulls a heavy dep tree (lightning, wandb, gradio, faster_whisper, modelscope, funasr, `pyaudio`) and still needs the same 3-stage CLI subprocess wrapper. CC-BY-NC-SA license. Worth revisiting if the user wants the model specifically — the install path just doesn't pay for itself in a "fast comprehensive bench" context.
 
 ---
 
@@ -187,8 +231,10 @@ Pending:
 
 ```
 tts-bench/
-├── bench.py              # orchestrator
-├── speak.py              # interactive REPL
+├── harness.py            # shared model registry + subprocess plumbing (imported by all 3 tools)
+├── bench.py              # formal benchmark — CSV + per-prompt summary
+├── compare.py            # one-shot A/B listening tool — every model × every device, plays out loud
+├── speak.py              # interactive REPL — feel warm-run latency for one model
 ├── install.ps1           # Windows installer
 ├── install.sh            # macOS / Linux installer
 ├── runners/
@@ -200,6 +246,7 @@ tts-bench/
 │   ├── piper_runner.py
 │   ├── chatterbox_runner.py
 │   ├── f5tts_runner.py
+│   ├── coqui_runner.py
 │   └── vibevoice_runner.py
 ├── reference/            # voice cloning reference audio (.wav + .txt pairs)
 ├── venvs/                # one isolated venv per model (gitignored)
@@ -214,6 +261,9 @@ MIT for the bench code in this repo. **Each TTS model has its own license** — 
 
 - MIT: [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts), [Piper](https://github.com/OHF-voice/piper1-gpl), [ChatterBox](https://github.com/resemble-ai/chatterbox), [F5-TTS](https://github.com/SWivid/F5-TTS), [VibeVoice (community fork)](https://github.com/vibevoice-community/VibeVoice)
 - Apache 2.0: [NeuTTS](https://github.com/neuphonic/neutts), [Kokoro](https://github.com/hexgrad/kokoro), [KittenTTS](https://github.com/KittenML/KittenTTS), [LuxTTS](https://github.com/ysharma3501/LuxTTS)
+- **CPML 1.0 (non-commercial):** [Coqui XTTS-v2](https://huggingface.co/coqui/XTTS-v2) — research / personal use only. The harness auto-accepts via `COQUI_TOS_AGREED=1`.
+
+For the models in the [Considered but skipped](#considered-but-skipped) section: Fish Audio S2 is research-license non-commercial, Fish Audio S1-mini is CC-BY-NC-SA-4.0 — both are explicitly outside this bench but listed there so the reasoning is documented.
 
 ---
 
