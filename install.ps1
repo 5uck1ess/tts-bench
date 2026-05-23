@@ -105,7 +105,7 @@ if (-not (Test-Path "venvs\chatterbox\Scripts\python.exe")) {
     # perth (ChatterBox's audio watermarker) imports pkg_resources, which was removed
     # in setuptools 80+. Pin to <80 to keep the import working.
     Invoke-Checked "setuptools<80 (perth watermarker compat)" { uv pip install --python venvs\chatterbox\Scripts\python.exe "setuptools<80" }
-    Write-Host "chatterbox: ok (GPU-targeted — expect <0.2x RTF on CPU)" -ForegroundColor Green
+    Write-Host "chatterbox: ok (GPU-targeted - expect under 0.2x RTF on CPU)" -ForegroundColor Green
 } else {
     Write-Host "chatterbox: already installed" -ForegroundColor Gray
 }
@@ -119,7 +119,7 @@ if (-not (Test-Path "venvs\f5tts\Scripts\python.exe")) {
     # torchcodec via its audio feature. Pin datasets<3.0 and the runner
     # monkey-patches torchaudio.load to use soundfile directly.
     Invoke-Checked "datasets<3.0 (avoid torchcodec import)" { uv pip install --python venvs\f5tts\Scripts\python.exe "datasets<3.0" }
-    Write-Host "f5tts: ok (GPU-targeted — expect <0.1x RTF on CPU)" -ForegroundColor Green
+    Write-Host "f5tts: ok (GPU-targeted - expect under 0.1x RTF on CPU)" -ForegroundColor Green
 } else {
     Write-Host "f5tts: already installed" -ForegroundColor Gray
 }
@@ -128,8 +128,17 @@ Step "Coqui XTTS-v2 (idiap fork)"
 if (-not (Test-Path "venvs\coqui\Scripts\python.exe")) {
     Invoke-Checked "uv venv coqui" { uv venv venvs\coqui --python 3.11 }
     # Original coqui-ai/TTS is archived; idiap/coqui-ai-TTS is the maintained fork.
-    # PyPI package name is `coqui-tts` (not `TTS` — the old name is squatted).
+    # PyPI package name is `coqui-tts` (not `TTS` - the old name is squatted).
     Invoke-Checked "uv pip install coqui-tts" { uv pip install --python venvs\coqui\Scripts\python.exe coqui-tts soundfile numpy }
+    # Pin transformers<5.0 because XTTS imports `isin_mps_friendly` from
+    # transformers.pytorch_utils which was removed in transformers 5.x.
+    Invoke-Checked "pin transformers<5.0" { uv pip install --python venvs\coqui\Scripts\python.exe "transformers>=4.45,<5.0" }
+    # Pin torch<2.9 because Coqui requires torchcodec for audio IO starting with
+    # torch 2.9 / torchaudio 2.9, and torchcodec needs FFmpeg shared DLLs which
+    # don't ship with the typical Windows FFmpeg static build. torch 2.8 still
+    # uses the soundfile backend directly. CPU wheels by default - swap to CUDA
+    # later via: uv pip install --python venvs\coqui\Scripts\python.exe --reinstall "torch<2.9" "torchaudio<2.9" --index-url https://download.pytorch.org/whl/cu128
+    Invoke-Checked "pin torch<2.9" { uv pip install --python venvs\coqui\Scripts\python.exe "torch<2.9" "torchaudio<2.9" }
     Write-Host "coqui: ok (XTTS-v2 ~2GB downloads on first use; non-commercial CPML license)" -ForegroundColor Green
 } else {
     Write-Host "coqui: already installed" -ForegroundColor Gray

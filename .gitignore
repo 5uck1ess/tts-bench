@@ -13,5 +13,6 @@ install.log
 __pycache__/
 *.pyc
 smoke_*.py
+smoke_*.wav
 test_*.wav
 docs/

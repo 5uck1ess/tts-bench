@@ -141,6 +141,16 @@ if [ ! -x venvs/coqui/bin/python ]; then
     # fork. PyPI package is `coqui-tts` (the old `TTS` name is squatted).
     uv pip install --python venvs/coqui/bin/python coqui-tts soundfile numpy \
         || die "uv pip install coqui-tts"
+    # Pin transformers<5.0 because XTTS imports `isin_mps_friendly` from
+    # transformers.pytorch_utils which was removed in transformers 5.x.
+    uv pip install --python venvs/coqui/bin/python "transformers>=4.45,<5.0" \
+        || die "uv pip install transformers"
+    # Pin torch<2.9 because Coqui requires torchcodec for audio IO starting
+    # with torch 2.9 / torchaudio 2.9. torch 2.8 still uses the soundfile
+    # backend directly so this avoids the torchcodec FFmpeg-DLL pain on Win.
+    # For CUDA later: uv pip install --python venvs/coqui/bin/python --reinstall "torch<2.9" "torchaudio<2.9" --index-url https://download.pytorch.org/whl/cu128
+    uv pip install --python venvs/coqui/bin/python "torch<2.9" "torchaudio<2.9" \
+        || die "uv pip install torch"
     green "coqui: ok (XTTS-v2 ~2GB downloads on first use; non-commercial CPML license)"
 else
     echo "coqui: already installed"
