@@ -12,3 +12,5 @@ reference/*.txt
 install.log
 __pycache__/
 *.pyc
+smoke_*.py
+test_*.wav
