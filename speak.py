@@ -26,10 +26,15 @@ REPO = Path(__file__).resolve().parent
 
 
 MODELS = {
-    "pocket":      ("pocket",  "runners/pocket_runner.py",  None),
-    "neutts_air":  ("neutts",  "runners/neutts_runner.py",  "air"),
-    "neutts_nano": ("neutts",  "runners/neutts_runner.py",  "nano"),
-    "luxtts":      ("luxtts",  "runners/luxtts_runner.py",  None),
+    "pocket":      ("pocket",     "runners/pocket_runner.py",     None),
+    "neutts_air":  ("neutts",     "runners/neutts_runner.py",     "air"),
+    "neutts_nano": ("neutts",     "runners/neutts_runner.py",     "nano"),
+    "luxtts":      ("luxtts",     "runners/luxtts_runner.py",     None),
+    "kokoro":      ("kokoro",     "runners/kokoro_runner.py",     None),
+    "kittentts":   ("kittentts",  "runners/kittentts_runner.py",  None),
+    "piper":       ("piper",      "runners/piper_runner.py",      None),
+    "chatterbox":  ("chatterbox", "runners/chatterbox_runner.py", None),
+    "f5tts":       ("f5tts",      "runners/f5tts_runner.py",      None),
 }
 
 
@@ -62,7 +67,7 @@ def _play(wav_path: Path) -> None:
 def main() -> int:
     p = argparse.ArgumentParser(description="Interactive TTS speed feel-test.")
     p.add_argument("model", choices=list(MODELS),
-                   help="pocket | neutts_air | neutts_nano | luxtts")
+                   help=" | ".join(MODELS))
     p.add_argument("--device", default="cpu")
     p.add_argument("--reference", default=None,
                    help="Reference wav for cloning (omit to use model default voice).")

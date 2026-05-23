@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-# Install 3 model venvs (pocket / neutts / luxtts) on macOS / Linux.
-# Idempotent — re-runs skip already-installed venvs.
+# Install model venvs on macOS / Linux. Idempotent — re-runs skip already-installed venvs.
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
 
@@ -66,6 +65,78 @@ if [ ! -x venvs/luxtts/bin/python ]; then
 else
     echo "luxtts: already installed"
 fi
+
+# --- Kokoro-82M ---
+echo; cyan "=== Kokoro-82M ==="
+if [ ! -x venvs/kokoro/bin/python ]; then
+    uv venv venvs/kokoro --python 3.11 || die "uv venv kokoro"
+    uv pip install --python venvs/kokoro/bin/python kokoro soundfile numpy \
+        || die "uv pip install kokoro"
+    # misaki (Kokoro's tokenizer) auto-downloads spaCy en_core_web_sm via spacy.cli.download()
+    # which shells out to pip. uv venvs have no pip, so pre-install the model wheel directly.
+    uv pip install --python venvs/kokoro/bin/python \
+        https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl \
+        || die "spacy en_core_web_sm install"
+    green "kokoro: ok"
+else
+    echo "kokoro: already installed"
+fi
+
+# --- KittenTTS ---
+echo; cyan "=== KittenTTS ==="
+if [ ! -x venvs/kittentts/bin/python ]; then
+    uv venv venvs/kittentts --python 3.11 || die "uv venv kittentts"
+    uv pip install --python venvs/kittentts/bin/python kittentts espeakng-loader soundfile numpy \
+        || die "uv pip install kittentts"
+    green "kittentts: ok"
+else
+    echo "kittentts: already installed"
+fi
+
+# --- Piper ---
+echo; cyan "=== Piper ==="
+if [ ! -x venvs/piper/bin/python ]; then
+    uv venv venvs/piper --python 3.11 || die "uv venv piper"
+    uv pip install --python venvs/piper/bin/python piper-tts soundfile numpy \
+        || die "uv pip install piper-tts"
+    green "piper: ok (voices auto-download on first use to ~/.cache/piper-voices)"
+else
+    echo "piper: already installed"
+fi
+
+# --- ChatterBox-TTS ---
+echo; cyan "=== ChatterBox-TTS ==="
+if [ ! -x venvs/chatterbox/bin/python ]; then
+    uv venv venvs/chatterbox --python 3.11 || die "uv venv chatterbox"
+    uv pip install --python venvs/chatterbox/bin/python chatterbox-tts soundfile numpy \
+        || die "uv pip install chatterbox-tts"
+    # perth (ChatterBox watermarker) imports pkg_resources (removed in setuptools 80+)
+    uv pip install --python venvs/chatterbox/bin/python "setuptools<80" \
+        || die "uv pip install setuptools"
+    green "chatterbox: ok (GPU-targeted — expect <0.2x RTF on CPU)"
+else
+    echo "chatterbox: already installed"
+fi
+
+# --- F5-TTS ---
+echo; cyan "=== F5-TTS ==="
+if [ ! -x venvs/f5tts/bin/python ]; then
+    uv venv venvs/f5tts --python 3.11 || die "uv venv f5tts"
+    uv pip install --python venvs/f5tts/bin/python f5-tts soundfile numpy \
+        || die "uv pip install f5-tts"
+    # Pin datasets<3.0 to avoid pulling torchcodec into the import chain.
+    # Mac/Linux generally have FFmpeg DLLs available, but consistency helps.
+    uv pip install --python venvs/f5tts/bin/python "datasets<3.0" \
+        || die "uv pip install datasets"
+    green "f5tts: ok (GPU-targeted — expect <0.1x RTF on CPU)"
+else
+    echo "f5tts: already installed"
+fi
+
+# VibeVoice-Realtime-0.5B intentionally skipped: as of 2026-05-23, the
+# Microsoft GitHub source and the HuggingFace checkpoint have an architecture
+# mismatch (most of the acoustic_tokenizer encoder loads as randomly
+# initialized). Re-add when Microsoft re-aligns the repo and checkpoint.
 
 echo
 green "Done. Run: python bench.py"

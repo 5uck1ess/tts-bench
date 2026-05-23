@@ -6,22 +6,48 @@ Built to answer one question: *which open TTS model do I plug into an always-on 
 
 ---
 
-## Current results (Windows CPU, x86, 2 cores, May 2026)
+## Test hardware
 
-Average across 5 prompts (1 cold + 2 warm per prompt per model):
+Listed because TTS speed is hardware-dependent — RTF claims that hold on a Ryzen 9 won't necessarily hold on a Raspberry Pi.
 
-| Model | Variant | TTFA cold | TTFA warm | RTF cold | RTF warm | Notes |
+| Machine | OS | CPU | RAM | GPU | Used for |
+|---|---|---|---|---|---|
+| **Windows desktop** | Windows 11 Pro | AMD Ryzen 9 9950X3D (16C / 32T @ 4.3 GHz base) | 128 GB | NVIDIA RTX 5090 | All current bench rows below (CPU mode; GPU runs pending) |
+| **Mac (pending)** | macOS — | Apple M4 Pro | — | Apple M4 Pro GPU (MPS) | Future MPS bench rows |
+
+If you reproduce on different hardware, your numbers will differ — file an issue or PR with your results and we'll add a column.
+
+## Current results (Windows CPU, May 2026)
+
+Two tiers measured on the Ryzen 9 9950X3D above. Numbers shown are from short prompts; long prompts scale RTF linearly.
+
+### Predefined-voice models (pick from a baked-in voice list)
+
+| Model | Size / License | TTFA cold | TTFA warm | RTF warm | Languages | Notes |
 |---|---|---|---|---|---|---|
-| **Pocket-TTS** (Kyutai, 100M, MIT) | — | **95-150ms** | **97-150ms** | 2.9× | **2.9-3.0×** | wins on CPU; 26 predefined voices, BYO-voice gated by HF accept-terms |
-| NeuTTS Nano (Neuphonic, GGUF Q4) | nano | 1.2s | 0.43-0.51s | 0.82× | 1.3-1.4× | multilingual fallback; separate model per language |
-| NeuTTS Air (Neuphonic, GGUF Q4) | air | 1.7-1.9s | 0.67-0.70s | 0.68-0.85× | 0.88-0.90× | **below realtime on CPU** — needs GPU |
-| LuxTTS (k2-fsa) | — | — | — | — | — | install blocked on Windows (see [Known issues](#known-issues)) |
+| **Piper** (rhasspy) | per-voice ~25MB / MIT | **72ms** | **39ms** | **47×** | 40+ via separate voice models | leader on this hardware; streaming-native, bundles espeak-ng (no Windows wheel pain) |
+| **Kokoro-82M** (hexgrad) | 82M / Apache 2.0 | 335ms | 245ms | 13× | 9 (a/b/e/f/h/i/j/p/z codes) | 54 voices; misaki tokenizer needs spaCy preinstall (see Known issues) |
+| **KittenTTS** (KittenML) | <100M / Apache 2.0 | 516ms | 487ms | 6.6× | EN only | 8 voices; non-streaming so TTFA == gen_s |
 
-**Reading the table:** TTFA = milliseconds until the first audio sample. RTF = `audio_seconds / generation_seconds` (1.0× = realtime, higher = faster than realtime). Pocket-TTS is **5-7× faster TTFA and 2-3× faster RTF** than the runner-up on this hardware.
+### Zero-shot voice cloning models (accept a reference wav at inference time)
 
-Raw CSV + WAVs from the run live in `results/2026-05-23_1139/`.
+| Model | Size / License | TTFA cold | TTFA warm | RTF warm | Cloning ref | Notes |
+|---|---|---|---|---|---|---|
+| **Pocket-TTS** (Kyutai, predefined mode) | 100M / MIT | 95-150ms | 97-150ms | **2.9-3.0×** | wav or voice name | 26 voices unauth; BYO-voice path is HF accept-terms gated on `kyutai/pocket-tts` |
+| NeuTTS Nano (GGUF Q4) | 748M / Apache 2.0 | 1.2s | 0.43-0.51s | 1.3-1.4× | wav + transcript | multilingual fallback; separate `.gguf` per language |
+| NeuTTS Air (GGUF Q4) | 748M / Apache 2.0 | 1.7-1.9s | 0.67-0.70s | 0.88-0.90× | wav + transcript | below realtime on CPU — needs GPU |
+| ChatterBox-TTS | ~1.2B / MIT | ~8s | ~8s | **~0.30×** | wav (no transcript) | 1000 diffusion steps — GPU-targeted, community quality leader |
+| F5-TTS (v1 Base) | ~330M / MIT | ~48s | ~48s | **~0.05×** | wav + transcript | flow matching, very slow on CPU; needs GPU |
+| LuxTTS (k2-fsa) | — | — | — | — | wav | install blocked on Windows (see [Known issues](#known-issues)) |
+| VibeVoice-Realtime-0.5B | 0.5B | — | — | — | — | **BLOCKED 2026-05-23** — MS GitHub source ↔ HF checkpoint mismatch (acoustic_tokenizer uninitialized) |
 
-Caveats: one machine, one run, two CPU cores. Re-bench on your own hardware before committing — see [Known issues](#known-issues) for examples of model README claims that didn't survive contact with a real install.
+**Reading the tables:** TTFA = milliseconds until the first audio sample. RTF = `audio_seconds / generation_seconds` (1.0× = realtime, higher = faster than realtime). Non-streaming models (KittenTTS, ChatterBox, F5-TTS) emit full audio in one call so TTFA = gen_s by definition.
+
+**Top-line takeaway:** if you don't need voice cloning, **Piper wins by a huge margin on this CPU** (39ms warm TTFA, 47× RTF). Pocket-TTS is the fastest cloning-capable option (with the HF accept-terms caveat). NeuTTS Air/Nano give clean BYO-voice without auth gates but at lower RTF. ChatterBox + F5-TTS are GPU-class — file them under "bench-cold but not deployable" until 5090 runs land.
+
+Raw CSV + WAVs from the latest run live in `results/`.
+
+Caveats: one machine, one run. Re-bench on your own hardware before committing — see [Known issues](#known-issues) for examples of model README claims that didn't survive contact with a real install.
 
 ---
 
@@ -118,27 +144,41 @@ The two existing runners (`pocket_runner.py`, `neutts_runner.py`) are ~150 lines
 
 ## Known issues
 
-- **`piper-phonemize` blocks LuxTTS on Windows.** LuxTTS depends on `piper-phonemize`, which only ships manylinux x86_64/aarch64 and macOS wheels — no Windows wheel exists. `install.ps1` marks LuxTTS as expected-fail; the bench skips it on Windows. Workaround: WSL2 (untested here) or run on Mac/Linux. (Note: `piper-tts` 1.4+ itself removed this dependency, so Piper proper works on Windows — only LuxTTS is affected.)
-- **NeuTTS via `pip install neutts` gives the torch backbone, not the production fast path.** Torch backbone on x86 CPU runs at ~0.2× RTF (sub-realtime, unusable). The production path is `llama-cpp-python` + `neuphonic/neutts-*-q4-gguf` models. Post-switch numbers are what's in the table. `install.ps1` and `install.sh` install the GGUF path by default.
-- **Pocket-TTS voice cloning is HF accept-terms gated.** Predefined voices (`anna`, `juergen`, `estelle`, etc.) work without auth. Passing a reference WAV triggers a fetch of the gated `kyutai/pocket-tts` model and 401s. Either accept the terms or use NeuTTS for BYO-voice.
-- **NeuTTS reference voices need both `.wav` AND `.txt` (transcript)** in the same directory with the same basename. Wav-only fails inside `encode_reference()`.
-- **NeuTTS Nano multilingual = separate model file per language.** `neuphonic/neutts-nano-q4-gguf` (English) vs `neuphonic/neutts-nano-french-q4-gguf` etc. The runner picks the right one based on `--language`.
-- **`uv venv` doesn't seed pip.** Installs use `uv pip install --python <venv-python>` throughout. The install scripts codify this.
+Frictions surfaced while building the harness. None are blockers on Mac/Linux — most apply to Windows or to specific models.
+
+**Cross-cutting**
+
+- **`uv venv` doesn't seed pip.** `python -m pip install ...` fails inside a fresh uv venv. Installs use `uv pip install --python <venv-python>` throughout. The install scripts codify this.
 - **PowerShell 5.1 + native exes + `$ErrorActionPreference=Stop` is a trap.** `uv` prints to stderr on success (`"Using CPython 3.11.15"`); PowerShell wraps each stderr line as a `NativeCommandError` and trips Stop even on exit 0. `install.ps1` uses `$LASTEXITCODE` checks instead.
+
+**Per-model**
+
+- **LuxTTS — blocked on Windows.** Depends on `piper-phonemize` which only ships manylinux x86_64/aarch64 and macOS wheels. Workaround: WSL2 (untested) or run on Mac/Linux. (Note: `piper-tts` 1.4+ replaced this dependency with bundled espeak-ng, so Piper proper works on Windows.)
+- **NeuTTS — `pip install neutts` gives the torch backbone, not the production fast path.** Torch backbone on x86 CPU runs at ~0.2× RTF (unusable). Production path is `llama-cpp-python` + `neuphonic/neutts-*-q4-gguf` models. Post-switch RTF is what's in the table. Install scripts install the GGUF path by default.
+- **NeuTTS — reference voices need both `.wav` AND `.txt` (transcript).** Wav-only fails inside `encode_reference()`. Pocket-TTS in contrast takes a voice name string or a single wav (gated).
+- **NeuTTS Nano — multilingual = separate model file per language.** `neuphonic/neutts-nano-q4-gguf` (EN), `neuphonic/neutts-nano-french-q4-gguf` (FR), etc. Runner switches based on `--language`.
+- **Pocket-TTS — voice cloning is HF accept-terms gated.** Predefined voices work without auth. Reference-wav cloning triggers a fetch of the gated `kyutai/pocket-tts` repo and 401s. Either accept terms or use NeuTTS Air/Nano for BYO-voice without auth.
+- **Kokoro — misaki tokenizer calls `spacy.cli.download()` at init.** Tries to install `en_core_web_sm` via pip; fails in uv venvs. Install scripts pre-install the model wheel directly to bypass this.
+- **KittenTTS — needs `espeakng-loader` (bundles espeak-ng DLL).** System espeak install also works on Mac/Linux but is more friction. Runner sets `ESPEAK_DATA_PATH` env var because the bundled DLL has a hardcoded CI build path.
+- **ChatterBox — needs `setuptools<80`.** The `perth` audio watermarker imports `pkg_resources` (removed in setuptools 80+). Install scripts pin the version.
+- **F5-TTS — `torchaudio.load()` routes through `torchcodec` in torch 2.12+**, which needs FFmpeg shared DLLs (libtorchcodec_core4.dll etc., NOT just ffmpeg.exe). On Windows with the typical static FFmpeg build this fails. Runner monkey-patches `torchaudio.load` to use `soundfile` directly. Install scripts also pin `datasets<3.0` to avoid pulling torchcodec into the import chain.
+- **VibeVoice-Realtime-0.5B — BLOCKED (2026-05-23).** Microsoft GitHub source and HuggingFace checkpoint are out of sync — most of `acoustic_tokenizer.encoder` loads as randomly initialized, with the "you should probably TRAIN this model" warning. Skipped in install scripts. Re-add when MS re-aligns.
 
 ---
 
 ## Roadmap
 
-Pending model additions (PRs welcome):
+Done in this round (May 23, 2026):
+- ✓ Kokoro, KittenTTS, Piper (predefined-voice tier)
+- ✓ ChatterBox, F5-TTS (extra cloning models)
+- ✓ `can_clone` column in `results.csv` so cloning vs predefined is one-dimensional
 
-- **Kokoro-82M** — Apache 2.0, 54 preset voices, claimed 90-210× RT on CPU. Venv installed; runner WIP.
-- **KittenTTS** — Apache 2.0, <100M, English only, predefined voices. Venv installed; runner pending.
-- **Piper** (rhasspy/piper) — MIT, per-language voice models, no longer blocked on Windows in 1.4+. Pending.
+Pending:
+
 - **Mac M4 Pro pass** — `install.sh` + MPS device detection are wired up; bench pending hardware.
+- **RTX 5090 pass** — none of the models in the current table are using the GPU yet. ChatterBox and F5-TTS especially need this to be evaluable.
 - **LuxTTS on macOS** — should install cleanly per upstream (piper-phonemize macOS wheels exist).
-
-These are all non-cloning small models (predefined voices only) — they fill a different niche than NeuTTS, which is the BYO-voice path. See `docs/superpowers/specs/2026-05-22-tts-bench-cross-platform-design.md` for the full bench design.
+- **VibeVoice-Realtime-0.5B** — re-add once Microsoft re-aligns the GitHub repo with the HF checkpoint.
 
 ---
 
@@ -153,11 +193,15 @@ tts-bench/
 ├── runners/
 │   ├── pocket_runner.py
 │   ├── neutts_runner.py
-│   └── luxtts_runner.py
+│   ├── luxtts_runner.py
+│   ├── kokoro_runner.py
+│   ├── kittentts_runner.py
+│   ├── piper_runner.py
+│   ├── chatterbox_runner.py
+│   └── f5tts_runner.py
 ├── reference/            # voice cloning reference audio (.wav + .txt pairs)
 ├── venvs/                # one isolated venv per model (gitignored)
-├── results/              # bench output WAVs + CSV (gitignored)
-└── docs/                 # design specs
+└── results/              # bench output WAVs + CSV (gitignored)
 ```
 
 ---

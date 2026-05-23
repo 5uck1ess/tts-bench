@@ -39,12 +39,21 @@ PROMPTS = [
 ]
 
 
-# (name, venv_dir, runner_relpath, multilingual?, devices, variant)
+# (name, venv_dir, runner_relpath, multilingual?, devices, variant, can_clone)
+# can_clone: True = accepts user-supplied reference wav at inference time (zero-shot cloning)
+#            False = predefined voice list only (Kokoro, KittenTTS, Piper)
 MODELS = [
-    ("pocket",      "pocket",  "runners/pocket_runner.py",  True,  ["cpu"],                None),
-    ("neutts_air",  "neutts",  "runners/neutts_runner.py",  False, ["cpu", "cuda", "mps"], "air"),
-    ("neutts_nano", "neutts",  "runners/neutts_runner.py",  True,  ["cpu", "cuda", "mps"], "nano"),
-    ("luxtts",      "luxtts",  "runners/luxtts_runner.py",  False, ["cpu", "cuda", "mps"], None),
+    # Zero-shot voice cloning candidates
+    ("pocket",      "pocket",     "runners/pocket_runner.py",     True,  ["cpu"],                None,   "gated"),
+    ("neutts_air",  "neutts",     "runners/neutts_runner.py",     False, ["cpu", "cuda", "mps"], "air",  True),
+    ("neutts_nano", "neutts",     "runners/neutts_runner.py",     True,  ["cpu", "cuda", "mps"], "nano", True),
+    ("luxtts",      "luxtts",     "runners/luxtts_runner.py",     False, ["cpu", "cuda", "mps"], None,   True),
+    ("chatterbox",  "chatterbox", "runners/chatterbox_runner.py", False, ["cpu", "cuda", "mps"], None,   True),
+    ("f5tts",       "f5tts",      "runners/f5tts_runner.py",      False, ["cpu", "cuda", "mps"], None,   True),
+    # Predefined-voice-only (no cloning)
+    ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     True,  ["cpu", "cuda", "mps"], None,   False),
+    ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  False, ["cpu"],                None,   False),
+    ("piper",       "piper",      "runners/piper_runner.py",      True,  ["cpu", "cuda"],        None,   False),
 ]
 
 
@@ -147,8 +156,11 @@ def main() -> int:
 
     # Build the list of cells (model, device, variant, py, runner) to run.
     cells = []
-    for model_name, venv_dir, runner_rel, multilingual, model_devices, variant in MODELS:
+    for model_name, venv_dir, runner_rel, multilingual, model_devices, variant, can_clone in MODELS:
         if requested_models and model_name not in requested_models:
+            continue
+        # If user passed --reference, skip models that can't clone (predefined-voice-only).
+        if args.reference and can_clone is False:
             continue
         py = venv_python(venv_dir)
         if not py.exists():
@@ -165,7 +177,7 @@ def main() -> int:
                 continue
             cells.append({
                 "model": model_name, "device": device, "variant": variant,
-                "multilingual": multilingual,
+                "multilingual": multilingual, "can_clone": can_clone,
                 "venv_python": py, "runner": REPO / runner_rel,
             })
 
@@ -181,7 +193,7 @@ def main() -> int:
     print()
 
     rows = []
-    fieldnames = ["prompt_id", "model", "device", "variant",
+    fieldnames = ["prompt_id", "model", "device", "variant", "can_clone",
                   "run_index", "is_cold",
                   "ttfa_ms", "gen_s", "audio_s", "rtf",
                   "wall_s", "ok", "error"]
@@ -218,6 +230,7 @@ def main() -> int:
                         "model": cell["model"],
                         "device": cell["device"],
                         "variant": cell["variant"] or "",
+                        "can_clone": cell["can_clone"],
                         "run_index": run_index,
                         "is_cold": run_index == 0,
                         "ttfa_ms": round(ttfa, 1) if ttfa else "",
