@@ -3,6 +3,10 @@
 venvs/
 results/
 reference/*.wav
+reference/*.mp3
+reference/*.m4a
+reference/*.flac
+reference/*.ogg
 reference/*.txt
 !reference/.gitkeep
 install.log

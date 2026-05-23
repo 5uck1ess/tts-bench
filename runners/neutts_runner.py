@@ -47,14 +47,20 @@ DEFAULT_REFERENCE = {
 
 def main() -> int:
     p = argparse.ArgumentParser()
-    p.add_argument("--text", required=True)
-    p.add_argument("--out", required=True)
+    p.add_argument("--text", default=None)
+    p.add_argument("--out", default=None)
     p.add_argument("--device", default="cpu")
     p.add_argument("--reference", default=None)
     p.add_argument("--variant", default="air")
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--language", default="en")
+    p.add_argument("--stdin", action="store_true",
+                   help="Interactive mode: read JSON jobs {text, out} from stdin, one per line.")
     args = p.parse_args()
+    if not args.stdin and (args.text is None or args.out is None):
+        print(json.dumps({"ok": False, "run_index": 0,
+                          "error": "either --stdin or both --text and --out are required"}))
+        return 1
 
     try:
         from neutts import NeuTTS
@@ -106,46 +112,67 @@ def main() -> int:
 
     # Streaming only works for the GGUF/llama.cpp backend. For the torch backbone
     # we get all audio in one shot from infer() — TTFA == gen_s in that case.
-    streaming = True
-    for i in range(args.runs):
+    streaming = {"on": True}
+
+    def _one(text, out_path, run_index, write_wav):
         try:
             t0 = time.perf_counter()
             first = None
             chunks = []
-            if streaming:
+            if streaming["on"]:
                 try:
-                    for chunk in tts.infer_stream(args.text, ref_codes, ref_text):
+                    for chunk in tts.infer_stream(text, ref_codes, ref_text):
                         if first is None:
                             first = time.perf_counter()
                         chunks.append(np.asarray(chunk))
                 except NotImplementedError:
-                    streaming = False
+                    streaming["on"] = False
                     chunks = []
                     first = None
-            if not streaming:
-                audio_np = tts.infer(args.text, ref_codes, ref_text)
+            if not streaming["on"]:
+                audio_np = tts.infer(text, ref_codes, ref_text)
                 first = time.perf_counter()
                 chunks = [np.asarray(audio_np)]
             t_end = time.perf_counter()
 
             audio = np.concatenate(chunks) if chunks else np.zeros(0, dtype="float32")
             audio_s = float(len(audio) / samplerate)
-
-            if i == 0:
-                sf.write(args.out, audio, samplerate)
+            if write_wav:
+                sf.write(out_path, audio, samplerate)
 
             print(json.dumps({
-                "ok": True,
-                "run_index": i,
+                "ok": True, "run_index": run_index,
                 "ttfa_ms": (first - t0) * 1000 if first else None,
-                "gen_s": t_end - t0,
-                "audio_s": audio_s,
+                "gen_s": t_end - t0, "audio_s": audio_s,
             }), flush=True)
+            return True
         except Exception as e:
             print(json.dumps({
-                "ok": False, "run_index": i,
+                "ok": False, "run_index": run_index,
                 "error": f"{type(e).__name__}: {e}",
             }), flush=True)
+            return False
+
+    if args.stdin:
+        idx = 0
+        print(json.dumps({"ready": True}), flush=True)
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                job = json.loads(line)
+            except json.JSONDecodeError as e:
+                print(json.dumps({"ok": False, "run_index": idx,
+                                  "error": f"json parse: {e}"}), flush=True)
+                idx += 1
+                continue
+            _one(job["text"], job["out"], idx, write_wav=True)
+            idx += 1
+        return 0
+
+    for i in range(args.runs):
+        if not _one(args.text, args.out, i, write_wav=(i == 0)):
             return 1
     return 0
 
