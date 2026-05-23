@@ -133,10 +133,21 @@ else
     echo "f5tts: already installed"
 fi
 
-# VibeVoice-Realtime-0.5B intentionally skipped: as of 2026-05-23, the
-# Microsoft GitHub source and the HuggingFace checkpoint have an architecture
-# mismatch (most of the acoustic_tokenizer encoder loads as randomly
-# initialized). Re-add when Microsoft re-aligns the repo and checkpoint.
+# --- VibeVoice-Realtime-0.5B (community fork) ---
+echo; cyan "=== VibeVoice-Realtime-0.5B (community fork) ==="
+if [ ! -x venvs/vibevoice/bin/python ]; then
+    uv venv venvs/vibevoice --python 3.11 || die "uv venv vibevoice"
+    # The official microsoft/VibeVoice repo was taken down then partially restored
+    # WITHOUT code. The community fork keeps the original code and added a
+    # working streaming variant in 2025-12-04. The pypi `vibevoice==0.0.1` ships
+    # the base architecture only (no streaming class), so install from the fork.
+    uv pip install --python venvs/vibevoice/bin/python \
+        "git+https://github.com/vibevoice-community/VibeVoice" torch soundfile numpy \
+        || die "uv pip install vibevoice (community fork)"
+    green "vibevoice: ok (voice .pt presets auto-download on first use to ~/.cache/vibevoice-voices)"
+else
+    echo "vibevoice: already installed"
+fi
 
 echo
 green "Done. Run: python bench.py"

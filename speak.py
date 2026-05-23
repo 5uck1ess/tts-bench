@@ -35,6 +35,7 @@ MODELS = {
     "piper":       ("piper",      "runners/piper_runner.py",      None),
     "chatterbox":  ("chatterbox", "runners/chatterbox_runner.py", None),
     "f5tts":       ("f5tts",      "runners/f5tts_runner.py",      None),
+    "vibevoice":   ("vibevoice",  "runners/vibevoice_runner.py",  None),
 }
 
 

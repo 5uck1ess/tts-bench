@@ -124,10 +124,20 @@ if (-not (Test-Path "venvs\f5tts\Scripts\python.exe")) {
     Write-Host "f5tts: already installed" -ForegroundColor Gray
 }
 
-# VibeVoice-Realtime-0.5B intentionally skipped: as of 2026-05-23, the
-# Microsoft GitHub source and the HuggingFace checkpoint have an architecture
-# mismatch (most of the acoustic_tokenizer encoder loads as randomly
-# initialized, with a "you should probably TRAIN this model" warning).
-# Reintroduce when Microsoft re-aligns the repo and checkpoint.
+Step "VibeVoice-Realtime-0.5B (community fork)"
+if (-not (Test-Path "venvs\vibevoice\Scripts\python.exe")) {
+    Invoke-Checked "uv venv vibevoice" { uv venv venvs\vibevoice --python 3.11 }
+    # The official microsoft/VibeVoice repo was taken down then partially restored
+    # WITHOUT code. The community fork keeps the original code and added a
+    # working streaming variant in 2025-12-04. The pypi `vibevoice==0.0.1` ships
+    # the base architecture only (no streaming class), so install from the fork.
+    Invoke-Checked "vibevoice (community fork)" {
+        uv pip install --python venvs\vibevoice\Scripts\python.exe `
+            "git+https://github.com/vibevoice-community/VibeVoice" torch soundfile numpy
+    }
+    Write-Host "vibevoice: ok (voice .pt presets auto-download on first use to ~/.cache/vibevoice-voices)" -ForegroundColor Green
+} else {
+    Write-Host "vibevoice: already installed" -ForegroundColor Gray
+}
 
 Write-Host "`nDone. Run: python bench.py" -ForegroundColor Green

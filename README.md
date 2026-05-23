@@ -28,6 +28,7 @@ Two tiers measured on the Ryzen 9 9950X3D above. Numbers shown are from short pr
 | **Piper** (rhasspy) | per-voice ~25MB / MIT | **72ms** | **39ms** | **47×** | 40+ via separate voice models | leader on this hardware; streaming-native, bundles espeak-ng (no Windows wheel pain) |
 | **Kokoro-82M** (hexgrad) | 82M / Apache 2.0 | 335ms | 245ms | 13× | 9 (a/b/e/f/h/i/j/p/z codes) | 54 voices; misaki tokenizer needs spaCy preinstall (see Known issues) |
 | **KittenTTS** (KittenML) | <100M / Apache 2.0 | 516ms | 487ms | 6.6× | EN only | 8 voices; non-streaming so TTFA == gen_s |
+| **VibeVoice-Realtime-0.5B** (Microsoft, community fork) | 0.5B / MIT | ~3.9s | ~3.7s | **~0.5×** | EN only (7 preset voices) | streaming-class but heavy diffusion; DDPM steps tunable (5 default). Predefined `.pt` voice embeddings auto-downloaded |
 
 ### Zero-shot voice cloning models (accept a reference wav at inference time)
 
@@ -39,7 +40,6 @@ Two tiers measured on the Ryzen 9 9950X3D above. Numbers shown are from short pr
 | ChatterBox-TTS | ~1.2B / MIT | ~8s | ~8s | **~0.30×** | wav (no transcript) | 1000 diffusion steps — GPU-targeted, community quality leader |
 | F5-TTS (v1 Base) | ~330M / MIT | ~48s | ~48s | **~0.05×** | wav + transcript | flow matching, very slow on CPU; needs GPU |
 | LuxTTS (k2-fsa) | — | — | — | — | wav | install blocked on Windows (see [Known issues](#known-issues)) |
-| VibeVoice-Realtime-0.5B | 0.5B | — | — | — | — | **BLOCKED 2026-05-23** — MS GitHub source ↔ HF checkpoint mismatch (acoustic_tokenizer uninitialized) |
 
 **Reading the tables:** TTFA = milliseconds until the first audio sample. RTF = `audio_seconds / generation_seconds` (1.0× = realtime, higher = faster than realtime). Non-streaming models (KittenTTS, ChatterBox, F5-TTS) emit full audio in one call so TTFA = gen_s by definition.
 
@@ -162,7 +162,8 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
 - **KittenTTS — needs `espeakng-loader` (bundles espeak-ng DLL).** System espeak install also works on Mac/Linux but is more friction. Runner sets `ESPEAK_DATA_PATH` env var because the bundled DLL has a hardcoded CI build path.
 - **ChatterBox — needs `setuptools<80`.** The `perth` audio watermarker imports `pkg_resources` (removed in setuptools 80+). Install scripts pin the version.
 - **F5-TTS — `torchaudio.load()` routes through `torchcodec` in torch 2.12+**, which needs FFmpeg shared DLLs (libtorchcodec_core4.dll etc., NOT just ffmpeg.exe). On Windows with the typical static FFmpeg build this fails. Runner monkey-patches `torchaudio.load` to use `soundfile` directly. Install scripts also pin `datasets<3.0` to avoid pulling torchcodec into the import chain.
-- **VibeVoice-Realtime-0.5B — BLOCKED (2026-05-23).** Microsoft GitHub source and HuggingFace checkpoint are out of sync — most of `acoustic_tokenizer.encoder` loads as randomly initialized, with the "you should probably TRAIN this model" warning. Skipped in install scripts. Re-add when MS re-aligns.
+- **VibeVoice — install from `vibevoice-community/VibeVoice`, NOT pypi or `microsoft/VibeVoice`.** pypi `vibevoice==0.0.1` only ships the base architecture (no streaming class). The official Microsoft repo was taken down in September 2025 then partially restored without code. The community fork at github.com/vibevoice-community/VibeVoice keeps the original code and added a working streaming variant on 2025-12-04. Voice presets (`.pt` files, 2-4MB each) are not bundled in the package — runner auto-downloads them from the fork to `~/.cache/vibevoice-voices/` on first use.
+- **VibeVoice — the "you should probably TRAIN this model" warning is benign.** The HF checkpoint deliberately omits the `acoustic_tokenizer.encoder` weights (~400 keys load as random). That subnet is unused at inference because the `.pt` voice presets are pre-encoded representations. Audio output is unaffected.
 
 ---
 
@@ -171,14 +172,14 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
 Done in this round (May 23, 2026):
 - ✓ Kokoro, KittenTTS, Piper (predefined-voice tier)
 - ✓ ChatterBox, F5-TTS (extra cloning models)
+- ✓ VibeVoice-Realtime-0.5B (predefined-voice tier, via the community fork)
 - ✓ `can_clone` column in `results.csv` so cloning vs predefined is one-dimensional
 
 Pending:
 
 - **Mac M4 Pro pass** — `install.sh` + MPS device detection are wired up; bench pending hardware.
-- **RTX 5090 pass** — none of the models in the current table are using the GPU yet. ChatterBox and F5-TTS especially need this to be evaluable.
+- **RTX 5090 pass** — none of the models in the current table are using the GPU yet. ChatterBox, F5-TTS, and VibeVoice especially need this to be evaluable.
 - **LuxTTS on macOS** — should install cleanly per upstream (piper-phonemize macOS wheels exist).
-- **VibeVoice-Realtime-0.5B** — re-add once Microsoft re-aligns the GitHub repo with the HF checkpoint.
 
 ---
 
@@ -198,7 +199,8 @@ tts-bench/
 │   ├── kittentts_runner.py
 │   ├── piper_runner.py
 │   ├── chatterbox_runner.py
-│   └── f5tts_runner.py
+│   ├── f5tts_runner.py
+│   └── vibevoice_runner.py
 ├── reference/            # voice cloning reference audio (.wav + .txt pairs)
 ├── venvs/                # one isolated venv per model (gitignored)
 └── results/              # bench output WAVs + CSV (gitignored)

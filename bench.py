@@ -54,6 +54,7 @@ MODELS = [
     ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     True,  ["cpu", "cuda", "mps"], None,   False),
     ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  False, ["cpu"],                None,   False),
     ("piper",       "piper",      "runners/piper_runner.py",      True,  ["cpu", "cuda"],        None,   False),
+    ("vibevoice",   "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,   False),
 ]
 
 
