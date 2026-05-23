@@ -27,13 +27,14 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
 
-# (variant, language) -> HF repo id
+# (variant, language) -> HF repo id. Q4 GGUF is Neuphonic's recommended fast
+# path (via llama-cpp-python). Non-GGUF backbones exist too but are slow.
 REPO_MAP = {
-    ("air", "en"):  "neuphonic/neutts-air",
-    ("nano", "en"): "neuphonic/neutts-nano",
-    ("nano", "fr"): "neuphonic/neutts-nano-french",
-    ("nano", "de"): "neuphonic/neutts-nano-german",
-    ("nano", "es"): "neuphonic/neutts-nano-spanish",
+    ("air", "en"):  "neuphonic/neutts-air-q4-gguf",
+    ("nano", "en"): "neuphonic/neutts-nano-q4-gguf",
+    ("nano", "fr"): "neuphonic/neutts-nano-french-q4-gguf",
+    ("nano", "de"): "neuphonic/neutts-nano-german-q4-gguf",
+    ("nano", "es"): "neuphonic/neutts-nano-spanish-q4-gguf",
 }
 
 

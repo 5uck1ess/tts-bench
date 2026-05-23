@@ -41,7 +41,7 @@ if (-not (Test-Path "venvs\neutts\Scripts\python.exe")) {
         }
         Invoke-Checked "uv pip install neutts source" { uv pip install --python venvs\neutts\Scripts\python.exe -e venvs\neutts\src }
     }
-    Invoke-Checked "uv pip install neutts deps" { uv pip install --python venvs\neutts\Scripts\python.exe torch soundfile numpy }
+    Invoke-Checked "uv pip install neutts deps" { uv pip install --python venvs\neutts\Scripts\python.exe torch soundfile numpy llama-cpp-python }
     Write-Host "neutts: ok" -ForegroundColor Green
 } else {
     Write-Host "neutts: already installed" -ForegroundColor Gray
