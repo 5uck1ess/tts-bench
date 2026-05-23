@@ -26,11 +26,18 @@ REPO = Path(__file__).resolve().parent
 
 
 MODELS = {
-    "pocket":      ("venvs/pocket/Scripts/python.exe",  "runners/pocket_runner.py",  None),
-    "neutts_air":  ("venvs/neutts/Scripts/python.exe",  "runners/neutts_runner.py",  "air"),
-    "neutts_nano": ("venvs/neutts/Scripts/python.exe",  "runners/neutts_runner.py",  "nano"),
-    "luxtts":      ("venvs/luxtts/Scripts/python.exe",  "runners/luxtts_runner.py",  None),
+    "pocket":      ("pocket",  "runners/pocket_runner.py",  None),
+    "neutts_air":  ("neutts",  "runners/neutts_runner.py",  "air"),
+    "neutts_nano": ("neutts",  "runners/neutts_runner.py",  "nano"),
+    "luxtts":      ("luxtts",  "runners/luxtts_runner.py",  None),
 }
+
+
+def venv_python(venv_dir: str) -> Path:
+    root = REPO / "venvs" / venv_dir
+    if sys.platform.startswith("win"):
+        return root / "Scripts" / "python.exe"
+    return root / "bin" / "python"
 
 
 def _play(wav_path: Path) -> None:
@@ -62,11 +69,12 @@ def main() -> int:
     p.add_argument("--language", default="en")
     args = p.parse_args()
 
-    py_rel, runner_rel, variant = MODELS[args.model]
-    py = REPO / py_rel
+    venv_dir, runner_rel, variant = MODELS[args.model]
+    py = venv_python(venv_dir)
     runner = REPO / runner_rel
     if not py.exists():
-        print(f"ERROR: venv not installed at {py}. Run install.ps1 first.")
+        installer = "install.ps1" if sys.platform.startswith("win") else "install.sh"
+        print(f"ERROR: venv not installed at {py}. Run {installer} first.")
         return 2
 
     out_dir = REPO / "results" / "speak" / datetime.now().strftime("%Y-%m-%d_%H%M%S")

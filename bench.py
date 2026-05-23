@@ -39,19 +39,40 @@ PROMPTS = [
 ]
 
 
-# (name, venv_python_relpath, runner_relpath, multilingual?, devices, variant)
+# (name, venv_dir, runner_relpath, multilingual?, devices, variant)
 MODELS = [
-    ("pocket",      "venvs/pocket/Scripts/python.exe",  "runners/pocket_runner.py",  True,  ["cpu"],         None),
-    ("neutts_air",  "venvs/neutts/Scripts/python.exe",  "runners/neutts_runner.py",  False, ["cpu", "cuda"], "air"),
-    ("neutts_nano", "venvs/neutts/Scripts/python.exe",  "runners/neutts_runner.py",  True,  ["cpu", "cuda"], "nano"),
-    ("luxtts",      "venvs/luxtts/Scripts/python.exe",  "runners/luxtts_runner.py",  False, ["cpu", "cuda"], None),
+    ("pocket",      "pocket",  "runners/pocket_runner.py",  True,  ["cpu"],                None),
+    ("neutts_air",  "neutts",  "runners/neutts_runner.py",  False, ["cpu", "cuda", "mps"], "air"),
+    ("neutts_nano", "neutts",  "runners/neutts_runner.py",  True,  ["cpu", "cuda", "mps"], "nano"),
+    ("luxtts",      "luxtts",  "runners/luxtts_runner.py",  False, ["cpu", "cuda", "mps"], None),
 ]
 
 
-def detect_cuda(venv_python: Path) -> bool:
+def venv_python(venv_dir: str) -> Path:
+    """Resolve the python.exe / bin/python path for a venv on this OS."""
+    root = REPO / "venvs" / venv_dir
+    if sys.platform.startswith("win"):
+        return root / "Scripts" / "python.exe"
+    return root / "bin" / "python"
+
+
+def detect_cuda(py: Path) -> bool:
     try:
         out = subprocess.run(
-            [str(venv_python), "-c", "import torch; print(torch.cuda.is_available())"],
+            [str(py), "-c", "import torch; print(torch.cuda.is_available())"],
+            capture_output=True, text=True, timeout=30,
+        )
+        return "True" in out.stdout
+    except (subprocess.TimeoutExpired, OSError):
+        return False
+
+
+def detect_mps(py: Path) -> bool:
+    try:
+        out = subprocess.run(
+            [str(py), "-c",
+             "import torch; b = getattr(torch.backends, 'mps', None); "
+             "print(bool(b and b.is_available()))"],
             capture_output=True, text=True, timeout=30,
         )
         return "True" in out.stdout
@@ -126,23 +147,26 @@ def main() -> int:
 
     # Build the list of cells (model, device, variant, py, runner) to run.
     cells = []
-    for model_name, py_rel, runner_rel, multilingual, model_devices, variant in MODELS:
+    for model_name, venv_dir, runner_rel, multilingual, model_devices, variant in MODELS:
         if requested_models and model_name not in requested_models:
             continue
-        venv_python = REPO / py_rel
-        if not venv_python.exists():
-            print(f"skip {model_name}: venv not installed ({py_rel})")
+        py = venv_python(venv_dir)
+        if not py.exists():
+            print(f"skip {model_name}: venv not installed ({py})")
             continue
-        cuda_ok = ("cuda" in model_devices) and detect_cuda(venv_python)
+        cuda_ok = ("cuda" in model_devices) and detect_cuda(py)
+        mps_ok = ("mps" in model_devices) and detect_mps(py)
         for device in model_devices:
             if device == "cuda" and not cuda_ok:
+                continue
+            if device == "mps" and not mps_ok:
                 continue
             if requested_devices and device not in requested_devices:
                 continue
             cells.append({
                 "model": model_name, "device": device, "variant": variant,
                 "multilingual": multilingual,
-                "venv_python": venv_python, "runner": REPO / runner_rel,
+                "venv_python": py, "runner": REPO / runner_rel,
             })
 
     if not cells:
