@@ -25,21 +25,21 @@ Two tiers measured on the Ryzen 9 9950X3D above. Numbers shown are from short pr
 
 | Model | Size / License | TTFA cold | TTFA warm | RTF warm | Languages | Notes |
 |---|---|---|---|---|---|---|
-| **Piper** (rhasspy) | per-voice ~25MB / MIT | **72ms** | **39ms** | **47×** | 40+ via separate voice models | leader on this hardware; streaming-native, bundles espeak-ng (no Windows wheel pain) |
-| **Kokoro-82M** (hexgrad) | 82M / Apache 2.0 | 335ms | 245ms | 13× | 9 (a/b/e/f/h/i/j/p/z codes) | 54 voices; misaki tokenizer needs spaCy preinstall (see Known issues) |
-| **KittenTTS** (KittenML) | <100M / Apache 2.0 | 516ms | 487ms | 6.6× | EN only | 8 voices; non-streaming so TTFA == gen_s |
-| **VibeVoice-Realtime-0.5B** (Microsoft, community fork) | 0.5B / MIT | ~3.9s | ~3.7s | **~0.5×** | EN only (7 preset voices) | streaming-class but heavy diffusion; DDPM steps tunable (5 default). Predefined `.pt` voice embeddings auto-downloaded |
+| **[Piper](https://github.com/OHF-voice/piper1-gpl)** (OHF-voice, formerly rhasspy) | per-voice ~25MB / MIT | **72ms** | **39ms** | **47×** | 40+ via separate voice models | leader on this hardware; streaming-native, bundles espeak-ng (no Windows wheel pain) |
+| **[Kokoro-82M](https://github.com/hexgrad/kokoro)** (hexgrad) | 82M / Apache 2.0 | 335ms | 245ms | 13× | 9 (a/b/e/f/h/i/j/p/z codes) | 54 voices; misaki tokenizer needs spaCy preinstall (see Known issues) |
+| **[KittenTTS](https://github.com/KittenML/KittenTTS)** (KittenML) | <100M / Apache 2.0 | 516ms | 487ms | 6.6× | EN only | 8 voices; non-streaming so TTFA == gen_s |
+| **[VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice)** (Microsoft, community fork) | 0.5B / MIT | ~3.9s | ~3.7s | **~0.5×** | EN only (7 preset voices) | streaming-class but heavy diffusion; DDPM steps tunable (5 default). Predefined `.pt` voice embeddings auto-downloaded |
 
 ### Zero-shot voice cloning models (accept a reference wav at inference time)
 
 | Model | Size / License | TTFA cold | TTFA warm | RTF warm | Cloning ref | Notes |
 |---|---|---|---|---|---|---|
-| **Pocket-TTS** (Kyutai, predefined mode) | 100M / MIT | 95-150ms | 97-150ms | **2.9-3.0×** | wav or voice name | 26 voices unauth; BYO-voice path is HF accept-terms gated on `kyutai/pocket-tts` |
-| NeuTTS Nano (GGUF Q4) | 748M / Apache 2.0 | 1.2s | 0.43-0.51s | 1.3-1.4× | wav + transcript | multilingual fallback; separate `.gguf` per language |
-| NeuTTS Air (GGUF Q4) | 748M / Apache 2.0 | 1.7-1.9s | 0.67-0.70s | 0.88-0.90× | wav + transcript | below realtime on CPU — needs GPU |
-| ChatterBox-TTS | ~1.2B / MIT | ~8s | ~8s | **~0.30×** | wav (no transcript) | 1000 diffusion steps — GPU-targeted, community quality leader |
-| F5-TTS (v1 Base) | ~330M / MIT | ~48s | ~48s | **~0.05×** | wav + transcript | flow matching, very slow on CPU; needs GPU |
-| LuxTTS (k2-fsa) | — | — | — | — | wav | install blocked on Windows (see [Known issues](#known-issues)) |
+| **[Pocket-TTS](https://github.com/kyutai-labs/pocket-tts)** (Kyutai, predefined mode) | 100M / MIT | 95-150ms | 97-150ms | **2.9-3.0×** | wav or voice name | 26 voices unauth; BYO-voice path is HF accept-terms gated on `kyutai/pocket-tts` |
+| [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | 748M / Apache 2.0 | 1.2s | 0.43-0.51s | 1.3-1.4× | wav + transcript | multilingual fallback; separate `.gguf` per language |
+| [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | 748M / Apache 2.0 | 1.7-1.9s | 0.67-0.70s | 0.88-0.90× | wav + transcript | below realtime on CPU — needs GPU |
+| [ChatterBox-TTS](https://github.com/resemble-ai/chatterbox) (Resemble AI) | ~1.2B / MIT | ~8s | ~8s | **~0.30×** | wav (no transcript) | 1000 diffusion steps — GPU-targeted, community quality leader |
+| [F5-TTS](https://github.com/SWivid/F5-TTS) (v1 Base) | ~330M / MIT | ~48s | ~48s | **~0.05×** | wav + transcript | flow matching, very slow on CPU; needs GPU |
+| [LuxTTS](https://github.com/ysharma3501/LuxTTS) (k2-fsa-based) | — | — | — | — | wav | install blocked on Windows (see [Known issues](#known-issues)) |
 
 **Reading the tables:** TTFA = milliseconds until the first audio sample. RTF = `audio_seconds / generation_seconds` (1.0× = realtime, higher = faster than realtime). Non-streaming models (KittenTTS, ChatterBox, F5-TTS) emit full audio in one call so TTFA = gen_s by definition.
 
@@ -210,7 +210,10 @@ tts-bench/
 
 ## License
 
-MIT for the bench code in this repo. **Each TTS model has its own license** (Pocket-TTS: MIT, NeuTTS: Apache 2.0, Kokoro: Apache 2.0, LuxTTS: Apache 2.0, etc.) — check before deploying any of them in a product.
+MIT for the bench code in this repo. **Each TTS model has its own license** — check the linked upstream repos above before deploying any of them in a product. Quick reference:
+
+- MIT: [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts), [Piper](https://github.com/OHF-voice/piper1-gpl), [ChatterBox](https://github.com/resemble-ai/chatterbox), [F5-TTS](https://github.com/SWivid/F5-TTS), [VibeVoice (community fork)](https://github.com/vibevoice-community/VibeVoice)
+- Apache 2.0: [NeuTTS](https://github.com/neuphonic/neutts), [Kokoro](https://github.com/hexgrad/kokoro), [KittenTTS](https://github.com/KittenML/KittenTTS), [LuxTTS](https://github.com/ysharma3501/LuxTTS)
 
 ---
 
