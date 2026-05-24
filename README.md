@@ -12,16 +12,18 @@ Listed because TTS speed is hardware-dependent — RTF claims that hold on a Ryz
 
 | Machine | OS | CPU | RAM | GPU | Used for |
 |---|---|---|---|---|---|
-| **Windows desktop** | Windows 11 Pro | AMD Ryzen 9 9950X3D (16C / 32T @ 4.3 GHz base) | 128 GB | NVIDIA RTX 5090 | All current bench rows below (CPU mode; GPU runs pending) |
-| **Mac (pending)** | macOS — | Apple M4 Pro | — | Apple M4 Pro GPU (MPS) | Future MPS bench rows |
+| **Windows desktop** | Windows 11 Pro | AMD Ryzen 9 9950X3D (16C / 32T @ 4.3 GHz base) | 128 GB | NVIDIA RTX 5090 | Windows CPU bench rows (GPU runs pending) |
+| **Mac** | macOS 26.5 | Apple M4 (10C) | 16 GB | Apple M4 GPU (MPS) | Mac CPU + MPS bench rows |
 
 If you reproduce on different hardware, your numbers will differ — file an issue or PR with your results and we'll add a column.
 
-## Current results (Windows CPU, May 2026)
+## Current results (May 2026)
 
-Two tiers measured on the Ryzen 9 9950X3D above. Numbers shown are from short prompts; long prompts scale RTF linearly.
+Same five prompts run on both rigs above. Numbers shown are from short prompts; long prompts scale RTF linearly. Warm averages over runs 2-3 across all prompts the model can speak.
 
-### Predefined-voice models (pick from a baked-in voice list)
+### Windows desktop — Ryzen 9 9950X3D CPU
+
+#### Predefined-voice models (pick from a baked-in voice list)
 
 | Model | Size / License | TTFA cold | TTFA warm | RTF warm | Languages | Notes |
 |---|---|---|---|---|---|---|
@@ -31,7 +33,7 @@ Two tiers measured on the Ryzen 9 9950X3D above. Numbers shown are from short pr
 | **[VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice)** (Microsoft, community fork) | 0.5B / MIT | ~3.9s | ~3.7s | **~0.5×** | EN only (7 preset voices) | streaming-class but heavy diffusion; DDPM steps tunable (5 default). Predefined `.pt` voice embeddings auto-downloaded |
 | [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) (NVIDIA, NeMo) | 357M / NVIDIA Open Model License | pending | pending | pending (CUDA: ~1.0× cold smoke) | 9 (en/es/de/it/vi/zh/fr/hi/ja) | fixed speaker embeddings (this checkpoint variant); HF accept-terms gated; install skips `[tts]` extra to avoid `pynini` on Windows — runner forces `apply_TN=False` to compensate |
 
-### Zero-shot voice cloning models (accept a reference wav at inference time)
+#### Zero-shot voice cloning models (accept a reference wav at inference time)
 
 | Model | Size / License | TTFA cold | TTFA warm | RTF warm | Cloning ref | Notes |
 |---|---|---|---|---|---|---|
@@ -49,7 +51,35 @@ Two tiers measured on the Ryzen 9 9950X3D above. Numbers shown are from short pr
 
 **Top-line takeaway:** if you don't need voice cloning, **Piper wins by a huge margin on this CPU** (39ms warm TTFA, 47× RTF). Pocket-TTS is the fastest cloning-capable option (with the HF accept-terms caveat). NeuTTS Air/Nano give clean BYO-voice without auth gates but at lower RTF. ChatterBox + F5-TTS are GPU-class — file them under "bench-cold but not deployable" until 5090 runs land.
 
-Raw CSV + WAVs from the latest run live in `results/`.
+### Mac — Apple M4 (10C, 16 GB) CPU + MPS
+
+Same harness, 5 prompts × 3 runs each, warm averages across all runnable prompts. Cloning tier limited to small/fast models — ChatterBox / F5-TTS / Coqui XTTS not run on this rig (README's "GPU-class" caveat applies even harder on a 10-core M4).
+
+#### Predefined-voice models
+
+| Model | Device | TTFA cold | TTFA warm | RTF warm | Notes |
+|---|---|---|---|---|---|
+| **[Piper](https://github.com/OHF-voice/piper1-gpl)** | cpu | **268ms** | **202ms** | **33.0×** | still the leader. 5× slower TTFA than Ryzen 9 but well above the headroom needed for an always-on agent |
+| **[Kokoro-82M](https://github.com/hexgrad/kokoro)** | mps | 2995ms | 486ms | **15.4×** | MPS gives ~50% RTF lift over CPU after warmup; cold-load tax (~3s) hits the first turn |
+| **[Kokoro-82M](https://github.com/hexgrad/kokoro)** | cpu | 994ms | 741ms | 10.2× | |
+| **[KittenTTS](https://github.com/KittenML/KittenTTS)** | cpu | 929ms | 1031ms | 8.0× | non-streaming so TTFA == gen_s; CPU-only (no MPS path in upstream) |
+| **[VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice)** | mps | 10760ms | 8287ms | **1.1×** | finally at realtime on MPS — CPU can't get there. Still 10s+ first-turn cold load |
+| **[VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice)** | cpu | 30305ms | 25519ms | 0.4× | below realtime on M4 CPU (Ryzen 9 hit ~0.5×; M4's fewer cores hurt diffusion) |
+
+#### Zero-shot voice cloning models
+
+| Model | Device | TTFA cold | TTFA warm | RTF warm | Cloning ref | Notes |
+|---|---|---|---|---|---|---|
+| **[Pocket-TTS](https://github.com/kyutai-labs/pocket-tts)** (predefined mode) | cpu | **77ms** | **42ms** | **7.8×** | wav or voice name | fastest cloning-capable option here too. M4 single-thread perf actually beats Ryzen 9 on TTFA |
+| [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | cpu | 815ms | 270ms | 3.0× | wav + transcript | multilingual via separate `.gguf` per language |
+| [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | mps | 1491ms | 444ms | 2.8× | wav + transcript | MPS gives no win — GGUF inference runs CPU-side via llama-cpp |
+| [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | cpu | 1436ms | 364ms | 2.1× | wav + transcript | ~2.4× faster than Windows numbers thanks to M4 single-thread |
+| [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | mps | 2399ms | 568ms | 2.1× | wav + transcript | same — MPS doesn't help GGUF path |
+| [LuxTTS](https://github.com/ysharma3501/LuxTTS) (zipvoice-based) | — | — | — | — | wav | install blocked on arm64 Mac too (see [Known issues](#known-issues)) |
+
+**Top-line takeaway on Mac:** Piper wins again (33× RTF, 202ms warm TTFA — drop-in for an always-on agent). Among cloning models, **Pocket-TTS is the clear winner on M4** — its 42ms warm TTFA actually beats the Windows number, because Pocket-TTS is single-thread dominated and M4 has strong single-thread perf. VibeVoice/MPS is the only diffusion-class model that reaches realtime on this machine; CPU diffusion isn't viable. NeuTTS gets no MPS benefit because its hot path is GGUF (llama-cpp, CPU-side).
+
+Raw CSV + WAVs from the latest runs live in `results/2026-05-23_1542/` (predefined tier) and `results/2026-05-23_1600/` (cloning tier).
 
 Caveats: one machine, one run. Re-bench on your own hardware before committing — see [Known issues](#known-issues) for examples of model README claims that didn't survive contact with a real install.
 
@@ -201,7 +231,7 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
 
 **Per-model**
 
-- **LuxTTS — blocked on Windows.** Depends on `piper-phonemize` which only ships manylinux x86_64/aarch64 and macOS wheels. Workaround: WSL2 (untested) or run on Mac/Linux. (Note: `piper-tts` 1.4+ replaced this dependency with bundled espeak-ng, so Piper proper works on Windows.)
+- **LuxTTS — blocked on Windows AND Apple Silicon.** Depends on `piper-phonemize` 1.1.0 which only ships wheels for `manylinux_2_28_{x86_64,aarch64}` and `macosx_10_14_x86_64` (Intel Mac only). On arm64 macOS (M-series) the install fails with "no wheels with a matching platform tag (e.g., `macosx_26_0_arm64`)". Workaround: build piper-phonemize from source (untested) or use Linux. The README previously claimed "should install cleanly on macOS — piper-phonemize macOS wheels exist" — that's only true for Intel Macs. Also note the cloned repo's pyproject lists `name = "Zipvoice"` even though the GitHub repo is named LuxTTS, so the runner imports `from zipvoice.luxvoice import LuxTTS`. (Piper proper is unaffected — `piper-tts` 1.4+ bundles espeak-ng and dropped the piper-phonemize dependency.)
 - **NeuTTS — `pip install neutts` gives the torch backbone, not the production fast path.** Torch backbone on x86 CPU runs at ~0.2× RTF (unusable). Production path is `llama-cpp-python` + `neuphonic/neutts-*-q4-gguf` models. Post-switch RTF is what's in the table. Install scripts install the GGUF path by default.
 - **NeuTTS — reference voices need both `.wav` AND `.txt` (transcript).** Wav-only fails inside `encode_reference()`. Pocket-TTS in contrast takes a voice name string or a single wav (gated).
 - **NeuTTS Nano — multilingual = separate model file per language.** `neuphonic/neutts-nano-q4-gguf` (EN), `neuphonic/neutts-nano-french-q4-gguf` (FR), etc. Runner switches based on `--language`.
@@ -230,13 +260,17 @@ Done in this round (May 23, 2026):
 - ✓ `compare.py` added — one-shot A/B listening tool across all installed models × devices, with audio playback
 - ✓ CUDA 12.8 torch wheels installed in GPU-targeted venvs (Blackwell sm_120 floor)
 
+Done in the Mac pass (May 23, 2026):
+- ✓ Apple M4 (16 GB) CPU + MPS bench rows for Piper, Kokoro, KittenTTS, VibeVoice, Pocket-TTS, NeuTTS Air, NeuTTS Nano
+- ✓ Discovered LuxTTS is also blocked on arm64 macOS (not just Windows) — piper-phonemize has no `macosx_26_0_arm64` wheel. README's "should install cleanly on macOS" was Intel-only.
+
 Pending:
 
-- **Mac M4 Pro pass** — `install.sh` + MPS device detection are wired up; bench pending hardware.
 - **RTX 5090 pass** — formal `bench.py --device cuda` run for all GPU-capable models. CUDA torch is now installed; results pending.
 - **Coqui XTTS-v2 numbers** — venv install in `install.ps1` / `install.sh`; bench numbers pending first run.
 - **OmniVoice / VoxCPM / Magpie numbers** — venvs added, runner wiring in place, bench numbers pending first run.
-- **LuxTTS on macOS** — should install cleanly per upstream (piper-phonemize macOS wheels exist).
+- **ChatterBox / F5-TTS / Coqui XTTS on Mac** — skipped this pass (README already labels them GPU-class; M4 CPU would be minutes per prompt). Worth re-running once MPS torch perf improves or on a dedicated GPU rig.
+- **LuxTTS on Mac arm64 / Windows** — needs piper-phonemize wheel for those platforms (or build from source). The earlier "should install cleanly on macOS" claim turned out to be Intel-Mac-only.
 
 ## Considered but skipped
 
