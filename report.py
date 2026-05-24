@@ -381,6 +381,7 @@ MODEL_DISPLAY_NAMES = {
     "indextts":      "IndexTTS-2",
     "f5tts":         "F5-TTS",
     "chatterbox":    "Chatterbox",
+    "dia":           "Dia 1.6B",
     "omnivoice":     "OmniVoice",
     "piper":         "Piper",
     "kokoro":        "Kokoro",
@@ -413,6 +414,7 @@ MODEL_SIZE = {
     "indextts":      "1.5B",
     "sesame":        "1B",
     "mars5":         "1.2B",
+    "dia":           "1.6B",
     "kokoro":        "82M",
     "kittentts":     "<100M",
     "piper":         "~25MB",
@@ -442,6 +444,7 @@ MODEL_KIND = {
     "qwentts_fast":  "cloning",
     "sesame":        "cloning",
     "mars5":         "cloning",
+    "dia":           "cloning",
     "neutts_air":    "cloning",
     "neutts_nano":   "cloning",
 }

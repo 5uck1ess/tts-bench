@@ -265,6 +265,17 @@ if (-not (Test-Path "venvs\indextts\Scripts\python.exe")) {
     Write-Host "indextts: already installed" -ForegroundColor Gray
 }
 
+Step "Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning)"
+if (-not (Test-Path "venvs\dia\Scripts\python.exe")) {
+    Invoke-Checked "uv venv dia" { uv venv venvs\dia --python 3.11 }
+    Invoke-Checked "uv pip install dia from git" { uv pip install --python venvs\dia\Scripts\python.exe "git+https://github.com/nari-labs/dia.git" soundfile numpy }
+    # Dia's pyproject pulls cu126 torch 2.6; reinstall cu128 for Blackwell (5090, sm_120).
+    Invoke-Checked "torch cu128 for dia" { uv pip install --python venvs\dia\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "dia: ok (44.1kHz output, CUDA-only on Blackwell, default voice uses fixed seed=42)" -ForegroundColor Green
+} else {
+    Write-Host "dia: already installed" -ForegroundColor Gray
+}
+
 Step "Sesame CSM-1B (conversational speech model, in-context cloning)"
 if (-not (Test-Path "venvs\sesame\Scripts\python.exe")) {
     # Native transformers support since 4.52.1 - no separate pip package needed.

@@ -277,6 +277,21 @@ else
     echo "indextts: already installed"
 fi
 
+# --- Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning) ---
+echo; cyan "=== Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning) ==="
+if [ ! -x venvs/dia/bin/python ]; then
+    uv venv venvs/dia --python 3.11 || die "uv venv dia"
+    uv pip install --python venvs/dia/bin/python "git+https://github.com/nari-labs/dia.git" soundfile numpy \
+        || die "uv pip install dia from git"
+    # Dia's pyproject pulls cu126 torch 2.6; on Blackwell (5090, sm_120) reinstall cu128.
+    # On Mac/Linux non-CUDA, this is harmless (cu128 wheels are CPU+CUDA universal where applicable).
+    uv pip install --python venvs/dia/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 \
+        || die "torch cu128 for dia"
+    green "dia: ok (44.1kHz output, CUDA-only on Blackwell, default voice uses fixed seed=42)"
+else
+    echo "dia: already installed"
+fi
+
 # --- Sesame CSM-1B (conversational speech model, in-context cloning) ---
 echo; cyan "=== Sesame CSM-1B (conversational speech model, in-context cloning) ==="
 if [ ! -x venvs/sesame/bin/python ]; then
