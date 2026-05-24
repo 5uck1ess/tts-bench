@@ -193,6 +193,12 @@ def main() -> int:
                         "Auto-derived from --reference and --models if omitted.")
     p.add_argument("--write-meta", metavar="DIR", default=None,
                    help="Just write meta.json into an existing results dir and exit (no bench run).")
+    p.add_argument("--canonical", default=None, metavar="SLUG",
+                   help="Write to results/<SLUG>/ instead of results/<timestamp>/. "
+                        "Common slugs: windows-default, windows-cloning, mac-default, mac-cloning. "
+                        "Overwrites the slug dir if it exists (prompts unless --force).")
+    p.add_argument("--force", action="store_true",
+                   help="Skip the overwrite-confirm prompt when --canonical points at an existing dir.")
     args = p.parse_args()
 
     if args.write_meta:
@@ -217,13 +223,23 @@ def main() -> int:
     requested_models = set(args.models.split(",")) if args.models else None
     requested_devices = set(args.devices.split(",")) if args.devices else None
 
-    cells = build_cells(args.reference, requested_models, requested_devices)
-    if not cells:
-        print("No cells to run. Check --models / --devices and that venvs are installed.")
-        return 2
-
-    out_dir = REPO / "results" / datetime.now().strftime("%Y-%m-%d_%H%M")
-    out_dir.mkdir(parents=True, exist_ok=True)
+    if args.canonical:
+        slug = args.canonical.strip().strip("/")
+        if not slug or "/" in slug or "\\" in slug:
+            print(f"Invalid --canonical slug: {args.canonical!r}", file=sys.stderr)
+            return 2
+        out_dir = REPO / "results" / slug
+        if out_dir.exists():
+            if not args.force:
+                reply = input(f"results/{slug}/ already exists. Overwrite? [y/N] ").strip().lower()
+                if reply not in ("y", "yes"):
+                    print("Aborted.")
+                    return 1
+            shutil.rmtree(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=False)
+    else:
+        out_dir = REPO / "results" / datetime.now().strftime("%Y-%m-%d_%H%M")
+        out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = out_dir / "results.csv"
     meta = write_meta(
         out_dir, rig_label=args.rig, label=args.label,
@@ -233,6 +249,11 @@ def main() -> int:
     print(f"Output: {out_dir}")
     print(f"Rig: {meta['rig']} ({meta.get('cpu') or '?'} / {meta.get('gpu') or 'no GPU detected'})")
     print(f"Label: {meta['label']}\n")
+
+    cells = build_cells(args.reference, requested_models, requested_devices)
+    if not cells:
+        print("No cells to run. Check --models / --devices and that venvs are installed.")
+        return 2
     print(f"Plan: {len(selected_prompts)} prompts × {len(cells)} cells × {args.runs} runs/cell\n")
 
     rows = []
