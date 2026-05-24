@@ -366,6 +366,31 @@ MODEL_SIZE = {
     "supertonic":  "99M",
 }
 
+# Whether a model supports zero-shot voice cloning at runtime.
+# "predefined": fixed speaker(s) / preset voices only.
+# "cloning":    accepts a reference wav (or wav+text) at inference and matches that voice.
+MODEL_KIND = {
+    "piper":       "predefined",
+    "kokoro":      "predefined",
+    "kittentts":   "predefined",
+    "magpie":      "predefined",
+    "vibevoice":   "predefined",
+    "supertonic":  "predefined",
+    "luxtts":      "predefined",
+    "pocket":      "cloning",
+    "chatterbox":  "cloning",
+    "f5tts":       "cloning",
+    "indextts":    "cloning",
+    "omnivoice":   "cloning",
+    "voxcpm":      "cloning",
+    "coqui":       "cloning",
+    "qwentts":     "cloning",
+    "sesame":      "cloning",
+    "mars5":       "cloning",
+    "neutts_air":  "cloning",
+    "neutts_nano": "cloning",
+}
+
 
 def _ds(val):
     """data-sort attribute for numeric cells; empty when None."""
@@ -424,6 +449,163 @@ def _read_csv(csv_path):
 
 def _sort_prompt_ids(ids):
     return sorted(ids, key=lambda s: int(s) if str(s).isdigit() else 1_000_000)
+
+
+def _build_context(rows, run_dir, meta):
+    """Pre-compute everything the four lens renderers need from a CSV row list.
+
+    Returns a dict with:
+      per_cell:    {(prompt_id, model, device) -> {"cold": row|None, "warms": [row], "fail": row|None}}
+      per_model:   {(model, device) -> aggregated dict with avg TTFA/RTF, peak mem/vram, avg NAQ, n_ok, n_total}
+      per_prompt:  {prompt_id -> [{model, device, naq, ttfa_warm, rtf_warm, wav, wav_exists, naq_harm, naq_buzz} ranked by NAQ desc, ok only]}
+      tldr_speed:  {"predefined": (model, device, rtf_warm, ttfa_warm) | None,
+                    "cloning":    (model, device, rtf_warm, ttfa_warm) | None}
+      tldr_quality:{"predefined": [(model, device, naq) top 3],
+                    "cloning":    [(model, device, naq) top 3]}
+      prompts_seen, models_seen, devices_seen, runs_per_cell, meta, run_name, run_dir
+    """
+    cells = defaultdict(lambda: {"cold": None, "warms": [], "fail": None})
+    for r in rows:
+        key = (r["prompt_id"], r["model"], r["device"])
+        if not r["ok"]:
+            if cells[key]["fail"] is None:
+                cells[key]["fail"] = r
+        elif r["is_cold"]:
+            cells[key]["cold"] = r
+        else:
+            cells[key]["warms"].append(r)
+
+    prompts_seen = _sort_prompt_ids({r["prompt_id"] for r in rows})
+    models_seen = sorted({r["model"] for r in rows})
+    devices_seen = sorted({r["device"] for r in rows})
+    runs_per_cell = max(
+        (1 if c["cold"] else 0) + len(c["warms"]) + (1 if c["fail"] else 0)
+        for c in cells.values()
+    )
+
+    def _rtf(r):
+        a, g = r.get("audio_s"), r.get("gen_s")
+        return (a / g) if (a and g) else None
+
+    per_model = {}
+    for (pid, model, dev), c in cells.items():
+        key = (model, dev)
+        per_model.setdefault(key, {
+            "ttfa_cold": [], "ttfa_warm": [], "rtf_cold": [], "rtf_warm": [],
+            "peak_mem": [], "peak_vram": [], "naq": [],
+            "ok_prompts": set(), "fail_prompts": set(), "all_prompts": set(),
+        })
+        bucket = per_model[key]
+        bucket["all_prompts"].add(pid)
+        if c["cold"]:
+            bucket["ok_prompts"].add(pid)
+            bucket["ttfa_cold"].append(c["cold"]["ttfa_ms"])
+            rc = _rtf(c["cold"])
+            if rc is not None:
+                bucket["rtf_cold"].append(rc)
+            if c["cold"].get("peak_mem_mb") is not None:
+                bucket["peak_mem"].append(c["cold"]["peak_mem_mb"])
+            if c["cold"].get("peak_vram_mb") is not None:
+                bucket["peak_vram"].append(c["cold"]["peak_vram_mb"])
+            if c["cold"].get("naq") is not None:
+                bucket["naq"].append(c["cold"]["naq"])
+            if c["warms"]:
+                bucket["ttfa_warm"].extend(w["ttfa_ms"] for w in c["warms"])
+                warm_rtfs = [v for v in (_rtf(w) for w in c["warms"]) if v is not None]
+                bucket["rtf_warm"].extend(warm_rtfs)
+        elif c["fail"]:
+            bucket["fail_prompts"].add(pid)
+
+    def _avg(xs):
+        return (sum(xs) / len(xs)) if xs else None
+
+    def _maxv(xs):
+        return max(xs) if xs else None
+
+    agg = {}
+    for key, b in per_model.items():
+        agg[key] = {
+            "ttfa_cold": _avg(b["ttfa_cold"]),
+            "ttfa_warm": _avg(b["ttfa_warm"]),
+            "rtf_cold":  _avg(b["rtf_cold"]),
+            "rtf_warm":  _avg(b["rtf_warm"]),
+            "peak_mem":  _maxv(b["peak_mem"]),
+            "peak_vram": _maxv(b["peak_vram"]),
+            "naq":       _avg(b["naq"]),
+            "n_ok":      len(b["ok_prompts"]),
+            "n_total":   len(b["all_prompts"]),
+        }
+
+    per_prompt = {}
+    for pid in prompts_seen:
+        items = []
+        for (p2, model, dev), c in cells.items():
+            if p2 != pid:
+                continue
+            if not c["cold"]:
+                continue
+            cold = c["cold"]
+            warm_ttfas = [w["ttfa_ms"] for w in c["warms"]]
+            ttfa_warm = (sum(warm_ttfas) / len(warm_ttfas)) if warm_ttfas else None
+            warm_rtfs = [v for v in (_rtf(w) for w in c["warms"]) if v is not None]
+            rtf_warm = (sum(warm_rtfs) / len(warm_rtfs)) if warm_rtfs else None
+            items.append({
+                "model": model,
+                "device": dev,
+                "naq": cold.get("naq"),
+                "ttfa_warm": ttfa_warm,
+                "rtf_warm": rtf_warm,
+                "wav": f"{model}_{dev}_p{pid}.wav",
+                "wav_exists": (run_dir / f"{model}_{dev}_p{pid}.wav").exists(),
+                "naq_harm": cold.get("naq_harm"),
+                "naq_buzz": cold.get("naq_buzz"),
+            })
+        # Sort by NAQ desc; rows with no NAQ sink to the bottom
+        items.sort(key=lambda it: (it["naq"] is None, -(it["naq"] or 0)))
+        per_prompt[pid] = items
+
+    def _pick_best_speed(kind):
+        best = None
+        for (model, dev), a in agg.items():
+            if MODEL_KIND.get(model) != kind:
+                continue
+            if a["rtf_warm"] is None:
+                continue
+            if best is None or a["rtf_warm"] > best[2]:
+                best = (model, dev, a["rtf_warm"], a["ttfa_warm"])
+        return best
+
+    def _pick_top_quality(kind, n=3):
+        scored = []
+        for (model, dev), a in agg.items():
+            if MODEL_KIND.get(model) != kind:
+                continue
+            if a["naq"] is None:
+                continue
+            scored.append((model, dev, a["naq"]))
+        scored.sort(key=lambda t: -t[2])
+        return scored[:n]
+
+    return {
+        "per_cell": cells,
+        "per_model": agg,
+        "per_prompt": per_prompt,
+        "tldr_speed": {
+            "predefined": _pick_best_speed("predefined"),
+            "cloning":    _pick_best_speed("cloning"),
+        },
+        "tldr_quality": {
+            "predefined": _pick_top_quality("predefined"),
+            "cloning":    _pick_top_quality("cloning"),
+        },
+        "prompts_seen": prompts_seen,
+        "models_seen": models_seen,
+        "devices_seen": devices_seen,
+        "runs_per_cell": runs_per_cell,
+        "meta": meta,
+        "run_name": run_dir.name,
+        "run_dir": run_dir,
+    }
 
 
 def build_report(run_dir: Path) -> Path:
