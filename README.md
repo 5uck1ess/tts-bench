@@ -6,7 +6,17 @@ Bench for local TTS models. Measures three things on whatever hardware you put i
 - **Quality** — NAQ, an objective 0–100 score for vocoder artifacts and naturalness
 - **Voice cloning** — same prompts, same reference, ranked by how output actually sounds
 
-**[▶ Hear them all](https://5uck1ess.github.io/tts-bench/)** — every model × prompt × rig, inline audio players.
+---
+
+## ▶ Demos
+
+**[5uck1ess.github.io/tts-bench](https://5uck1ess.github.io/tts-bench/)** — public side-by-side audio.
+
+Every model × prompt × device combination is rendered with an inline `<audio>` player so you can hear the actual output without cloning the repo or running anything locally. Useful for:
+
+- *Picking a model.* Listen to the same prompt across 18 TTS models on the same hardware. Quality, prosody, and artifacts are obvious in 5 seconds; benchmark tables can't show that.
+- *Comparing rigs.* Each report is tagged with the rig (Ryzen 9 9950X3D, Apple M4, etc.) and labeled (default voice vs cloning) so you can see how the same model sounds on the box you actually own.
+- *Comparing devices for one model.* CPU vs CUDA vs MPS rows for the same model, side by side, with their audio.
 
 ---
 
