@@ -112,6 +112,7 @@ STYLE = """<style>
   th:hover { background: var(--th-hover); }
   td.num { text-align: right; font-variant-numeric: tabular-nums;
            color: var(--num); }
+  th.num { text-align: right; }
   td.fail { color: var(--fail); font-style: italic; }
   td.dev-cuda { color: var(--dev-cuda); }
   td.dev-mps  { color: var(--dev-mps); }
@@ -717,10 +718,13 @@ def _render_speed(ctx):
     # Table
     cols = ("Model", "Device", "TTFA cold", "TTFA warm",
             "RTF cold", "RTF warm", "Peak RAM", "Peak VRAM", "Size", "NAQ")
+    num_cols = {"TTFA cold", "TTFA warm", "RTF cold", "RTF warm",
+                "Peak RAM", "Peak VRAM", "NAQ"}
     rtf_warm_idx = cols.index("RTF warm")
     out.append('<table><thead><tr>')
     for c in cols:
-        out.append(f'<th>{c}</th>')
+        cls = ' class="num"' if c in num_cols else ''
+        out.append(f'<th{cls}>{c}</th>')
     out.append('</tr></thead><tbody>')
 
     # Sort rows by RTF warm desc for stable origIdx ordering
@@ -819,6 +823,7 @@ def _render_quality(ctx):
     # Per-prompt tables
     cols = ("Model", "Device", "NAQ", "HARM", "BUZZ", "Size",
             "TTFA warm", "RTF warm", "Audio (cold)")
+    num_cols = {"NAQ", "HARM", "BUZZ", "TTFA warm", "RTF warm"}
     naq_idx = cols.index("NAQ")
     for pid in ctx["prompts_seen"]:
         out.append(f'<div class="prompt"><h2>Prompt {escape(pid)}</h2>')
@@ -829,7 +834,8 @@ def _render_quality(ctx):
                        f'"{escape(text)}"</span>')
         out.append('<table><thead><tr>')
         for c in cols:
-            out.append(f'<th>{c}</th>')
+            cls = ' class="num"' if c in num_cols else ''
+            out.append(f'<th{cls}>{c}</th>')
         out.append('</tr></thead><tbody>')
 
         cell_keys = sorted([k for k in ctx["per_cell"] if k[0] == pid],
@@ -915,6 +921,7 @@ def _render_samples(ctx):
         out.append('</nav>')
 
     cols = ("Rank", "Model", "Device", "NAQ", "TTFA warm", "Audio")
+    num_cols = {"Rank", "NAQ", "TTFA warm"}
     for pid in prompts:
         items = ctx["per_prompt"].get(pid, [])
         out.append(f'<div class="prompt" id="p{escape(pid)}"><h2>Prompt {escape(pid)}</h2>')
@@ -928,7 +935,8 @@ def _render_samples(ctx):
             continue
         out.append('<table><thead><tr>')
         for c in cols:
-            out.append(f'<th>{c}</th>')
+            cls = ' class="num"' if c in num_cols else ''
+            out.append(f'<th{cls}>{c}</th>')
         out.append('</tr></thead><tbody>')
         for rank, it in enumerate(items, 1):
             row_id = f"sample-p{pid}-{it['model']}-{it['device']}".lower().replace("/", "-")
@@ -1022,8 +1030,10 @@ def build_index() -> Path:
            '<h1>TTS Bench — All Runs</h1>',
            f'<div class="meta">{len(runs)} run(s) with <code>results.csv</code></div>',
            '<table><thead><tr>']
+    num_cols = {"Prompts", "Rows", "OK"}
     for col in ("Date", "Label", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
-        out.append(f'<th>{col}</th>')
+        cls = ' class="num"' if col in num_cols else ''
+        out.append(f'<th{cls}>{col}</th>')
     out.append('</tr></thead><tbody>')
 
     for r in runs:
