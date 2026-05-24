@@ -9,6 +9,36 @@ red()    { printf '\033[31m%s\033[0m\n' "$*"; }
 yellow() { printf '\033[33m%s\033[0m\n' "$*"; }
 die()    { red "FAILED: $*"; exit 1; }
 
+# --- Reference voices (default cloning voices; gitignored, fetched from upstream) ---
+# Several cloning runners (neutts, f5tts, indextts, qwentts, mars5) fall back to a shared
+# default reference voice in reference/ when --reference is omitted. These wavs are gitignored,
+# so a fresh clone has none — fetch the canonical neutts-air samples here.
+echo; cyan "=== Reference voices ==="
+mkdir -p reference
+NEUTTS_SAMPLES="https://raw.githubusercontent.com/neuphonic/neutts-air/main/samples"
+fetch_ref() {  # fetch_ref <stem>: download reference/<stem>.{wav,txt} unless already present
+    local stem="$1"
+    if [ -f "reference/${stem}.wav" ] && [ -f "reference/${stem}.txt" ]; then
+        echo "reference/${stem}: already present"; return 0
+    fi
+    if curl -fsSL -o "reference/${stem}.wav" "${NEUTTS_SAMPLES}/${stem}.wav" \
+       && curl -fsSL -o "reference/${stem}.txt" "${NEUTTS_SAMPLES}/${stem}.txt"; then
+        green "reference/${stem}: fetched"
+    else
+        rm -f "reference/${stem}.wav" "reference/${stem}.txt"
+        yellow "reference/${stem}: fetch failed — cloning cells for this voice will be skipped"
+    fi
+}
+fetch_ref jo        # English default voice (neutts, f5tts, indextts, qwentts, qwentts_fast)
+fetch_ref juliette  # French default voice (neutts-fr, f5tts-fr, mars5)
+# chris_hemsworth_15s.{wav,txt}: a ~15s English clip used as the default voice by vibevoice and
+# zipvoice (and as the NAQ self-test's real-speech reference). Not redistributable here — drop a
+# clean ~15s English wav + matching transcript at reference/chris_hemsworth_15s.{wav,txt} to bench
+# those two models' default voice. Without it they are skipped, not failed.
+if [ ! -f reference/chris_hemsworth_15s.wav ]; then
+    yellow "reference/chris_hemsworth_15s.wav missing — vibevoice & zipvoice default-voice cells need it (+ .txt)"
+fi
+
 # --- Pocket-TTS ---
 echo; cyan "=== Pocket-TTS ==="
 if [ ! -x venvs/pocket/bin/python ]; then
