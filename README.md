@@ -4,6 +4,8 @@ Personal speed bench for small/local TTS models. Cold + warm runs, same prompts,
 
 Built to answer one question: *which open TTS model do I plug into an always-on voice agent on the machine I actually have?*
 
+**▶ [Listen to the results in your browser](https://5uck1ess.github.io/tts-bench/)** — every model × prompt combo has an inline audio player; no install needed.
+
 ---
 
 ## Test hardware
