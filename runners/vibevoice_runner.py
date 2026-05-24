@@ -157,7 +157,12 @@ def main() -> int:
             t_end = time.perf_counter()
 
             audio_t = outputs.speech_outputs[0]
-            arr = audio_t.detach().cpu().numpy().squeeze() if hasattr(audio_t, "cpu") else np.asarray(audio_t).squeeze()
+            # CUDA bf16 path returns a BFloat16 tensor; numpy() rejects it,
+            # so cast to float32 before leaving torch.
+            if hasattr(audio_t, "cpu"):
+                arr = audio_t.detach().cpu().float().numpy().squeeze()
+            else:
+                arr = np.asarray(audio_t).squeeze()
             audio_s = float(len(arr) / samplerate)
             if write_wav:
                 sf.write(out_path, arr, samplerate)
