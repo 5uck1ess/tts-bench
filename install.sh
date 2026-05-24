@@ -226,5 +226,21 @@ else
     echo "magpie: already installed"
 fi
 
+# --- Qwen3-TTS-Base 1.7B (Alibaba Qwen, zero-shot cloning, 10 langs) ---
+echo; cyan "=== Qwen3-TTS-Base 1.7B (Alibaba Qwen, zero-shot cloning, 10 langs) ==="
+if [ ! -x venvs/qwentts/bin/python ]; then
+    # qwen-tts targets Python 3.12 upstream.
+    uv venv venvs/qwentts --python 3.12 || die "uv venv qwentts"
+    uv pip install --python venvs/qwentts/bin/python qwen-tts soundfile numpy \
+        || die "uv pip install qwen-tts"
+    # FlashAttention 2 is recommended for best perf on Linux; on Mac the runner
+    # falls back to default SDPA. We skip the flash-attn install here so the
+    # script works on both - users on Linux with CUDA can `pip install flash-attn`
+    # after for the perf bump.
+    green "qwentts: ok (zero-shot cloning, wav+txt, 10 langs)"
+else
+    echo "qwentts: already installed"
+fi
+
 echo
 green "Done. Run: python bench.py"

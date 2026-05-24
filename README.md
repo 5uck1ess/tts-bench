@@ -46,7 +46,8 @@ Same five prompts run on both rigs above. Numbers shown are from short prompts; 
 | [F5-TTS](https://github.com/SWivid/F5-TTS) (v1 Base) | ~330M / MIT | ~48s | ~48s | **~0.05×** | wav + transcript | flow matching, very slow on CPU; needs GPU |
 | [Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS) (idiap fork) | ~750M / CPML 1.0 (non-commercial) | pending | pending | pending | wav (no transcript) | de facto multilingual cloning baseline; ~2GB download on first use; auto-accepts CPML via `COQUI_TOS_AGREED=1` |
 | [OmniVoice](https://github.com/k2-fsa/OmniVoice) (k2-fsa) | TBD / see upstream | pending | pending | pending | wav + transcript | 600+ languages; diffusion-LM, vendor-claimed 0.025× RTF (GPU); voice design tags (gender/age/whisper) |
-| [VoxCPM-0.5B](https://github.com/OpenBMB/VoxCPM) (OpenBMB) | 0.5B / see upstream | pending | pending | pending | wav (no transcript) | tokenizer-free TTS; multilingual; 0.5B variant in this bench (the larger 2B `VoxCPM2` uses a server API and is skipped) |
+| [VoxCPM2](https://github.com/OpenBMB/VoxCPM) (OpenBMB) | 2B / see upstream | pending | pending | pending | wav (no transcript) | tokenizer-free, 48kHz, 30 langs; in-process via `voxcpm` pip pkg (not the optional Nano-vLLM server path). Earlier 0.5B variant doesn't support cloning — skipped. |
+| [Qwen3-TTS-Base 1.7B](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) (Alibaba Qwen) | 1.7B / Apache 2.0 | pending | pending | pending | wav + transcript | 10 langs (zh/en/ja/ko/de/fr/ru/pt/es/it); claimed 97ms streaming TTFA; FlashAttention 2 skipped on Windows |
 | [LuxTTS](https://github.com/ysharma3501/LuxTTS) (k2-fsa-based) | — | — | — | — | wav | install blocked on Windows (see [Known issues](#known-issues)) |
 
 **Reading the tables:** TTFA = milliseconds until the first audio sample. RTF = `audio_seconds / generation_seconds` (1.0× = realtime, higher = faster than realtime). Non-streaming models (KittenTTS, ChatterBox, F5-TTS) emit full audio in one call so TTFA = gen_s by definition.
@@ -184,6 +185,18 @@ python speak.py chatterbox --reference reference/myvoice.wav
 ```
 
 `--reference` auto-skips models that can only use predefined voices (Kokoro, KittenTTS, Piper, VibeVoice, Magpie).
+
+### Subjective cloning quality notes
+
+Numbers tell you which model is fast; ears tell you which one is *good*. Tested on Windows + RTX 5090 with `chris_hemsworth_15s.wav` reference (the cut version — full 67s wav blew through NeuTTS's 2048-token context):
+
+1. **OmniVoice — best cloning fidelity** (top of the listening test). Surprisingly preserves the **source accent** (Chris Hemsworth's Australian came through), which most zero-shot cloners flatten to neutral American. Caveat: audible artifacts (glitches / noise) layered on top of the cloned voice. If those can be tamed it's the pick.
+2. **ChatterBox — second best.** Cleaner output than OmniVoice (no artifacts), but doesn't carry the accent as faithfully. Right answer when you want clean audio and accent isn't critical.
+3. **Coqui XTTS-v2** — clone fidelity weaker than ChatterBox. Multilingual baseline is its strongest reason to keep around.
+4. **Pocket-TTS** — terrible at cloning (output is mostly artifacts, not usable). Keep it for **predefined voices only** — it's the fastest cloning-capable model in that mode.
+5. **NeuTTS Air / Nano** — works, but on long-form inputs both truncated at exactly 1.9s in our compare run; likely a GGUF context/decode cap that needs investigation.
+
+These are first-pass impressions on a single reference; replication with other references (jo, juliette) recommended before treating them as definitive.
 
 ---
 
@@ -331,7 +344,8 @@ tts-bench/
 │   ├── vibevoice_runner.py
 │   ├── omnivoice_runner.py
 │   ├── voxcpm_runner.py
-│   └── magpie_runner.py
+│   ├── magpie_runner.py
+│   └── qwentts_runner.py
 ├── reference/            # voice cloning reference audio (.wav + .txt pairs)
 ├── venvs/                # one isolated venv per model (gitignored)
 └── results/              # bench output WAVs + CSV (gitignored)

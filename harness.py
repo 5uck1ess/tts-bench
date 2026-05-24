@@ -31,6 +31,7 @@ MODELS = [
     ("coqui",       "coqui",      "runners/coqui_runner.py",      True,  ["cpu", "cuda", "mps"], None,   True),
     ("omnivoice",   "omnivoice",  "runners/omnivoice_runner.py",  True,  ["cpu", "cuda", "mps"], None,   True),
     ("voxcpm",      "voxcpm",     "runners/voxcpm_runner.py",     True,  ["cpu", "cuda"],        None,   True),
+    ("qwentts",     "qwentts",    "runners/qwentts_runner.py",    True,  ["cpu", "cuda"],        "base", True),
     # Predefined-voice-only (no cloning)
     ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     True,  ["cpu", "cuda", "mps"], None,   False),
     ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  False, ["cpu"],                None,   False),

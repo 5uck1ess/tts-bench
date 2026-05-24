@@ -212,4 +212,22 @@ if (-not (Test-Path "venvs\magpie\Scripts\python.exe")) {
     Write-Host "magpie: already installed" -ForegroundColor Gray
 }
 
+Step "Qwen3-TTS-Base 1.7B (Alibaba Qwen, zero-shot cloning, 10 langs)"
+if (-not (Test-Path "venvs\qwentts\Scripts\python.exe")) {
+    # qwen-tts requires Python 3.12 per upstream docs (works on 3.13 too but
+    # 3.12 is what they test against).
+    Invoke-Checked "uv venv qwentts" { uv venv venvs\qwentts --python 3.12 }
+    Invoke-Checked "uv pip install qwen-tts" { uv pip install --python venvs\qwentts\Scripts\python.exe qwen-tts soundfile numpy }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120). qwen-tts pulls cu12 torch by
+    # default; reinstall with the cu128 index AFTER qwen-tts so its deps don't
+    # silently downgrade torch back to a non-cu128 build.
+    Invoke-Checked "torch cu128 for qwentts" { uv pip install --python venvs\qwentts\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    # FlashAttention 2 is recommended upstream for best perf but flash-attn has
+    # no first-party Windows wheels - skip it; runner falls back to default
+    # SDPA implementation. ~20-40% slower inference but works.
+    Write-Host "qwentts: ok (zero-shot cloning, wav+txt, 10 langs; flash-attn skipped on Windows)" -ForegroundColor Green
+} else {
+    Write-Host "qwentts: already installed" -ForegroundColor Gray
+}
+
 Write-Host "`nDone. Run: python bench.py" -ForegroundColor Green
