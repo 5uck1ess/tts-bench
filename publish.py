@@ -140,6 +140,7 @@ def build_pages_index():
             "prompts": _sort_prompt_ids({r["prompt_id"] for r in rows}),
             "rows": len(rows),
             "ok": sum(1 for r in rows if r["ok"]),
+            "has_index": (d / "index.html").exists(),
             "rig": (meta or {}).get("rig"),
             "rig_full": _rig_summary(meta),
             "label": (meta or {}).get("label"),
@@ -152,9 +153,10 @@ def build_pages_index():
            '</head><body>',
            CONTROLS,
            '<h1>TTS Bench — Published Runs</h1>',
-           '<div class="meta">Open-source TTS models benchmarked side-by-side on CPU and CUDA. '
-           'Each report has inline audio players so you can listen to every model × prompt combo '
-           'without downloading anything. '
+           '<div class="meta">Open-source TTS models benchmarked side-by-side. Three axes: '
+           '<strong>speed</strong> (TTFA, RTF), <strong>quality</strong> (NAQ), '
+           '<strong>voice cloning</strong>. Each run has inline audio so you can listen '
+           'to every model × prompt without downloading. '
            '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>',
            f'<div class="meta">{len(runs)} published run(s)</div>',
            '<table><thead><tr>']
@@ -172,7 +174,10 @@ def build_pages_index():
                       if r["label"]
                       else '<span class="muted">—</span>')
         out.append('<tr>')
-        out.append(f"<td>{escape(r['name'])}</td>")
+        if r.get("has_index"):
+            out.append(f"<td><a href='{escape(r['name'])}/index.html'>{escape(r['name'])}</a></td>")
+        else:
+            out.append(f"<td><a href='{escape(r['name'])}/report.html'>{escape(r['name'])}</a></td>")
         out.append(f"<td>{label_cell}</td>")
         out.append(f"<td>{rig_cell}</td>")
         out.append(f"<td{_ds(len(r['models']))}>{escape(models)}</td>")
@@ -180,7 +185,16 @@ def build_pages_index():
         out.append(f"<td class='num'{_ds(len(r['prompts']))}>{len(r['prompts'])}</td>")
         out.append(f"<td class='num'{_ds(r['rows'])}>{r['rows']}</td>")
         out.append(f"<td class='num'{_ds(r['ok'])}>{r['ok']}/{r['rows']}</td>")
-        out.append(f'<td><a href="{escape(r["name"])}/report.html">view</a></td>')
+        if r.get("has_index"):
+            out.append(
+                f'<td>'
+                f'<a href="{escape(r["name"])}/speed.html">speed</a> · '
+                f'<a href="{escape(r["name"])}/quality.html">quality</a> · '
+                f'<a href="{escape(r["name"])}/samples.html">samples</a>'
+                f'</td>'
+            )
+        else:
+            out.append(f'<td><a href="{escape(r["name"])}/report.html">view (legacy)</a></td>')
         out.append('</tr>')
 
     out.append('</tbody></table>')

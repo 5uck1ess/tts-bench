@@ -1007,7 +1007,7 @@ def build_index() -> Path:
             "prompts": _sort_prompt_ids({r["prompt_id"] for r in rows}),
             "rows": len(rows),
             "ok": sum(1 for r in rows if r["ok"]),
-            "has_html": (d / "report.html").exists(),
+            "has_index": (d / "index.html").exists(),
             "rig": (meta or {}).get("rig"),
             "rig_full": _rig_summary(meta),
             "label": (meta or {}).get("label"),
@@ -1030,15 +1030,26 @@ def build_index() -> Path:
         models = (", ".join(r["models"])
                   if len(r["models"]) <= 5
                   else f"{len(r['models'])} models")
-        link = (f'<a href="{escape(r["name"])}/report.html">view</a>'
-                if r["has_html"] else '<span class="muted">no report</span>')
+        if r["has_index"]:
+            link = (
+                f'<a href="{escape(r["name"])}/speed.html">speed</a> · '
+                f'<a href="{escape(r["name"])}/quality.html">quality</a> · '
+                f'<a href="{escape(r["name"])}/samples.html">samples</a>'
+            )
+        elif (RESULTS / r["name"] / "report.html").exists():
+            link = f'<a href="{escape(r["name"])}/report.html">view (legacy)</a>'
+        else:
+            link = '<span class="muted">no report</span>'
         rig_cell = (f'<code title="{escape(r["rig_full"])}">{escape(r["rig"])}</code>'
                     if r["rig"] else '<span class="muted">—</span>')
         label_cell = (escape(r["label"])
                       if r["label"]
                       else '<span class="muted">—</span>')
         out.append('<tr>')
-        out.append(f"<td>{escape(r['name'])}</td>")
+        if r["has_index"]:
+            out.append(f"<td><a href='{escape(r['name'])}/index.html'>{escape(r['name'])}</a></td>")
+        else:
+            out.append(f"<td>{escape(r['name'])}</td>")
         out.append(f"<td>{label_cell}</td>")
         out.append(f"<td>{rig_cell}</td>")
         out.append(f"<td{_ds(len(r['models']))}>{escape(models)}</td>")
