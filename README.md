@@ -1,5 +1,9 @@
 <p align="center">
-  <img src="assets/logo.svg" alt="tts-bench" width="520">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/logo-flat-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/logo-flat-light.svg">
+    <img alt="tts-bench" src="assets/logo-flat-dark.svg" width="520">
+  </picture>
 </p>
 
 Bench for local TTS models. Three lenses, on whatever hardware you put it on:
