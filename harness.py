@@ -39,7 +39,8 @@ MODELS = [
     ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     True,  ["cpu", "cuda", "mps"], None,   False),
     ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  False, ["cpu"],                None,   False),
     ("piper",       "piper",      "runners/piper_runner.py",      True,  ["cpu", "cuda"],        None,   False),
-    ("vibevoice",   "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,   False),
+    ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,    False),
+    ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], "1.5b", False),
     ("magpie",      "magpie",     "runners/magpie_runner.py",     True,  ["cpu", "cuda"],        None,   False),
     ("supertonic",  "supertonic", "runners/supertonic_runner.py", True,  ["cpu"],                None,   False),
 ]
