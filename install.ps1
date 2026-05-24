@@ -336,6 +336,21 @@ if (-not (Test-Path "venvs\mars5\Scripts\python.exe")) {
     Write-Host "mars5: already installed" -ForegroundColor Gray
 }
 
+Step "Soprano 80M (ekwek1, Apache 2.0, predefined voice, 32kHz)"
+if (-not (Test-Path "venvs\soprano\Scripts\python.exe")) {
+    Invoke-Checked "uv venv soprano" { uv venv venvs\soprano --python 3.11 }
+    if (-not (Test-Path "venvs\soprano\src")) {
+        Invoke-Checked "git clone soprano" { git clone --depth 1 https://github.com/ekwek1/soprano venvs\soprano\src }
+    }
+    Invoke-Checked "uv pip install soprano source" { uv pip install --python venvs\soprano\Scripts\python.exe -e venvs\soprano\src }
+    Invoke-Checked "uv pip install soprano deps" { uv pip install --python venvs\soprano\Scripts\python.exe soundfile numpy }
+    # Windows CUDA gotcha: soprano pip install pulls CPU-only torch; reinstall cu128 for Blackwell (5090, sm_120).
+    Invoke-Checked "torch cu128 for soprano" { uv pip install --python venvs\soprano\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "soprano: ok (~80M params, Apache 2.0, predefined voice, 32kHz, English only; weights auto-download from ekwek/Soprano-1.1-80M on first use)" -ForegroundColor Green
+} else {
+    Write-Host "soprano: already installed" -ForegroundColor Gray
+}
+
 Step "Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices)"
 if (-not (Test-Path "venvs\supertonic\Scripts\python.exe")) {
     # Pure-ONNX runtime; no torch dependency. ~25MB weights auto-downloaded

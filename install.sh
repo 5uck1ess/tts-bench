@@ -353,6 +353,25 @@ else
     echo "mars5: already installed"
 fi
 
+# --- Soprano 80M (ekwek1, Apache 2.0, predefined voice, 32kHz) ---
+echo; cyan "=== Soprano 80M (ekwek1, Apache 2.0, predefined voice, 32kHz) ==="
+if [ ! -x venvs/soprano/bin/python ]; then
+    uv venv venvs/soprano --python 3.11 || die "uv venv soprano"
+    if [ ! -d venvs/soprano/src ]; then
+        git clone --depth 1 https://github.com/ekwek1/soprano venvs/soprano/src \
+            || die "git clone soprano"
+    fi
+    uv pip install --python venvs/soprano/bin/python -e venvs/soprano/src \
+        || die "uv pip install soprano source"
+    uv pip install --python venvs/soprano/bin/python soundfile numpy \
+        || die "uv pip install soprano deps"
+    # On CUDA Linux/Windows, reinstall cu128 torch for Blackwell; on Mac, default torch is fine.
+    # uv pip install --python venvs/soprano/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+    green "soprano: ok (~80M params, Apache 2.0, predefined voice, 32kHz, English only; weights auto-download from ekwek/Soprano-1.1-80M on first use)"
+else
+    echo "soprano: already installed"
+fi
+
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
 if [ ! -x venvs/supertonic/bin/python ]; then

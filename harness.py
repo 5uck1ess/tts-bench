@@ -46,6 +46,7 @@ MODELS = [
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], "1.5b", False),
     ("magpie",      "magpie",     "runners/magpie_runner.py",     True,  ["cpu", "cuda"],        None,   False),
+    ("soprano",     "soprano",    "runners/soprano_runner.py",    False, ["cpu", "cuda", "mps"], None,   False),
     ("supertonic",  "supertonic", "runners/supertonic_runner.py", True,  ["cpu"],                None,   False),
 ]
 

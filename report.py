@@ -388,6 +388,7 @@ MODEL_DISPLAY_NAMES = {
     "piper":         "Piper",
     "kokoro":        "Kokoro",
     "kittentts":     "KittenTTS",
+    "soprano":       "Soprano 80M",
     "supertonic":    "Supertonic",
     "luxtts":        "LuxTTS",
 }
@@ -422,6 +423,7 @@ MODEL_SIZE = {
     "kokoro":        "82M",
     "kittentts":     "<100M",
     "piper":         "~25MB",
+    "soprano":       "80M",
     "supertonic":    "99M",
 }
 
@@ -435,6 +437,7 @@ MODEL_KIND = {
     "magpie":        "predefined",
     "vibevoice":     "predefined",
     "vibevoice_15b": "predefined",
+    "soprano":       "predefined",
     "supertonic":    "predefined",
     "luxtts":        "predefined",
     "pocket":        "cloning",
