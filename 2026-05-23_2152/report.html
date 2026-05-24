@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>TTS Bench — 2026-05-23_2152</title>
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #1a1a1a;
+    --panel: #242424;
+    --text: #e0e0e0;
+    --muted: #888;
+    --accent: #6cf;
+    --num: #cfc;
+    --fail: #f88;
+    --border: #333;
+    --row-hover: #2a2a2a;
+    --th-bg: #2c2c2c;
+    --th-hover: #353535;
+    --input-bg: #2a2a2a;
+    --input-border: #444;
+    --controls-border: #2a2a2a;
+    --dev-cpu: #ddd;
+    --dev-cuda: #9cf;
+    --dev-mps: #fc9;
+    --lang: #6cf;
+    --prompt-text: #9c9;
+    --code-bg: #2a2a2a;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --text: #1a1d22;
+    --muted: #6b7280;
+    --accent: #1a73e8;
+    --num: #137333;
+    --fail: #c5221f;
+    --border: #e2e6eb;
+    --row-hover: #f0f4f8;
+    --th-bg: #eef1f4;
+    --th-hover: #e2e6eb;
+    --input-bg: #ffffff;
+    --input-border: #cdd3da;
+    --controls-border: #e2e6eb;
+    --dev-cpu: #555;
+    --dev-cuda: #1a73e8;
+    --dev-mps: #c2410c;
+    --lang: #1a73e8;
+    --prompt-text: #2d6a4f;
+    --code-bg: #eef1f4;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+         background: var(--bg); color: var(--text);
+         margin: 0; padding: 1.5rem 2rem 3rem;
+         max-width: 1400px; margin-inline: auto;
+         transition: background 0.15s, color 0.15s; }
+  h1, h2 { color: var(--text); margin-top: 0; }
+  h1 { font-size: 1.5em; }
+  h2 { font-size: 1.05em; }
+  .meta { color: var(--muted); font-size: 0.88em; margin-bottom: 0.4rem; }
+  .prompt { background: var(--panel); padding: 1rem 1.2rem;
+            border-radius: 10px; margin-bottom: 1.4rem;
+            border: 1px solid var(--border); }
+  .prompt-text { color: var(--prompt-text); font-style: italic;
+                 display: block; margin: 0.2rem 0 0.8rem 0; }
+  .lang { color: var(--lang); font-style: normal; margin-right: 0.4rem;
+          font-weight: 500; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { padding: 7px 10px; text-align: left;
+           border-bottom: 1px solid var(--border); }
+  th { background: var(--th-bg); color: var(--text);
+       cursor: pointer; user-select: none; white-space: nowrap;
+       font-weight: 600; }
+  th:hover { background: var(--th-hover); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums;
+           color: var(--num); }
+  td.fail { color: var(--fail); font-style: italic; }
+  td.dev-cuda { color: var(--dev-cuda); }
+  td.dev-mps  { color: var(--dev-mps); }
+  td.dev-cpu  { color: var(--dev-cpu); }
+  .muted { color: var(--muted); }
+  audio { width: 220px; height: 30px; vertical-align: middle; }
+  tr:hover td { background: var(--row-hover); }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px;
+         font-size: 0.92em; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .nav { margin-bottom: 0.6rem; }
+  .controls { position: sticky; top: 0; background: var(--bg); z-index: 10;
+              padding: 0.7rem 0 0.7rem; margin-bottom: 1rem;
+              display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+              border-bottom: 1px solid var(--controls-border); }
+  .controls input { background: var(--input-bg); color: var(--text);
+                    border: 1px solid var(--input-border);
+                    border-radius: 6px; padding: 7px 11px; font: inherit;
+                    min-width: 320px; }
+  .controls input:focus { outline: none; border-color: var(--accent); }
+  .controls .hint { color: var(--muted); font-size: 0.85em; }
+  .controls button { background: var(--input-bg); color: var(--text);
+                     border: 1px solid var(--input-border);
+                     border-radius: 6px; padding: 6px 12px; font: inherit;
+                     cursor: pointer; transition: border-color 0.15s; }
+  .controls button:hover { border-color: var(--accent); }
+  .spacer { flex: 1; }
+</style>
+</head><body>
+<div class="controls">
+<input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
+<button type="button" id="reset-sort">reset sort</button>
+<span class="hint">click any column header to sort</span>
+<span class="spacer"></span>
+<button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
+</div>
+<div class="nav"><a href="../index.html">← all runs</a></div>
+<h1>TTS Bench — 2026-05-23_2152</h1>
+<div class="meta">3 model(s) · 2 device(s) · 5 prompt(s) · 3 run(s) per cell</div>
+<div class="meta">Source: <code>results.csv</code></div>
+<div class="prompt"><h2>Prompt 1</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"Open the browser and read my email."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>magpie</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="5156.0">5.16s</td>
+<td class="num" data-sort="5650.2">5.65s</td>
+<td class="num" data-sort="0.5224980605120249">0.52×</td>
+<td class="num" data-sort="0.5221050340430209">0.52×</td>
+<td><audio controls preload="none" src="magpie_cpu_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="7838.0">7.84s</td>
+<td class="num" data-sort="5408.25">5.41s</td>
+<td class="num" data-sort="0.290890533299311">0.29×</td>
+<td class="num" data-sort="0.42158600312410466">0.42×</td>
+<td><audio controls preload="none" src="omnivoice_cpu_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="4393.8">4.39s</td>
+<td class="num" data-sort="2627.35">2.63s</td>
+<td class="num" data-sort="0.5189130137921617">0.52×</td>
+<td class="num" data-sort="0.8677954965426529">0.87×</td>
+<td><audio controls preload="none" src="omnivoice_mps_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>voxcpm</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="3482.9">3.48s</td>
+<td class="num" data-sort="3186.15">3.19s</td>
+<td class="num" data-sort="0.6431422090786414">0.64×</td>
+<td class="num" data-sort="0.7155634695999462">0.72×</td>
+<td><audio controls preload="none" src="voxcpm_cpu_p1.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 2</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"I&#x27;ll start a new git branch, push the changes, and open a pull request when the tests pass."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>magpie</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="14374.1">14.37s</td>
+<td class="num" data-sort="15471.2">15.47s</td>
+<td class="num" data-sort="0.4329314530996723">0.43×</td>
+<td class="num" data-sort="0.4263733683008575">0.43×</td>
+<td><audio controls preload="none" src="magpie_cpu_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="11506.5">11.51s</td>
+<td class="num" data-sort="9505.7">9.51s</td>
+<td class="num" data-sort="0.42758440881241033">0.43×</td>
+<td class="num" data-sort="0.5339870609284354">0.53×</td>
+<td><audio controls preload="none" src="omnivoice_cpu_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="6612.2">6.61s</td>
+<td class="num" data-sort="6052.45">6.05s</td>
+<td class="num" data-sort="0.834820483348961">0.83×</td>
+<td class="num" data-sort="0.8666177656222711">0.87×</td>
+<td><audio controls preload="none" src="omnivoice_mps_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>voxcpm</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="7098.6">7.10s</td>
+<td class="num" data-sort="6301.5">6.30s</td>
+<td class="num" data-sort="0.6874594990561519">0.69×</td>
+<td class="num" data-sort="0.7045920793413505">0.70×</td>
+<td><audio controls preload="none" src="voxcpm_cpu_p2.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 3</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"The Parakeet TDT zero point six billion parameter model achieves one point six nine percent word error rate on LibriSpeech test-clean, beating Whisper Large V3 at two point seven percent while running at over two thousand times realtime on a single GPU."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>magpie</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="72765.2">72.77s</td>
+<td class="num" data-sort="76066.6">76.07s</td>
+<td class="num" data-sort="0.2463540263752453">0.25×</td>
+<td class="num" data-sort="0.2412110758896386">0.24×</td>
+<td><audio controls preload="none" src="magpie_cpu_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="26295.6">26.30s</td>
+<td class="num" data-sort="23963.1">23.96s</td>
+<td class="num" data-sort="0.6031427311033024">0.60×</td>
+<td class="num" data-sort="0.6627035780852313">0.66×</td>
+<td><audio controls preload="none" src="omnivoice_cpu_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-mps">mps</td>
+<td colspan="5" class="fail">FAIL: RuntimeError: MPS backend out of memory (MPS allocated: 3.38 GiB, other allocations: 16.73 GiB, max allowed: 20.13 GiB). Tried to allocate 1</td>
+</tr>
+<tr>
+<td>voxcpm</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="24127.8">24.13s</td>
+<td class="num" data-sort="21356.65">21.36s</td>
+<td class="num" data-sort="0.6962922438017557">0.70×</td>
+<td class="num" data-sort="0.7079792627475472">0.71×</td>
+<td><audio controls preload="none" src="voxcpm_cpu_p3.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 4</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"Run pytest tests slash test underscore voice dot py with verbose flag and capture flag set to no."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>magpie</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="24482.8">24.48s</td>
+<td class="num" data-sort="23417.5">23.42s</td>
+<td class="num" data-sort="0.3736909177054912">0.37×</td>
+<td class="num" data-sort="0.37975856766589555">0.38×</td>
+<td><audio controls preload="none" src="magpie_cpu_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="11905.1">11.91s</td>
+<td class="num" data-sort="9810.3">9.81s</td>
+<td class="num" data-sort="0.5073455913852047">0.51×</td>
+<td class="num" data-sort="0.6156999334600788">0.62×</td>
+<td><audio controls preload="none" src="omnivoice_cpu_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="6592.0">6.59s</td>
+<td class="num" data-sort="6317.1">6.32s</td>
+<td class="num" data-sort="0.9162621359223302">0.92×</td>
+<td class="num" data-sort="0.9537589668520725">0.95×</td>
+<td><audio controls preload="none" src="omnivoice_mps_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>voxcpm</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="13112.8">13.11s</td>
+<td class="num" data-sort="7390.0">7.39s</td>
+<td class="num" data-sort="0.695503630040876">0.70×</td>
+<td class="num" data-sort="0.709112404367118">0.71×</td>
+<td><audio controls preload="none" src="voxcpm_cpu_p4.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 5</h2>
+<span class="prompt-text"><span class="lang">[fr]</span>"Bonjour, je m&#x27;appelle Cicero et je vais vous aider avec votre code aujourd&#x27;hui."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>magpie</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="16804.2">16.80s</td>
+<td class="num" data-sort="16689.5">16.69s</td>
+<td class="num" data-sort="0.4200735530403113">0.42×</td>
+<td class="num" data-sort="0.42341071771417194">0.42×</td>
+<td><audio controls preload="none" src="magpie_cpu_p5.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="10718.9">10.72s</td>
+<td class="num" data-sort="8535.05">8.54s</td>
+<td class="num" data-sort="0.4580693914487494">0.46×</td>
+<td class="num" data-sort="0.5466315141320912">0.55×</td>
+<td><audio controls preload="none" src="omnivoice_cpu_p5.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="5608.9">5.61s</td>
+<td class="num" data-sort="5259.950000000001">5.26s</td>
+<td class="num" data-sort="0.8843088662661127">0.88×</td>
+<td class="num" data-sort="0.9105825831609428">0.91×</td>
+<td><audio controls preload="none" src="omnivoice_mps_p5.wav"></audio></td>
+</tr>
+<tr>
+<td>voxcpm</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="6592.2">6.59s</td>
+<td class="num" data-sort="9678.0">9.68s</td>
+<td class="num" data-sort="0.6917265859652316">0.69×</td>
+<td class="num" data-sort="0.6984119441008942">0.70×</td>
+<td><audio controls preload="none" src="voxcpm_cpu_p5.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<script>
+(function(){
+  // ---------- theme toggle ----------
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(name) {
+    document.documentElement.setAttribute('data-theme', name);
+    themeBtn.textContent = name === 'light' ? '☀ light' : '☾ dark';
+    try { localStorage.setItem('tts-bench-theme', name); } catch (e) {}
+  }
+  let stored = null;
+  try { stored = localStorage.getItem('tts-bench-theme'); } catch (e) {}
+  applyTheme(stored === 'light' ? 'light' : 'dark');
+  themeBtn.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- sort + filter ----------
+  const tables = document.querySelectorAll('table');
+  const filterInput = document.getElementById('filter');
+  const resetBtn = document.getElementById('reset-sort');
+  const sortState = { col: -1, dir: 0 };
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach(th => { th.dataset.label = th.textContent; });
+    table.querySelectorAll('tbody tr').forEach((row, i) => { row.dataset.origIdx = String(i); });
+  });
+
+  function applyFilter() {
+    const q = filterInput.value.toLowerCase().trim();
+    tables.forEach(t => {
+      t.querySelectorAll('tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+    });
+  }
+  filterInput.addEventListener('input', applyFilter);
+
+  function cellSortValue(row, colIdx) {
+    const cell = row.children[colIdx];
+    if (!cell) return Number.POSITIVE_INFINITY;
+    if (cell.hasAttribute('data-sort')) {
+      const raw = cell.getAttribute('data-sort');
+      if (raw === '' || raw === null) return Number.POSITIVE_INFINITY;
+      const v = parseFloat(raw);
+      return Number.isNaN(v) ? Number.POSITIVE_INFINITY : v;
+    }
+    return cell.textContent.toLowerCase();
+  }
+
+  function renderArrows() {
+    tables.forEach(t => {
+      t.querySelectorAll('thead th').forEach((th, i) => {
+        const arrow = (i === sortState.col && sortState.dir !== 0)
+                    ? (sortState.dir === 1 ? ' ▲' : ' ▼') : '';
+        th.textContent = th.dataset.label + arrow;
+      });
+    });
+  }
+
+  function restoreOrder() {
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => parseInt(a.dataset.origIdx) - parseInt(b.dataset.origIdx));
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  function sortAll(colIdx) {
+    if (sortState.col === colIdx) {
+      sortState.dir = sortState.dir === 1 ? -1 : (sortState.dir === -1 ? 0 : 1);
+    } else {
+      sortState.col = colIdx;
+      sortState.dir = 1;
+    }
+    renderArrows();
+
+    if (sortState.dir === 0) {
+      restoreOrder();
+      return;
+    }
+
+    const dir = sortState.dir;
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const aSpan = a.querySelector('td[colspan]') !== null;
+        const bSpan = b.querySelector('td[colspan]') !== null;
+        if (aSpan !== bSpan) return aSpan ? 1 : -1;
+        const av = cellSortValue(a, colIdx);
+        const bv = cellSortValue(b, colIdx);
+        if (av < bv) return -dir;
+        if (av > bv) return dir;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach((th, idx) => {
+      th.addEventListener('click', () => sortAll(idx));
+    });
+  });
+
+  resetBtn.addEventListener('click', () => {
+    sortState.col = -1; sortState.dir = 0;
+    renderArrows();
+    restoreOrder();
+    filterInput.value = '';
+    applyFilter();
+  });
+})();
+</script>
+</body></html>
