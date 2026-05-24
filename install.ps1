@@ -230,6 +230,23 @@ if (-not (Test-Path "venvs\qwentts\Scripts\python.exe")) {
     Write-Host "qwentts: already installed" -ForegroundColor Gray
 }
 
+Step "faster-qwen3-tts (CUDA-graph fast path for Qwen3-TTS-Base 1.7B)"
+if (-not (Test-Path "venvs\qwentts_fast\Scripts\python.exe")) {
+    Invoke-Checked "uv venv qwentts_fast" { uv venv venvs\qwentts_fast --python 3.11 }
+    Invoke-Checked "torch cu128 in qwentts_fast" {
+        uv pip install --python venvs\qwentts_fast\Scripts\python.exe `
+            --index-url https://download.pytorch.org/whl/cu128 `
+            torch torchaudio
+    }
+    Invoke-Checked "faster-qwen3-tts" {
+        uv pip install --python venvs\qwentts_fast\Scripts\python.exe `
+            faster-qwen3-tts soundfile numpy
+    }
+    Write-Host "qwentts_fast: ok (CUDA-graph fast path, same Qwen3-TTS-Base 1.7B weights; CUDA-only)" -ForegroundColor Green
+} else {
+    Write-Host "qwentts_fast: already installed" -ForegroundColor Gray
+}
+
 Step "IndexTTS-2 (Bilibili Index, zero-shot cloning + emotion control)"
 if (-not (Test-Path "venvs\indextts\Scripts\python.exe")) {
     # No pip wheel - upstream requires source clone. We mirror the neutts/luxtts

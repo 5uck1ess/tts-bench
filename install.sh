@@ -242,6 +242,24 @@ else
     echo "qwentts: already installed"
 fi
 
+# --- faster-qwen3-tts (CUDA-graph fast path for Qwen3-TTS-Base 1.7B) ---
+echo; cyan "=== faster-qwen3-tts (CUDA-graph fast path for Qwen3-TTS-Base 1.7B) ==="
+if [ ! -x venvs/qwentts_fast/bin/python ]; then
+    uv venv venvs/qwentts_fast --python 3.11 || die "uv venv qwentts_fast"
+    # CUDA-only on Linux/Windows; on Mac this installs CPU torch but the runner
+    # will report CUDA unavailable and the bench cell will fail gracefully.
+    uv pip install --python venvs/qwentts_fast/bin/python \
+        --index-url https://download.pytorch.org/whl/cu128 \
+        torch torchaudio \
+        || die "torch cu128 in qwentts_fast"
+    uv pip install --python venvs/qwentts_fast/bin/python \
+        faster-qwen3-tts soundfile numpy \
+        || die "faster-qwen3-tts install"
+    green "qwentts_fast: ok (CUDA-graph fast path, same Qwen3-TTS-Base 1.7B weights; CUDA-only)"
+else
+    echo "qwentts_fast: already installed"
+fi
+
 # --- IndexTTS-2 (Bilibili Index, zero-shot cloning + emotion control) ---
 echo; cyan "=== IndexTTS-2 (Bilibili Index, zero-shot cloning + emotion control) ==="
 if [ ! -x venvs/indextts/bin/python ]; then
