@@ -50,6 +50,7 @@ Same five prompts run on both rigs above. Numbers shown are from short prompts; 
 | [Qwen3-TTS-Base 1.7B](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) (Alibaba Qwen) | 1.7B / Apache 2.0 | pending | pending | pending | wav + transcript | 10 langs (zh/en/ja/ko/de/fr/ru/pt/es/it); claimed 97ms streaming TTFA; FlashAttention 2 skipped on Windows |
 | [IndexTTS-2](https://github.com/index-tts/index-tts) (Bilibili Index) | ~1.5B / Apache 2.0 | pending | pending | pending | wav (no transcript) | zero-shot cloning + optional emotion-reference conditioning; source-clone install (no pip wheel); ~5 GB weights auto-download from HF on first use |
 | [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) (Sesame AI) | 1B / Apache 2.0 | pending | pending | pending | wav + transcript (as prior-turn context) | conversational speech model; in-context cloning via apply_chat_template; native transformers >= 4.52.1; **HF manual-approval gated** — request access on the model page before first run |
+| [MARS5-TTS](https://github.com/Camb-ai/MARS5-TTS) (CAMB.AI) | ~1.2B (750M AR + 450M NAR) / **AGPL-3.0** | pending | pending | pending | wav (shallow clone) or wav + transcript (deep clone, higher quality) | English-only; loaded via `torch.hub.load`; reference audio must be 1-12 seconds; **AGPL-3.0 means non-commercial unless you license from CAMB.AI** |
 | [LuxTTS](https://github.com/ysharma3501/LuxTTS) (k2-fsa-based) | — | — | — | — | wav | install blocked on Windows (see [Known issues](#known-issues)) |
 
 **Reading the tables:** TTFA = milliseconds until the first audio sample. RTF = `audio_seconds / generation_seconds` (1.0× = realtime, higher = faster than realtime). Non-streaming models (KittenTTS, ChatterBox, F5-TTS) emit full audio in one call so TTFA = gen_s by definition.
@@ -352,7 +353,8 @@ tts-bench/
 │   ├── magpie_runner.py
 │   ├── qwentts_runner.py
 │   ├── indextts_runner.py
-│   └── sesame_runner.py
+│   ├── sesame_runner.py
+│   └── mars5_runner.py
 ├── reference/            # voice cloning reference audio (.wav + .txt pairs)
 ├── venvs/                # one isolated venv per model (gitignored)
 └── results/              # bench output WAVs + CSV (gitignored)

@@ -273,5 +273,19 @@ else
     echo "sesame: already installed"
 fi
 
+# --- MARS5-TTS (CAMB.AI, English zero-shot cloning, AGPL-3.0) ---
+echo; cyan "=== MARS5-TTS (CAMB.AI, English zero-shot cloning, AGPL-3.0) ==="
+if [ ! -x venvs/mars5/bin/python ]; then
+    # torch.hub loads the model - no source clone needed. AGPL-3.0 license.
+    uv venv venvs/mars5 --python 3.10 || die "uv venv mars5"
+    # numpy<2.0 pin: MARS5's torch.hub'd code uses np.array(obj, copy=False),
+    # which was removed in NumPy 2.0 and raises ValueError at inference time.
+    uv pip install --python venvs/mars5/bin/python torch torchaudio librosa vocos encodec safetensors regex soundfile "numpy<2.0" \
+        || die "uv pip install mars5 deps"
+    green "mars5: ok (English only, AGPL-3.0; ref audio must be 1-12s, ~1.2GB weights auto-download on first run)"
+else
+    echo "mars5: already installed"
+fi
+
 echo
 green "Done. Run: python bench.py"

@@ -262,4 +262,20 @@ if (-not (Test-Path "venvs\sesame\Scripts\python.exe")) {
     Write-Host "sesame: already installed" -ForegroundColor Gray
 }
 
+Step "MARS5-TTS (CAMB.AI, English zero-shot cloning, AGPL-3.0)"
+if (-not (Test-Path "venvs\mars5\Scripts\python.exe")) {
+    # Loaded via torch.hub - no source clone needed. ~1.2GB AR+NAR checkpoints
+    # auto-download on first runner call. AGPL-3.0 license: not for commercial
+    # use without a separate license from CAMB.AI.
+    Invoke-Checked "uv venv mars5" { uv venv venvs\mars5 --python 3.10 }
+    # numpy<2.0 pin: MARS5's torch.hub'd code uses np.array(obj, copy=False),
+    # which was removed in NumPy 2.0 and raises ValueError at inference time.
+    Invoke-Checked "uv pip install mars5 deps" { uv pip install --python venvs\mars5\Scripts\python.exe torch torchaudio librosa vocos encodec safetensors regex soundfile "numpy<2.0" }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120).
+    Invoke-Checked "torch cu128 for mars5" { uv pip install --python venvs\mars5\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "mars5: ok (English only, AGPL-3.0; ref audio must be 1-12s, ~1.2GB weights auto-download on first run)" -ForegroundColor Green
+} else {
+    Write-Host "mars5: already installed" -ForegroundColor Gray
+}
+
 Write-Host "`nDone. Run: python bench.py" -ForegroundColor Green
