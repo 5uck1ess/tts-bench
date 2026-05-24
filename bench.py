@@ -240,7 +240,7 @@ def main() -> int:
                   "run_index", "is_cold",
                   "ttfa_ms", "gen_s", "audio_s", "rtf",
                   "peak_mem_mb", "peak_vram_mb",
-                  "naq", "naq_harm", "naq_buzz",
+                  "naq", "naq_artifact", "naq_naturalness",
                   "wall_s", "ok", "error"]
 
     with csv_path.open("w", newline="", encoding="utf-8") as f:
@@ -268,8 +268,8 @@ def main() -> int:
                     peak_mem = r.get("peak_mem_mb")
                     peak_vram = r.get("peak_vram_mb")
                     naq = r.get("naq")
-                    naq_harm = r.get("naq_harm")
-                    naq_buzz = r.get("naq_buzz")
+                    naq_artifact = r.get("naq_artifact")
+                    naq_naturalness = r.get("naq_naturalness")
 
                     row = {
                         "prompt_id": prompt_id,
@@ -286,8 +286,8 @@ def main() -> int:
                         "peak_mem_mb": round(peak_mem, 1) if peak_mem is not None else "",
                         "peak_vram_mb": round(peak_vram, 1) if peak_vram is not None else "",
                         "naq": round(naq, 1) if naq is not None else "",
-                        "naq_harm": round(naq_harm, 1) if naq_harm is not None else "",
-                        "naq_buzz": round(naq_buzz, 1) if naq_buzz is not None else "",
+                        "naq_artifact": round(naq_artifact, 1) if naq_artifact is not None else "",
+                        "naq_naturalness": round(naq_naturalness, 1) if naq_naturalness is not None else "",
                         "wall_s": round(r.get("wall_s", 0), 3),
                         "ok": r.get("ok", False),
                         "error": (r.get("error") or "")[:200],
