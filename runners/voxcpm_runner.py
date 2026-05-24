@@ -1,12 +1,14 @@
-"""VoxCPM-0.5B runner (OpenBMB, zero-shot voice cloning, multilingual).
+"""VoxCPM2 runner (OpenBMB, zero-shot voice cloning, multilingual, 2B params).
 
-We target the 0.5B variant for bench parity — it uses the simple direct
-generate() API. The larger VoxCPM2 (2B) uses a server-mode API and is out
-of scope here.
+VoxCPM2 is the current recommended release — 2B params, 48kHz output,
+30 languages, ~8 GB VRAM. The 0.5B variant is "legacy" per upstream's
+own model table and (more importantly) does NOT support cloning via
+`reference_wav_path` — only VoxCPM2 does. Both ship in the same `voxcpm`
+pip package; the only difference is the HF id passed to `from_pretrained`.
 
 API (voxcpm==latest):
     from voxcpm import VoxCPM
-    model = VoxCPM.from_pretrained("openbmb/VoxCPM-0.5B", load_denoiser=False)
+    model = VoxCPM.from_pretrained("openbmb/VoxCPM2", load_denoiser=False)
     wav = model.generate(text="...", cfg_value=2.0, inference_timesteps=10)
     # Cloning (wav-only, no transcript needed):
     wav = model.generate(text="...", reference_wav_path="ref.wav")
@@ -45,13 +47,13 @@ def main() -> int:
         import torch
         from voxcpm import VoxCPM
 
-        # VoxCPM-0.5B auto-picks device. If user asked for CPU explicitly,
+        # VoxCPM2 auto-picks device. If user asked for CPU explicitly,
         # hide CUDA to force the fallback (no clean device param on the class).
         if args.device == "cpu" and torch.cuda.is_available():
             torch.cuda.is_available = lambda: False  # type: ignore[assignment]
 
-        model = VoxCPM.from_pretrained("openbmb/VoxCPM-0.5B", load_denoiser=False)
-        samplerate = int(model.tts_model.sample_rate) if hasattr(model, "tts_model") else 16000
+        model = VoxCPM.from_pretrained("openbmb/VoxCPM2", load_denoiser=False)
+        samplerate = int(model.tts_model.sample_rate) if hasattr(model, "tts_model") else 48000
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"load failed: {type(e).__name__}: {e}"}))

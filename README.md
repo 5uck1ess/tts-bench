@@ -95,6 +95,8 @@ Caveats: one machine, one run. Re-bench on your own hardware before committing â
 
 Requires [`uv`](https://github.com/astral-sh/uv) and Python 3.11. ~10-15 min total install (NeuTTS builds `llama-cpp-python` from source on first run).
 
+**Disk budget: ~60 GB once every model has loaded at least once.** ~16 GB across the per-model `venvs/`, plus ~40 GB of model weights downloaded to `~/.cache/huggingface/` (and a smaller `~/.cache/modelscope/` for VoxCPM2). `results/` and `_gh-pages/` are negligible by comparison â€” local benches cost <100 MB unless you keep dozens of historical runs. To prune, just `rm -rf venvs/<model>/` for models you don't want; the install scripts are idempotent so you can re-add later.
+
 ```powershell
 # Windows
 .\install.ps1
