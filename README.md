@@ -1,10 +1,10 @@
 # tts-bench
 
-Bench for local TTS models. Measures three things on whatever hardware you put it on:
+Bench for local TTS models. Three lenses, on whatever hardware you put it on:
 
-- **Speed** — cold + warm TTFA, RTF, memory, on CPU / CUDA / Apple Silicon
-- **Quality** — NAQ, an objective 0–100 score for vocoder artifacts and naturalness
-- **Voice cloning** — same prompts, same reference, ranked by how output actually sounds
+- **Speed** — cold + warm **TTFA** (time to first audio), **RTF** (real-time factor; higher = faster than realtime), memory, on CPU / CUDA / Apple Silicon
+- **Quality** — **NAQ** (Naturalness-Artifact Quotient), an objective 0-100 score covering vocoder artifacts and prosodic naturalness
+- **Samples** — every model × prompt × rig, inline audio players, ranked by NAQ
 
 ---
 
