@@ -116,7 +116,70 @@ def main() -> int:
     print()
     _print_table(results)
     print(f"\nWavs in: {out_dir}")
+    try:
+        html = _write_html_report(out_dir, text, results, args.reference, args.language)
+        print(f"Report: {html}")
+    except Exception as e:
+        print(f"(report generation skipped: {e})")
     return 0
+
+
+def _write_html_report(out_dir, text, results, reference, language):
+    """Self-contained HTML report for a compare run — one row per (model, device)
+    with an inline <audio> player. Reuses report.py's theme / sort / filter UI."""
+    from html import escape
+    from report import STYLE, CONTROLS, SCRIPT, _ds, _fmt_ttfa, _fmt_rtf
+
+    def fmt_s(v):
+        return f"{v:.2f}s" if v is not None else "—"
+
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           f'<title>Compare — {escape(out_dir.name)}</title>',
+           STYLE, '</head><body>', CONTROLS,
+           f'<h1>Compare — {escape(out_dir.name)}</h1>']
+    if reference:
+        out.append(f'<div class="meta"><strong>Reference (cloning):</strong> '
+                   f'<code>{escape(reference)}</code></div>')
+    out.append(f'<div class="meta"><strong>Language:</strong> {escape(language)}'
+               f' &nbsp;·&nbsp; <strong>Text ({len(text)} chars):</strong> '
+               f'<em>"{escape(text if len(text) <= 200 else text[:200] + "…")}"</em></div>')
+    out.append(f'<div class="meta">{len(results)} cell(s); '
+               f'{sum(1 for r in results if r["ok"])} ok</div>')
+
+    out.append('<table><thead><tr>')
+    for col in ("Model", "Device", "TTFA", "gen", "audio", "RTF", "wall", "Audio"):
+        out.append(f'<th>{col}</th>')
+    out.append('</tr></thead><tbody>')
+
+    for r in results:
+        dev = r["device"]
+        out.append('<tr>')
+        out.append(f'<td>{escape(r["model"])}</td>'
+                   f'<td class="dev-{escape(dev)}">{escape(dev)}</td>')
+        if not r["ok"]:
+            err = (r.get("error") or "").strip()[:140] or "fail"
+            out.append(f'<td colspan="6" class="fail">FAIL: {escape(err)}</td>')
+            out.append('</tr>')
+            continue
+        out.append(f'<td class="num"{_ds(r["ttfa_ms"])}>{_fmt_ttfa(r["ttfa_ms"])}</td>')
+        out.append(f'<td class="num"{_ds(r["gen_s"])}>{fmt_s(r["gen_s"])}</td>')
+        out.append(f'<td class="num"{_ds(r["audio_s"])}>{fmt_s(r["audio_s"])}</td>')
+        out.append(f'<td class="num"{_ds(r["rtf"])}>{_fmt_rtf(r["rtf"])}</td>')
+        out.append(f'<td class="num"{_ds(r["wall_s"])}>{fmt_s(r["wall_s"])}</td>')
+        wav = r["wav"]
+        if wav.exists():
+            out.append(f'<td><audio controls preload="none" src="{escape(wav.name)}"></audio></td>')
+        else:
+            out.append('<td><span class="muted">missing</span></td>')
+        out.append('</tr>')
+
+    out.append('</tbody></table>')
+    out.append(SCRIPT)
+    out.append('</body></html>')
+    html_path = out_dir / "report.html"
+    html_path.write_text("\n".join(out), encoding="utf-8")
+    return html_path
 
 
 def _print_table(results):
