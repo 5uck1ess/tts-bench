@@ -42,10 +42,6 @@ import _meminfo
 import _naq
 
 
-TURBO_REPO = "ResembleAI/chatterbox-turbo"
-BASE_REPO  = "ResembleAI/chatterbox"
-
-
 def _load_base(device):
     """Load Chatterbox 1.2B (base). Returns (model, samplerate)."""
     from chatterbox.tts import ChatterboxTTS
@@ -58,114 +54,18 @@ def _load_base(device):
 def _load_turbo(device):
     """Load Chatterbox Turbo (~744M, GPT2-based AR model).
 
-    The turbo checkpoint uses a different T3 architecture (GPT2_medium instead
-    of Llama_520M) and a different file naming convention (t3_turbo_v1.safetensors
-    vs t3_cfg.safetensors). We build the model manually since ChatterboxTTS.from_local()
-    hardcodes the base filenames.
+    Uses ChatterboxTurboTTS.from_pretrained() which downloads from
+    ResembleAI/chatterbox-turbo via snapshot_download (cached after first run).
+    Includes a bundled default voice (conds.pt) and supports zero-shot cloning
+    via audio_prompt_path — same generate() signature as the base model.
 
     Returns (model, samplerate).
     """
-    from pathlib import Path
-    import torch
-    import torch.nn.functional as F
-    from chatterbox.tts import ChatterboxTTS, Conditionals
-    from chatterbox.models.t3 import T3
-    from chatterbox.models.t3.modules.t3_config import T3Config
-    from chatterbox.models.s3gen import S3Gen
-    from chatterbox.models.tokenizers import EnTokenizer
-    from chatterbox.models.voice_encoder import VoiceEncoder
-    from safetensors.torch import load_file
-    from huggingface_hub import hf_hub_download, snapshot_download
+    from chatterbox.tts_turbo import ChatterboxTurboTTS
 
-    # Download turbo snapshot (cached after first run)
-    turbo_dir = Path(snapshot_download(TURBO_REPO))
-
-    # Turbo has no tokenizer.json — use the base model's tokenizer
-    tokenizer_json = hf_hub_download(repo_id=BASE_REPO, filename="tokenizer.json")
-
-    # Build T3 with GPT2_medium config matching the turbo checkpoint
-    hp = T3Config.english_only()
-    hp.llama_config_name = "GPT2_medium"
-    hp.speech_cond_prompt_len = 250      # from t3_turbo_v1.yaml
-    hp.use_perceiver_resampler = False   # GPT2 path has no perceiver
-    hp.input_pos_emb = "handled_internally_by_backbone"  # GPT2 handles pos internally
-    hp.text_tokens_dict_size = 50276     # GPT2 vocab (full)
-    hp.speech_tokens_dict_size = 6563   # turbo checkpoint dimension
-    hp.start_speech_token = 6561
-    hp.stop_speech_token = 6562
-
-    # Always load to CPU first for non-CUDA devices (handles CUDA-saved weights)
-    map_location = None if device == "cuda" else torch.device("cpu")
-
-    t3 = T3(hp)
-    t3.load_state_dict(load_file(turbo_dir / "t3_turbo_v1.safetensors"), strict=False)
-    t3.to(device).eval()
-
-    s3gen = S3Gen()
-    s3gen.load_state_dict(load_file(turbo_dir / "s3gen.safetensors"), strict=False)
-    s3gen.to(device).eval()
-
-    ve = VoiceEncoder()
-    ve.load_state_dict(load_file(turbo_dir / "ve.safetensors"))
-    ve.to(device).eval()
-
-    tokenizer = EnTokenizer(tokenizer_json)
-
-    conds_path = turbo_dir / "conds.pt"
-    conds = Conditionals.load(conds_path, map_location=map_location or device) if conds_path.exists() else None
-
-    m = ChatterboxTTS(t3, s3gen, ve, tokenizer, device, conds=conds)
+    m = ChatterboxTurboTTS.from_pretrained(device=device)
     samplerate = int(m.sr) if hasattr(m, "sr") else 24000
     return m, samplerate
-
-
-def _turbo_generate(m, text, audio_prompt_path=None):
-    """Generate audio using the turbo inference path (T3.inference_turbo).
-
-    The base ChatterboxTTS.generate() calls t3.inference() which requires
-    learned positional embeddings — absent in the GPT2 turbo model. This
-    function replicates the generate() body but calls inference_turbo() instead.
-    """
-    import torch
-    import torch.nn.functional as F
-    from chatterbox.tts import punc_norm
-    from chatterbox.models.s3tokenizer import drop_invalid_tokens
-
-    if audio_prompt_path:
-        m.prepare_conditionals(audio_prompt_path)
-
-    assert m.conds is not None, (
-        "No conditionals loaded. Provide --reference for turbo cloning, "
-        "or ensure conds.pt exists in the turbo checkpoint."
-    )
-
-    text = punc_norm(text)
-    text_tokens = m.tokenizer.text_to_tokens(text).to(m.device)
-
-    sot = m.t3.hp.start_text_token
-    eot = m.t3.hp.stop_text_token
-    text_tokens = F.pad(text_tokens, (1, 0), value=sot)
-    text_tokens = F.pad(text_tokens, (0, 1), value=eot)
-
-    with torch.inference_mode():
-        speech_tokens = m.t3.inference_turbo(
-            t3_cond=m.conds.t3,
-            text_tokens=text_tokens,
-            max_gen_len=600,
-        )
-        speech_tokens = drop_invalid_tokens(speech_tokens.squeeze(0))
-        speech_tokens = speech_tokens[speech_tokens < m.t3.hp.start_speech_token]
-        speech_tokens = speech_tokens.to(m.device)
-
-        wav, _ = m.s3gen.inference(
-            speech_tokens=speech_tokens,
-            ref_dict=m.conds.gen,
-        )
-        wav = wav.squeeze(0).detach().cpu().numpy()
-        wav = m.watermarker.apply_watermark(wav, sample_rate=m.sr)
-
-    import torch as _torch
-    return _torch.from_numpy(wav).unsqueeze(0)
 
 
 def main() -> int:
@@ -215,10 +115,9 @@ def main() -> int:
             _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
 
-            if use_turbo:
-                audio = _turbo_generate(m, text, audio_prompt_path=args.reference)
-            else:
-                audio = m.generate(text, audio_prompt_path=args.reference)
+            # Both base and turbo share the same generate() signature:
+            # m.generate(text, audio_prompt_path=ref_or_None)
+            audio = m.generate(text, audio_prompt_path=args.reference)
 
             t_end = time.perf_counter()
 
