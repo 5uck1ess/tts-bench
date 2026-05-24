@@ -1,8 +1,15 @@
 """Generate a self-contained HTML report from a bench.py results directory.
 
-The report shows TTFA cold/warm, RTF cold/warm per (model, device, prompt), with
-an inline <audio> player for the cold run of each cell so you can click-play
-each wav directly in the browser without leaving the page.
+Shows TTFA cold/warm + RTF cold/warm per (model, device, prompt), with an
+inline <audio> player for the cold run of each cell so you can click-play
+each wav in the browser without leaving the page.
+
+Features:
+- dark/light theme toggle (persisted to localStorage)
+- sortable columns (click any header — cycles asc / desc / unsorted)
+- live text filter across all visible rows
+
+All inline — no external CSS, JS, or fonts; works offline.
 
 Also builds results/index.html — a top-level page listing every dated run.
 
@@ -32,31 +39,235 @@ except Exception:
 
 
 STYLE = """<style>
-  :root { color-scheme: dark; }
-  body { font-family: ui-monospace, Menlo, Consolas, monospace;
-         background: #1a1a1a; color: #e0e0e0; margin: 2rem; max-width: 1400px; }
-  h1, h2 { color: #fff; margin-top: 0; }
+  :root {
+    color-scheme: dark light;
+    --bg: #1a1a1a;
+    --panel: #242424;
+    --text: #e0e0e0;
+    --muted: #888;
+    --accent: #6cf;
+    --num: #cfc;
+    --fail: #f88;
+    --border: #333;
+    --row-hover: #2a2a2a;
+    --th-bg: #2c2c2c;
+    --th-hover: #353535;
+    --input-bg: #2a2a2a;
+    --input-border: #444;
+    --controls-border: #2a2a2a;
+    --dev-cpu: #ddd;
+    --dev-cuda: #9cf;
+    --dev-mps: #fc9;
+    --lang: #6cf;
+    --prompt-text: #9c9;
+    --code-bg: #2a2a2a;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --text: #1a1d22;
+    --muted: #6b7280;
+    --accent: #1a73e8;
+    --num: #137333;
+    --fail: #c5221f;
+    --border: #e2e6eb;
+    --row-hover: #f0f4f8;
+    --th-bg: #eef1f4;
+    --th-hover: #e2e6eb;
+    --input-bg: #ffffff;
+    --input-border: #cdd3da;
+    --controls-border: #e2e6eb;
+    --dev-cpu: #555;
+    --dev-cuda: #1a73e8;
+    --dev-mps: #c2410c;
+    --lang: #1a73e8;
+    --prompt-text: #2d6a4f;
+    --code-bg: #eef1f4;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+         background: var(--bg); color: var(--text);
+         margin: 0; padding: 1.5rem 2rem 3rem;
+         max-width: 1400px; margin-inline: auto;
+         transition: background 0.15s, color 0.15s; }
+  h1, h2 { color: var(--text); margin-top: 0; }
+  h1 { font-size: 1.5em; }
   h2 { font-size: 1.05em; }
-  .meta { color: #888; font-size: 0.88em; margin-bottom: 0.4rem; }
-  .prompt { background: #242424; padding: 1rem 1.2rem; border-radius: 8px; margin-bottom: 1.4rem; }
-  .prompt-text { color: #9c9; font-style: italic; display: block; margin: 0.2rem 0 0.8rem 0; }
-  .lang { color: #6cf; font-style: normal; margin-right: 0.4rem; }
+  .meta { color: var(--muted); font-size: 0.88em; margin-bottom: 0.4rem; }
+  .prompt { background: var(--panel); padding: 1rem 1.2rem;
+            border-radius: 10px; margin-bottom: 1.4rem;
+            border: 1px solid var(--border); }
+  .prompt-text { color: var(--prompt-text); font-style: italic;
+                 display: block; margin: 0.2rem 0 0.8rem 0; }
+  .lang { color: var(--lang); font-style: normal; margin-right: 0.4rem;
+          font-weight: 500; }
   table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
-  th, td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #333; }
-  th { background: #2c2c2c; color: #ccc; }
-  td.num { text-align: right; font-variant-numeric: tabular-nums; color: #cfc; }
-  td.fail { color: #f88; font-style: italic; }
-  td.dev-cuda { color: #9cf; }
-  td.dev-mps  { color: #fc9; }
-  td.dev-cpu  { color: #ddd; }
-  .muted { color: #666; }
-  audio { width: 220px; height: 28px; vertical-align: middle; }
-  tr:hover { background: #2a2a2a; }
-  code { background: #2a2a2a; padding: 1px 5px; border-radius: 3px; }
-  a { color: #6cf; }
-  a:hover { color: #9cf; }
-  .nav { margin-bottom: 1rem; }
+  th, td { padding: 7px 10px; text-align: left;
+           border-bottom: 1px solid var(--border); }
+  th { background: var(--th-bg); color: var(--text);
+       cursor: pointer; user-select: none; white-space: nowrap;
+       font-weight: 600; }
+  th:hover { background: var(--th-hover); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums;
+           color: var(--num); }
+  td.fail { color: var(--fail); font-style: italic; }
+  td.dev-cuda { color: var(--dev-cuda); }
+  td.dev-mps  { color: var(--dev-mps); }
+  td.dev-cpu  { color: var(--dev-cpu); }
+  .muted { color: var(--muted); }
+  audio { width: 220px; height: 30px; vertical-align: middle; }
+  tr:hover td { background: var(--row-hover); }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px;
+         font-size: 0.92em; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .nav { margin-bottom: 0.6rem; }
+  .controls { position: sticky; top: 0; background: var(--bg); z-index: 10;
+              padding: 0.7rem 0 0.7rem; margin-bottom: 1rem;
+              display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+              border-bottom: 1px solid var(--controls-border); }
+  .controls input { background: var(--input-bg); color: var(--text);
+                    border: 1px solid var(--input-border);
+                    border-radius: 6px; padding: 7px 11px; font: inherit;
+                    min-width: 320px; }
+  .controls input:focus { outline: none; border-color: var(--accent); }
+  .controls .hint { color: var(--muted); font-size: 0.85em; }
+  .controls button { background: var(--input-bg); color: var(--text);
+                     border: 1px solid var(--input-border);
+                     border-radius: 6px; padding: 6px 12px; font: inherit;
+                     cursor: pointer; transition: border-color 0.15s; }
+  .controls button:hover { border-color: var(--accent); }
+  .spacer { flex: 1; }
 </style>"""
+
+
+CONTROLS = '''<div class="controls">
+<input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
+<button type="button" id="reset-sort">reset sort</button>
+<span class="hint">click any column header to sort</span>
+<span class="spacer"></span>
+<button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
+</div>'''
+
+
+SCRIPT = r'''<script>
+(function(){
+  // ---------- theme toggle ----------
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(name) {
+    document.documentElement.setAttribute('data-theme', name);
+    themeBtn.textContent = name === 'light' ? '☀ light' : '☾ dark';
+    try { localStorage.setItem('tts-bench-theme', name); } catch (e) {}
+  }
+  let stored = null;
+  try { stored = localStorage.getItem('tts-bench-theme'); } catch (e) {}
+  applyTheme(stored === 'light' ? 'light' : 'dark');
+  themeBtn.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- sort + filter ----------
+  const tables = document.querySelectorAll('table');
+  const filterInput = document.getElementById('filter');
+  const resetBtn = document.getElementById('reset-sort');
+  const sortState = { col: -1, dir: 0 };
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach(th => { th.dataset.label = th.textContent; });
+    table.querySelectorAll('tbody tr').forEach((row, i) => { row.dataset.origIdx = String(i); });
+  });
+
+  function applyFilter() {
+    const q = filterInput.value.toLowerCase().trim();
+    tables.forEach(t => {
+      t.querySelectorAll('tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+    });
+  }
+  filterInput.addEventListener('input', applyFilter);
+
+  function cellSortValue(row, colIdx) {
+    const cell = row.children[colIdx];
+    if (!cell) return Number.POSITIVE_INFINITY;
+    if (cell.hasAttribute('data-sort')) {
+      const raw = cell.getAttribute('data-sort');
+      if (raw === '' || raw === null) return Number.POSITIVE_INFINITY;
+      const v = parseFloat(raw);
+      return Number.isNaN(v) ? Number.POSITIVE_INFINITY : v;
+    }
+    return cell.textContent.toLowerCase();
+  }
+
+  function renderArrows() {
+    tables.forEach(t => {
+      t.querySelectorAll('thead th').forEach((th, i) => {
+        const arrow = (i === sortState.col && sortState.dir !== 0)
+                    ? (sortState.dir === 1 ? ' ▲' : ' ▼') : '';
+        th.textContent = th.dataset.label + arrow;
+      });
+    });
+  }
+
+  function restoreOrder() {
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => parseInt(a.dataset.origIdx) - parseInt(b.dataset.origIdx));
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  function sortAll(colIdx) {
+    if (sortState.col === colIdx) {
+      sortState.dir = sortState.dir === 1 ? -1 : (sortState.dir === -1 ? 0 : 1);
+    } else {
+      sortState.col = colIdx;
+      sortState.dir = 1;
+    }
+    renderArrows();
+
+    if (sortState.dir === 0) {
+      restoreOrder();
+      return;
+    }
+
+    const dir = sortState.dir;
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const aSpan = a.querySelector('td[colspan]') !== null;
+        const bSpan = b.querySelector('td[colspan]') !== null;
+        if (aSpan !== bSpan) return aSpan ? 1 : -1;
+        const av = cellSortValue(a, colIdx);
+        const bv = cellSortValue(b, colIdx);
+        if (av < bv) return -dir;
+        if (av > bv) return dir;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach((th, idx) => {
+      th.addEventListener('click', () => sortAll(idx));
+    });
+  });
+
+  resetBtn.addEventListener('click', () => {
+    sortState.col = -1; sortState.dir = 0;
+    renderArrows();
+    restoreOrder();
+    filterInput.value = '';
+    applyFilter();
+  });
+})();
+</script>'''
 
 
 def _fmt_ttfa(ms):
@@ -71,6 +282,11 @@ def _fmt_rtf(x):
     if x is None:
         return "—"
     return f"{x:.2f}×"
+
+
+def _ds(val):
+    """data-sort attribute for numeric cells; empty when None."""
+    return f' data-sort="{val}"' if val is not None else ' data-sort=""'
 
 
 def _read_csv(csv_path):
@@ -108,19 +324,19 @@ def build_report(run_dir: Path) -> Path:
     devices_seen = sorted({r["device"] for r in rows})
     runs_per_cell = max(len(v) for v in cells.values())
 
-    out = ["<!doctype html>",
+    out = ['<!doctype html>',
            '<html lang="en"><head><meta charset="utf-8">',
-           f"<title>TTS Bench — {escape(run_dir.name)}</title>",
+           f'<title>TTS Bench — {escape(run_dir.name)}</title>',
            STYLE,
-           "</head><body>"]
-
-    out.append('<div class="nav"><a href="../index.html">← all runs</a></div>')
-    out.append(f"<h1>TTS Bench — {escape(run_dir.name)}</h1>")
-    out.append(f'<div class="meta">{len(models_seen)} model(s) · '
-               f'{len(devices_seen)} device(s) · '
-               f'{len(prompts_seen)} prompt(s) · '
-               f'{runs_per_cell} run(s) per cell</div>')
-    out.append(f'<div class="meta">Source: <code>results.csv</code></div>')
+           '</head><body>',
+           CONTROLS,
+           '<div class="nav"><a href="../index.html">← all runs</a></div>',
+           f'<h1>TTS Bench — {escape(run_dir.name)}</h1>',
+           f'<div class="meta">{len(models_seen)} model(s) · '
+           f'{len(devices_seen)} device(s) · '
+           f'{len(prompts_seen)} prompt(s) · '
+           f'{runs_per_cell} run(s) per cell</div>',
+           '<div class="meta">Source: <code>results.csv</code></div>']
 
     for pid in prompts_seen:
         out.append(f'<div class="prompt"><h2>Prompt {escape(pid)}</h2>')
@@ -130,11 +346,11 @@ def build_report(run_dir: Path) -> Path:
             out.append(f'<span class="prompt-text"><span class="lang">[{escape(lang)}]</span>'
                        f'"{escape(text)}"</span>')
 
-        out.append("<table><thead><tr>")
+        out.append('<table><thead><tr>')
         for col in ("Model", "Device", "TTFA cold", "TTFA warm",
                     "RTF cold", "RTF warm", "Audio (cold)"):
-            out.append(f"<th>{col}</th>")
-        out.append("</tr></thead><tbody>")
+            out.append(f'<th>{col}</th>')
+        out.append('</tr></thead><tbody>')
 
         cell_keys = sorted([k for k in cells if k[0] == pid], key=lambda k: (k[1], k[2]))
         for (_, model, device) in cell_keys:
@@ -144,13 +360,13 @@ def build_report(run_dir: Path) -> Path:
             failed = next((r for r in cell_rows if not r["ok"]), None)
 
             dev_class = f"dev-{device}"
-            out.append("<tr>")
+            out.append('<tr>')
             out.append(f'<td>{escape(model)}</td><td class="{dev_class}">{escape(device)}</td>')
 
             if not cold:
                 err = (failed.get("error") if failed else "") or "no successful run"
                 out.append(f'<td colspan="5" class="fail">FAIL: {escape(err.strip()[:140])}</td>')
-                out.append("</tr>")
+                out.append('</tr>')
                 continue
 
             ttfa_cold = cold["ttfa_ms"]
@@ -169,16 +385,17 @@ def build_report(run_dir: Path) -> Path:
                           if (run_dir / wav_name).exists()
                           else '<span class="muted">missing</span>')
 
-            out.append(f'<td class="num">{_fmt_ttfa(ttfa_cold)}</td>')
-            out.append(f'<td class="num">{_fmt_ttfa(ttfa_warm)}</td>')
-            out.append(f'<td class="num">{_fmt_rtf(rtf_cold)}</td>')
-            out.append(f'<td class="num">{_fmt_rtf(rtf_warm)}</td>')
-            out.append(f"<td>{audio_html}</td>")
-            out.append("</tr>")
+            out.append(f'<td class="num"{_ds(ttfa_cold)}>{_fmt_ttfa(ttfa_cold)}</td>')
+            out.append(f'<td class="num"{_ds(ttfa_warm)}>{_fmt_ttfa(ttfa_warm)}</td>')
+            out.append(f'<td class="num"{_ds(rtf_cold)}>{_fmt_rtf(rtf_cold)}</td>')
+            out.append(f'<td class="num"{_ds(rtf_warm)}>{_fmt_rtf(rtf_warm)}</td>')
+            out.append(f'<td>{audio_html}</td>')
+            out.append('</tr>')
 
-        out.append("</tbody></table></div>")
+        out.append('</tbody></table></div>')
 
-    out.append("</body></html>")
+    out.append(SCRIPT)
+    out.append('</body></html>')
     html_path = run_dir / "report.html"
     html_path.write_text("\n".join(out), encoding="utf-8")
     return html_path
@@ -211,17 +428,18 @@ def build_index() -> Path:
             "has_html": (d / "report.html").exists(),
         })
 
-    out = ["<!doctype html>",
+    out = ['<!doctype html>',
            '<html lang="en"><head><meta charset="utf-8">',
-           "<title>TTS Bench — All Runs</title>",
+           '<title>TTS Bench — All Runs</title>',
            STYLE,
-           "</head><body>",
-           "<h1>TTS Bench — All Runs</h1>",
+           '</head><body>',
+           CONTROLS,
+           '<h1>TTS Bench — All Runs</h1>',
            f'<div class="meta">{len(runs)} run(s) with <code>results.csv</code></div>',
-           "<table><thead><tr>"]
+           '<table><thead><tr>']
     for col in ("Date", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
-        out.append(f"<th>{col}</th>")
-    out.append("</tr></thead><tbody>")
+        out.append(f'<th>{col}</th>')
+    out.append('</tr></thead><tbody>')
 
     for r in runs:
         models = (", ".join(r["models"])
@@ -229,16 +447,18 @@ def build_index() -> Path:
                   else f"{len(r['models'])} models")
         link = (f'<a href="{escape(r["name"])}/report.html">view</a>'
                 if r["has_html"] else '<span class="muted">no report</span>')
-        out.append("<tr>")
+        out.append('<tr>')
         out.append(f"<td>{escape(r['name'])}</td>")
-        out.append(f"<td>{escape(models)}</td>")
+        out.append(f"<td{_ds(len(r['models']))}>{escape(models)}</td>")
         out.append(f"<td>{escape(', '.join(r['devices']))}</td>")
-        out.append(f"<td class='num'>{len(r['prompts'])}</td>")
-        out.append(f"<td class='num'>{r['rows']}</td>")
-        out.append(f"<td class='num'>{r['ok']}/{r['rows']}</td>")
-        out.append(f"<td>{link}</td>")
-        out.append("</tr>")
-    out.append("</tbody></table></body></html>")
+        out.append(f"<td class='num'{_ds(len(r['prompts']))}>{len(r['prompts'])}</td>")
+        out.append(f"<td class='num'{_ds(r['rows'])}>{r['rows']}</td>")
+        out.append(f"<td class='num'{_ds(r['ok'])}>{r['ok']}/{r['rows']}</td>")
+        out.append(f'<td>{link}</td>')
+        out.append('</tr>')
+    out.append('</tbody></table>')
+    out.append(SCRIPT)
+    out.append('</body></html>')
 
     index_path = RESULTS / "index.html"
     index_path.write_text("\n".join(out), encoding="utf-8")
