@@ -400,7 +400,7 @@ green "psutil: ensured in all venvs"
 
 # --- NAQ deps in every venv (librosa + scipy for naq scoring) ---
 echo; cyan "=== NAQ deps in every venv (librosa + scipy for naq scoring) ==="
-# Pure-acoustic NAQ (HARM + BUZZ); librosa + scipy is all we need. A learned
+# Pure-acoustic NAQ; librosa + scipy are all that's needed. A learned
 # MOS predictor was considered and dropped — install portability across
 # heterogeneous venvs wasn't workable.
 for v in venvs/*/bin/python; do

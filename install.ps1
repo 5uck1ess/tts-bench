@@ -376,9 +376,9 @@ Get-ChildItem venvs -Directory | ForEach-Object {
 Write-Host "psutil: ensured in all venvs" -ForegroundColor Green
 
 Step "NAQ deps in every venv (librosa + scipy for naq scoring)"
-# NAQ scoring runs after every wav is written. Pure-acoustic (HARM + BUZZ);
-# librosa + scipy is all we need. A learned-MOS predictor was considered and
-# dropped — install portability across heterogeneous venvs wasn't workable.
+# NAQ scoring runs after every wav is written. Pure-acoustic;
+# librosa + scipy are all that's needed. A learned-MOS predictor was considered
+# and dropped — install portability across heterogeneous venvs wasn't workable.
 Get-ChildItem venvs -Directory | ForEach-Object {
     $py = Join-Path $_.FullName "Scripts\python.exe"
     if (Test-Path $py) {
