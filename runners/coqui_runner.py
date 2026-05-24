@@ -29,6 +29,8 @@ import os
 import sys
 import time
 
+import _meminfo
+
 
 # Auto-accept Coqui Public Model License (non-commercial). Must be set before
 # importing TTS — otherwise the lib prompts interactively and the subprocess
@@ -79,6 +81,7 @@ def main() -> int:
 
     def _one(text, out_path, run_index, write_wav):
         try:
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             if args.reference:
                 wav = m.tts(text=text, speaker_wav=args.reference, language=language)
@@ -95,6 +98,7 @@ def main() -> int:
                 "ok": True, "run_index": run_index,
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
             return True
         except Exception as e:

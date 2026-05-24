@@ -102,7 +102,7 @@ Same harness, 5 prompts × 3 runs each, warm averages across all runnable prompt
 
 **Top-line takeaway on Mac:** Piper wins again (33× RTF, 202ms warm TTFA — drop-in for an always-on agent). Among cloning models, **Pocket-TTS is the clear winner on M4** — its 42ms warm TTFA actually beats the Windows number, because Pocket-TTS is single-thread dominated and M4 has strong single-thread perf. VibeVoice/MPS is the only diffusion-class model that reaches realtime on this machine; CPU diffusion isn't viable. NeuTTS gets no MPS benefit because its hot path is GGUF (llama-cpp, CPU-side). The new GPU-class additions (OmniVoice, VoxCPM, Magpie) all land sub-realtime on M4 — useful as "works at all on a Mac" data points, not as deploy candidates.
 
-Raw CSVs from the runs live in `results/2026-05-23_1542/` (predefined pass 1), `results/2026-05-23_1600/` (cloning pass 2), and `results/2026-05-23_2152/` (omnivoice + voxcpm + magpie pass 3).
+Raw CSVs live alongside their reports — Mac runs are in `_gh-pages/2026-05-23_*` (since `results/` is gitignored and per-machine).
 
 Caveats: one machine, one run. Re-bench on your own hardware before committing — see [Known issues](#known-issues) for examples of model README claims that didn't survive contact with a real install.
 

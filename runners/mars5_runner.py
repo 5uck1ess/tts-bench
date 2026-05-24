@@ -30,6 +30,8 @@ import sys
 import time
 from pathlib import Path
 
+import _meminfo
+
 
 def _read_ref_transcript(ref_wav):
     if not ref_wav:
@@ -108,6 +110,7 @@ def main() -> int:
     def _one(text, out_path, run_index, write_wav):
         try:
             cfg = config_class(deep_clone=deep_clone)
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             result = mars5.tts(text, ref_tensor, ref_text or "", cfg=cfg)
             t_end = time.perf_counter()
@@ -128,6 +131,7 @@ def main() -> int:
                 "ok": True, "run_index": run_index,
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
             return True
         except Exception as e:

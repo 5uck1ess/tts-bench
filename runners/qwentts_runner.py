@@ -35,6 +35,8 @@ import sys
 import time
 from pathlib import Path
 
+import _meminfo
+
 
 # Map our ISO-style language codes to Qwen3-TTS's full names.
 LANG_MAP = {
@@ -116,6 +118,7 @@ def main() -> int:
 
     def _one(text, out_path, run_index, write_wav):
         try:
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             wavs, sr = model.generate_voice_clone(
                 text=text,
@@ -140,6 +143,7 @@ def main() -> int:
                 "ok": True, "run_index": run_index,
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
             return True
         except Exception as e:

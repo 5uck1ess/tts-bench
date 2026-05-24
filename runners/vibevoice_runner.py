@@ -41,6 +41,8 @@ import time
 import urllib.request
 from pathlib import Path
 
+import _meminfo
+
 
 VOICE_PRESETS = {
     "en-Carter_man":   None,
@@ -144,6 +146,7 @@ def main() -> int:
                 if torch.is_tensor(v):
                     inputs[k] = v.to(device)
 
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             outputs = model.generate(
                 **inputs, max_new_tokens=None, cfg_scale=args.cfg_scale,
@@ -163,6 +166,7 @@ def main() -> int:
                 "ok": True, "run_index": run_index,
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
             return True
         except Exception as e:

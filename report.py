@@ -285,6 +285,15 @@ def _fmt_rtf(x):
     return f"{x:.2f}×"
 
 
+def _fmt_mb(x):
+    """Format MiB compactly: <1000 MB shows as 'NNN MB', >=1024 as 'X.XX GB'."""
+    if x is None:
+        return "—"
+    if x >= 1024:
+        return f"{x/1024:.2f} GB"
+    return f"{x:.0f} MB"
+
+
 def _ds(val):
     """data-sort attribute for numeric cells; empty when None."""
     return f' data-sort="{val}"' if val is not None else ' data-sort=""'
@@ -327,7 +336,8 @@ def _read_csv(csv_path):
     rows = []
     with csv_path.open(encoding="utf-8") as f:
         for r in csv.DictReader(f):
-            for k in ("ttfa_ms", "gen_s", "audio_s", "rtf", "wall_s"):
+            for k in ("ttfa_ms", "gen_s", "audio_s", "rtf",
+                      "peak_mem_mb", "peak_vram_mb", "wall_s"):
                 v = r.get(k)
                 r[k] = float(v) if v not in (None, "") else None
             r["run_index"] = int(r.get("run_index") or 0)
@@ -390,7 +400,7 @@ def build_report(run_dir: Path) -> Path:
 
         out.append('<table><thead><tr>')
         for col in ("Model", "Device", "TTFA cold", "TTFA warm",
-                    "RTF cold", "RTF warm", "Audio (cold)"):
+                    "RTF cold", "RTF warm", "Mem", "VRAM", "Audio (cold)"):
             out.append(f'<th>{col}</th>')
         out.append('</tr></thead><tbody>')
 
@@ -407,7 +417,7 @@ def build_report(run_dir: Path) -> Path:
 
             if not cold:
                 err = (failed.get("error") if failed else "") or "no successful run"
-                out.append(f'<td colspan="5" class="fail">FAIL: {escape(err.strip()[:140])}</td>')
+                out.append(f'<td colspan="7" class="fail">FAIL: {escape(err.strip()[:140])}</td>')
                 out.append('</tr>')
                 continue
 
@@ -422,6 +432,9 @@ def build_report(run_dir: Path) -> Path:
             warm_rtfs = [v for v in (_rtf(w) for w in warms) if v is not None]
             rtf_warm = (sum(warm_rtfs) / len(warm_rtfs)) if warm_rtfs else None
 
+            mem_cold = cold.get("peak_mem_mb")
+            vram_cold = cold.get("peak_vram_mb")
+
             wav_name = f"{model}_{device}_p{pid}.wav"
             audio_html = (f'<audio controls preload="none" src="{escape(wav_name)}"></audio>'
                           if (run_dir / wav_name).exists()
@@ -431,6 +444,8 @@ def build_report(run_dir: Path) -> Path:
             out.append(f'<td class="num"{_ds(ttfa_warm)}>{_fmt_ttfa(ttfa_warm)}</td>')
             out.append(f'<td class="num"{_ds(rtf_cold)}>{_fmt_rtf(rtf_cold)}</td>')
             out.append(f'<td class="num"{_ds(rtf_warm)}>{_fmt_rtf(rtf_warm)}</td>')
+            out.append(f'<td class="num"{_ds(mem_cold)}>{_fmt_mb(mem_cold)}</td>')
+            out.append(f'<td class="num"{_ds(vram_cold)}>{_fmt_mb(vram_cold)}</td>')
             out.append(f'<td>{audio_html}</td>')
             out.append('</tr>')
 

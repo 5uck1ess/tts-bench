@@ -23,6 +23,8 @@ import json
 import sys
 import time
 
+import _meminfo
+
 
 def main() -> int:
     p = argparse.ArgumentParser()
@@ -61,6 +63,7 @@ def main() -> int:
 
     def _one(text, out_path, run_index, write_wav):
         try:
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             if args.reference:
                 wav = model.generate(text=text, reference_wav_path=args.reference)
@@ -77,6 +80,7 @@ def main() -> int:
                 "ok": True, "run_index": run_index,
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
             return True
         except Exception as e:

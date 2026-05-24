@@ -23,6 +23,8 @@ import sys
 import time
 from pathlib import Path
 
+import _meminfo
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -116,6 +118,7 @@ def main() -> int:
 
     def _one(text, out_path, run_index, write_wav):
         try:
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             first = None
             chunks = []
@@ -144,6 +147,7 @@ def main() -> int:
                 "ok": True, "run_index": run_index,
                 "ttfa_ms": (first - t0) * 1000 if first else None,
                 "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
             return True
         except Exception as e:

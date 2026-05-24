@@ -302,5 +302,16 @@ else
     echo "supertonic: already installed"
 fi
 
+# --- psutil in every venv (for bench memory tracking) ---
+# Bench reports include peak CPU RSS via psutil. The runner falls back to
+# `None` if psutil is missing, so this is best-effort — but cheap to install.
+echo; cyan "=== psutil in every venv (for bench memory tracking) ==="
+for v in venvs/*/bin/python; do
+    if [ -x "$v" ]; then
+        uv pip install --python "$v" psutil --quiet >/dev/null 2>&1 || true
+    fi
+done
+green "psutil: ensured in all venvs"
+
 echo
 green "Done. Run: python bench.py"

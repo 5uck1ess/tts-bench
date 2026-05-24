@@ -11,6 +11,8 @@ import json
 import sys
 import time
 
+import _meminfo
+
 
 def main() -> int:
     p = argparse.ArgumentParser()
@@ -37,6 +39,7 @@ def main() -> int:
 
     for i in range(args.runs):
         try:
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             first = None
             chunks = []
@@ -64,6 +67,7 @@ def main() -> int:
                 "ttfa_ms": (first - t0) * 1000 if first else None,
                 "gen_s": t_end - t0,
                 "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
         except Exception as e:
             print(json.dumps({

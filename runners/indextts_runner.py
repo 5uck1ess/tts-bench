@@ -34,6 +34,8 @@ import sys
 import time
 from pathlib import Path
 
+import _meminfo
+
 
 def main() -> int:
     p = argparse.ArgumentParser()
@@ -89,6 +91,7 @@ def main() -> int:
         try:
             import numpy as np
 
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             # output_path=None routes through the "return tuple" branch in
             # IndexTTS2.infer_generator (line 702-708 of infer_v2.py), avoiding
@@ -117,6 +120,7 @@ def main() -> int:
                 "ok": True, "run_index": run_index,
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
             return True
         except Exception as e:

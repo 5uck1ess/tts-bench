@@ -291,4 +291,15 @@ if (-not (Test-Path "venvs\supertonic\Scripts\python.exe")) {
     Write-Host "supertonic: already installed" -ForegroundColor Gray
 }
 
+Step "psutil in every venv (for bench memory tracking)"
+# Bench reports include peak CPU RSS via psutil. The runner falls back to
+# `None` if psutil is missing, so this is best-effort — but cheap to install.
+Get-ChildItem venvs -Directory | ForEach-Object {
+    $py = Join-Path $_.FullName "Scripts\python.exe"
+    if (Test-Path $py) {
+        & uv pip install --python $py psutil --quiet 2>&1 | Out-Null
+    }
+}
+Write-Host "psutil: ensured in all venvs" -ForegroundColor Green
+
 Write-Host "`nDone. Run: python bench.py" -ForegroundColor Green

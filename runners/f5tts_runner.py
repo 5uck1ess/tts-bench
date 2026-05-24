@@ -28,6 +28,8 @@ import sys
 import time
 from pathlib import Path
 
+import _meminfo
+
 
 def _install_soundfile_loader():
     """Replace torchaudio.load with soundfile to avoid torchcodec DLL hell on Windows."""
@@ -94,6 +96,7 @@ def main() -> int:
 
     def _one(text, out_path, run_index, write_wav):
         try:
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             result = m.infer(
                 ref_file=str(ref_wav), ref_text=ref_text, gen_text=text,
@@ -111,6 +114,7 @@ def main() -> int:
                 "ok": True, "run_index": run_index,
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
             return True
         except Exception as e:

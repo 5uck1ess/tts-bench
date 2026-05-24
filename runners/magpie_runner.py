@@ -30,6 +30,8 @@ import json
 import sys
 import time
 
+import _meminfo
+
 
 # Magpie 357M has a small set of built-in speakers. 0 is a reasonable default
 # for English; pick higher indices if you want other voices.
@@ -70,6 +72,7 @@ def main() -> int:
 
     def _one(text, out_path, run_index, write_wav):
         try:
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             with torch.no_grad():
                 audio, _ = model.do_tts(
@@ -89,6 +92,7 @@ def main() -> int:
                 "ok": True, "run_index": run_index,
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
             return True
         except Exception as e:

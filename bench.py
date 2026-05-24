@@ -205,6 +205,7 @@ def main() -> int:
     fieldnames = ["prompt_id", "model", "device", "variant", "can_clone",
                   "run_index", "is_cold",
                   "ttfa_ms", "gen_s", "audio_s", "rtf",
+                  "peak_mem_mb", "peak_vram_mb",
                   "wall_s", "ok", "error"]
 
     with csv_path.open("w", newline="", encoding="utf-8") as f:
@@ -229,6 +230,8 @@ def main() -> int:
                     gen_s = r.get("gen_s")
                     audio_s = r.get("audio_s")
                     rtf = (audio_s / gen_s) if (audio_s and gen_s) else None
+                    peak_mem = r.get("peak_mem_mb")
+                    peak_vram = r.get("peak_vram_mb")
 
                     row = {
                         "prompt_id": prompt_id,
@@ -242,6 +245,8 @@ def main() -> int:
                         "gen_s": round(gen_s, 4) if gen_s else "",
                         "audio_s": round(audio_s, 3) if audio_s else "",
                         "rtf": round(rtf, 2) if rtf else "",
+                        "peak_mem_mb": round(peak_mem, 1) if peak_mem is not None else "",
+                        "peak_vram_mb": round(peak_vram, 1) if peak_vram is not None else "",
                         "wall_s": round(r.get("wall_s", 0), 3),
                         "ok": r.get("ok", False),
                         "error": (r.get("error") or "")[:200],

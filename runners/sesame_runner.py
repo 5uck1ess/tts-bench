@@ -48,6 +48,8 @@ import sys
 import time
 from pathlib import Path
 
+import _meminfo
+
 
 SAMPLE_RATE = 24000  # Mimi codec
 MODEL_ID = "sesame/csm-1b"
@@ -127,6 +129,7 @@ def main() -> int:
         try:
             conversation = _build_conversation(text)
 
+            _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             inputs = processor.apply_chat_template(
                 conversation, tokenize=True, return_dict=True,
@@ -154,6 +157,7 @@ def main() -> int:
                 "ok": True, "run_index": run_index,
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
             }), flush=True)
             return True
         except Exception as e:
