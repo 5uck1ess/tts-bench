@@ -115,7 +115,7 @@ def build_cells(reference=None, requested_models=None, requested_devices=None,
 
 
 def run_cell(cell, text, out_wav, language="en", runs=1, reference=None,
-             timeout=300) -> list[dict]:
+             timeout=600) -> list[dict]:
     """Run one (model, device) cell with N back-to-back generations.
 
     Returns one dict per run from the runner's JSON-line stdout. On failure
