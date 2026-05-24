@@ -176,6 +176,31 @@ if (-not (Test-Path "venvs\omnivoice\Scripts\python.exe")) {
     Write-Host "omnivoice: already installed" -ForegroundColor Gray
 }
 
+Step "ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning)"
+if (-not (Test-Path "venvs\zipvoice\Scripts\python.exe")) {
+    # No pip wheel — source clone + editable install. Same lab as OmniVoice.
+    # pyproject.toml in the repo has no [build-system]; we patch it during clone.
+    Invoke-Checked "uv venv zipvoice" { uv venv venvs\zipvoice --python 3.11 }
+    if (-not (Test-Path "venvs\zipvoice\src")) {
+        Invoke-Checked "git clone zipvoice" { git clone --depth 1 https://github.com/k2-fsa/ZipVoice venvs\zipvoice\src }
+    }
+    # Patch pyproject.toml so editable install works (upstream has no [build-system]).
+    $pj = "venvs\zipvoice\src\pyproject.toml"
+    if (-not (Select-String -Path $pj -Pattern "\[build-system\]" -Quiet)) {
+        $patch = "[build-system]`nbuild-backend = `"setuptools.build_meta`"`nrequires = [`"setuptools>=61`"]`n`n[project]`nname = `"zipvoice`"`nversion = `"0.1.0`"`n`n[tool.setuptools.packages.find]`ninclude = [`"zipvoice*`"]`n`n"
+        $existing = Get-Content $pj -Raw
+        Set-Content $pj ($patch + $existing)
+    }
+    Invoke-Checked "uv pip install zipvoice editable" { uv pip install --python venvs\zipvoice\Scripts\python.exe -e venvs\zipvoice\src }
+    Invoke-Checked "uv pip install zipvoice requirements" { uv pip install --python venvs\zipvoice\Scripts\python.exe -r venvs\zipvoice\src\requirements.txt }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120). k2 is NOT required for inference.
+    # Pin to 2.8.0: torchaudio>=2.9.0 requires torchcodec which has no Windows wheels.
+    Invoke-Checked "torch cu128 for zipvoice" { uv pip install --python venvs\zipvoice\Scripts\python.exe "torch==2.8.0+cu128" "torchaudio==2.8.0+cu128" --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "zipvoice: ok (zero-shot cloning zh+en, 123M, weights auto-download from HF on first use)" -ForegroundColor Green
+} else {
+    Write-Host "zipvoice: already installed" -ForegroundColor Gray
+}
+
 Step "VoxCPM-0.5B (OpenBMB, multilingual cloning)"
 if (-not (Test-Path "venvs\voxcpm\Scripts\python.exe")) {
     # voxcpm requires Python >=3.10 <3.13 and torch >=2.5 with CUDA >=12.

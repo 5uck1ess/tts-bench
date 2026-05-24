@@ -190,6 +190,34 @@ else
     echo "omnivoice: already installed"
 fi
 
+# --- ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning) ---
+echo; cyan "=== ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning) ==="
+if [ ! -x venvs/zipvoice/bin/python ]; then
+    # No pip wheel — source clone + editable install. Same lab as OmniVoice.
+    # pyproject.toml in the repo has no [build-system]; we patch it before installing.
+    uv venv venvs/zipvoice --python 3.11 || die "uv venv zipvoice"
+    if [ ! -d venvs/zipvoice/src ]; then
+        git clone --depth 1 https://github.com/k2-fsa/ZipVoice venvs/zipvoice/src \
+            || die "git clone zipvoice"
+    fi
+    # Patch pyproject.toml so editable install works (upstream has no [build-system]).
+    if ! grep -q '\[build-system\]' venvs/zipvoice/src/pyproject.toml 2>/dev/null; then
+        printf '[build-system]\nbuild-backend = "setuptools.build_meta"\nrequires = ["setuptools>=61"]\n\n[project]\nname = "zipvoice"\nversion = "0.1.0"\n\n[tool.setuptools.packages.find]\ninclude = ["zipvoice*"]\n\n' \
+            | cat - venvs/zipvoice/src/pyproject.toml > /tmp/pj_tmp && mv /tmp/pj_tmp venvs/zipvoice/src/pyproject.toml
+    fi
+    uv pip install --python venvs/zipvoice/bin/python -e venvs/zipvoice/src \
+        || die "uv pip install zipvoice editable"
+    uv pip install --python venvs/zipvoice/bin/python -r venvs/zipvoice/src/requirements.txt \
+        || die "uv pip install zipvoice requirements"
+    # k2 is NOT required for inference — skip it.
+    # Pin to 2.8.0: torchaudio>=2.9.0 requires torchcodec which has no Windows wheels.
+    # CUDA users on Blackwell can install cu128 torch 2.8.0 manually:
+    # uv pip install --python venvs/zipvoice/bin/python "torch==2.8.0+cu128" "torchaudio==2.8.0+cu128" --index-url https://download.pytorch.org/whl/cu128
+    green "zipvoice: ok (zero-shot cloning zh+en, 123M, weights auto-download from HF on first use)"
+else
+    echo "zipvoice: already installed"
+fi
+
 # --- VoxCPM-0.5B (OpenBMB, multilingual cloning) ---
 echo; cyan "=== VoxCPM-0.5B (OpenBMB, multilingual cloning) ==="
 if [ ! -x venvs/voxcpm/bin/python ]; then
