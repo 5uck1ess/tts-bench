@@ -17,3 +17,8 @@ smoke_*.py
 smoke_*.wav
 test_*.wav
 docs/superpowers/
+
+# Windows: bash treats `nul` as a regular filename, so `cmd 2>nul`
+# from a bash shell on Windows leaves a literal file behind.
+nul
+NUL
