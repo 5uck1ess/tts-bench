@@ -9,5 +9,9 @@
   "ram_gb": 126,
   "gpu": "NVIDIA GeForce RTX 5090",
   "gpu_vram_gb": 32,
-  "captured_at": "2026-05-24T05:54:13Z"
+  "captured_at": "2026-05-24T05:54:13Z",
+  "label": "cloning \u00b7 chris_hemsworth_15s",
+  "reference": "chris_hemsworth_15s.wav",
+  "models_filter": null,
+  "prompts_filter": null
 }

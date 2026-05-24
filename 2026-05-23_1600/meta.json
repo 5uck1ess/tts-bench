@@ -9,5 +9,9 @@
   "ram_gb": 16,
   "gpu": "Apple M4 GPU (MPS)",
   "gpu_vram_gb": null,
-  "captured_at": "2026-05-24T03:15:26Z"
+  "captured_at": "2026-05-24T03:15:26Z",
+  "label": "cloning \u00b7 pass 2 (jo/juliette refs)",
+  "reference": null,
+  "models_filter": null,
+  "prompts_filter": null
 }
