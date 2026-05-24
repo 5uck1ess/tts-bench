@@ -28,6 +28,7 @@ import sys
 import time
 
 import _meminfo
+import _naq
 
 
 LANG_CODE = {
@@ -113,6 +114,7 @@ def main() -> int:
                 "ttfa_ms": (first - t0) * 1000 if first else None,
                 "gen_s": t_end - t0, "audio_s": audio_s,
                 **_meminfo.sample(args.device),
+                **(_naq.score(out_path) if write_wav else {"naq": None, "naq_harm": None, "naq_buzz": None}),
             }), flush=True)
             return True
         except Exception as e:

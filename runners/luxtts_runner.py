@@ -12,6 +12,7 @@ import sys
 import time
 
 import _meminfo
+import _naq
 
 
 def main() -> int:
@@ -68,6 +69,7 @@ def main() -> int:
                 "gen_s": t_end - t0,
                 "audio_s": audio_s,
                 **_meminfo.sample(args.device),
+                **(_naq.score(args.out) if i == 0 else {"naq": None, "naq_harm": None, "naq_buzz": None}),
             }), flush=True)
         except Exception as e:
             print(json.dumps({
