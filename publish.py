@@ -33,7 +33,7 @@ if hasattr(sys.stderr, "reconfigure"):
 
 from report import (
     STYLE, CONTROLS, SCRIPT,
-    _ds, _read_csv, _sort_prompt_ids, build_report,
+    _ds, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
 )
 
 REPO = Path(__file__).parent
@@ -132,6 +132,7 @@ def build_pages_index():
             continue
         if not rows:
             continue
+        meta = _read_meta(d)
         runs.append({
             "name": d.name,
             "models": sorted({r["model"] for r in rows}),
@@ -139,6 +140,8 @@ def build_pages_index():
             "prompts": _sort_prompt_ids({r["prompt_id"] for r in rows}),
             "rows": len(rows),
             "ok": sum(1 for r in rows if r["ok"]),
+            "rig": (meta or {}).get("rig"),
+            "rig_full": _rig_summary(meta),
         })
 
     out = ['<!doctype html>',
@@ -154,7 +157,7 @@ def build_pages_index():
            '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>',
            f'<div class="meta">{len(runs)} published run(s)</div>',
            '<table><thead><tr>']
-    for col in ("Date", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
+    for col in ("Date", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
         out.append(f'<th>{col}</th>')
     out.append('</tr></thead><tbody>')
 
@@ -162,8 +165,11 @@ def build_pages_index():
         models = (", ".join(r["models"])
                   if len(r["models"]) <= 5
                   else f"{len(r['models'])} models")
+        rig_cell = (f'<code title="{escape(r["rig_full"])}">{escape(r["rig"])}</code>'
+                    if r["rig"] else '<span class="muted">—</span>')
         out.append('<tr>')
         out.append(f"<td>{escape(r['name'])}</td>")
+        out.append(f"<td>{rig_cell}</td>")
         out.append(f"<td{_ds(len(r['models']))}>{escape(models)}</td>")
         out.append(f"<td>{escape(', '.join(r['devices']))}</td>")
         out.append(f"<td class='num'{_ds(len(r['prompts']))}>{len(r['prompts'])}</td>")
@@ -233,11 +239,19 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
 
     for src in (run_dir / "report.html", run_dir / "results.csv"):
         shutil.copy2(src, dest)
+    meta_src = run_dir / "meta.json"
+    if meta_src.exists():
+        shutil.copy2(meta_src, dest)
+    else:
+        print(f"  warning: no meta.json in {run_dir.name} — "
+              f"run `python bench.py --write-meta {run_dir.relative_to(REPO)}` "
+              f"to tag it with this machine's rig info.")
     wavs = list(run_dir.glob("*.wav"))
     for wav in wavs:
         shutil.copy2(wav, dest)
     total_bytes = sum(p.stat().st_size for p in dest.iterdir())
-    print(f"Copied report.html + results.csv + {len(wavs)} wav(s) "
+    has_meta = " + meta.json" if meta_src.exists() else ""
+    print(f"Copied report.html + results.csv{has_meta} + {len(wavs)} wav(s) "
           f"({total_bytes / 1024 / 1024:.1f} MB)")
 
     (WORKTREE / ".nojekyll").touch()

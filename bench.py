@@ -15,10 +15,129 @@ Usage:
 
 import argparse
 import csv
+import json
+import os
+import platform
+import shutil
+import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
+from pathlib import Path
+
+# Windows console defaults to cp1252; force UTF-8 so em-dashes / arrows don't
+# render as � (or crash on a print).
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from harness import REPO, build_cells, run_cell
+
+
+def _run_cmd(cmd):
+    """Run a shell command; return stripped stdout on success, else None.
+
+    Returns None for missing executable (OSError), non-zero exit, or timeout.
+    """
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def _default_rig_label(sys_name, cpu, gpu):
+    os_short = {"Windows": "windows", "Darwin": "mac", "Linux": "linux"}.get(sys_name, "unknown")
+    if gpu and "RTX" in gpu:
+        return f"{os_short}-{gpu.split()[-1].lower()}"  # "windows-5090"
+    if cpu and "Apple" in cpu:
+        suffix = cpu.replace("Apple ", "").lower().replace(" ", "-")
+        return f"{os_short}-{suffix}"  # "mac-m4" or "mac-m4-pro"
+    if cpu:
+        words = cpu.lower().split()
+        for i, w in enumerate(words):
+            if w in ("ryzen", "core", "epyc", "xeon"):
+                return f"{os_short}-{'-'.join(words[i:i+3])}"
+    return os_short
+
+
+def detect_rig(label=None):
+    """Detect machine info for tagging a bench run. Pure stdlib."""
+    sys_name = platform.system()
+    meta = {
+        "rig": label,
+        "os": f"{sys_name} {platform.release()}",
+        "os_version": platform.version(),
+        "python": platform.python_version(),
+        "cpu": None,
+        "cpu_cores_logical": os.cpu_count(),
+        "cpu_cores_physical": None,
+        "ram_gb": None,
+        "gpu": None,
+        "gpu_vram_gb": None,
+        "captured_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+
+    if sys_name == "Windows":
+        ps = ["powershell", "-NoProfile", "-Command"]
+        meta["cpu"] = _run_cmd(ps + ["(Get-CimInstance Win32_Processor).Name"])
+        ram = _run_cmd(ps + ["(Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory"])
+        if ram and ram.isdigit():
+            meta["ram_gb"] = round(int(ram) / (1024**3))
+        cores = _run_cmd(ps + ["(Get-CimInstance Win32_Processor).NumberOfCores"])
+        if cores and cores.isdigit():
+            meta["cpu_cores_physical"] = int(cores)
+    elif sys_name == "Darwin":
+        meta["cpu"] = _run_cmd(["sysctl", "-n", "machdep.cpu.brand_string"])
+        ram = _run_cmd(["sysctl", "-n", "hw.memsize"])
+        if ram and ram.isdigit():
+            meta["ram_gb"] = round(int(ram) / (1024**3))
+        cores = _run_cmd(["sysctl", "-n", "hw.physicalcpu"])
+        if cores and cores.isdigit():
+            meta["cpu_cores_physical"] = int(cores)
+        if meta["cpu"] and "Apple" in meta["cpu"]:
+            meta["gpu"] = f"{meta['cpu']} GPU (MPS)"
+    elif sys_name == "Linux":
+        try:
+            with open("/proc/cpuinfo") as f:
+                for line in f:
+                    if line.startswith("model name"):
+                        meta["cpu"] = line.split(":", 1)[1].strip()
+                        break
+            with open("/proc/meminfo") as f:
+                for line in f:
+                    if line.startswith("MemTotal"):
+                        meta["ram_gb"] = round(int(line.split()[1]) / (1024**2))
+                        break
+        except OSError:
+            pass
+
+    if shutil.which("nvidia-smi"):
+        out = _run_cmd(["nvidia-smi", "--query-gpu=name,memory.total",
+                        "--format=csv,noheader,nounits"])
+        if out:
+            first = out.splitlines()[0]
+            parts = [p.strip() for p in first.split(",")]
+            if parts:
+                meta["gpu"] = parts[0]
+                if len(parts) >= 2:
+                    try:
+                        meta["gpu_vram_gb"] = round(int(parts[1]) / 1024)
+                    except ValueError:
+                        pass
+
+    if not meta["rig"]:
+        meta["rig"] = _default_rig_label(sys_name, meta["cpu"], meta["gpu"])
+    return meta
+
+
+def write_meta(run_dir: Path, rig_label=None):
+    """Detect rig info and write meta.json into run_dir. Returns the meta dict."""
+    meta = detect_rig(label=rig_label)
+    (run_dir / "meta.json").write_text(
+        json.dumps(meta, indent=2) + "\n", encoding="utf-8"
+    )
+    return meta
 
 
 PROMPTS = [
@@ -44,7 +163,21 @@ def main() -> int:
                    help="Comma-sep devices to attempt; default: cpu + cuda + mps (auto-detect).")
     p.add_argument("--runs", type=int, default=3,
                    help="Generations per cell (run 1 = cold, runs 2..N = warm). Default 3.")
+    p.add_argument("--rig", default=None,
+                   help="Short rig label (e.g. 'windows-5090'). Auto-detected if omitted.")
+    p.add_argument("--write-meta", metavar="DIR", default=None,
+                   help="Just write meta.json into an existing results dir and exit (no bench run).")
     args = p.parse_args()
+
+    if args.write_meta:
+        run_dir = Path(args.write_meta)
+        if not run_dir.is_absolute():
+            run_dir = REPO / args.write_meta
+        if not run_dir.exists():
+            raise SystemExit(f"Not found: {run_dir}")
+        meta = write_meta(run_dir, rig_label=args.rig)
+        print(f"Wrote {run_dir}/meta.json — rig: {meta['rig']}")
+        return 0
 
     if args.prompts:
         wanted = {int(x) for x in args.prompts.split(",")}
@@ -63,7 +196,9 @@ def main() -> int:
     out_dir = REPO / "results" / datetime.now().strftime("%Y-%m-%d_%H%M")
     out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = out_dir / "results.csv"
-    print(f"Output: {out_dir}\n")
+    meta = write_meta(out_dir, rig_label=args.rig)
+    print(f"Output: {out_dir}")
+    print(f"Rig: {meta['rig']} ({meta.get('cpu') or '?'} / {meta.get('gpu') or 'no GPU detected'})\n")
     print(f"Plan: {len(selected_prompts)} prompts × {len(cells)} cells × {args.runs} runs/cell\n")
 
     rows = []

@@ -22,6 +22,7 @@ Usage:
 
 import argparse
 import csv
+import json
 import sys
 import webbrowser
 from collections import defaultdict
@@ -289,6 +290,39 @@ def _ds(val):
     return f' data-sort="{val}"' if val is not None else ' data-sort=""'
 
 
+def _read_meta(run_dir):
+    """Read meta.json from a results dir; return None if missing or invalid."""
+    p = run_dir / "meta.json"
+    if not p.exists():
+        return None
+    try:
+        return json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def _rig_summary(meta):
+    """One-line human summary like 'AMD Ryzen 9 9950X3D · RTX 5090 32GB · 128 GB RAM · Windows 11'."""
+    if not meta:
+        return ""
+    parts = []
+    if meta.get("cpu"):
+        cpu = meta["cpu"]
+        if meta.get("cpu_cores_physical"):
+            cpu = f"{cpu} ({meta['cpu_cores_physical']}C)"
+        parts.append(cpu)
+    if meta.get("gpu"):
+        gpu = meta["gpu"]
+        if meta.get("gpu_vram_gb"):
+            gpu = f"{gpu} {meta['gpu_vram_gb']}GB"
+        parts.append(gpu)
+    if meta.get("ram_gb"):
+        parts.append(f"{meta['ram_gb']} GB RAM")
+    if meta.get("os"):
+        parts.append(meta["os"])
+    return " · ".join(parts)
+
+
 def _read_csv(csv_path):
     rows = []
     with csv_path.open(encoding="utf-8") as f:
@@ -324,6 +358,8 @@ def build_report(run_dir: Path) -> Path:
     devices_seen = sorted({r["device"] for r in rows})
     runs_per_cell = max(len(v) for v in cells.values())
 
+    meta = _read_meta(run_dir)
+
     out = ['<!doctype html>',
            '<html lang="en"><head><meta charset="utf-8">',
            f'<title>TTS Bench — {escape(run_dir.name)}</title>',
@@ -331,12 +367,18 @@ def build_report(run_dir: Path) -> Path:
            '</head><body>',
            CONTROLS,
            '<div class="nav"><a href="../index.html">← all runs</a></div>',
-           f'<h1>TTS Bench — {escape(run_dir.name)}</h1>',
-           f'<div class="meta">{len(models_seen)} model(s) · '
-           f'{len(devices_seen)} device(s) · '
-           f'{len(prompts_seen)} prompt(s) · '
-           f'{runs_per_cell} run(s) per cell</div>',
-           '<div class="meta">Source: <code>results.csv</code></div>']
+           f'<h1>TTS Bench — {escape(run_dir.name)}</h1>']
+    if meta:
+        out.append(f'<div class="meta"><strong>Rig:</strong> '
+                   f'<code>{escape(meta.get("rig") or "?")}</code> — '
+                   f'{escape(_rig_summary(meta))}</div>')
+    out.extend([
+        f'<div class="meta">{len(models_seen)} model(s) · '
+        f'{len(devices_seen)} device(s) · '
+        f'{len(prompts_seen)} prompt(s) · '
+        f'{runs_per_cell} run(s) per cell</div>',
+        '<div class="meta">Source: <code>results.csv</code></div>',
+    ])
 
     for pid in prompts_seen:
         out.append(f'<div class="prompt"><h2>Prompt {escape(pid)}</h2>')
@@ -418,6 +460,7 @@ def build_index() -> Path:
             continue
         if not rows:
             continue
+        meta = _read_meta(d)
         runs.append({
             "name": d.name,
             "models": sorted({r["model"] for r in rows}),
@@ -426,6 +469,8 @@ def build_index() -> Path:
             "rows": len(rows),
             "ok": sum(1 for r in rows if r["ok"]),
             "has_html": (d / "report.html").exists(),
+            "rig": (meta or {}).get("rig"),
+            "rig_full": _rig_summary(meta),
         })
 
     out = ['<!doctype html>',
@@ -437,7 +482,7 @@ def build_index() -> Path:
            '<h1>TTS Bench — All Runs</h1>',
            f'<div class="meta">{len(runs)} run(s) with <code>results.csv</code></div>',
            '<table><thead><tr>']
-    for col in ("Date", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
+    for col in ("Date", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
         out.append(f'<th>{col}</th>')
     out.append('</tr></thead><tbody>')
 
@@ -447,8 +492,11 @@ def build_index() -> Path:
                   else f"{len(r['models'])} models")
         link = (f'<a href="{escape(r["name"])}/report.html">view</a>'
                 if r["has_html"] else '<span class="muted">no report</span>')
+        rig_cell = (f'<code title="{escape(r["rig_full"])}">{escape(r["rig"])}</code>'
+                    if r["rig"] else '<span class="muted">—</span>')
         out.append('<tr>')
         out.append(f"<td>{escape(r['name'])}</td>")
+        out.append(f"<td>{rig_cell}</td>")
         out.append(f"<td{_ds(len(r['models']))}>{escape(models)}</td>")
         out.append(f"<td>{escape(', '.join(r['devices']))}</td>")
         out.append(f"<td class='num'{_ds(len(r['prompts']))}>{len(r['prompts'])}</td>")
