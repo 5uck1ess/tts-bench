@@ -1,13 +1,7 @@
 .devkit/
 .obsidian/
 venvs/
-results/*
-!results/2026-05-23_1542/
-!results/2026-05-23_1600/
-!results/2026-05-23_2152/
-results/2026-05-23_1542/*.wav
-results/2026-05-23_1600/*.wav
-results/2026-05-23_2152/*.wav
+results/
 reference/*.wav
 reference/*.mp3
 reference/*.m4a
