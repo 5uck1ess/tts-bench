@@ -615,6 +615,63 @@ def _build_context(rows, run_dir, meta):
     }
 
 
+def _render_lens_picker(ctx):
+    """Render the per-rig landing card with three lens links."""
+    meta = ctx["meta"]
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           f'<title>TTS Bench — {escape(ctx["run_name"])}</title>',
+           STYLE,
+           '</head><body>',
+           CONTROLS,
+           '<div class="nav"><a href="../index.html">← all runs</a></div>',
+           f'<h1>TTS Bench — {escape(ctx["run_name"])}</h1>']
+    if meta:
+        out.append(f'<div class="meta"><strong>Rig:</strong> '
+                   f'<code>{escape(meta.get("rig") or "?")}</code> — '
+                   f'{escape(_rig_summary(meta))}</div>')
+        if meta.get("label"):
+            ref = meta.get("reference")
+            ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
+            out.append(f'<div class="meta"><strong>Label:</strong> '
+                       f'{escape(meta["label"])}{ref_html}</div>')
+    n_models = len(ctx["models_seen"])
+    n_devices = len(ctx["devices_seen"])
+    n_prompts = len(ctx["prompts_seen"])
+    out.append(
+        f'<div class="meta">{n_models} model(s) · '
+        f'{n_devices} device(s) · '
+        f'{n_prompts} prompt(s) · '
+        f'{ctx["runs_per_cell"]} run(s) per cell</div>'
+    )
+    out.append('<div class="lens-grid">')
+    out.append(
+        '<div class="lens-card"><a href="speed.html">'
+        '<h3>▶ Speed</h3>'
+        f'<div class="desc">TTFA, RTF, memory · {n_models} models · sortable</div>'
+        '</a></div>'
+    )
+    out.append(
+        '<div class="lens-card"><a href="quality.html">'
+        '<h3>▶ Quality</h3>'
+        f'<div class="desc">NAQ + sub-scores · audio embedded · {n_models} models</div>'
+        '</a></div>'
+    )
+    out.append(
+        '<div class="lens-card"><a href="samples.html">'
+        '<h3>▶ Samples</h3>'
+        '<div class="desc">By-prompt gallery · A/B every model</div>'
+        '</a></div>'
+    )
+    out.append('</div>')
+    out.append('<div class="meta">'
+               '<a href="results.csv">results.csv</a> · '
+               '<a href="meta.json">meta.json</a></div>')
+    out.append(SCRIPT)
+    out.append('</body></html>')
+    return "\n".join(out)
+
+
 def build_report(run_dir: Path) -> Path:
     csv_path = run_dir / "results.csv"
     if not csv_path.exists():
