@@ -26,7 +26,7 @@ Listed because TTS speed is hardware-dependent — RTF claims that hold on a Ryz
 
 | Machine | OS | CPU | RAM | GPU | Used for |
 |---|---|---|---|---|---|
-| **Windows desktop** | Windows 11 Pro | AMD Ryzen 9 9950X3D (16C / 32T @ 4.3 GHz base) | 128 GB | NVIDIA RTX 5090 | Windows CPU bench rows (GPU runs pending) |
+| **Windows desktop** | Windows 11 Pro | AMD Ryzen 9 9950X3D (16C / 32T @ 4.3 GHz base) | 128 GB | NVIDIA RTX 5090 (32 GB) | Windows CPU + RTX 5090 CUDA bench rows |
 | **Mac** | macOS 26.5 | Apple M4 (10C) | 16 GB | Apple M4 GPU (MPS) | Mac CPU + MPS bench rows |
 
 If you reproduce on different hardware, your numbers will differ — file an issue or PR with your results and we'll add a column.
@@ -45,7 +45,7 @@ Same five prompts run on both rigs above. Numbers shown are from short prompts; 
 | **[Kokoro-82M](https://github.com/hexgrad/kokoro)** (hexgrad) | 82M / Apache 2.0 | 335ms | 245ms | 13× | 9 (a/b/e/f/h/i/j/p/z codes) | 54 voices; misaki tokenizer needs spaCy preinstall (see Known issues) |
 | **[KittenTTS](https://github.com/KittenML/KittenTTS)** (KittenML) | <100M / Apache 2.0 | 516ms | 487ms | 6.6× | EN only | 8 voices; non-streaming so TTFA == gen_s |
 | **[VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice)** (Microsoft, community fork) | 0.5B / MIT | ~3.9s | ~3.7s | **~0.5×** | EN only (7 preset voices) | streaming-class but heavy diffusion; DDPM steps tunable (5 default). Predefined `.pt` voice embeddings auto-downloaded |
-| [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) (NVIDIA, NeMo) | 357M / NVIDIA Open Model License | pending | pending | pending (CUDA: ~1.0× cold smoke) | 9 (en/es/de/it/vi/zh/fr/hi/ja) | fixed speaker embeddings (this checkpoint variant); HF accept-terms gated; install skips `[tts]` extra to avoid `pynini` on Windows — runner forces `apply_TN=False` to compensate |
+| [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) (NVIDIA, NeMo) | 357M / NVIDIA Open Model License | pending | pending | pending (CUDA: 1.7× warm — see below) | 9 (en/es/de/it/vi/zh/fr/hi/ja) | fixed speaker embeddings (this checkpoint variant); HF accept-terms gated; install skips `[tts]` extra to avoid `pynini` on Windows — runner forces `apply_TN=False` to compensate |
 | **[Supertonic](https://github.com/supertone-inc/supertonic)** (Supertone Inc., ONNX) | ~99M / MIT code + OpenRAIL-M weights | 560ms | **509ms** | **6.1×** | 31 (ar/bg/hr/cs/da/nl/en/et/fi/fr/de/el/hi/hu/id/it/ja/ko/lv/lt/pl/pt/ro/ru/sk/sl/es/sv/tr/uk/vi) | pure-ONNX runtime, no torch dep — tiny venv. Open-weight release is fixed-voice only (cloning via hosted Voice Builder / Supertone Play API). 44.1 kHz output |
 
 #### Zero-shot voice cloning models (accept a reference wav at inference time)
@@ -101,6 +101,56 @@ Same harness, 5 prompts × 3 runs each, warm averages across all runnable prompt
 | [LuxTTS](https://github.com/ysharma3501/LuxTTS) (zipvoice-based) | — | — | — | — | wav | install blocked on arm64 Mac too (see [Known issues](#known-issues)) |
 
 **Top-line takeaway on Mac:** Piper wins again (33× RTF, 202ms warm TTFA — drop-in for an always-on agent). Among cloning models, **Pocket-TTS is the clear winner on M4** — its 42ms warm TTFA actually beats the Windows number, because Pocket-TTS is single-thread dominated and M4 has strong single-thread perf. VibeVoice/MPS is the only diffusion-class model that reaches realtime on this machine; CPU diffusion isn't viable. NeuTTS gets no MPS benefit because its hot path is GGUF (llama-cpp, CPU-side). The new GPU-class additions (OmniVoice, VoxCPM, Magpie) all land sub-realtime on M4 — useful as "works at all on a Mac" data points, not as deploy candidates.
+
+### Windows desktop — RTX 5090 CUDA
+
+Same 5 prompts × 3 runs. Warm averages over the warm runs across all prompts the model can speak. `VRAM` is `torch.cuda.max_memory_allocated()` for the cold run. Pocket-TTS, KittenTTS, and Supertonic are CPU-only (skipped). LuxTTS install is still blocked on Windows.
+
+#### Predefined-voice models
+
+| Model | TTFA cold | TTFA warm | RTF warm | VRAM | Notes |
+|---|---|---|---|---|---|
+| **[Kokoro-82M](https://github.com/hexgrad/kokoro)** | **926ms** | **69ms** | **101×** | 0.7 GB | clear winner on this rig; warm TTFA matches Piper/cpu while RTF is 2× higher |
+| [VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice) | 4702ms | 4568ms | 2.1× | 2.6 GB | finally hits comfortable realtime on GPU (CPU was 0.5×). Diffusion cold-load tax still ~4.7s |
+| [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) | 6628ms | 5016ms | 1.7× | 3.6 GB | 9 langs; slow first turn (NeMo init), warm RTF reasonable. HF accept-terms gated |
+
+#### Zero-shot voice cloning models
+
+Two runs reported per model: **default voice** (the cloning model with its bundled fallback wav) and **cloning** (`--reference reference/chris_hemsworth_15s.wav` + matching transcript). Cloning numbers are usually slightly slower because the 15-second reference is longer than each model's bundled default.
+
+| Model | Mode | TTFA cold | TTFA warm | RTF warm | VRAM | Notes |
+|---|---|---|---|---|---|---|
+| **[OmniVoice](https://github.com/k2-fsa/OmniVoice)** (k2-fsa, 600+ langs) | default | **1177ms** | **811ms** | **8.5×** | 2.0 GB | top RTF on long prompts (20× warm on the Parakeet paragraph). Same wins on cloning (9.2×). |
+| OmniVoice | cloning | 1267ms | 869ms | **9.2×** | 2.4 GB | same fast as default; consistently the fastest cloning model on this hardware |
+| **[F5-TTS](https://github.com/SWivid/F5-TTS)** (v1 Base) | default | 1319ms | 872ms | **5.2×** | 0.8 GB | second-fastest cloner; smallest VRAM footprint of the cloning models |
+| F5-TTS | cloning | 1597ms | 1096ms | 5.3× | 0.8 GB | |
+| **[Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS)** | default | 2433ms | 2113ms | 4.2× | 2.0 GB | multilingual cloning baseline (CPML 1.0 non-commercial) |
+| Coqui XTTS-v2 | cloning | 2496ms | 1789ms | 4.1× | 1.9 GB | |
+| [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | default | 658ms | 273ms | 2.7× | 3.3 GB | best TTFA among cloning models; GGUF runs CPU-side so VRAM stays small. EN/FR/DE/ES |
+| NeuTTS Nano | cloning | 741ms | 306ms | 2.5× | 3.3 GB | |
+| [VibeVoice-Realtime cloning n/a]() | | | | | | (predefined voices only) |
+| [ChatterBox-TTS](https://github.com/resemble-ai/chatterbox) (Resemble AI) | default | 3645ms | 2842ms | 2.0× | 3.1 GB | community quality leader for cloning; 1000-step diffusion is the wall-time tax |
+| ChatterBox-TTS | cloning | 4468ms | 3333ms | 2.0× | 3.5 GB | |
+| [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | default | 1156ms | 434ms | 1.6× | 3.3 GB | EN only; same GGUF CPU-side path as Nano |
+| NeuTTS Air | cloning | 1202ms | 448ms | 1.4× | 3.3 GB | |
+| [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) (OpenBMB, 2B, 30 langs) | default | 5639ms | 5658ms | 1.2× | 5.4 GB | tokenizer-free 48 kHz output; 5+ GB VRAM is the heaviest in the cloning set |
+| VoxCPM2 | cloning | 7445ms | 5081ms | 1.2× | 5.7 GB | |
+| [IndexTTS-2](https://github.com/index-tts/index-tts) (Bilibili Index, ~1.5B) | default | 7065ms | 5966ms | 1.1× | 7.2 GB | source-clone install; ~5 GB weights; emotion-conditioning support |
+| IndexTTS-2 | cloning | 7486ms | 6072ms | 1.1× | 7.3 GB | |
+| [Qwen3-TTS-Base 1.7B](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | default | 11253ms | 10096ms | 0.6× | 4.5 GB | 10-lang cloning; warm RTF below realtime — slower than vendor's claimed 97ms streaming TTFA |
+| Qwen3-TTS Base | cloning (short) | 4420ms | 3247ms | 0.6× | 4.4 GB | **only completed 1/5 prompts** at 600s timeout — 15s reference + long text pushes generation past 5-10min per cell |
+| [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) | default | 14563ms | 15925ms | 0.5× | 3.5 GB | conversational TTS via ChatML; HF manual-approval gated. Mimi codec 24kHz |
+| Sesame CSM-1B | cloning | 14866ms | 12321ms | 0.5× | 3.5 GB | |
+| [MARS5-TTS](https://github.com/Camb-ai/MARS5-TTS) (CAMB.AI) | default | 32717ms | 32115ms | 0.2× | 6.0 GB | unexpectedly slow on CUDA — torch.hub model load + AR generation. AGPL-3.0 |
+| MARS5-TTS | cloning | 43620ms | 39235ms | 0.1× | 6.9 GB | |
+| [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | n/a | — | — | — | — | CPU-only (no CUDA path in the harness) |
+
+**Top-line takeaway on CUDA:**
+
+- *Predefined voices:* **Kokoro on the 5090 is the deploy-target answer** — 69ms warm TTFA, 101× RTF on short prompts, 0.7 GB VRAM. Lower latency than Piper/cpu and roughly 2× the RTF.
+- *Cloning, fastest:* **OmniVoice** — 869ms warm TTFA at 9.2× RTF on the Chris Hemsworth reference, scaling to 20× on long prompts. F5-TTS is the runner-up (5.3× warm RTF, smallest VRAM at 0.8 GB).
+- *Cloning, slowest:* MARS5 at 0.1× RTF and Qwen3-TTS Base at 0.5-0.6× — both genuinely sub-realtime on a 5090, with Qwen also hitting the 10-min per-cell wall on the 15-second reference (only the shortest prompt completed for cloning).
+- *VRAM budget:* the heaviest cloning models (IndexTTS-2 at 7.3 GB, MARS5 at 6.9 GB, VoxCPM2 at 5.7 GB) all comfortably fit a 16 GB GPU; the 32 GB on this rig is overkill.
 
 Raw CSVs live alongside their reports — Mac runs are in `_gh-pages/2026-05-23_*` (since `results/` is gitignored and per-machine).
 
@@ -299,8 +349,9 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
 
 ## Pending work
 
-- **RTX 5090 full bench pass** — formal `bench.py --device cuda` run for all 18 installed models with the cloning reference. CUDA torch is installed; cold/warm + memory numbers pending.
-- **Memory tracking in reports** — CPU RSS + CUDA peak VRAM per (model, device, prompt) cell. Plumbing added to the runner JSON-line protocol; back-fill across all runners pending.
+- **Subjective listening pass** — sit through all 19 models × default + cloning audio in the Demos report and write up a quality ranking alongside the speed numbers. Numbers tell you which one is fast; ears tell you which one is good.
+- **MARS5 CUDA investigation** — 0.1-0.2× RTF on a 5090 is suspicious for a model marketed as GPU-targeted. Could be torch.hub load overhead being counted, autoregressive batch size, or a config knob.
+- **Qwen3-TTS Base cloning timeout on long prompts** — at the 15-second Chris Hemsworth reference, prompts 2-5 hit the 10-min per-cell wall. Either swap to a shorter reference for the cloning bench or accept it as a "scales poorly with reference length" finding.
 - **ChatterBox / F5-TTS / Coqui XTTS on Mac MPS** — skipped earlier pass (all three are GPU-class on CPU; M4 CPU would be minutes per prompt). Worth re-running on Mac once MPS torch perf improves, or on a dedicated GPU Mac.
 - **LuxTTS on Mac arm64 / Windows** — depends on piper-phonemize, which has no wheels for those platforms; needs build-from-source or upstream wheel.
 
