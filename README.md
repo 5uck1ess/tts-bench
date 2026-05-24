@@ -4,7 +4,19 @@ Personal speed bench for small/local TTS models. Cold + warm runs, same prompts,
 
 Built to answer one question: *which open TTS model do I plug into an always-on voice agent on the machine I actually have?*
 
-**▶ [Listen to the results in your browser](https://5uck1ess.github.io/tts-bench/)** — every model × prompt combo has an inline audio player; no install needed.
+---
+
+## ▶ Demos
+
+**[5uck1ess.github.io/tts-bench](https://5uck1ess.github.io/tts-bench/)** — public side-by-side audio.
+
+Every model × prompt × device combination is rendered with an inline `<audio>` player so you can hear the actual output without cloning the repo or running anything locally. Useful for:
+
+- *Picking a model.* Listen to the same prompt across 18 TTS models on the same hardware. Quality, prosody, and artifacts are obvious in 5 seconds; benchmark tables can't show that.
+- *Comparing rigs.* Each report is tagged with the rig that produced it (Ryzen 9 9950X3D, Apple M4, etc.) so you can see how the same model sounds on the box you actually own.
+- *Comparing devices for one model.* CPU vs CUDA vs MPS rows for the same model, side by side, with their audio.
+
+You can also build and publish your own demos from any bench run — see [Generating local demos](#generating-local-demos) and [Publishing your own to GitHub Pages](#publishing-your-own-to-github-pages) below.
 
 ---
 
@@ -142,9 +154,9 @@ python compare.py "..." --no-play                         # silent batch run
 
 Wavs land in `results/compare/<timestamp>/<model>_<device>.wav` so you can re-listen later.
 
-### Reviewing bench results in the browser
+### Generating local demos
 
-`bench.py` writes a self-contained dark-mode `report.html` next to each run's `results.csv` — sortable-looking table of TTFA cold/warm + RTF cold/warm per (model, device, prompt), with an inline `<audio>` player per cell so you can click-play each wav without leaving the page. A top-level `results/index.html` lists every run with a link to its report.
+`bench.py` writes a self-contained dark-mode `report.html` next to each run's `results.csv` — sortable-looking table of TTFA cold/warm + RTF cold/warm per (model, device, prompt), with an inline `<audio>` player per cell so you can click-play each wav without leaving the page. A top-level `results/index.html` lists every run with a link to its report. This is what gets published to the [public Demos](#-demos).
 
 ```powershell
 python report.py results/2026-05-23_1409          # one report
@@ -155,9 +167,9 @@ python report.py --index                          # just rebuild results/index.h
 
 No dependencies — pure stdlib + a small HTML/CSS template. The report has a light/dark theme toggle (top-right, persisted to localStorage), sortable columns (click any header), and a live row filter. Reports regenerate from `results.csv`, so you can tweak `report.py` and re-run `--all` to refresh historical runs.
 
-### Publishing reports to GitHub Pages
+### Publishing your own to GitHub Pages
 
-`publish.py` ships a chosen run to a `gh-pages` branch (managed via a git worktree at `_gh-pages/`, never touches master) so anyone can view it without cloning the repo.
+`publish.py` ships a chosen run to a `gh-pages` branch (managed via a git worktree at `_gh-pages/`, never touches master) so anyone can view it without cloning the repo — same mechanism as the [public Demos](#-demos) at the top of this README.
 
 ```powershell
 python publish.py results/2026-05-23_2203          # publish + push
@@ -284,32 +296,12 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
 
 ---
 
-## Roadmap
+## Pending work
 
-Done in this round (May 23, 2026):
-- ✓ Kokoro, KittenTTS, Piper (predefined-voice tier)
-- ✓ ChatterBox, F5-TTS (extra cloning models)
-- ✓ VibeVoice-Realtime-0.5B (predefined-voice tier, via the community fork)
-- ✓ Coqui XTTS-v2 (idiap fork) — multilingual cloning baseline
-- ✓ OmniVoice (k2-fsa) — 600+ languages, diffusion-LM cloning
-- ✓ VoxCPM-0.5B (OpenBMB) — tokenizer-free multilingual cloning
-- ✓ Magpie-TTS Multilingual 357M (NVIDIA NeMo) — 9-lang predefined-voice; installed without the `[tts]` extra to sidestep `pynini` on Windows (runner forces `apply_TN=False`)
-- ✓ `can_clone` column in `results.csv` so cloning vs predefined is one-dimensional
-- ✓ `harness.py` extracted — shared model registry + subprocess plumbing
-- ✓ `compare.py` added — one-shot A/B listening tool across all installed models × devices, with audio playback
-- ✓ CUDA 12.8 torch wheels installed in GPU-targeted venvs (Blackwell sm_120 floor)
-
-Done in the Mac pass (May 23, 2026):
-- ✓ Apple M4 (16 GB) CPU + MPS bench rows for Piper, Kokoro, KittenTTS, VibeVoice, Pocket-TTS, NeuTTS Air, NeuTTS Nano, OmniVoice, VoxCPM, Magpie
-- ✓ Discovered LuxTTS is also blocked on arm64 macOS (not just Windows) — piper-phonemize has no `macosx_26_0_arm64` wheel. README's "should install cleanly on macOS" was Intel-only.
-- ✓ Discovered OmniVoice/MPS OOMs on 16 GB Macs for long prompts (3.38 GiB allocation cap-out). Short/medium prompts fine.
-
-Pending:
-
-- **RTX 5090 pass** — formal `bench.py --device cuda` run for all GPU-capable models. CUDA torch is now installed; results pending.
-- **Coqui XTTS-v2 numbers** — venv install in `install.ps1` / `install.sh`; bench numbers pending first run.
-- **ChatterBox / F5-TTS / Coqui XTTS on Mac** — skipped this pass (README already labels them GPU-class; M4 CPU would be minutes per prompt). Worth re-running once MPS torch perf improves or on a dedicated GPU rig.
-- **LuxTTS on Mac arm64 / Windows** — needs piper-phonemize wheel for those platforms (or build from source). The earlier "should install cleanly on macOS" claim turned out to be Intel-Mac-only.
+- **RTX 5090 full bench pass** — formal `bench.py --device cuda` run for all 18 installed models with the cloning reference. CUDA torch is installed; cold/warm + memory numbers pending.
+- **Memory tracking in reports** — CPU RSS + CUDA peak VRAM per (model, device, prompt) cell. Plumbing added to the runner JSON-line protocol; back-fill across all runners pending.
+- **ChatterBox / F5-TTS / Coqui XTTS on Mac MPS** — skipped earlier pass (all three are GPU-class on CPU; M4 CPU would be minutes per prompt). Worth re-running on Mac once MPS torch perf improves, or on a dedicated GPU Mac.
+- **LuxTTS on Mac arm64 / Windows** — depends on piper-phonemize, which has no wheels for those platforms; needs build-from-source or upstream wheel.
 
 ## Considered but skipped
 
