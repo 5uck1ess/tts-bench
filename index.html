@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <title>TTS Bench — Published Runs</title>
+<link rel="icon" type="image/svg+xml" href="logo-mark.svg"><link rel="icon" type="image/png" sizes="32x32" href="favicon.png"><link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
 <style>
   :root {
     color-scheme: dark light;
@@ -133,7 +134,25 @@
                    padding: 0.4rem 0; margin-bottom: 0.8rem;
                    border-bottom: 1px solid var(--border); font-size: 0.9em; }
   .prompt-jumper a { margin-right: 0.6rem; }
+
+  /* Lens-to-lens nav tabs at top of each lens page */
+  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem; }
+  .lens-tab { display: inline-block; padding: 4px 12px; border-radius: 6px;
+              border: 1px solid var(--border); color: var(--text);
+              text-decoration: none; font-size: 0.92em;
+              transition: border-color 0.15s, background 0.15s; }
+  .lens-tab:hover { border-color: var(--accent); text-decoration: none; }
+  .lens-tab.active { background: var(--accent); color: var(--bg);
+                     border-color: var(--accent); }
+
+  /* "Reading this report" explainer above tables */
+  .reading-guide { background: var(--panel); border-left: 3px solid var(--muted);
+                   padding: 0.55rem 0.9rem; margin: 0.7rem 0 1rem;
+                   border-radius: 4px; font-size: 0.88em; color: var(--text); }
+  .reading-guide strong { color: var(--accent); }
+  .reading-guide a { color: var(--accent); }
 </style>
+<style>.site-header{margin:1rem 0 1.25rem;}.site-logo{display:block;height:auto;max-width:min(320px,80vw);}.site-logo--light{display:none;}[data-theme="light"] .site-logo--dark{display:none;}[data-theme="light"] .site-logo--light{display:block;}</style>
 </head><body>
 <div class="controls">
 <input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
@@ -142,7 +161,8 @@
 <span class="spacer"></span>
 <button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
 </div>
-<h1>TTS Bench — Published Runs</h1>
+<header class="site-header"><img class="site-logo site-logo--dark" src="logo-flat-dark.svg" alt="tts-bench" width="320" height="auto"><img class="site-logo site-logo--light" src="logo-flat-light.svg" alt="tts-bench" width="320" height="auto"></header>
+<h1>Published Runs</h1>
 <div class="meta">Open-source TTS models benchmarked side-by-side. Three axes: <strong>speed</strong> (TTFA, RTF), <strong>quality</strong> (NAQ), <strong>voice cloning</strong>. Each run has inline audio so you can listen to every model × prompt without downloading. <a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>
 <div class="meta">8 published run(s)</div>
 <table><thead><tr>
