@@ -41,6 +41,7 @@ MODELS = {
     "voxcpm":      ("voxcpm",     "runners/voxcpm_runner.py",     None),
     "magpie":      ("magpie",     "runners/magpie_runner.py",     None),
     "qwentts":     ("qwentts",    "runners/qwentts_runner.py",    "base"),
+    "indextts":    ("indextts",   "runners/indextts_runner.py",   None),
 }
 
 

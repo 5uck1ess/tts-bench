@@ -242,5 +242,22 @@ else
     echo "qwentts: already installed"
 fi
 
+# --- IndexTTS-2 (Bilibili Index, zero-shot cloning + emotion control) ---
+echo; cyan "=== IndexTTS-2 (Bilibili Index, zero-shot cloning + emotion control) ==="
+if [ ! -x venvs/indextts/bin/python ]; then
+    # Source clone (no pip wheel). Model weights (IndexTeam/IndexTTS-2) are
+    # downloaded by huggingface_hub on first runner call (~5GB), not here.
+    uv venv venvs/indextts --python 3.11 || die "uv venv indextts"
+    if [ ! -d venvs/indextts/src ]; then
+        git clone --depth 1 https://github.com/index-tts/index-tts venvs/indextts/src \
+            || die "git clone index-tts"
+    fi
+    uv pip install --python venvs/indextts/bin/python -e venvs/indextts/src soundfile numpy huggingface_hub \
+        || die "uv pip install indextts source"
+    green "indextts: ok (zero-shot cloning, wav only, weights auto-download from HF on first use)"
+else
+    echo "indextts: already installed"
+fi
+
 echo
 green "Done. Run: python bench.py"

@@ -230,4 +230,22 @@ if (-not (Test-Path "venvs\qwentts\Scripts\python.exe")) {
     Write-Host "qwentts: already installed" -ForegroundColor Gray
 }
 
+Step "IndexTTS-2 (Bilibili Index, zero-shot cloning + emotion control)"
+if (-not (Test-Path "venvs\indextts\Scripts\python.exe")) {
+    # No pip wheel - upstream requires source clone. We mirror the neutts/luxtts
+    # pattern: venv + clone into venvs\indextts\src + uv pip install -e ...
+    # Model weights (IndexTeam/IndexTTS-2) are downloaded by huggingface_hub
+    # on first runner call (~5GB), not by this install step.
+    Invoke-Checked "uv venv indextts" { uv venv venvs\indextts --python 3.11 }
+    if (-not (Test-Path "venvs\indextts\src")) {
+        Invoke-Checked "git clone index-tts" { git clone --depth 1 https://github.com/index-tts/index-tts venvs\indextts\src }
+    }
+    Invoke-Checked "uv pip install indextts source" { uv pip install --python venvs\indextts\Scripts\python.exe -e venvs\indextts\src soundfile numpy huggingface_hub }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120).
+    Invoke-Checked "torch cu128 for indextts" { uv pip install --python venvs\indextts\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "indextts: ok (zero-shot cloning, wav only, weights auto-download from HF on first use)" -ForegroundColor Green
+} else {
+    Write-Host "indextts: already installed" -ForegroundColor Gray
+}
+
 Write-Host "`nDone. Run: python bench.py" -ForegroundColor Green

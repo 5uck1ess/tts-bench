@@ -48,6 +48,7 @@ Same five prompts run on both rigs above. Numbers shown are from short prompts; 
 | [OmniVoice](https://github.com/k2-fsa/OmniVoice) (k2-fsa) | TBD / see upstream | pending | pending | pending | wav + transcript | 600+ languages; diffusion-LM, vendor-claimed 0.025× RTF (GPU); voice design tags (gender/age/whisper) |
 | [VoxCPM2](https://github.com/OpenBMB/VoxCPM) (OpenBMB) | 2B / see upstream | pending | pending | pending | wav (no transcript) | tokenizer-free, 48kHz, 30 langs; in-process via `voxcpm` pip pkg (not the optional Nano-vLLM server path). Earlier 0.5B variant doesn't support cloning — skipped. |
 | [Qwen3-TTS-Base 1.7B](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) (Alibaba Qwen) | 1.7B / Apache 2.0 | pending | pending | pending | wav + transcript | 10 langs (zh/en/ja/ko/de/fr/ru/pt/es/it); claimed 97ms streaming TTFA; FlashAttention 2 skipped on Windows |
+| [IndexTTS-2](https://github.com/index-tts/index-tts) (Bilibili Index) | ~1.5B / Apache 2.0 | pending | pending | pending | wav (no transcript) | zero-shot cloning + optional emotion-reference conditioning; source-clone install (no pip wheel); ~5 GB weights auto-download from HF on first use |
 | [LuxTTS](https://github.com/ysharma3501/LuxTTS) (k2-fsa-based) | — | — | — | — | wav | install blocked on Windows (see [Known issues](#known-issues)) |
 
 **Reading the tables:** TTFA = milliseconds until the first audio sample. RTF = `audio_seconds / generation_seconds` (1.0× = realtime, higher = faster than realtime). Non-streaming models (KittenTTS, ChatterBox, F5-TTS) emit full audio in one call so TTFA = gen_s by definition.
@@ -345,7 +346,8 @@ tts-bench/
 │   ├── omnivoice_runner.py
 │   ├── voxcpm_runner.py
 │   ├── magpie_runner.py
-│   └── qwentts_runner.py
+│   ├── qwentts_runner.py
+│   └── indextts_runner.py
 ├── reference/            # voice cloning reference audio (.wav + .txt pairs)
 ├── venvs/                # one isolated venv per model (gitignored)
 └── results/              # bench output WAVs + CSV (gitignored)
