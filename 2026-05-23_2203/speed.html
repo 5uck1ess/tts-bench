@@ -74,6 +74,7 @@
   th:hover { background: var(--th-hover); }
   td.num { text-align: right; font-variant-numeric: tabular-nums;
            color: var(--num); }
+  th.num { text-align: right; }
   td.fail { color: var(--fail); font-style: italic; }
   td.dev-cuda { color: var(--dev-cuda); }
   td.dev-mps  { color: var(--dev-mps); }
@@ -152,14 +153,14 @@
 <table><thead><tr>
 <th>Model</th>
 <th>Device</th>
-<th>TTFA cold</th>
-<th>TTFA warm</th>
-<th>RTF cold</th>
-<th>RTF warm</th>
-<th>Peak RAM</th>
-<th>Peak VRAM</th>
+<th class="num">TTFA cold</th>
+<th class="num">TTFA warm</th>
+<th class="num">RTF cold</th>
+<th class="num">RTF warm</th>
+<th class="num">Peak RAM</th>
+<th class="num">Peak VRAM</th>
 <th>Size</th>
-<th>NAQ</th>
+<th class="num">NAQ</th>
 </tr></thead><tbody>
 <tr id="speed-kokoro-cuda">
 <td>kokoro</td><td class="dev-cuda">cuda</td>

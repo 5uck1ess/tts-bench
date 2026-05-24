@@ -74,6 +74,7 @@
   th:hover { background: var(--th-hover); }
   td.num { text-align: right; font-variant-numeric: tabular-nums;
            color: var(--num); }
+  th.num { text-align: right; }
   td.fail { color: var(--fail); font-style: italic; }
   td.dev-cuda { color: var(--dev-cuda); }
   td.dev-mps  { color: var(--dev-mps); }
@@ -152,11 +153,11 @@
 <div class="prompt" id="p1"><h2>Prompt 1</h2>
 <span class="prompt-text"><span class="lang">[en]</span>"Open the browser and read my email."</span>
 <table><thead><tr>
-<th>Rank</th>
+<th class="num">Rank</th>
 <th>Model</th>
 <th>Device</th>
-<th>NAQ</th>
-<th>TTFA warm</th>
+<th class="num">NAQ</th>
+<th class="num">TTFA warm</th>
 <th>Audio</th>
 </tr></thead><tbody>
 <tr id="sample-p1-neutts_air-cuda">
@@ -251,11 +252,11 @@
 <div class="prompt" id="p2"><h2>Prompt 2</h2>
 <span class="prompt-text"><span class="lang">[en]</span>"I&#x27;ll start a new git branch, push the changes, and open a pull request when the tests pass."</span>
 <table><thead><tr>
-<th>Rank</th>
+<th class="num">Rank</th>
 <th>Model</th>
 <th>Device</th>
-<th>NAQ</th>
-<th>TTFA warm</th>
+<th class="num">NAQ</th>
+<th class="num">TTFA warm</th>
 <th>Audio</th>
 </tr></thead><tbody>
 <tr id="sample-p2-neutts_air-cuda">
@@ -342,11 +343,11 @@
 <div class="prompt" id="p3"><h2>Prompt 3</h2>
 <span class="prompt-text"><span class="lang">[en]</span>"The Parakeet TDT zero point six billion parameter model achieves one point six nine percent word error rate on LibriSpeech test-clean, beating Whisper Large V3 at two point seven percent while running at over two thousand times realtime on a single GPU."</span>
 <table><thead><tr>
-<th>Rank</th>
+<th class="num">Rank</th>
 <th>Model</th>
 <th>Device</th>
-<th>NAQ</th>
-<th>TTFA warm</th>
+<th class="num">NAQ</th>
+<th class="num">TTFA warm</th>
 <th>Audio</th>
 </tr></thead><tbody>
 <tr id="sample-p3-neutts_air-cuda">
@@ -433,11 +434,11 @@
 <div class="prompt" id="p4"><h2>Prompt 4</h2>
 <span class="prompt-text"><span class="lang">[en]</span>"Run pytest tests slash test underscore voice dot py with verbose flag and capture flag set to no."</span>
 <table><thead><tr>
-<th>Rank</th>
+<th class="num">Rank</th>
 <th>Model</th>
 <th>Device</th>
-<th>NAQ</th>
-<th>TTFA warm</th>
+<th class="num">NAQ</th>
+<th class="num">TTFA warm</th>
 <th>Audio</th>
 </tr></thead><tbody>
 <tr id="sample-p4-neutts_air-cuda">
@@ -524,11 +525,11 @@
 <div class="prompt" id="p5"><h2>Prompt 5</h2>
 <span class="prompt-text"><span class="lang">[fr]</span>"Bonjour, je m&#x27;appelle Cicero et je vais vous aider avec votre code aujourd&#x27;hui."</span>
 <table><thead><tr>
-<th>Rank</th>
+<th class="num">Rank</th>
 <th>Model</th>
 <th>Device</th>
-<th>NAQ</th>
-<th>TTFA warm</th>
+<th class="num">NAQ</th>
+<th class="num">TTFA warm</th>
 <th>Audio</th>
 </tr></thead><tbody>
 <tr id="sample-p5-neutts_nano-cuda">

@@ -74,6 +74,7 @@
   th:hover { background: var(--th-hover); }
   td.num { text-align: right; font-variant-numeric: tabular-nums;
            color: var(--num); }
+  th.num { text-align: right; }
   td.fail { color: var(--fail); font-style: italic; }
   td.dev-cuda { color: var(--dev-cuda); }
   td.dev-mps  { color: var(--dev-mps); }
@@ -149,11 +150,11 @@
 <div class="prompt" id="p1"><h2>Prompt 1</h2>
 <span class="prompt-text"><span class="lang">[en]</span>"Open the browser and read my email."</span>
 <table><thead><tr>
-<th>Rank</th>
+<th class="num">Rank</th>
 <th>Model</th>
 <th>Device</th>
-<th>NAQ</th>
-<th>TTFA warm</th>
+<th class="num">NAQ</th>
+<th class="num">TTFA warm</th>
 <th>Audio</th>
 </tr></thead><tbody>
 <tr id="sample-p1-supertonic-cpu">
