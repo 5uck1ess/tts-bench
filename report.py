@@ -437,7 +437,7 @@ def _read_csv(csv_path):
         for r in csv.DictReader(f):
             for k in ("ttfa_ms", "gen_s", "audio_s", "rtf",
                       "peak_mem_mb", "peak_vram_mb",
-                      "naq", "naq_harm", "naq_buzz",
+                      "naq", "naq_artifact", "naq_naturalness",
                       "wall_s"):
                 v = r.get(k)
                 r[k] = float(v) if v not in (None, "") else None
@@ -462,7 +462,7 @@ def _build_context(rows, run_dir, meta):
       per_model:   {(model, device) -> aggregated dict with avg TTFA/RTF, peak mem/vram, avg NAQ,
                     n_ok, n_fail, n_total}
       per_prompt:  {prompt_id -> [{model, device, naq, ttfa_warm, rtf_warm, wav, wav_exists,
-                    naq_harm, naq_buzz} ranked by NAQ desc, successful-cold rows only]}
+                    naq_artifact, naq_naturalness} ranked by NAQ desc, successful-cold rows only]}
       tldr_speed:  {"predefined": (model, device, rtf_warm, ttfa_warm) | None,
                     "cloning":    (model, device, rtf_warm, ttfa_warm) | None}
       tldr_quality:{"predefined": [(model, device, naq) top 3],
@@ -565,8 +565,8 @@ def _build_context(rows, run_dir, meta):
                 "rtf_warm": rtf_warm,
                 "wav": f"{model}_{dev}_p{pid}.wav",
                 "wav_exists": (run_dir / f"{model}_{dev}_p{pid}.wav").exists(),
-                "naq_harm": cold.get("naq_harm"),
-                "naq_buzz": cold.get("naq_buzz"),
+                "naq_artifact": cold.get("naq_artifact"),
+                "naq_naturalness": cold.get("naq_naturalness"),
             })
         # Sort by NAQ desc; rows with no NAQ sink to the bottom
         items.sort(key=lambda it: (it["naq"] is None, -(it["naq"] or 0)))
@@ -821,9 +821,9 @@ def _render_quality(ctx):
     out.append('</div>')
 
     # Per-prompt tables
-    cols = ("Model", "Device", "NAQ", "HARM", "BUZZ", "Size",
+    cols = ("Model", "Device", "NAQ", "Size",
             "TTFA warm", "RTF warm", "Audio (cold)")
-    num_cols = {"NAQ", "HARM", "BUZZ", "TTFA warm", "RTF warm"}
+    num_cols = {"NAQ", "TTFA warm", "RTF warm"}
     naq_idx = cols.index("NAQ")
     for pid in ctx["prompts_seen"]:
         out.append(f'<div class="prompt"><h2>Prompt {escape(pid)}</h2>')
@@ -872,9 +872,14 @@ def _render_quality(ctx):
             out.append(f'<tr id="{escape(row_id)}">')
             out.append(f'<td>{escape(model)}</td>'
                        f'<td class="{dev_class}">{escape(dev)}</td>')
-            out.append(f'<td class="num"{_ds(cold.get("naq"))}>{_fmt_naq(cold.get("naq"))}</td>')
-            out.append(f'<td class="num"{_ds(cold.get("naq_harm"))}>{_fmt_naq(cold.get("naq_harm"))}</td>')
-            out.append(f'<td class="num"{_ds(cold.get("naq_buzz"))}>{_fmt_naq(cold.get("naq_buzz"))}</td>')
+            naq_val = cold.get("naq")
+            naq_art = cold.get("naq_artifact")
+            naq_nat = cold.get("naq_naturalness")
+            tooltip = (f"artifact: {naq_art}, naturalness: {naq_nat}"
+                       if (naq_art is not None and naq_nat is not None) else "")
+            out.append(
+                f'<td class="num"{_ds(naq_val)} title="{escape(tooltip)}">{_fmt_naq(naq_val)}</td>'
+            )
             out.append(f'<td class="muted">{escape(size_str)}</td>')
             out.append(f'<td class="num pill"{_ds(ttfa_warm)}>{_fmt_ttfa(ttfa_warm)}</td>')
             out.append(f'<td class="num pill"{_ds(rtf_warm)}>{_fmt_rtf(rtf_warm)}</td>')
@@ -1031,7 +1036,7 @@ def build_index() -> Path:
            f'<div class="meta">{len(runs)} run(s) with <code>results.csv</code></div>',
            '<table><thead><tr>']
     num_cols = {"Prompts", "Rows", "OK"}
-    for col in ("Date", "Label", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
+    for col in ("Run", "Label", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
         cls = ' class="num"' if col in num_cols else ''
         out.append(f'<th{cls}>{col}</th>')
     out.append('</tr></thead><tbody>')
