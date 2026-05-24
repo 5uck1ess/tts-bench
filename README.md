@@ -124,7 +124,7 @@ Full 10-model cloning ranking + ref format docs: **[docs/cloning.md](docs/clonin
 | Machine | Used for |
 |---|---|
 | Windows desktop (Ryzen 9 9950X3D / 128 GB / RTX 5090 32 GB) | Windows CPU + CUDA bench rows |
-| Linux workstation (RTX 3090 24 GB) | Linux CPU + CUDA; the only rig that runs Fish-Speech S2 natively |
+| Linux workstation (Ryzen 9 5900XT / 64 GB / RTX 3090 24 GB, Ubuntu Server 24.04) | Linux CPU + CUDA; the only rig that runs Fish-Speech S2 natively |
 | Mac (Apple M4 / 16 GB / M4 GPU) | Mac CPU + MPS bench rows |
 
 If you reproduce on different hardware, file an issue or PR with your results and we'll add a column.
