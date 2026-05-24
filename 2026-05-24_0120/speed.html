@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<title>TTS Bench — Published Runs</title>
+<title>TTS Bench — Speed — 2026-05-24_0120</title>
 <style>
   :root {
     color-scheme: dark light;
@@ -141,109 +141,182 @@
 <span class="spacer"></span>
 <button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
 </div>
-<h1>TTS Bench — Published Runs</h1>
-<div class="meta">Open-source TTS models benchmarked side-by-side on CPU and CUDA. Each report has inline audio players so you can listen to every model × prompt combo without downloading anything. <a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>
-<div class="meta">8 published run(s)</div>
+<div class="nav"><a href="index.html">← lens picker</a> · <a href="../index.html">all runs</a></div>
+<h1>TTS Bench — Speed — 2026-05-24_0120</h1>
+<div class="meta"><strong>Rig:</strong> <code>windows-5090</code> — AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11</div>
+<div class="meta"><strong>Label:</strong> default voice</div>
+<div class="tldr"><h2>Speed winners</h2>
+<p>Fastest predefined-voice: <strong>kokoro</strong> (cuda) — 100.96× warm RTF, 69ms warm TTFA</p>
+<p>Fastest cloning-capable: <strong>omnivoice</strong> (cuda) — 8.47× warm RTF, 811ms warm TTFA</p>
+</div>
 <table><thead><tr>
-<th>Date</th>
-<th>Label</th>
-<th>Rig</th>
-<th>Models</th>
-<th>Devices</th>
-<th>Prompts</th>
-<th>Rows</th>
-<th>OK</th>
-<th>Report</th>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Peak RAM</th>
+<th>Peak VRAM</th>
+<th>Size</th>
+<th>NAQ</th>
 </tr></thead><tbody>
-<tr>
-<td>2026-05-24_1001</td>
-<td>default voice · supertonic · prompts 1</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="1">supertonic</td>
-<td>cpu</td>
-<td class='num' data-sort="1">1</td>
-<td class='num' data-sort="2">2</td>
-<td class='num' data-sort="2">2/2</td>
-<td><a href="2026-05-24_1001/report.html">view</a></td>
+<tr id="speed-kokoro-cuda">
+<td>kokoro</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="925.5799999999999">926ms</td>
+<td class="num" data-sort="69.28">69ms</td>
+<td class="num" data-sort="8.2758100488323">8.28×</td>
+<td class="num" data-sort="100.95830475640261">100.96×</td>
+<td class="num" data-sort="2428.1">2.37 GB</td>
+<td class="num" data-sort="924.6">925 MB</td>
+<td class="muted">82M</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
 </tr>
-<tr>
-<td>2026-05-24_0154</td>
-<td>cloning · chris_hemsworth_15s</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="11">11 models</td>
-<td>cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="139">139</td>
-<td class='num' data-sort="135">135/139</td>
-<td><a href="2026-05-24_0154/report.html">view</a></td>
+<tr id="speed-omnivoice-cuda">
+<td>omnivoice</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1176.76">1.18s</td>
+<td class="num" data-sort="811.36">811ms</td>
+<td class="num" data-sort="5.989305522273623">5.99×</td>
+<td class="num" data-sort="8.471469098902562">8.47×</td>
+<td class="num" data-sort="2113.2">2.06 GB</td>
+<td class="num" data-sort="2208.8">2.16 GB</td>
+<td class="muted">~1B</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
 </tr>
-<tr>
-<td>2026-05-24_0120</td>
-<td>default voice</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="14">14 models</td>
-<td>cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="189">189</td>
-<td class='num' data-sort="189">189/189</td>
-<td><a href="2026-05-24_0120/report.html">view</a></td>
+<tr id="speed-f5tts-cuda">
+<td>f5tts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1318.6">1.32s</td>
+<td class="num" data-sort="872.4125">872ms</td>
+<td class="num" data-sort="3.509431076772766">3.51×</td>
+<td class="num" data-sort="5.2125846421324535">5.21×</td>
+<td class="num" data-sort="2727.4">2.66 GB</td>
+<td class="num" data-sort="802.2">802 MB</td>
+<td class="muted">330M</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
 </tr>
-<tr>
-<td>2026-05-23_2250</td>
-<td>default voice · full CPU pass</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="14">14 models</td>
-<td>cpu</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="184">184</td>
-<td class='num' data-sort="180">180/184</td>
-<td><a href="2026-05-23_2250/report.html">view</a></td>
+<tr id="speed-coqui-cuda">
+<td>coqui</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="2433.4">2.43s</td>
+<td class="num" data-sort="2112.52">2.11s</td>
+<td class="num" data-sort="3.3116417405512">3.31×</td>
+<td class="num" data-sort="4.171647491026172">4.17×</td>
+<td class="num" data-sort="2148.2">2.10 GB</td>
+<td class="num" data-sort="2222.5">2.17 GB</td>
+<td class="muted">750M</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
 </tr>
-<tr>
-<td>2026-05-23_2203</td>
-<td>default voice · first CUDA pass</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="10">10 models</td>
-<td>cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="130">130</td>
-<td class='num' data-sort="126">126/130</td>
-<td><a href="2026-05-23_2203/report.html">view</a></td>
+<tr id="speed-neutts_nano-cuda">
+<td>neutts_nano</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="657.64">658ms</td>
+<td class="num" data-sort="273.27">273ms</td>
+<td class="num" data-sort="2.201311754372898">2.20×</td>
+<td class="num" data-sort="2.686350191506663">2.69×</td>
+<td class="num" data-sort="3320.4">3.24 GB</td>
+<td class="num" data-sort="3336.0">3.26 GB</td>
+<td class="muted">748M</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
 </tr>
-<tr>
-<td>2026-05-23_2152</td>
-<td>default voice · late additions (omnivoice/voxcpm/magpie)</td>
-<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
-<td data-sort="3">magpie, omnivoice, voxcpm</td>
-<td>cpu, mps</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="58">58</td>
-<td class='num' data-sort="57">57/58</td>
-<td><a href="2026-05-23_2152/report.html">view</a></td>
+<tr id="speed-vibevoice-cuda">
+<td>vibevoice</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="4702.275">4.70s</td>
+<td class="num" data-sort="4568.075">4.57s</td>
+<td class="num" data-sort="1.9524144179757288">1.95×</td>
+<td class="num" data-sort="2.1175990324584064">2.12×</td>
+<td class="num" data-sort="1913.5">1.87 GB</td>
+<td class="num" data-sort="2684.5">2.62 GB</td>
+<td class="muted">0.5B</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
 </tr>
-<tr>
-<td>2026-05-23_1600</td>
-<td>cloning · pass 2 (jo/juliette refs)</td>
-<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
-<td data-sort="4">luxtts, neutts_air, neutts_nano, pocket</td>
-<td>cpu, mps</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="77">77</td>
-<td class='num' data-sort="69">69/77</td>
-<td><a href="2026-05-23_1600/report.html">view</a></td>
+<tr id="speed-chatterbox-cuda">
+<td>chatterbox</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="3645.25">3.65s</td>
+<td class="num" data-sort="2841.8">2.84s</td>
+<td class="num" data-sort="1.5474140718284293">1.55×</td>
+<td class="num" data-sort="2.0227550433354016">2.02×</td>
+<td class="num" data-sort="2874.4">2.81 GB</td>
+<td class="num" data-sort="3318.2">3.24 GB</td>
+<td class="muted">1.2B</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
 </tr>
-<tr>
-<td>2026-05-23_1542</td>
-<td>default voice · predefined-voice pass 1</td>
-<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
-<td data-sort="4">kittentts, kokoro, piper, vibevoice</td>
-<td>cpu, mps</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="81">81</td>
-<td class='num' data-sort="81">81/81</td>
-<td><a href="2026-05-23_1542/report.html">view</a></td>
+<tr id="speed-magpie-cuda">
+<td>magpie</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="6628.360000000001">6.63s</td>
+<td class="num" data-sort="5016.25">5.02s</td>
+<td class="num" data-sort="1.3662195362237004">1.37×</td>
+<td class="num" data-sort="1.7083531461191517">1.71×</td>
+<td class="num" data-sort="3634.1">3.55 GB</td>
+<td class="num" data-sort="7496.7">7.32 GB</td>
+<td class="muted">357M</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
+</tr>
+<tr id="speed-neutts_air-cuda">
+<td>neutts_air</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1156.075">1.16s</td>
+<td class="num" data-sort="434.075">434ms</td>
+<td class="num" data-sort="1.3374407389985192">1.34×</td>
+<td class="num" data-sort="1.5828720165809478">1.58×</td>
+<td class="num" data-sort="3583.5">3.50 GB</td>
+<td class="num" data-sort="3335.1">3.26 GB</td>
+<td class="muted">748M</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
+</tr>
+<tr id="speed-voxcpm-cuda">
+<td>voxcpm</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="5639.24">5.64s</td>
+<td class="num" data-sort="5658.39">5.66s</td>
+<td class="num" data-sort="1.1946166336491388">1.19×</td>
+<td class="num" data-sort="1.2055862360211802">1.21×</td>
+<td class="num" data-sort="9849.0">9.62 GB</td>
+<td class="num" data-sort="5689.0">5.56 GB</td>
+<td class="muted">2B</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
+</tr>
+<tr id="speed-indextts-cuda">
+<td>indextts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="7065.299999999999">7.07s</td>
+<td class="num" data-sort="5966.15">5.97s</td>
+<td class="num" data-sort="0.9173657744619701">0.92×</td>
+<td class="num" data-sort="1.1332244117833947">1.13×</td>
+<td class="num" data-sort="5970.8">5.83 GB</td>
+<td class="num" data-sort="7732.7">7.55 GB</td>
+<td class="muted">1.5B</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
+</tr>
+<tr id="speed-qwentts-cuda">
+<td>qwentts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="11253.460000000001">11.25s</td>
+<td class="num" data-sort="10095.68">10.10s</td>
+<td class="num" data-sort="0.5172790765347206">0.52×</td>
+<td class="num" data-sort="0.6162652665596537">0.62×</td>
+<td class="num" data-sort="2465.3">2.41 GB</td>
+<td class="num" data-sort="4755.3">4.64 GB</td>
+<td class="muted">1.7B</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
+</tr>
+<tr id="speed-sesame-cuda">
+<td>sesame</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="14563.225">14.56s</td>
+<td class="num" data-sort="15924.9875">15.92s</td>
+<td class="num" data-sort="0.4764289136707285">0.48×</td>
+<td class="num" data-sort="0.4939877547031276">0.49×</td>
+<td class="num" data-sort="2413.1">2.36 GB</td>
+<td class="num" data-sort="3589.2">3.51 GB</td>
+<td class="muted">1B</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
+</tr>
+<tr id="speed-mars5-cuda">
+<td>mars5</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="32716.7">32.72s</td>
+<td class="num" data-sort="32115.1875">32.12s</td>
+<td class="num" data-sort="0.21651209927882328">0.22×</td>
+<td class="num" data-sort="0.22221389490945276">0.22×</td>
+<td class="num" data-sort="2309.6">2.26 GB</td>
+<td class="num" data-sort="6966.3">6.80 GB</td>
+<td class="muted">1.2B</td>
+<td class="num pill" data-sort=""><a href="quality.html" title="See NAQ details on quality view">—</a></td>
 </tr>
 </tbody></table>
+<script>window.__defaultSort = {colIdx: 5, dir: -1};</script>
 <script>
 (function(){
   // ---------- theme toggle ----------

@@ -1,0 +1,3 @@
+prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,peak_vram_mb,naq,naq_harm,naq_buzz,wall_s,ok,error
+1,supertonic,cpu,,False,0,True,426.2,0.4262,2.856,6.7,486.9,,21.4,20.8,22.6,3.913,True,
+1,supertonic,cpu,,False,1,False,424.4,0.4244,2.856,6.73,671.8,,,,,0,True,
