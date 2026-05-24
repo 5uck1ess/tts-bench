@@ -24,6 +24,13 @@ import sys
 from html import escape
 from pathlib import Path
 
+# Windows console defaults to cp1252; force UTF-8 so em-dashes / arrows in
+# print() messages don't crash mid-run.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 from report import (
     STYLE, CONTROLS, SCRIPT,
     _ds, _read_csv, _sort_prompt_ids, build_report,
