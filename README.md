@@ -1,4 +1,6 @@
-# tts-bench
+<p align="center">
+  <img src="assets/logo.svg" alt="tts-bench" width="520">
+</p>
 
 Bench for local TTS models. Three lenses, on whatever hardware you put it on:
 

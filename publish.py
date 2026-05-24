@@ -117,8 +117,47 @@ def ensure_worktree():
     _git("commit", "-m", f"Initialize {BRANCH} branch", cwd=WORKTREE)
 
 
+def _copy_branding_assets():
+    """Copy logo + favicon assets from assets/ into _gh-pages/ so the
+    deployed site can reference them with relative paths."""
+    src_dir = REPO / "assets"
+    if not src_dir.exists():
+        return
+    for name in ("logo-flat-dark.svg", "logo-flat-light.svg", "logo-mark.svg"):
+        src = src_dir / name
+        if src.exists():
+            shutil.copy2(src, WORKTREE / name)
+
+
+LOGO_HEADER = (
+    '<header class="site-header">'
+    '<img class="site-logo site-logo--dark" src="logo-flat-dark.svg" '
+    'alt="tts-bench" width="320" height="auto">'
+    '<img class="site-logo site-logo--light" src="logo-flat-light.svg" '
+    'alt="tts-bench" width="320" height="auto">'
+    '</header>'
+)
+
+LOGO_STYLE = (
+    '<style>'
+    '.site-header{margin:1rem 0 1.25rem;}'
+    '.site-logo{display:block;height:auto;max-width:min(320px,80vw);}'
+    '.site-logo--light{display:none;}'
+    '[data-theme="light"] .site-logo--dark{display:none;}'
+    '[data-theme="light"] .site-logo--light{display:block;}'
+    '</style>'
+)
+
+FAVICON_LINK = (
+    '<link rel="icon" type="image/svg+xml" href="logo-mark.svg">'
+    '<link rel="icon" type="image/png" sizes="32x32" href="favicon.png">'
+    '<link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">'
+)
+
+
 def build_pages_index():
     """Build _gh-pages/index.html listing all published runs."""
+    _copy_branding_assets()
     runs = []
     for d in sorted(WORKTREE.iterdir(), reverse=True):
         if not d.is_dir() or d.name.startswith("."):
@@ -149,10 +188,13 @@ def build_pages_index():
     out = ['<!doctype html>',
            '<html lang="en"><head><meta charset="utf-8">',
            '<title>TTS Bench — Published Runs</title>',
+           FAVICON_LINK,
            STYLE,
+           LOGO_STYLE,
            '</head><body>',
            CONTROLS,
-           '<h1>TTS Bench — Published Runs</h1>',
+           LOGO_HEADER,
+           '<h1>Published Runs</h1>',
            '<div class="meta">Open-source TTS models benchmarked side-by-side. Three axes: '
            '<strong>speed</strong> (TTFA, RTF), <strong>quality</strong> (NAQ), '
            '<strong>voice cloning</strong>. Each run has inline audio so you can listen '

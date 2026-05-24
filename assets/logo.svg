@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 180" width="680" height="180">
+  <rect width="680" height="180" fill="#0d0d0d"/>
+  <g fill="#00ff88" transform="translate(48,40)">
+    <rect x="0"   y="50" width="10" height="20"  rx="2"/>
+    <rect x="16"  y="40" width="10" height="40"  rx="2"/>
+    <rect x="32"  y="24" width="10" height="72"  rx="2"/>
+    <rect x="48"  y="8"  width="10" height="104" rx="2"/>
+    <rect x="64"  y="0"  width="10" height="120" rx="2"/>
+    <rect x="80"  y="8"  width="10" height="104" rx="2"/>
+    <rect x="96"  y="28" width="10" height="64"  rx="2"/>
+    <rect x="112" y="46" width="10" height="28"  rx="2"/>
+  </g>
+  <text x="208" y="112"
+        font-family="ui-monospace, 'JetBrains Mono', Menlo, Consolas, monospace"
+        font-size="84" font-weight="700" fill="#f2f2f2"
+        letter-spacing="-3">tts-bench</text>
+</svg>
