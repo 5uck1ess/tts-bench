@@ -938,7 +938,7 @@ def _render_samples(ctx):
                 if it["wav_exists"] else '<span class="muted">missing</span>'
             )
             out.append(f'<tr id="{escape(row_id)}">')
-            out.append(f'<td class="num">{rank}</td>')
+            out.append(f'<td class="num" data-sort="{rank}">{rank}</td>')
             out.append(f'<td>{escape(it["model"])}</td>')
             out.append(f'<td class="{dev_class}">{escape(it["device"])}</td>')
             out.append(f'<td class="num"{_ds(it["naq"])}>{_fmt_naq(it["naq"])}</td>')
