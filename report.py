@@ -883,6 +883,75 @@ def _render_quality(ctx):
     return "\n".join(out)
 
 
+def _render_samples(ctx):
+    """Render samples.html — by-prompt MOS-style gallery, successful rows only, ranked by NAQ."""
+    meta = ctx["meta"]
+    prompts = ctx["prompts_seen"]
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           f'<title>TTS Bench — Samples — {escape(ctx["run_name"])}</title>',
+           STYLE,
+           '</head><body>',
+           CONTROLS,
+           '<div class="nav">'
+           '<a href="index.html">← lens picker</a> · '
+           '<a href="../index.html">all runs</a></div>',
+           f'<h1>TTS Bench — Samples — {escape(ctx["run_name"])}</h1>']
+    if meta:
+        out.append(f'<div class="meta"><strong>Rig:</strong> '
+                   f'<code>{escape(meta.get("rig") or "?")}</code> — '
+                   f'{escape(_rig_summary(meta))}</div>')
+        if meta.get("label"):
+            ref = meta.get("reference")
+            ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
+            out.append(f'<div class="meta"><strong>Label:</strong> '
+                       f'{escape(meta["label"])}{ref_html}</div>')
+    out.append(f'<div class="meta">{len(prompts)} prompt(s) · '
+               f'one section per prompt · all models ranked by NAQ within each</div>')
+
+    if len(prompts) > 3:
+        out.append('<nav class="prompt-jumper">Jump to: ')
+        out.append(" · ".join(f'<a href="#p{escape(pid)}">P{escape(pid)}</a>' for pid in prompts))
+        out.append('</nav>')
+
+    cols = ("Rank", "Model", "Device", "NAQ", "TTFA warm", "Audio")
+    for pid in prompts:
+        items = ctx["per_prompt"].get(pid, [])
+        out.append(f'<div class="prompt" id="p{escape(pid)}"><h2>Prompt {escape(pid)}</h2>')
+        ptext = PROMPT_INFO.get(pid)
+        if ptext:
+            lang, text = ptext
+            out.append(f'<span class="prompt-text"><span class="lang">[{escape(lang)}]</span>'
+                       f'"{escape(text)}"</span>')
+        if not items:
+            out.append('<div class="meta">No successful samples for this prompt.</div></div>')
+            continue
+        out.append('<table><thead><tr>')
+        for c in cols:
+            out.append(f'<th>{c}</th>')
+        out.append('</tr></thead><tbody>')
+        for rank, it in enumerate(items, 1):
+            row_id = f"sample-p{pid}-{it['model']}-{it['device']}".lower().replace("/", "-")
+            dev_class = f"dev-{it['device']}"
+            audio_html = (
+                f'<audio controls preload="none" src="{escape(it["wav"])}"></audio>'
+                if it["wav_exists"] else '<span class="muted">missing</span>'
+            )
+            out.append(f'<tr id="{escape(row_id)}">')
+            out.append(f'<td class="num">{rank}</td>')
+            out.append(f'<td>{escape(it["model"])}</td>')
+            out.append(f'<td class="{dev_class}">{escape(it["device"])}</td>')
+            out.append(f'<td class="num"{_ds(it["naq"])}>{_fmt_naq(it["naq"])}</td>')
+            out.append(f'<td class="num pill"{_ds(it["ttfa_warm"])}>{_fmt_ttfa(it["ttfa_warm"])}</td>')
+            out.append(f'<td>{audio_html}</td>')
+            out.append('</tr>')
+        out.append('</tbody></table></div>')
+
+    out.append(SCRIPT)
+    out.append('</body></html>')
+    return "\n".join(out)
+
+
 def build_report(run_dir: Path) -> Path:
     csv_path = run_dir / "results.csv"
     if not csv_path.exists():
