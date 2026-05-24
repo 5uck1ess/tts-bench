@@ -672,6 +672,111 @@ def _render_lens_picker(ctx):
     return "\n".join(out)
 
 
+def _render_speed(ctx):
+    """Render speed.html — aggregated per (model, device), no audio."""
+    meta = ctx["meta"]
+    has_ref = bool((meta or {}).get("reference"))
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           f'<title>TTS Bench — Speed — {escape(ctx["run_name"])}</title>',
+           STYLE,
+           '</head><body>',
+           CONTROLS,
+           '<div class="nav">'
+           '<a href="index.html">← lens picker</a> · '
+           '<a href="../index.html">all runs</a></div>',
+           f'<h1>TTS Bench — Speed — {escape(ctx["run_name"])}</h1>']
+    if meta:
+        out.append(f'<div class="meta"><strong>Rig:</strong> '
+                   f'<code>{escape(meta.get("rig") or "?")}</code> — '
+                   f'{escape(_rig_summary(meta))}</div>')
+        if meta.get("label"):
+            ref = meta.get("reference")
+            ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
+            out.append(f'<div class="meta"><strong>Label:</strong> '
+                       f'{escape(meta["label"])}{ref_html}</div>')
+
+    # TLDR
+    out.append('<div class="tldr"><h2>Speed winners</h2>')
+    tldr = ctx["tldr_speed"]
+    def _fmt_tldr(entry, label):
+        if not entry:
+            return f'<p>{label}: <span class="muted">no data</span></p>'
+        model, dev, rtf, ttfa = entry
+        return (f'<p>{label}: <strong>{escape(model)}</strong> ({escape(dev)}) — '
+                f'{_fmt_rtf(rtf)} warm RTF, {_fmt_ttfa(ttfa)} warm TTFA</p>')
+    if has_ref:
+        # Cloning-only run; collapse to single line
+        best = tldr["cloning"] or tldr["predefined"]
+        out.append(_fmt_tldr(best, "Fastest (this cloning run)"))
+    else:
+        out.append(_fmt_tldr(tldr["predefined"], "Fastest predefined-voice"))
+        out.append(_fmt_tldr(tldr["cloning"],    "Fastest cloning-capable"))
+    out.append('</div>')
+
+    # Table
+    cols = ("Model", "Device", "TTFA cold", "TTFA warm",
+            "RTF cold", "RTF warm", "Peak RAM", "Peak VRAM", "Size", "NAQ")
+    rtf_warm_idx = cols.index("RTF warm")
+    out.append('<table><thead><tr>')
+    for c in cols:
+        out.append(f'<th>{c}</th>')
+    out.append('</tr></thead><tbody>')
+
+    # Sort rows by RTF warm desc for stable origIdx ordering
+    keys_sorted = sorted(
+        ctx["per_model"].keys(),
+        key=lambda k: (ctx["per_model"][k]["rtf_warm"] is None,
+                       -(ctx["per_model"][k]["rtf_warm"] or 0))
+    )
+    for (model, dev) in keys_sorted:
+        a = ctx["per_model"][(model, dev)]
+        row_id = f"speed-{model}-{dev}".lower().replace("/", "-")
+        dev_class = f"dev-{dev}"
+        size_str = MODEL_SIZE.get(model, "—")
+        n_ok = a["n_ok"]; n_total = a["n_total"]
+        partial = (n_ok < n_total) and n_ok > 0
+        partial_tag = (f' <span class="muted">({n_ok}/{n_total} ok)</span>'
+                       if partial else "")
+        if n_ok == 0:
+            err_row = next(
+                (c["fail"] for k, c in ctx["per_cell"].items()
+                 if k[1] == model and k[2] == dev and c["fail"]),
+                None,
+            )
+            err = (err_row.get("error") if err_row else "") or "no successful run"
+            out.append(f'<tr id="{escape(row_id)}">'
+                       f'<td>{escape(model)}</td>'
+                       f'<td class="{dev_class}">{escape(dev)}</td>'
+                       f'<td colspan="{len(cols)-2}" class="fail">FAIL: {escape(err.strip()[:140])}</td>'
+                       '</tr>')
+            continue
+        out.append(f'<tr id="{escape(row_id)}">')
+        out.append(f'<td>{escape(model)}{partial_tag}</td>'
+                   f'<td class="{dev_class}">{escape(dev)}</td>')
+        out.append(f'<td class="num"{_ds(a["ttfa_cold"])}>{_fmt_ttfa(a["ttfa_cold"])}</td>')
+        out.append(f'<td class="num"{_ds(a["ttfa_warm"])}>{_fmt_ttfa(a["ttfa_warm"])}</td>')
+        out.append(f'<td class="num"{_ds(a["rtf_cold"])}>{_fmt_rtf(a["rtf_cold"])}</td>')
+        out.append(f'<td class="num"{_ds(a["rtf_warm"])}>{_fmt_rtf(a["rtf_warm"])}</td>')
+        out.append(f'<td class="num"{_ds(a["peak_mem"])}>{_fmt_mb(a["peak_mem"])}</td>')
+        out.append(f'<td class="num"{_ds(a["peak_vram"])}>{_fmt_mb(a["peak_vram"])}</td>')
+        out.append(f'<td class="muted">{escape(size_str)}</td>')
+        naq_val = a["naq"]
+        out.append(
+            f'<td class="num pill"{_ds(naq_val)}>'
+            f'<a href="quality.html" title="See NAQ details on quality view">{_fmt_naq(naq_val)}</a>'
+            '</td>'
+        )
+        out.append('</tr>')
+    out.append('</tbody></table>')
+
+    # Default sort: RTF warm desc
+    out.append(f'<script>window.__defaultSort = {{colIdx: {rtf_warm_idx}, dir: -1}};</script>')
+    out.append(SCRIPT)
+    out.append('</body></html>')
+    return "\n".join(out)
+
+
 def build_report(run_dir: Path) -> Path:
     csv_path = run_dir / "results.csv"
     if not csv_path.exists():
