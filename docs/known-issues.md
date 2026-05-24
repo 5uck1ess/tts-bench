@@ -1,0 +1,38 @@
+# Known issues
+
+Frictions surfaced while building the harness. None are blockers on Mac/Linux — most apply to Windows or to specific models.
+
+## Cross-cutting
+
+- **`uv venv` doesn't seed pip.** `python -m pip install ...` fails inside a fresh uv venv. Installs use `uv pip install --python <venv-python>` throughout. The install scripts codify this.
+- **PowerShell 5.1 + native exes + `$ErrorActionPreference=Stop` is a trap.** `uv` prints to stderr on success (`"Using CPython 3.11.15"`); PowerShell wraps each stderr line as a `NativeCommandError` and trips Stop even on exit 0. `install.ps1` uses `$LASTEXITCODE` checks instead.
+
+## Per-model
+
+- **OmniVoice MPS — OOM on long prompts on 16 GB Macs.** The 30-word Parakeet paragraph (prompt 3 in the bench) hits "MPS backend out of memory (MPS allocated: 3.38 GiB)" on a 16 GB M4. Short/medium prompts (5-15 words) generate fine at ~0.9× RTF. If you need long-form on MPS, fall back to OmniVoice/cpu (0.6× RTF) or use a 32 GB+ Mac.
+- **LuxTTS — blocked on Windows AND Apple Silicon.** Depends on `piper-phonemize` 1.1.0 which only ships wheels for `manylinux_2_28_{x86_64,aarch64}` and `macosx_10_14_x86_64` (Intel Mac only). On arm64 macOS (M-series) the install fails with "no wheels with a matching platform tag (e.g., `macosx_26_0_arm64`)". Workaround: build piper-phonemize from source (untested) or use Linux. The README previously claimed "should install cleanly on macOS — piper-phonemize macOS wheels exist" — that's only true for Intel Macs. Also note the cloned repo's pyproject lists `name = "Zipvoice"` even though the GitHub repo is named LuxTTS, so the runner imports `from zipvoice.luxvoice import LuxTTS`. (Piper proper is unaffected — `piper-tts` 1.4+ bundles espeak-ng and dropped the piper-phonemize dependency.)
+- **NeuTTS — `pip install neutts` gives the torch backbone, not the production fast path.** Torch backbone on x86 CPU runs at ~0.2× RTF (unusable). Production path is `llama-cpp-python` + `neuphonic/neutts-*-q4-gguf` models. Post-switch RTF is what's in the table. Install scripts install the GGUF path by default.
+- **NeuTTS — reference voices need both `.wav` AND `.txt` (transcript).** Wav-only fails inside `encode_reference()`. Pocket-TTS in contrast takes a voice name string or a single wav (gated).
+- **NeuTTS Nano — multilingual = separate model file per language.** `neuphonic/neutts-nano-q4-gguf` (EN), `neuphonic/neutts-nano-french-q4-gguf` (FR), etc. Runner switches based on `--language`.
+- **Pocket-TTS — voice cloning is HF accept-terms gated.** Predefined voices work without auth. Reference-wav cloning triggers a fetch of the gated `kyutai/pocket-tts` repo and 401s. Either accept terms or use NeuTTS Air/Nano for BYO-voice without auth.
+- **Kokoro — misaki tokenizer calls `spacy.cli.download()` at init.** Tries to install `en_core_web_sm` via pip; fails in uv venvs. Install scripts pre-install the model wheel directly to bypass this.
+- **KittenTTS — needs `espeakng-loader` (bundles espeak-ng DLL).** System espeak install also works on Mac/Linux but is more friction. Runner sets `ESPEAK_DATA_PATH` env var because the bundled DLL has a hardcoded CI build path.
+- **ChatterBox — needs `setuptools<80`.** The `perth` audio watermarker imports `pkg_resources` (removed in setuptools 80+). Install scripts pin the version.
+- **F5-TTS — `torchaudio.load()` routes through `torchcodec` in torch 2.12+**, which needs FFmpeg shared DLLs (libtorchcodec_core4.dll etc., NOT just ffmpeg.exe). On Windows with the typical static FFmpeg build this fails. Runner monkey-patches `torchaudio.load` to use `soundfile` directly. Install scripts also pin `datasets<3.0` to avoid pulling torchcodec into the import chain.
+- **VibeVoice — install from `vibevoice-community/VibeVoice`, NOT pypi or `microsoft/VibeVoice`.** pypi `vibevoice==0.0.1` only ships the base architecture (no streaming class). The official Microsoft repo was taken down in September 2025 then partially restored without code. The community fork at github.com/vibevoice-community/VibeVoice keeps the original code and added a working streaming variant on 2025-12-04. Voice presets (`.pt` files, 2-4MB each) are not bundled in the package — runner auto-downloads them from the fork to `~/.cache/vibevoice-voices/` on first use.
+- **VibeVoice — the "you should probably TRAIN this model" warning is benign.** The HF checkpoint deliberately omits the `acoustic_tokenizer.encoder` weights (~400 keys load as random). That subnet is unused at inference because the `.pt` voice presets are pre-encoded representations. Audio output is unaffected.
+
+---
+
+## Per-model licenses
+
+**Each TTS model has its own license** — check the linked upstream repos before deploying any of them in a product.
+
+- MIT: [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts), [Piper](https://github.com/OHF-voice/piper1-gpl), [ChatterBox](https://github.com/resemble-ai/chatterbox), [F5-TTS](https://github.com/SWivid/F5-TTS), [VibeVoice (community fork)](https://github.com/vibevoice-community/VibeVoice), [Supertonic](https://github.com/supertone-inc/supertonic) (sample code; model weights are **OpenRAIL-M**, see below)
+- **OpenRAIL-M (use-based, commercial-permissive):** [Supertonic model weights](https://huggingface.co/Supertone/supertonic) — read the license for the use restrictions.
+- Apache 2.0: [NeuTTS](https://github.com/neuphonic/neutts), [Kokoro](https://github.com/hexgrad/kokoro), [KittenTTS](https://github.com/KittenML/KittenTTS), [LuxTTS](https://github.com/ysharma3501/LuxTTS)
+- **CPML 1.0 (non-commercial):** [Coqui XTTS-v2](https://huggingface.co/coqui/XTTS-v2) — research / personal use only. The harness auto-accepts via `COQUI_TOS_AGREED=1`.
+- **NVIDIA Open Model License:** [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) — commercial use permitted with terms; HF accept-terms gated.
+- **Check upstream — see model repo:** [OmniVoice](https://github.com/k2-fsa/OmniVoice), [VoxCPM](https://github.com/OpenBMB/VoxCPM). License field is not stated in the standard MIT/Apache form in the upstream READMEs — verify before deploying anywhere production-adjacent.
+
+For the models in the [Considered but skipped](considered.md) section: Fish Audio S2 is research-license non-commercial, Fish Audio S1-mini is CC-BY-NC-SA-4.0, Orpheus TTS is Apache 2.0, CosyVoice 3 see upstream — all explicitly outside this bench but listed there so the reasoning is documented.
