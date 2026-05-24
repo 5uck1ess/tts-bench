@@ -1,20 +1,26 @@
-"""NAQ — Naturalness-Artifact Quotient. Per-wav objective quality score.
+"""NAQ — Naturalness-Artifact Quotient v2. Per-wav objective quality score.
 
-NAQ v2 structure (two macros, each 0-100):
-  naq_artifact: mean of non-null sub-scores in {HARM, BUZZ}
-    HARM: HNR (dB) clamped [0,30] -> hnr/30*100   (Boersma 1993)
-    BUZZ: 4-8 kHz spectral flatness inverted -> (1-flatness)*100
-  naq_naturalness: PROSODY and PITCH_MVMT sub-scores (Task 2+)
-  naq (composite): mean(naq_artifact, naq_naturalness) when both present
+NAQ = 0.5 * ARTIFACT + 0.5 * NATURALNESS where:
+  ARTIFACT    = mean of {HARM, BUZZ}                 (>= 1 non-null required)
+  NATURALNESS = mean of {DYN, PROSODY, RHYTHM, PITCH_MVMT}  (>= 2 non-null required)
 
-pyin is extracted once via _voiced_f0() and shared across HARM, PROSODY,
-and PITCH_MVMT to avoid redundant ~1s calls.
+Sub-features (each normalized to [0, 100], higher = better):
+  HARM:       HNR in dB, Praat-style (Boersma 1993), clipped to [0, 30]
+  BUZZ:       1 - 4-8kHz spectral flatness (vocoder buzz band)
+  DYN:        P95-P5 of frame RMS in dB, clipped to [0, 30]
+  PROSODY:    std-dev of voiced F0 in semitones (ref 100 Hz), clipped to [0, 5]
+  RHYTHM:     Shannon entropy of IOI histogram, normalized by log2(10)
+  PITCH_MVMT: mean |delta F0| across adjacent voiced frames in semitones, clipped to [0, 1.5]
+
+ARTIFACT captures absence-of-artifacts; NATURALNESS captures presence of positive
+naturalness cues humans pick up. Both axes are required because acoustic-artifact
+metrics alone (the v1 design) can't tell a clean-but-monotone synth from a
+clean-and-expressive one.
 
 A learned-MOS predictor (UTMOS/DNSMOS) was considered but dropped: portable
-install across 18+ heterogeneous venvs and CPU-only venvs (Piper, KittenTTS,
-Supertonic) was infeasible. The remaining sub-scores capture the
-artifact axes the user explicitly cared about (vocoder buzz + phase noise);
-overall "naturalness" prediction is left for a future enhancement.
+install across 18+ heterogeneous venvs (some no-torch CPU-only) is infeasible.
+Voting-system ground truth is the eventual real metric; this is a best-effort
+proxy until that ships.
 
 Best-effort: if librosa/scipy are missing or the wav is unloadable,
 score() returns nulls and the bench continues.
@@ -123,11 +129,114 @@ def _buzz_flatness(wav_path):
         return None
 
 
+def _dyn_range_db(wav_path):
+    """Return P95 - P5 of frame-level RMS in dB, or None.
+
+    Captures dynamic range across the wav (loud emphasis vs quiet parts).
+    20ms windows, 10ms hop. Requires >=10 frames.
+    """
+    try:
+        import numpy as np
+        import soundfile as sf
+        y, sr = sf.read(wav_path)
+        if y.ndim > 1:
+            y = y.mean(axis=1)
+        if y.size == 0 or sr < 8000:
+            return None
+        win = int(sr * 0.020)
+        hop = int(sr * 0.010)
+        if win < 16 or len(y) < win * 10:
+            return None
+        n_frames = (len(y) - win) // hop + 1
+        rms = np.empty(n_frames, dtype=np.float64)
+        for i in range(n_frames):
+            frame = y[i*hop : i*hop + win]
+            rms[i] = float(np.sqrt(np.mean(frame * frame)))
+        rms_db = 20.0 * np.log10(rms + 1e-9)
+        return float(np.percentile(rms_db, 95) - np.percentile(rms_db, 5))
+    except _SAFE as e:
+        print(f"[_naq] DYN failed: {e}", file=sys.stderr)
+        return None
+
+
+def _prosody_std_semi(f0, valid):
+    """Return std-dev of voiced F0 in semitones (ref 100 Hz), or None.
+
+    Requires >=10 valid F0 frames.
+    """
+    try:
+        import numpy as np
+        f0_valid = f0[valid]
+        if f0_valid.size < 10:
+            return None
+        f0_semi = 12.0 * np.log2(f0_valid / 100.0)
+        return float(np.std(f0_semi))
+    except _SAFE as e:
+        print(f"[_naq] PROSODY failed: {e}", file=sys.stderr)
+        return None
+
+
+def _rhythm_entropy(wav_path):
+    """Return entropy of inter-onset intervals normalized to log2(10), or None.
+
+    librosa.onset.onset_detect -> times -> IOI distribution histogram (10 bins,
+    range 0.1-2.0 sec) -> Shannon entropy. Requires >=3 IOIs (i.e. >=4 onsets).
+    """
+    try:
+        import librosa
+        import numpy as np
+        y, sr = librosa.load(wav_path, sr=None, mono=True)
+        if y.size == 0:
+            return None
+        onset_times = librosa.onset.onset_detect(y=y, sr=sr, units='time')
+        if len(onset_times) < 4:
+            return None
+        ioi = np.diff(onset_times)
+        if len(ioi) < 3:
+            return None
+        hist, _ = np.histogram(ioi, bins=10, range=(0.1, 2.0))
+        total = hist.sum()
+        if total <= 0:
+            return None
+        p = hist[hist > 0] / total
+        entropy = float(-np.sum(p * np.log2(p)))
+        return entropy / np.log2(10.0)
+    except _SAFE as e:
+        print(f"[_naq] RHYTHM failed: {e}", file=sys.stderr)
+        return None
+
+
+def _pitch_movement_semi(f0, valid):
+    """Return mean |delta F0| in semitones across adjacent voiced frames, or None.
+
+    Requires >=10 adjacent voiced-pair frames (i.e. 10 transitions where both
+    frames are voiced).
+    """
+    try:
+        import numpy as np
+        if valid.size < 2:
+            return None
+        f0_semi = 12.0 * np.log2(np.where(valid, f0, np.nan) / 100.0)
+        adj_valid = valid[:-1] & valid[1:]
+        if adj_valid.sum() < 10:
+            return None
+        deltas = np.abs(f0_semi[1:] - f0_semi[:-1])
+        valid_deltas = deltas[adj_valid]
+        return float(np.mean(valid_deltas))
+    except _SAFE as e:
+        print(f"[_naq] PITCH_MVMT failed: {e}", file=sys.stderr)
+        return None
+
+
 def score(wav_path):
     """Return {naq, naq_artifact, naq_naturalness} for a wav file.
 
-    All three fields are floats in [0, 100] on success, or None on failure
-    of that macro. The composite `naq` is None if either macro is None.
+    Composite NAQ = 0.5 * ARTIFACT + 0.5 * NATURALNESS where:
+      ARTIFACT    = mean of {HARM, BUZZ} non-nulls (requires >=1)
+      NATURALNESS = mean of {DYN, PROSODY, RHYTHM, PITCH_MVMT} non-nulls (requires >=2)
+
+    All three returned fields are floats in [0, 100] or None.
+    The composite is None if either macro is None.
     """
     out = {"naq": None, "naq_artifact": None, "naq_naturalness": None}
     try:
@@ -136,32 +245,48 @@ def score(wav_path):
     except _SAFE:
         return out
 
+    # Shared pyin output for HARM, PROSODY, PITCH_MVMT
     f0_data = _voiced_f0(wav_path)
     if f0_data is not None:
         sr, voiced, f0, valid = f0_data
         hnr_db = _hnr_score(sr, voiced, f0, valid)
+        prosody_raw = _prosody_std_semi(f0, valid)
+        pitch_mvmt_raw = _pitch_movement_semi(f0, valid)
     else:
-        hnr_db = None
+        hnr_db = prosody_raw = pitch_mvmt_raw = None
 
     flat = _buzz_flatness(wav_path)
+    dyn_raw = _dyn_range_db(wav_path)
+    rhythm_raw = _rhythm_entropy(wav_path)
 
-    harm = None if hnr_db is None else round(max(0.0, min(100.0, hnr_db / 30.0 * 100.0)), 1)
-    buzz = None if flat is None else round(max(0.0, min(100.0, (1.0 - flat) * 100.0)), 1)
+    # Normalize each feature to [0, 100]
+    def _clip(v, denom):
+        return None if v is None else round(max(0.0, min(100.0, v / denom * 100.0)), 1)
 
-    # Artifact macro: mean of non-null among {HARM, BUZZ}; requires >=1.
+    harm       = _clip(hnr_db, 30.0)
+    buzz       = None if flat is None else round(max(0.0, min(100.0, (1.0 - flat) * 100.0)), 1)
+    dyn        = _clip(dyn_raw, 30.0)
+    prosody    = _clip(prosody_raw, 5.0)
+    rhythm     = _clip(rhythm_raw, 1.0)  # already in [0, 1] from entropy / log2(10)
+    pitch_mvmt = _clip(pitch_mvmt_raw, 1.5)
+
+    # ARTIFACT macro: requires >=1 non-null
     artifact_vals = [v for v in (harm, buzz) if v is not None]
-    if artifact_vals:
+    if len(artifact_vals) >= 1:
         out["naq_artifact"] = round(sum(artifact_vals) / len(artifact_vals), 1)
 
-    if out["naq_artifact"] is not None:
-        # Naturalness macro will be filled in by later tasks; for now leave None.
-        # Composite is None until both macros compute.
-        pass
+    # NATURALNESS macro: requires >=2 non-null
+    naturalness_vals = [v for v in (dyn, prosody, rhythm, pitch_mvmt) if v is not None]
+    if len(naturalness_vals) >= 2:
+        out["naq_naturalness"] = round(sum(naturalness_vals) / len(naturalness_vals), 1)
+
+    if out["naq_artifact"] is not None and out["naq_naturalness"] is not None:
+        out["naq"] = round(0.5 * out["naq_artifact"] + 0.5 * out["naq_naturalness"], 1)
     return out
 
 
 def _selftest():
-    """Validate scoring on real speech, white noise, and silence."""
+    """Validate scoring on real speech, white noise, silence, and synthetic prosody."""
     import json
     import tempfile
     import numpy as np
@@ -172,40 +297,62 @@ def _selftest():
 
     failures = []
 
+    # 1. Real speech
     if os.path.exists(real_wav):
         s = score(real_wav)
         print(f"real speech: {json.dumps(s)}")
-        if s["naq_artifact"] is None:
-            failures.append("real speech naq_artifact was None")
-        elif s["naq_artifact"] < 10:
-            failures.append(f"real speech naq_artifact {s['naq_artifact']} < 10")
+        if s["naq"] is None:
+            failures.append("real speech NAQ was None")
+        elif s["naq"] < 10:
+            failures.append(f"real speech NAQ {s['naq']} < 10")
     else:
         print(f"SKIP real speech (no {real_wav})")
 
+    # 2. White noise: HARM None (no F0) so ARTIFACT = BUZZ alone.
+    #    NATURALNESS may compute if >=2 of {DYN,RHYTHM} succeed (PROSODY+PITCH_MVMT None).
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         noise_path = f.name
     try:
-        noise = (np.random.default_rng(0).standard_normal(48000 * 3)).astype("float32") * 0.1
+        rng = np.random.default_rng(0)
+        noise = (rng.standard_normal(48000 * 3)).astype("float32") * 0.1
         sf.write(noise_path, noise, 48000)
         s = score(noise_path)
         print(f"white noise: {json.dumps(s)}")
-        # White noise: harm path returns None (no periodicity).
-        # naq_artifact may still compute from BUZZ alone; composite naq stays None.
         if s["naq"] is not None and s["naq"] > 40:
-            failures.append(f"white noise NAQ {s['naq']} > 40 unexpected")
+            failures.append(f"white noise NAQ {s['naq']} > 40 (should be low)")
     finally:
         os.unlink(noise_path)
 
+    # 3. Silence: every voiced/F0/onset feature returns None -> NATURALNESS None -> composite None.
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         silence_path = f.name
     try:
         sf.write(silence_path, np.zeros(48000, dtype="float32"), 48000)
         s = score(silence_path)
         print(f"silence:     {json.dumps(s)}")
-        if s["naq_artifact"] is not None:
-            failures.append(f"silence naq_artifact was {s['naq_artifact']} (expected None)")
+        if s["naq"] is not None:
+            failures.append(f"silence NAQ was {s['naq']} (expected None)")
     finally:
         os.unlink(silence_path)
+
+    # 4. Synthetic monotone tone (220 Hz sine, 3s): high HARM, low PROSODY/PITCH_MVMT.
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
+        mono_path = f.name
+    try:
+        sr = 24000
+        t = np.linspace(0, 3.0, sr * 3, endpoint=False)
+        tone = (0.3 * np.sin(2 * np.pi * 220.0 * t)).astype("float32")
+        sf.write(mono_path, tone, sr)
+        s = score(mono_path)
+        print(f"monotone:    {json.dumps(s)}")
+        # We expect ARTIFACT to be high (clean sine), NATURALNESS to be low (flat F0)
+        if s["naq_artifact"] is not None and s["naq_naturalness"] is not None:
+            if s["naq_naturalness"] > 30:
+                failures.append(
+                    f"monotone NATURALNESS {s['naq_naturalness']} > 30 (should be low for flat sine)"
+                )
+    finally:
+        os.unlink(mono_path)
 
     if failures:
         print("\nFAILURES:")
