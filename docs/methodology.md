@@ -5,7 +5,7 @@
 Open TTS models advertise speed numbers from cherry-picked hardware, often confusing cold and warm starts, and never tell you what the output sounds like. tts-bench measures three things, on whatever hardware you point it at:
 
 - **Speed** — cold + warm TTFA, RTF, peak RAM, peak VRAM. Cold = first run after process start. Warm = subsequent runs.
-- **Quality (NAQ)** — objective 0-100 score for vocoder artifacts + naturalness. Computed automatically for the cold run of every cell. See [naq.md](naq.md).
+- **Quality (NAQ v2)** — objective 0-100 score combining two macros at 50/50: ARTIFACT (mean of HARM + BUZZ) and NATURALNESS (mean of DYN + PROSODY + RHYTHM + PITCH_MVMT). Captures both artifact-absence AND positive-naturalness cues, not just one axis. Best-effort acoustic proxy until voting-system ground truth ships. See [naq.md](naq.md).
 - **Voice cloning** — same prompts, same reference voice, ranked subjectively. See [cloning.md](cloning.md).
 
 ## Why cold vs warm
