@@ -953,6 +953,8 @@ def _render_samples(ctx):
 
 
 def build_report(run_dir: Path) -> Path:
+    """Emit index.html + speed.html + quality.html + samples.html from results.csv.
+    Returns the path to index.html (the lens picker)."""
     csv_path = run_dir / "results.csv"
     if not csv_path.exists():
         raise SystemExit(f"No results.csv in {run_dir}")
@@ -960,125 +962,24 @@ def build_report(run_dir: Path) -> Path:
     if not rows:
         raise SystemExit(f"Empty results.csv in {run_dir}")
 
-    cells = defaultdict(list)
-    for r in rows:
-        cells[(r["prompt_id"], r["model"], r["device"])].append(r)
-
-    prompts_seen = _sort_prompt_ids({r["prompt_id"] for r in rows})
-    models_seen = sorted({r["model"] for r in rows})
-    devices_seen = sorted({r["device"] for r in rows})
-    runs_per_cell = max(len(v) for v in cells.values())
-
     meta = _read_meta(run_dir)
+    ctx = _build_context(rows, run_dir, meta)
 
-    out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
-           f'<title>TTS Bench — {escape(run_dir.name)}</title>',
-           STYLE,
-           '</head><body>',
-           CONTROLS,
-           '<div class="nav"><a href="../index.html">← all runs</a></div>',
-           f'<h1>TTS Bench — {escape(run_dir.name)}</h1>']
-    if meta:
-        out.append(f'<div class="meta"><strong>Rig:</strong> '
-                   f'<code>{escape(meta.get("rig") or "?")}</code> — '
-                   f'{escape(_rig_summary(meta))}</div>')
-        if meta.get("label"):
-            ref = meta.get("reference")
-            ref_html = (f' — ref <code>{escape(ref)}</code>'
-                        if ref else "")
-            out.append(f'<div class="meta"><strong>Label:</strong> '
-                       f'{escape(meta["label"])}{ref_html}</div>')
-    out.extend([
-        f'<div class="meta">{len(models_seen)} model(s) · '
-        f'{len(devices_seen)} device(s) · '
-        f'{len(prompts_seen)} prompt(s) · '
-        f'{runs_per_cell} run(s) per cell</div>',
-        '<div class="meta">Source: <code>results.csv</code></div>',
-    ])
+    (run_dir / "index.html").write_text(_render_lens_picker(ctx), encoding="utf-8")
+    (run_dir / "speed.html").write_text(_render_speed(ctx), encoding="utf-8")
+    (run_dir / "quality.html").write_text(_render_quality(ctx), encoding="utf-8")
+    (run_dir / "samples.html").write_text(_render_samples(ctx), encoding="utf-8")
 
-    for pid in prompts_seen:
-        out.append(f'<div class="prompt"><h2>Prompt {escape(pid)}</h2>')
-        ptext = PROMPT_INFO.get(pid)
-        if ptext:
-            lang, text = ptext
-            out.append(f'<span class="prompt-text"><span class="lang">[{escape(lang)}]</span>'
-                       f'"{escape(text)}"</span>')
-
-        out.append('<table><thead><tr>')
-        for col in ("Model", "Size", "Device", "TTFA cold", "TTFA warm",
-                    "RTF cold", "RTF warm", "Mem", "VRAM", "NAQ", "Audio (cold)"):
-            out.append(f'<th>{col}</th>')
-        out.append('</tr></thead><tbody>')
-
-        cell_keys = sorted([k for k in cells if k[0] == pid], key=lambda k: (k[1], k[2]))
-        for (_, model, device) in cell_keys:
-            cell_rows = cells[(pid, model, device)]
-            cold = next((r for r in cell_rows if r["is_cold"] and r["ok"]), None)
-            warms = [r for r in cell_rows if not r["is_cold"] and r["ok"]]
-            failed = next((r for r in cell_rows if not r["ok"]), None)
-
-            dev_class = f"dev-{device}"
-            size_str = MODEL_SIZE.get(model, "—")
-            out.append('<tr>')
-            out.append(f'<td>{escape(model)}</td>'
-                       f'<td class="muted">{escape(size_str)}</td>'
-                       f'<td class="{dev_class}">{escape(device)}</td>')
-
-            if not cold:
-                err = (failed.get("error") if failed else "") or "no successful run"
-                out.append(f'<td colspan="8" class="fail">FAIL: {escape(err.strip()[:140])}</td>')
-                out.append('</tr>')
-                continue
-
-            ttfa_cold = cold["ttfa_ms"]
-            ttfa_warm = (sum(w["ttfa_ms"] for w in warms) / len(warms)) if warms else None
-
-            def _rtf(r):
-                a, g = r["audio_s"], r["gen_s"]
-                return (a / g) if (a and g) else None
-
-            rtf_cold = _rtf(cold)
-            warm_rtfs = [v for v in (_rtf(w) for w in warms) if v is not None]
-            rtf_warm = (sum(warm_rtfs) / len(warm_rtfs)) if warm_rtfs else None
-
-            mem_cold = cold.get("peak_mem_mb")
-            vram_cold = cold.get("peak_vram_mb")
-            naq_cold = cold.get("naq")
-            harm_cold = cold.get("naq_harm")
-            buzz_cold = cold.get("naq_buzz")
-            naq_tooltip = ""
-            if naq_cold is not None:
-                naq_tooltip = (
-                    f"HARM {_fmt_naq(harm_cold)}  "
-                    f"BUZZ {_fmt_naq(buzz_cold)}"
-                )
-
-            wav_name = f"{model}_{device}_p{pid}.wav"
-            audio_html = (f'<audio controls preload="none" src="{escape(wav_name)}"></audio>'
-                          if (run_dir / wav_name).exists()
-                          else '<span class="muted">missing</span>')
-
-            out.append(f'<td class="num"{_ds(ttfa_cold)}>{_fmt_ttfa(ttfa_cold)}</td>')
-            out.append(f'<td class="num"{_ds(ttfa_warm)}>{_fmt_ttfa(ttfa_warm)}</td>')
-            out.append(f'<td class="num"{_ds(rtf_cold)}>{_fmt_rtf(rtf_cold)}</td>')
-            out.append(f'<td class="num"{_ds(rtf_warm)}>{_fmt_rtf(rtf_warm)}</td>')
-            out.append(f'<td class="num"{_ds(mem_cold)}>{_fmt_mb(mem_cold)}</td>')
-            out.append(f'<td class="num"{_ds(vram_cold)}>{_fmt_mb(vram_cold)}</td>')
-            out.append(
-                f'<td class="num"{_ds(naq_cold)} title="{escape(naq_tooltip)}">'
-                f'{_fmt_naq(naq_cold)}</td>'
-            )
-            out.append(f'<td>{audio_html}</td>')
-            out.append('</tr>')
-
-        out.append('</tbody></table></div>')
-
-    out.append(SCRIPT)
-    out.append('</body></html>')
-    html_path = run_dir / "report.html"
-    html_path.write_text("\n".join(out), encoding="utf-8")
-    return html_path
+    # Legacy report.html — emit a small redirect stub so any external link still works.
+    legacy = run_dir / "report.html"
+    legacy.write_text(
+        '<!doctype html><html><head><meta charset="utf-8">'
+        '<meta http-equiv="refresh" content="0; url=index.html">'
+        '<title>Redirecting…</title></head>'
+        '<body><a href="index.html">Lens picker</a></body></html>',
+        encoding="utf-8",
+    )
+    return run_dir / "index.html"
 
 
 def build_index() -> Path:
@@ -1169,7 +1070,7 @@ def main() -> int:
             if not d.is_dir() or not (d / "results.csv").exists():
                 continue
             html = build_report(d)
-            print(f"  wrote {html.relative_to(REPO)}")
+            print(f"  wrote {html.relative_to(REPO)} (+ 3 lens pages)")
         idx = build_index()
         print(f"wrote {idx.relative_to(REPO)}")
         if args.open:
@@ -1192,7 +1093,7 @@ def main() -> int:
         raise SystemExit(f"Not found: {run_dir}")
 
     html = build_report(run_dir)
-    print(f"wrote {html.relative_to(REPO)}")
+    print(f"wrote {html.relative_to(REPO)} (+ speed.html, quality.html, samples.html)")
     build_index()
     if args.open:
         webbrowser.open(html.as_uri())
