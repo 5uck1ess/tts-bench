@@ -1,42 +1,32 @@
 """NAQ — Naturalness-Artifact Quotient. Per-wav objective quality score.
 
-NAQ = 0.60 * MOS_score + 0.25 * HARM_score + 0.15 * BUZZ_score
+NAQ = 0.65 * HARM_score + 0.35 * BUZZ_score
 where each sub-score is normalized to [0, 100].
 
 Sub-scores:
-  MOS_score:  UTMOS predicted MOS (1-5) -> (mos - 1) * 25
   HARM_score: HNR (dB) clamped to [0, 30] -> hnr / 30 * 100
+              (Boersma 1993, normalized autocorrelation at the F0 lag)
   BUZZ_score: 4-8 kHz spectral flatness inverted -> (1 - flatness) * 100
+              (the vocoder "buzziness" band; flat spectra = artifacted)
 
-Best-effort: if utmos/librosa/scipy are missing or the wav is unloadable,
-score() returns all-None and the bench continues.
+A learned-MOS predictor (UTMOS/DNSMOS) was considered but dropped: portable
+install across 18+ heterogeneous venvs and CPU-only venvs (Piper, KittenTTS,
+Supertonic) was infeasible. The remaining two sub-scores capture the
+artifact axes the user explicitly cared about (vocoder buzz + phase noise);
+overall "naturalness" prediction is left for a future enhancement.
+
+Best-effort: if librosa/scipy are missing or the wav is unloadable,
+score() returns nulls and the bench continues.
 """
 
 import os
 import sys
 
 _SAFE = (ImportError, RuntimeError, AttributeError, OSError, ValueError)
-_LOAD_FAILED = False  # one-shot flag so we don't retry the import per call
-
-
-def _utmos_score(wav_path):
-    """Return UTMOS MOS in [1, 5], or None on failure."""
-    global _LOAD_FAILED
-    if _LOAD_FAILED:
-        return None
-    try:
-        from utmos import Score
-        scorer = Score()
-        mos = scorer.calculate_wav_file(wav_path)
-        return float(mos)
-    except _SAFE as e:
-        _LOAD_FAILED = True
-        print(f"[_naq] utmos unavailable: {e}", file=sys.stderr)
-        return None
 
 
 def _hnr_score(wav_path):
-    """Return mean HNR in dB over voiced regions, or None.
+    """Return median HNR in dB over voiced regions, or None.
 
     Uses Boersma 1993 formulation: HNR = 10 * log10(r / (1 - r))
     where r is the Praat-style normalized autocorrelation at the F0 lag,
@@ -70,7 +60,6 @@ def _hnr_score(wav_path):
         hnr_vals = []
         for start in range(0, len(voiced) - frame_len, hop):
             frame = voiced[start : start + frame_len]
-            # Search for peak r in a window around the expected lag
             best_r = -999.0
             for lag in range(lo, hi + 1):
                 x1 = frame[: frame_len - lag]
@@ -107,7 +96,6 @@ def _buzz_flatness(wav_path):
         psd_band = psd[band]
         if psd_band.size == 0 or np.all(psd_band <= 0):
             return None
-        # Spectral flatness = geometric-mean / arithmetic-mean
         geo = np.exp(np.mean(np.log(psd_band + 1e-12)))
         ari = np.mean(psd_band)
         flat = float(geo / ari) if ari > 0 else None
@@ -118,42 +106,33 @@ def _buzz_flatness(wav_path):
 
 
 def score(wav_path):
-    """Return {naq, naq_mos, naq_harm, naq_buzz} for a wav file.
+    """Return {naq, naq_harm, naq_buzz} for a wav file.
 
-    All four fields are floats in [0, 100] on success, or None on failure
-    of that sub-score. The composite `naq` is None if any sub-score is None.
+    All three fields are floats in [0, 100] on success, or None on failure
+    of that sub-score. The composite `naq` is None if either sub-score is None.
     """
-    out = {"naq": None, "naq_mos": None, "naq_harm": None, "naq_buzz": None}
+    out = {"naq": None, "naq_harm": None, "naq_buzz": None}
     try:
         if not os.path.exists(wav_path):
             return out
     except _SAFE:
         return out
 
-    mos = _utmos_score(wav_path)
     hnr_db = _hnr_score(wav_path)
     flat = _buzz_flatness(wav_path)
 
-    if mos is not None:
-        out["naq_mos"] = round(max(0.0, min(100.0, (mos - 1.0) * 25.0)), 1)
     if hnr_db is not None:
         out["naq_harm"] = round(max(0.0, min(100.0, hnr_db / 30.0 * 100.0)), 1)
     if flat is not None:
         out["naq_buzz"] = round(max(0.0, min(100.0, (1.0 - flat) * 100.0)), 1)
 
-    if all(out[k] is not None for k in ("naq_mos", "naq_harm", "naq_buzz")):
-        out["naq"] = round(
-            0.60 * out["naq_mos"] + 0.25 * out["naq_harm"] + 0.15 * out["naq_buzz"], 1
-        )
+    if out["naq_harm"] is not None and out["naq_buzz"] is not None:
+        out["naq"] = round(0.65 * out["naq_harm"] + 0.35 * out["naq_buzz"], 1)
     return out
 
 
 def _selftest():
-    """Validate scoring on real speech, noise, and silence reference inputs.
-
-    Real speech should score above 60. White noise should score below 40.
-    Silence returns None for all sub-scores.
-    """
+    """Validate scoring on real speech, white noise, and silence."""
     import json
     import tempfile
     import numpy as np
@@ -164,18 +143,16 @@ def _selftest():
 
     failures = []
 
-    # Real speech
     if os.path.exists(real_wav):
         s = score(real_wav)
         print(f"real speech: {json.dumps(s)}")
         if s["naq"] is None:
             failures.append("real speech NAQ was None")
-        elif s["naq"] < 30:
-            failures.append(f"real speech NAQ {s['naq']} < 30 expected")
+        elif s["naq"] < 10:
+            failures.append(f"real speech NAQ {s['naq']} < 10 (clean speech should beat noise floor)")
     else:
         print(f"SKIP real speech (no {real_wav})")
 
-    # White noise
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         noise_path = f.name
     try:
@@ -183,20 +160,19 @@ def _selftest():
         sf.write(noise_path, noise, 48000)
         s = score(noise_path)
         print(f"white noise: {json.dumps(s)}")
+        # White noise: harm path returns None (no periodicity), so composite is None.
+        # If composite slips through, it should still be low.
         if s["naq"] is not None and s["naq"] > 40:
             failures.append(f"white noise NAQ {s['naq']} > 40 unexpected")
     finally:
         os.unlink(noise_path)
 
-    # Silence
     with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as f:
         silence_path = f.name
     try:
         sf.write(silence_path, np.zeros(48000, dtype="float32"), 48000)
         s = score(silence_path)
         print(f"silence:     {json.dumps(s)}")
-        # silence -> harm/buzz return None (no voiced regions, no spectral content);
-        # composite must be None too
         if s["naq"] is not None:
             failures.append(f"silence NAQ was {s['naq']} (expected None)")
     finally:

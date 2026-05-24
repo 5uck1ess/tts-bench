@@ -302,14 +302,14 @@ Get-ChildItem venvs -Directory | ForEach-Object {
 }
 Write-Host "psutil: ensured in all venvs" -ForegroundColor Green
 
-Step "NAQ deps in every venv (utmos + librosa + scipy for naq scoring)"
-# NAQ scoring runs after every wav is written. utmos is a pretrained MOS
-# predictor (~50 MB); librosa + scipy are already present in most venvs but
-# we ensure them here for the predefined-voice ones that don't depend on them.
+Step "NAQ deps in every venv (librosa + scipy for naq scoring)"
+# NAQ scoring runs after every wav is written. Pure-acoustic (HARM + BUZZ);
+# librosa + scipy is all we need. A learned-MOS predictor was considered and
+# dropped — install portability across heterogeneous venvs wasn't workable.
 Get-ChildItem venvs -Directory | ForEach-Object {
     $py = Join-Path $_.FullName "Scripts\python.exe"
     if (Test-Path $py) {
-        & uv pip install --python $py utmos librosa scipy --quiet 2>&1 | Out-Null
+        & uv pip install --python $py librosa scipy --quiet 2>&1 | Out-Null
     }
 }
 Write-Host "naq deps: ensured in all venvs" -ForegroundColor Green

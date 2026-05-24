@@ -313,11 +313,14 @@ for v in venvs/*/bin/python; do
 done
 green "psutil: ensured in all venvs"
 
-# --- NAQ deps in every venv (utmos + librosa + scipy for naq scoring) ---
-echo; cyan "=== NAQ deps in every venv (utmos + librosa + scipy for naq scoring) ==="
+# --- NAQ deps in every venv (librosa + scipy for naq scoring) ---
+echo; cyan "=== NAQ deps in every venv (librosa + scipy for naq scoring) ==="
+# Pure-acoustic NAQ (HARM + BUZZ); librosa + scipy is all we need. A learned
+# MOS predictor was considered and dropped — install portability across
+# heterogeneous venvs wasn't workable.
 for v in venvs/*/bin/python; do
     if [ -x "$v" ]; then
-        uv pip install --python "$v" utmos librosa scipy --quiet >/dev/null 2>&1 || true
+        uv pip install --python "$v" librosa scipy --quiet >/dev/null 2>&1 || true
     fi
 done
 green "naq deps: ensured in all venvs"
