@@ -160,4 +160,56 @@ if (-not (Test-Path "venvs\vibevoice\Scripts\python.exe")) {
     Write-Host "vibevoice: already installed" -ForegroundColor Gray
 }
 
+Step "OmniVoice (k2-fsa, 600+ languages)"
+if (-not (Test-Path "venvs\omnivoice\Scripts\python.exe")) {
+    Invoke-Checked "uv venv omnivoice" { uv venv venvs\omnivoice --python 3.11 }
+    Invoke-Checked "uv pip install omnivoice" { uv pip install --python venvs\omnivoice\Scripts\python.exe omnivoice soundfile numpy }
+    # GPU-targeted (diffusion LM); cu128 wheels for Blackwell (RTX 5090, sm_120).
+    Invoke-Checked "torch cu128 for omnivoice" { uv pip install --python venvs\omnivoice\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "omnivoice: ok (zero-shot cloning, 600+ langs, weights auto-download from HF on first use)" -ForegroundColor Green
+} else {
+    Write-Host "omnivoice: already installed" -ForegroundColor Gray
+}
+
+Step "VoxCPM-0.5B (OpenBMB, multilingual cloning)"
+if (-not (Test-Path "venvs\voxcpm\Scripts\python.exe")) {
+    # voxcpm requires Python >=3.10 <3.13 and torch >=2.5 with CUDA >=12.
+    Invoke-Checked "uv venv voxcpm" { uv venv venvs\voxcpm --python 3.11 }
+    Invoke-Checked "uv pip install voxcpm" { uv pip install --python venvs\voxcpm\Scripts\python.exe voxcpm soundfile numpy }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120).
+    Invoke-Checked "torch cu128 for voxcpm" { uv pip install --python venvs\voxcpm\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "voxcpm: ok (zero-shot cloning, 0.5B variant; runner uses openbmb/VoxCPM-0.5B)" -ForegroundColor Green
+} else {
+    Write-Host "voxcpm: already installed" -ForegroundColor Gray
+}
+
+Step "Magpie-TTS Multilingual 357M (NVIDIA NeMo, predefined voices, 9 langs)"
+if (-not (Test-Path "venvs\magpie\Scripts\python.exe")) {
+    Invoke-Checked "uv venv magpie" { uv venv venvs\magpie --python 3.11 }
+    # nemo_toolkit[tts] pulls nemo_text_processing -> pynini, which has no Windows
+    # wheel and needs OpenFST + bazel + MSVC to build from source. Skip the [tts]
+    # extra; install NeMo core + safe TTS deps + the [asr]-equivalent set
+    # individually (NeMo's eager imports drag in TTS->audio_codec->ASR->lhotse
+    # ->pyannote->IPython even if you only want MagpieTTSModel). Runner calls
+    # do_tts(apply_TN=False) to avoid the pynini-using code path at inference.
+    Invoke-Checked "uv pip install nemo_toolkit (core, no [tts])" { uv pip install --python venvs\magpie\Scripts\python.exe nemo_toolkit }
+    # NeMo core deps (lightning pinned to <=2.4 per NeMo's requirements_lightning.txt).
+    Invoke-Checked "uv pip install nemo core deps" { uv pip install --python venvs\magpie\Scripts\python.exe hydra-core omegaconf "lightning>2.2.1,<=2.4.0" "pytorch-lightning>2.2.1,<=2.4.0" fiddle cloudpickle wrapt "ruamel.yaml" wget braceexpand webdataset huggingface_hub editdistance "jiwer>=3.1.0,<4.0.0" "peft<=0.18.0" wandb sacremoses "sentencepiece<1.0.0" "datasets>=3.2.0" inflect }
+    Invoke-Checked "uv pip install nemo TTS safe deps" { uv pip install --python venvs\magpie\Scripts\python.exe attrdict "cdifflib==1.2.6" einops kornia librosa matplotlib nltk pandas seaborn }
+    # NeMo telemetry trio - required at import time even if not used.
+    Invoke-Checked "uv pip install nemo nv_one_logger telemetry" { uv pip install --python venvs\magpie\Scripts\python.exe nv_one_logger_core nv_one_logger_training_telemetry nv_one_logger_pytorch_lightning_integration }
+    # ASR-eager-import deps pulled by tts.models.audio_codec -> asr.parts.preprocessing.features.
+    Invoke-Checked "uv pip install nemo ASR-eager deps" { uv pip install --python venvs\magpie\Scripts\python.exe lhotse pyannote.core pyannote.metrics kaldi-python-io marshmallow optuna pydub pyloudnorm resampy sacrebleu whisper_normalizer ipython }
+    # Per-language G2P tokenizers - Magpie's multilingual config instantiates ALL
+    # of these at load time even if you only generate English.
+    Invoke-Checked "uv pip install nemo per-lang G2P (jieba/pyopenjtalk/etc)" { uv pip install --python venvs\magpie\Scripts\python.exe jieba pypinyin pypinyin-dict janome pyopenjtalk }
+    Invoke-Checked "uv pip install magpie-specific deps" { uv pip install --python venvs\magpie\Scripts\python.exe kaldialign soundfile numpy }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120). Must come LAST because
+    # nv_one_logger / lightning downgrades silently revert torch otherwise.
+    Invoke-Checked "torch cu128 for magpie" { uv pip install --python venvs\magpie\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "magpie: ok (predefined voices, gated on HF - run 'uvx hf auth login' if not done; apply_TN forced False)" -ForegroundColor Green
+} else {
+    Write-Host "magpie: already installed" -ForegroundColor Gray
+}
+
 Write-Host "`nDone. Run: python bench.py" -ForegroundColor Green

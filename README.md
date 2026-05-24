@@ -29,6 +29,7 @@ Two tiers measured on the Ryzen 9 9950X3D above. Numbers shown are from short pr
 | **[Kokoro-82M](https://github.com/hexgrad/kokoro)** (hexgrad) | 82M / Apache 2.0 | 335ms | 245ms | 13× | 9 (a/b/e/f/h/i/j/p/z codes) | 54 voices; misaki tokenizer needs spaCy preinstall (see Known issues) |
 | **[KittenTTS](https://github.com/KittenML/KittenTTS)** (KittenML) | <100M / Apache 2.0 | 516ms | 487ms | 6.6× | EN only | 8 voices; non-streaming so TTFA == gen_s |
 | **[VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice)** (Microsoft, community fork) | 0.5B / MIT | ~3.9s | ~3.7s | **~0.5×** | EN only (7 preset voices) | streaming-class but heavy diffusion; DDPM steps tunable (5 default). Predefined `.pt` voice embeddings auto-downloaded |
+| [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) (NVIDIA, NeMo) | 357M / NVIDIA Open Model License | pending | pending | pending (CUDA: ~1.0× cold smoke) | 9 (en/es/de/it/vi/zh/fr/hi/ja) | fixed speaker embeddings (this checkpoint variant); HF accept-terms gated; install skips `[tts]` extra to avoid `pynini` on Windows — runner forces `apply_TN=False` to compensate |
 
 ### Zero-shot voice cloning models (accept a reference wav at inference time)
 
@@ -40,6 +41,8 @@ Two tiers measured on the Ryzen 9 9950X3D above. Numbers shown are from short pr
 | [ChatterBox-TTS](https://github.com/resemble-ai/chatterbox) (Resemble AI) | ~1.2B / MIT | ~8s | ~8s | **~0.30×** | wav (no transcript) | 1000 diffusion steps — GPU-targeted, community quality leader |
 | [F5-TTS](https://github.com/SWivid/F5-TTS) (v1 Base) | ~330M / MIT | ~48s | ~48s | **~0.05×** | wav + transcript | flow matching, very slow on CPU; needs GPU |
 | [Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS) (idiap fork) | ~750M / CPML 1.0 (non-commercial) | pending | pending | pending | wav (no transcript) | de facto multilingual cloning baseline; ~2GB download on first use; auto-accepts CPML via `COQUI_TOS_AGREED=1` |
+| [OmniVoice](https://github.com/k2-fsa/OmniVoice) (k2-fsa) | TBD / see upstream | pending | pending | pending | wav + transcript | 600+ languages; diffusion-LM, vendor-claimed 0.025× RTF (GPU); voice design tags (gender/age/whisper) |
+| [VoxCPM-0.5B](https://github.com/OpenBMB/VoxCPM) (OpenBMB) | 0.5B / see upstream | pending | pending | pending | wav (no transcript) | tokenizer-free TTS; multilingual; 0.5B variant in this bench (the larger 2B `VoxCPM2` uses a server API and is skipped) |
 | [LuxTTS](https://github.com/ysharma3501/LuxTTS) (k2-fsa-based) | — | — | — | — | wav | install blocked on Windows (see [Known issues](#known-issues)) |
 
 **Reading the tables:** TTFA = milliseconds until the first audio sample. RTF = `audio_seconds / generation_seconds` (1.0× = realtime, higher = faster than realtime). Non-streaming models (KittenTTS, ChatterBox, F5-TTS) emit full audio in one call so TTFA = gen_s by definition.
@@ -103,8 +106,8 @@ Three flavors of "zero-shot cloning" are supported, with slightly different refe
 
 | Models | Reference needed |
 |---|---|
-| ChatterBox, Coqui XTTS-v2, LuxTTS | wav only — no transcript |
-| NeuTTS Air, NeuTTS Nano, F5-TTS | wav **+** matching `.txt` transcript (same basename, e.g. `myvoice.wav` + `myvoice.txt`). The transcript MUST be the literal words spoken in the wav. |
+| ChatterBox, Coqui XTTS-v2, LuxTTS, VoxCPM | wav only — no transcript |
+| NeuTTS Air, NeuTTS Nano, F5-TTS, OmniVoice | wav **+** matching `.txt` transcript (same basename, e.g. `myvoice.wav` + `myvoice.txt`). The transcript MUST be the literal words spoken in the wav. |
 | Pocket-TTS (cloning path) | wav, HF accept-terms gated on [`kyutai/pocket-tts`](https://huggingface.co/kyutai/pocket-tts) + `hf auth login` |
 
 Drop the wav (and optional `.txt`) into `reference/`, then:
@@ -115,7 +118,7 @@ python compare.py "..." --reference reference/myvoice.wav
 python speak.py chatterbox --reference reference/myvoice.wav
 ```
 
-`--reference` auto-skips models that can only use predefined voices (Kokoro, KittenTTS, Piper, VibeVoice).
+`--reference` auto-skips models that can only use predefined voices (Kokoro, KittenTTS, Piper, VibeVoice, Magpie).
 
 ---
 
@@ -206,6 +209,9 @@ Done in this round (May 23, 2026):
 - ✓ ChatterBox, F5-TTS (extra cloning models)
 - ✓ VibeVoice-Realtime-0.5B (predefined-voice tier, via the community fork)
 - ✓ Coqui XTTS-v2 (idiap fork) — multilingual cloning baseline
+- ✓ OmniVoice (k2-fsa) — 600+ languages, diffusion-LM cloning
+- ✓ VoxCPM-0.5B (OpenBMB) — tokenizer-free multilingual cloning
+- ✓ Magpie-TTS Multilingual 357M (NVIDIA NeMo) — 9-lang predefined-voice; installed without the `[tts]` extra to sidestep `pynini` on Windows (runner forces `apply_TN=False`)
 - ✓ `can_clone` column in `results.csv` so cloning vs predefined is one-dimensional
 - ✓ `harness.py` extracted — shared model registry + subprocess plumbing
 - ✓ `compare.py` added — one-shot A/B listening tool across all installed models × devices, with audio playback
@@ -216,6 +222,7 @@ Pending:
 - **Mac M4 Pro pass** — `install.sh` + MPS device detection are wired up; bench pending hardware.
 - **RTX 5090 pass** — formal `bench.py --device cuda` run for all GPU-capable models. CUDA torch is now installed; results pending.
 - **Coqui XTTS-v2 numbers** — venv install in `install.ps1` / `install.sh`; bench numbers pending first run.
+- **OmniVoice / VoxCPM / Magpie numbers** — venvs added, runner wiring in place, bench numbers pending first run.
 - **LuxTTS on macOS** — should install cleanly per upstream (piper-phonemize macOS wheels exist).
 
 ## Considered but skipped
@@ -224,6 +231,8 @@ Models that were evaluated for inclusion and intentionally left out, with the re
 
 - **[Fish Audio S2 / S2-Pro](https://github.com/fishaudio/fish-speech)** (current `main` branch, 4B params). Linux/WSL only per official docs (Windows native unsupported); 24GB VRAM floor; no clean Python API — inference is a 3-stage CLI pipeline (DAC encode → text2semantic → DAC decode) with intermediate `.npy` files; research-license non-commercial. Doesn't fit the harness pattern. Run via the upstream SGLang/vLLM serving setup if you want it.
 - **[Fish Audio S1-mini](https://huggingface.co/fishaudio/s1-mini)** (0.5B distilled S1). Small enough to fit in principle, but the S1 inference code lives at a specific mid-2025 *commit* (no tag) — pre-S2 branch's `v1.5.1` doesn't pair (different `firefly-gan-vq-*` filenames), and `v2.0.0-beta` is S2-only. Pinning to commit `781bf1cd` works, but pulls a heavy dep tree (lightning, wandb, gradio, faster_whisper, modelscope, funasr, `pyaudio`) and still needs the same 3-stage CLI subprocess wrapper. CC-BY-NC-SA license. Worth revisiting if the user wants the model specifically — the install path just doesn't pay for itself in a "fast comprehensive bench" context.
+- **[Orpheus TTS](https://github.com/canopyai/Orpheus-TTS)** (Canopy Labs, 3B Llama-based). High-quality emotional/empathetic speech with ~200ms streaming latency, but the inference path is `pip install orpheus-speech` which depends on **vllm**. vllm has no first-party Windows wheel; community Windows wheels exist (SystemPanic, devnen) but the Blackwell-compatible one (5090 / sm_120) is pinned to vllm 0.20.0 + cu132 while Orpheus pins vllm 0.7.3 — version mismatch is unrecoverable without rebuilding from source. Linux/WSL or Mac (via LM Studio + GGUF) work, but this is a Windows-primary bench so Orpheus is out of scope here. Revisit on the Mac M4 Pro pass.
+- **[CosyVoice 3](https://github.com/FunAudioLLM/CosyVoice)** (FunAudioLLM, Fun-CosyVoice3-0.5B-2512). High-quality multilingual cloning + 18 Chinese dialects, but installs as a source clone (no pip wheel) with a researcher-pinned `requirements.txt`: `torch==2.3.1` from a cu121 extra-index (incompatible with Blackwell sm_120 / 5090 — would need a post-install swap), `onnxruntime==1.18.0` pinned in a way uv resolves against a Linux-only CUDA wheel feed first, plus 40+ other exact-version pins (`gradio==5.4.0`, `lightning==2.2.4`, `openai-whisper==20231117`, `transformers==4.51.3`, `tensorrt-cu12` Linux-only). Same family of issue as fish-speech and Orpheus: not a clean cross-platform install. Doable with significant install-archaeology effort — revisit if/when the upstream ships a Windows-friendly requirements set.
 
 ---
 
@@ -247,7 +256,10 @@ tts-bench/
 │   ├── chatterbox_runner.py
 │   ├── f5tts_runner.py
 │   ├── coqui_runner.py
-│   └── vibevoice_runner.py
+│   ├── vibevoice_runner.py
+│   ├── omnivoice_runner.py
+│   ├── voxcpm_runner.py
+│   └── magpie_runner.py
 ├── reference/            # voice cloning reference audio (.wav + .txt pairs)
 ├── venvs/                # one isolated venv per model (gitignored)
 └── results/              # bench output WAVs + CSV (gitignored)
@@ -262,8 +274,10 @@ MIT for the bench code in this repo. **Each TTS model has its own license** — 
 - MIT: [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts), [Piper](https://github.com/OHF-voice/piper1-gpl), [ChatterBox](https://github.com/resemble-ai/chatterbox), [F5-TTS](https://github.com/SWivid/F5-TTS), [VibeVoice (community fork)](https://github.com/vibevoice-community/VibeVoice)
 - Apache 2.0: [NeuTTS](https://github.com/neuphonic/neutts), [Kokoro](https://github.com/hexgrad/kokoro), [KittenTTS](https://github.com/KittenML/KittenTTS), [LuxTTS](https://github.com/ysharma3501/LuxTTS)
 - **CPML 1.0 (non-commercial):** [Coqui XTTS-v2](https://huggingface.co/coqui/XTTS-v2) — research / personal use only. The harness auto-accepts via `COQUI_TOS_AGREED=1`.
+- **NVIDIA Open Model License:** [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) — commercial use permitted with terms; HF accept-terms gated.
+- **Check upstream — see model repo:** [OmniVoice](https://github.com/k2-fsa/OmniVoice), [VoxCPM](https://github.com/OpenBMB/VoxCPM). License field is not stated in the standard MIT/Apache form in the upstream READMEs — verify before deploying anywhere production-adjacent.
 
-For the models in the [Considered but skipped](#considered-but-skipped) section: Fish Audio S2 is research-license non-commercial, Fish Audio S1-mini is CC-BY-NC-SA-4.0 — both are explicitly outside this bench but listed there so the reasoning is documented.
+For the models in the [Considered but skipped](#considered-but-skipped) section: Fish Audio S2 is research-license non-commercial, Fish Audio S1-mini is CC-BY-NC-SA-4.0, Orpheus TTS is Apache 2.0, CosyVoice 3 see upstream — all explicitly outside this bench but listed there so the reasoning is documented.
 
 ---
 

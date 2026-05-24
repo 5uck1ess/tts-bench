@@ -37,6 +37,9 @@ MODELS = {
     "f5tts":       ("f5tts",      "runners/f5tts_runner.py",      None),
     "coqui":       ("coqui",      "runners/coqui_runner.py",      None),
     "vibevoice":   ("vibevoice",  "runners/vibevoice_runner.py",  None),
+    "omnivoice":   ("omnivoice",  "runners/omnivoice_runner.py",  None),
+    "voxcpm":      ("voxcpm",     "runners/voxcpm_runner.py",     None),
+    "magpie":      ("magpie",     "runners/magpie_runner.py",     None),
 }
 
 

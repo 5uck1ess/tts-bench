@@ -172,5 +172,59 @@ else
     echo "vibevoice: already installed"
 fi
 
+# --- OmniVoice (k2-fsa, 600+ languages) ---
+echo; cyan "=== OmniVoice (k2-fsa, 600+ languages) ==="
+if [ ! -x venvs/omnivoice/bin/python ]; then
+    uv venv venvs/omnivoice --python 3.11 || die "uv venv omnivoice"
+    uv pip install --python venvs/omnivoice/bin/python omnivoice soundfile numpy \
+        || die "uv pip install omnivoice"
+    # CPU wheels by default on Mac/Linux. CUDA users can swap to cu128 manually:
+    # uv pip install --python venvs/omnivoice/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+    green "omnivoice: ok (zero-shot cloning, 600+ langs, weights auto-download from HF on first use)"
+else
+    echo "omnivoice: already installed"
+fi
+
+# --- VoxCPM-0.5B (OpenBMB, multilingual cloning) ---
+echo; cyan "=== VoxCPM-0.5B (OpenBMB, multilingual cloning) ==="
+if [ ! -x venvs/voxcpm/bin/python ]; then
+    # voxcpm requires Python >=3.10 <3.13 and torch >=2.5.
+    uv venv venvs/voxcpm --python 3.11 || die "uv venv voxcpm"
+    uv pip install --python venvs/voxcpm/bin/python voxcpm soundfile numpy \
+        || die "uv pip install voxcpm"
+    green "voxcpm: ok (zero-shot cloning, 0.5B variant; runner uses openbmb/VoxCPM-0.5B)"
+else
+    echo "voxcpm: already installed"
+fi
+
+# --- Magpie-TTS Multilingual 357M (NVIDIA NeMo, predefined voices, 9 langs) ---
+echo; cyan "=== Magpie-TTS Multilingual 357M (NVIDIA NeMo, predefined voices, 9 langs) ==="
+if [ ! -x venvs/magpie/bin/python ]; then
+    uv venv venvs/magpie --python 3.11 || die "uv venv magpie"
+    # nemo_toolkit[tts] pulls nemo_text_processing -> pynini. On Mac/Linux pynini
+    # has wheels and the [tts] extra works fine. We mirror the Windows recipe
+    # below (skip [tts], install deps individually) for cross-platform parity
+    # and so the runner's do_tts(apply_TN=False) call path is consistent.
+    uv pip install --python venvs/magpie/bin/python nemo_toolkit \
+        || die "uv pip install nemo_toolkit"
+    uv pip install --python venvs/magpie/bin/python hydra-core omegaconf "lightning>2.2.1,<=2.4.0" "pytorch-lightning>2.2.1,<=2.4.0" fiddle cloudpickle wrapt "ruamel.yaml" wget braceexpand webdataset huggingface_hub editdistance "jiwer>=3.1.0,<4.0.0" "peft<=0.18.0" wandb sacremoses "sentencepiece<1.0.0" "datasets>=3.2.0" inflect \
+        || die "uv pip install nemo core deps"
+    uv pip install --python venvs/magpie/bin/python attrdict "cdifflib==1.2.6" einops kornia librosa matplotlib nltk pandas seaborn \
+        || die "uv pip install nemo TTS safe deps"
+    uv pip install --python venvs/magpie/bin/python nv_one_logger_core nv_one_logger_training_telemetry nv_one_logger_pytorch_lightning_integration \
+        || die "uv pip install nemo telemetry"
+    uv pip install --python venvs/magpie/bin/python lhotse pyannote.core pyannote.metrics kaldi-python-io marshmallow optuna pydub pyloudnorm resampy sacrebleu whisper_normalizer ipython \
+        || die "uv pip install nemo ASR-eager deps"
+    # Per-language G2P tokenizers - Magpie's multilingual config instantiates ALL
+    # of these at load time even if you only generate English.
+    uv pip install --python venvs/magpie/bin/python jieba pypinyin pypinyin-dict janome pyopenjtalk \
+        || die "uv pip install nemo per-lang G2P"
+    uv pip install --python venvs/magpie/bin/python kaldialign soundfile numpy \
+        || die "uv pip install magpie-specific deps"
+    green "magpie: ok (predefined voices, gated on HF - run 'uvx hf auth login' if not done; apply_TN forced False)"
+else
+    echo "magpie: already installed"
+fi
+
 echo
 green "Done. Run: python bench.py"
