@@ -64,7 +64,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (18)
+## Models tracked (25)
 
 | Model | Params | Predefined | Cloning | Multilingual | SR | License |
 |---|---|---|---|---|---|---|
@@ -72,30 +72,42 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | Kokoro | 82M | ✓ | — | ✓ | 24k | Apache 2.0 |
 | KittenTTS | <100M | ✓ | — | — | 24k | Apache 2.0 |
 | Magpie-TTS | 357M | ✓ | — | ✓ (9) | 22.05k | NVIDIA OML |
-| VibeVoice | 0.5B | ✓ | — | — | 24k | MIT |
+| VibeVoice Realtime 0.5B | 0.5B | ✓ | — | — | 24k | MIT |
+| VibeVoice 1.5B | 3B | ✓ | — | — | 24k | MIT |
 | Supertonic | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
 | LuxTTS | — | ✓ | — | — | 22.05k | MIT |
+| Soprano 80M | 80M | ✓ | — | — | 32k | Apache 2.0 |
 | Pocket-TTS | 100M | — | ✓ | — | 24k | Apache 2.0 |
 | ChatterBox | 1.2B | — | ✓ | — | 24k | MIT |
+| ChatterBox Turbo | 744M | — | ✓ | — | 24k | MIT |
 | F5-TTS | 330M | — | ✓ | ✓ | 24k | CC-BY-NC |
 | IndexTTS-2 | 1.5B | — | ✓ | ✓ | 24k | Apache 2.0 |
 | OmniVoice | ~1B | — | ✓ | ✓ (600+) | 24k | Apache 2.0 |
+| ZipVoice | 123M | — | ✓ | ✓ (zh+en) | 24k | Apache 2.0 |
 | VoxCPM2 | 2B | — | ✓ | ✓ (30) | **48k** | Apache 2.0 |
 | Sesame CSM-1B | 1B | — | ✓ | — | 24k | Apache 2.0 |
 | Coqui XTTS-v2 | 750M | — | ✓ | ✓ (17) | 24k | CPML (non-commercial) |
 | Qwen3-TTS Base | 1.7B | — | ✓ | ✓ | 24k | Apache 2.0 |
+| Qwen3-TTS 1.7B (CUDA-graph) | 1.7B | — | ✓ | ✓ | 24k | MIT |
 | Mars5-TTS | 1.2B | — | ✓ | — | 24k | AGPL-3.0 |
 | NeuTTS Air | 748M | — | ✓ | — | 24k | Apache 2.0 |
+| NeuTTS Nano | 748M | — | ✓ | — | 24k | Apache 2.0 |
+| Dia 1.6B | 1.6B | — | ✓ | — | 44.1k | Apache 2.0 |
 
 Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-issues.md)**. Models considered but excluded: **[docs/considered.md](docs/considered.md)**.
 
 ---
 
-## Quality scoring: NAQ
+## Quality scoring: NAQ v2
 
-**Naturalness-Artifact Quotient** — objective 0-100 per-wav score combining HARM (harmonic-to-noise ratio, weighted 0.65) and BUZZ (inverse 4-8 kHz spectral flatness, weighted 0.35). Higher = more natural; lower = more roboty / vocoder-artifacted. Computed for the cold run of every cell.
+**Naturalness-Artifact Quotient** — objective 0-100 per-wav score with two macros at 50/50:
 
-Full spec, formula, calibration, and planned v2 features: **[docs/naq.md](docs/naq.md)**.
+- **ARTIFACT** = mean of HARM (harmonic-to-noise ratio) + BUZZ (4-8 kHz vocoder hash). Captures absence of audible artifacts.
+- **NATURALNESS** = mean of DYN (dynamic range) + PROSODY (F0 variance) + RHYTHM (IOI entropy) + PITCH_MVMT (frame-to-frame F0 movement). Captures presence of positive naturalness cues.
+
+NAQ v2 = 0.5 × ARTIFACT + 0.5 × NATURALNESS. Higher = more natural; lower = more roboty / vocoder-artifacted. Computed for the cold run of every cell. Hover any NAQ cell in the quality report for the two-macro breakdown.
+
+Full spec, formula, edge cases: **[docs/naq.md](docs/naq.md)**.
 
 ---
 
@@ -112,6 +124,7 @@ Full 10-model cloning ranking + ref format docs: **[docs/cloning.md](docs/clonin
 | Machine | Used for |
 |---|---|
 | Windows desktop (Ryzen 9 9950X3D / 128 GB / RTX 5090 32 GB) | Windows CPU + CUDA bench rows |
+| Linux workstation (RTX 3090 24 GB) | Linux CPU + CUDA; the only rig that runs Fish-Speech S2 natively |
 | Mac (Apple M4 / 16 GB / M4 GPU) | Mac CPU + MPS bench rows |
 
 If you reproduce on different hardware, file an issue or PR with your results and we'll add a column.
