@@ -131,6 +131,12 @@ def main() -> int:
             inputs = processor.apply_chat_template(
                 conversation, tokenize=True, return_dict=True,
             ).to(device)
+            # Audio reference comes back as float32; cast to model dtype so
+            # the bfloat16 path on CUDA doesn't trip "Input type (float) and
+            # bias type (struct c10::BFloat16) should be the same".
+            for k in ("input_values", "audio_values"):
+                if k in inputs and inputs[k] is not None and inputs[k].dtype != model.dtype:
+                    inputs[k] = inputs[k].to(model.dtype)
             audio = model.generate(**inputs, output_audio=True)
             t_end = time.perf_counter()
 

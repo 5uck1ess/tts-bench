@@ -255,7 +255,7 @@ if (-not (Test-Path "venvs\sesame\Scripts\python.exe")) {
     # and click "Ask for access" before first use. After approval lands in your
     # HF account, `hf auth login` will let the runner download weights.
     Invoke-Checked "uv venv sesame" { uv venv venvs\sesame --python 3.11 }
-    Invoke-Checked "uv pip install sesame deps" { uv pip install --python venvs\sesame\Scripts\python.exe "transformers>=4.52.1" soundfile numpy librosa huggingface_hub }
+    Invoke-Checked "uv pip install sesame deps" { uv pip install --python venvs\sesame\Scripts\python.exe "transformers>=4.52.1" accelerate soundfile numpy librosa huggingface_hub }
     Invoke-Checked "torch cu128 for sesame" { uv pip install --python venvs\sesame\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
     Write-Host "sesame: ok (CSM-1B; HF access REQUIRED - request at https://huggingface.co/sesame/csm-1b before running)" -ForegroundColor Green
 } else {

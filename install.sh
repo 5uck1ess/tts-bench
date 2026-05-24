@@ -266,7 +266,7 @@ if [ ! -x venvs/sesame/bin/python ]; then
     # MANUAL APPROVAL gating on HF - visit https://huggingface.co/sesame/csm-1b
     # and click "Ask for access". After approval, `hf auth login` enables download.
     uv venv venvs/sesame --python 3.11 || die "uv venv sesame"
-    uv pip install --python venvs/sesame/bin/python "transformers>=4.52.1" soundfile numpy librosa huggingface_hub \
+    uv pip install --python venvs/sesame/bin/python "transformers>=4.52.1" accelerate soundfile numpy librosa huggingface_hub \
         || die "uv pip install sesame deps"
     green "sesame: ok (CSM-1B; HF access REQUIRED - request at https://huggingface.co/sesame/csm-1b before running)"
 else
