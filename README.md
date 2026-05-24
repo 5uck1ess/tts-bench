@@ -1,20 +1,12 @@
 # tts-bench
 
-Bench for local TTS models. Cold + warm runs, same prompts, real wall clock — across CPU, CUDA, and Apple Silicon (MPS). Speed + objective quality (via NAQ) + memory + multilingual coverage, all measured the same way on every machine.
+Bench for local TTS models. Measures three things on whatever hardware you put it on:
 
-Built to answer one question: *which open TTS model do I plug into an always-on voice agent on the machine I actually have?*
+- **Speed** — cold + warm TTFA, RTF, memory, on CPU / CUDA / Apple Silicon
+- **Quality** — NAQ, an objective 0–100 score for vocoder artifacts and naturalness
+- **Voice cloning** — same prompts, same reference, ranked by how output actually sounds
 
----
-
-## ▶ Demos
-
-**[5uck1ess.github.io/tts-bench](https://5uck1ess.github.io/tts-bench/)** — public side-by-side audio.
-
-Every model × prompt × device combination is rendered with an inline `<audio>` player so you can hear the actual output without cloning the repo or running anything locally. Useful for:
-
-- *Picking a model.* Listen to the same prompt across 18 TTS models on the same hardware. Quality, prosody, and artifacts are obvious in 5 seconds; benchmark tables can't show that.
-- *Comparing rigs.* Each report is tagged with the rig (Ryzen 9 9950X3D, Apple M4, etc.) and labeled (default voice vs cloning) so you can see how the same model sounds on the box you actually own.
-- *Comparing devices for one model.* CPU vs CUDA vs MPS rows for the same model, side by side, with their audio.
+**[▶ Hear them all](https://5uck1ess.github.io/tts-bench/)** — every model × prompt × rig, inline audio players.
 
 ---
 
@@ -38,31 +30,56 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## TLDR results (May 2026)
+## TLDR (May 2026)
 
-**CPU — Ryzen 9 9950X3D (Windows):**
-- **Piper** wins predefined voices — 39ms warm TTFA, 47× RTF. Drop-in for an always-on agent.
-- **Pocket-TTS** wins cloning-capable on default voices — 100ms warm TTFA.
+**Fastest:**
+- CPU (Ryzen 9 9950X3D, Windows): **Piper** — 39ms warm TTFA, 47× RTF
+- CUDA (RTX 5090): **Kokoro** — 69ms warm TTFA, 101× RTF
+- CPU + MPS (Apple M4, 16 GB): **Piper** — 202ms warm TTFA, 33× RTF
 
-**CPU + MPS — Apple M4 (Mac, 16 GB):**
-- **Piper** wins again — 202ms warm TTFA, 33× RTF.
-- **Pocket-TTS** best cloning-capable — 42ms warm TTFA (M4 single-thread beats Ryzen 9).
+**Best sounding (NAQ v1):** *Pending — only the most recent bench cell ships with NAQ; full back-fill needs a fresh bench pass on each rig. Run `python bench.py` then check `quality.html` on your gh-pages report. See [docs/naq.md](docs/naq.md) for the score definition; v2 with naturalness features is on the way.*
 
-**CUDA — RTX 5090 (Windows):**
-- **Kokoro** wins predefined — 69ms warm TTFA, **101× RTF**, 0.7 GB VRAM.
-- **OmniVoice** wins cloning — 869ms warm TTFA, **9.2× warm RTF**, 2.4 GB VRAM; scales to 20× RTF on long prompts.
+**Best cloning (subjective rank):**
+- 1. **OmniVoice** — accent preserved, top of listening test
+- 2. **ChatterBox** — strong second, clean output
+- 3. **IndexTTS-2** — also good, accent preserved
 
-Full per-model, per-prompt tables: **[docs/results.md](docs/results.md)**.
+[→ full per-rig results](docs/results.md) · [→ NAQ details](docs/naq.md) · [→ full cloning ranking](docs/cloning.md)
+
+---
+
+## Models tracked (18)
+
+| Model | Params | Predefined | Cloning | Multilingual | SR | License |
+|---|---|---|---|---|---|---|
+| Piper | ~25 MB | ✓ | — | ✓ | 22.05k | MIT |
+| Kokoro | 82M | ✓ | — | ✓ | 24k | Apache 2.0 |
+| KittenTTS | <100M | ✓ | — | — | 24k | Apache 2.0 |
+| Magpie-TTS | 357M | ✓ | — | ✓ (9) | 22.05k | NVIDIA OML |
+| VibeVoice | 0.5B | ✓ | — | — | 24k | MIT |
+| Supertonic | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
+| LuxTTS | — | ✓ | — | — | 22.05k | MIT |
+| Pocket-TTS | 100M | — | ✓ | — | 24k | Apache 2.0 |
+| ChatterBox | 1.2B | — | ✓ | — | 24k | MIT |
+| F5-TTS | 330M | — | ✓ | ✓ | 24k | CC-BY-NC |
+| IndexTTS-2 | 1.5B | — | ✓ | ✓ | 24k | Apache 2.0 |
+| OmniVoice | ~1B | — | ✓ | ✓ (600+) | 24k | Apache 2.0 |
+| VoxCPM2 | 2B | — | ✓ | ✓ (30) | **48k** | Apache 2.0 |
+| Sesame CSM-1B | 1B | — | ✓ | — | 24k | Apache 2.0 |
+| Coqui XTTS-v2 | 750M | — | ✓ | ✓ (17) | 24k | CPML (non-commercial) |
+| Qwen3-TTS Base | 1.7B | — | ✓ | ✓ | 24k | Apache 2.0 |
+| Mars5-TTS | 1.2B | — | ✓ | — | 24k | AGPL-3.0 |
+| NeuTTS Air | 748M | — | ✓ | — | 24k | Apache 2.0 |
+
+Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-issues.md)**. Models considered but excluded: **[docs/considered.md](docs/considered.md)**.
 
 ---
 
 ## Quality scoring: NAQ
 
-**Naturalness-Artifact Quotient** — a 0-100 objective per-wav score combining HARM (harmonic-to-noise ratio, weighted 0.65) and BUZZ (inverse 4-8 kHz spectral flatness, weighted 0.35). Higher = more natural; lower = more roboty / vocoder-artifacted. Computed automatically for the cold run of every bench cell and shown next to the speed numbers in every report.
+**Naturalness-Artifact Quotient** — objective 0-100 per-wav score combining HARM (harmonic-to-noise ratio, weighted 0.65) and BUZZ (inverse 4-8 kHz spectral flatness, weighted 0.35). Higher = more natural; lower = more roboty / vocoder-artifacted. Computed for the cold run of every cell.
 
-Sub-scores (`naq_harm`, `naq_buzz`) are exposed in the CSV and as a tooltip in the HTML report so you can see *why* a model scored where it did.
-
-Full spec, formula, and calibration: **[docs/naq.md](docs/naq.md)**.
+Full spec, formula, calibration, and planned v2 features: **[docs/naq.md](docs/naq.md)**.
 
 ---
 
@@ -70,13 +87,7 @@ Full spec, formula, and calibration: **[docs/naq.md](docs/naq.md)**.
 
 Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
-**Cloning quality ranking (May 2026):**
-
-1. **OmniVoice** — accent preserved, top of listening test
-2. **ChatterBox** — strong second, clean output
-3. **IndexTTS-2** — also good, accent preserved
-
-Full 10-model ranking + ref format docs: **[docs/cloning.md](docs/cloning.md)**.
+Full 10-model cloning ranking + ref format docs: **[docs/cloning.md](docs/cloning.md)**.
 
 ---
 
@@ -99,35 +110,14 @@ If you reproduce on different hardware, file an issue or PR with your results an
 - [Architecture](docs/architecture.md) — bench design, runner protocol, adding a model
 - [Known issues](docs/known-issues.md) — per-model gotchas + per-license table
 - [Considered but skipped](docs/considered.md) — models evaluated and excluded
-
----
-
-## Pending work
-
-- **Subjective listening pass on the predefined-voice tier (CUDA).** Cloning got the full ranking; predefined didn't.
-- **MARS5 CUDA investigation** — 0.1× RTF + cloning that doesn't match the reference. Both unusable. Needs deeper look or "skipped after investigation" doc.
-- **Qwen3-TTS Base cloning timeout on long prompts** — at the 15s Chris Hemsworth ref, prompts 2-5 hit the 10-min per-cell wall.
-- **ChatterBox / F5-TTS / Coqui XTTS on Mac MPS** — skipped earlier (all GPU-class). Worth re-running once MPS torch perf improves.
-- **LuxTTS on Mac arm64 / Windows** — depends on piper-phonemize, no wheels for those platforms.
+- [Tasks & pending work](docs/tasks.md) — open issues, planned features
+- [Methodology](docs/methodology.md) — why three axes, why cold + warm, why reproducible
 
 ---
 
 ## License
 
 MIT for the bench code in this repo. **Each TTS model has its own license** — see [docs/known-issues.md](docs/known-issues.md) for the full per-model table.
-
----
-
-## Why this exists
-
-The published latency numbers for small open TTS models are usually:
-1. Run on different hardware than yours
-2. Quote a single TTFA that conflates cold and warm
-3. From the model's own README (vendor-favorable)
-
-This bench fixes (1) by running on whatever hardware you put it on, (2) by reporting cold and warm separately, and (3) by being reproducible from a clean machine in <15 minutes. It already disproved one vendor claim during its first pass — NeuTTS Air's "2× realtime on AMD Ryzen 9" turned into 0.9× RTF on x86 Windows CPU.
-
-If you're picking a small TTS model for a real-time agent, run it on the hardware that agent will actually run on. This is the harness for doing that.
 
 ---
 
