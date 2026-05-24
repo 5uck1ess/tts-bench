@@ -108,42 +108,41 @@ Same 5 prompts × 3 runs. Warm averages over the warm runs across all prompts th
 
 #### Predefined-voice models
 
-| Model | TTFA cold | TTFA warm | RTF warm | VRAM | Notes |
-|---|---|---|---|---|---|
-| **[Kokoro-82M](https://github.com/hexgrad/kokoro)** | **926ms** | **69ms** | **101×** | 0.7 GB | clear winner on this rig; warm TTFA matches Piper/cpu while RTF is 2× higher |
-| [VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice) | 4702ms | 4568ms | 2.1× | 2.6 GB | finally hits comfortable realtime on GPU (CPU was 0.5×). Diffusion cold-load tax still ~4.7s |
-| [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) | 6628ms | 5016ms | 1.7× | 3.6 GB | 9 langs; slow first turn (NeMo init), warm RTF reasonable. HF accept-terms gated |
+| Model | Size | TTFA cold | TTFA warm | RTF warm | VRAM | Notes |
+|---|---|---|---|---|---|---|
+| **[Kokoro-82M](https://github.com/hexgrad/kokoro)** | 82M | **926ms** | **69ms** | **101×** | 0.7 GB | clear winner on this rig; warm TTFA matches Piper/cpu while RTF is 2× higher |
+| [VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice) | 0.5B | 4702ms | 4568ms | 2.1× | 2.6 GB | finally hits comfortable realtime on GPU (CPU was 0.5×). Diffusion cold-load tax still ~4.7s |
+| [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) | 357M | 6628ms | 5016ms | 1.7× | 3.6 GB | 9 langs; slow first turn (NeMo init), warm RTF reasonable. HF accept-terms gated |
 
 #### Zero-shot voice cloning models
 
 Two runs reported per model: **default voice** (the cloning model with its bundled fallback wav) and **cloning** (`--reference reference/chris_hemsworth_15s.wav` + matching transcript). Cloning numbers are usually slightly slower because the 15-second reference is longer than each model's bundled default.
 
-| Model | Mode | TTFA cold | TTFA warm | RTF warm | VRAM | Notes |
-|---|---|---|---|---|---|---|
-| **[OmniVoice](https://github.com/k2-fsa/OmniVoice)** (k2-fsa, 600+ langs) | default | **1177ms** | **811ms** | **8.5×** | 2.0 GB | top RTF on long prompts (20× warm on the Parakeet paragraph). Same wins on cloning (9.2×). |
-| OmniVoice | cloning | 1267ms | 869ms | **9.2×** | 2.4 GB | same fast as default; consistently the fastest cloning model on this hardware |
-| **[F5-TTS](https://github.com/SWivid/F5-TTS)** (v1 Base) | default | 1319ms | 872ms | **5.2×** | 0.8 GB | second-fastest cloner; smallest VRAM footprint of the cloning models |
-| F5-TTS | cloning | 1597ms | 1096ms | 5.3× | 0.8 GB | |
-| **[Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS)** | default | 2433ms | 2113ms | 4.2× | 2.0 GB | multilingual cloning baseline (CPML 1.0 non-commercial) |
-| Coqui XTTS-v2 | cloning | 2496ms | 1789ms | 4.1× | 1.9 GB | |
-| [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | default | 658ms | 273ms | 2.7× | 3.3 GB | best TTFA among cloning models; GGUF runs CPU-side so VRAM stays small. EN/FR/DE/ES |
-| NeuTTS Nano | cloning | 741ms | 306ms | 2.5× | 3.3 GB | |
-| [VibeVoice-Realtime cloning n/a]() | | | | | | (predefined voices only) |
-| [ChatterBox-TTS](https://github.com/resemble-ai/chatterbox) (Resemble AI) | default | 3645ms | 2842ms | 2.0× | 3.1 GB | community quality leader for cloning; 1000-step diffusion is the wall-time tax |
-| ChatterBox-TTS | cloning | 4468ms | 3333ms | 2.0× | 3.5 GB | |
-| [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | default | 1156ms | 434ms | 1.6× | 3.3 GB | EN only; same GGUF CPU-side path as Nano |
-| NeuTTS Air | cloning | 1202ms | 448ms | 1.4× | 3.3 GB | |
-| [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) (OpenBMB, 2B, 30 langs) | default | 5639ms | 5658ms | 1.2× | 5.4 GB | tokenizer-free 48 kHz output; 5+ GB VRAM is the heaviest in the cloning set |
-| VoxCPM2 | cloning | 7445ms | 5081ms | 1.2× | 5.7 GB | |
-| [IndexTTS-2](https://github.com/index-tts/index-tts) (Bilibili Index, ~1.5B) | default | 7065ms | 5966ms | 1.1× | 7.2 GB | source-clone install; ~5 GB weights; emotion-conditioning support |
-| IndexTTS-2 | cloning | 7486ms | 6072ms | 1.1× | 7.3 GB | |
-| [Qwen3-TTS-Base 1.7B](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | default | 11253ms | 10096ms | 0.6× | 4.5 GB | 10-lang cloning; warm RTF below realtime — slower than vendor's claimed 97ms streaming TTFA |
-| Qwen3-TTS Base | cloning (short) | 4420ms | 3247ms | 0.6× | 4.4 GB | **only completed 1/5 prompts** at 600s timeout — 15s reference + long text pushes generation past 5-10min per cell |
-| [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) | default | 14563ms | 15925ms | 0.5× | 3.5 GB | conversational TTS via ChatML; HF manual-approval gated. Mimi codec 24kHz |
-| Sesame CSM-1B | cloning | 14866ms | 12321ms | 0.5× | 3.5 GB | |
-| [MARS5-TTS](https://github.com/Camb-ai/MARS5-TTS) (CAMB.AI) | default | 32717ms | 32115ms | 0.2× | 6.0 GB | unexpectedly slow on CUDA — torch.hub model load + AR generation. AGPL-3.0 |
-| MARS5-TTS | cloning | 43620ms | 39235ms | 0.1× | 6.9 GB | |
-| [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | n/a | — | — | — | — | CPU-only (no CUDA path in the harness) |
+| Model | Size | Mode | TTFA cold | TTFA warm | RTF warm | VRAM | Notes |
+|---|---|---|---|---|---|---|---|
+| **[OmniVoice](https://github.com/k2-fsa/OmniVoice)** (k2-fsa, 600+ langs) | ~1B | default | **1177ms** | **811ms** | **8.5×** | 2.0 GB | top RTF on long prompts (20× warm on the Parakeet paragraph). Same wins on cloning (9.2×). |
+| OmniVoice | ~1B | cloning | 1267ms | 869ms | **9.2×** | 2.4 GB | same fast as default; consistently the fastest cloning model on this hardware |
+| **[F5-TTS](https://github.com/SWivid/F5-TTS)** (v1 Base) | 330M | default | 1319ms | 872ms | **5.2×** | 0.8 GB | second-fastest cloner; smallest VRAM footprint of the cloning models |
+| F5-TTS | 330M | cloning | 1597ms | 1096ms | 5.3× | 0.8 GB | |
+| **[Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS)** | 750M | default | 2433ms | 2113ms | 4.2× | 2.0 GB | multilingual cloning baseline (CPML 1.0 non-commercial) |
+| Coqui XTTS-v2 | 750M | cloning | 2496ms | 1789ms | 4.1× | 1.9 GB | |
+| [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | 748M | default | 658ms | 273ms | 2.7× | 3.3 GB | best TTFA among cloning models; GGUF runs CPU-side so VRAM stays small. EN/FR/DE/ES |
+| NeuTTS Nano | 748M | cloning | 741ms | 306ms | 2.5× | 3.3 GB | |
+| [ChatterBox-TTS](https://github.com/resemble-ai/chatterbox) (Resemble AI) | 1.2B | default | 3645ms | 2842ms | 2.0× | 3.1 GB | community quality leader for cloning; 1000-step diffusion is the wall-time tax |
+| ChatterBox-TTS | 1.2B | cloning | 4468ms | 3333ms | 2.0× | 3.5 GB | |
+| [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | 748M | default | 1156ms | 434ms | 1.6× | 3.3 GB | EN only; same GGUF CPU-side path as Nano |
+| NeuTTS Air | 748M | cloning | 1202ms | 448ms | 1.4× | 3.3 GB | |
+| [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) (OpenBMB, 30 langs) | 2B | default | 5639ms | 5658ms | 1.2× | 5.4 GB | tokenizer-free 48 kHz output; 5+ GB VRAM is the heaviest in the cloning set |
+| VoxCPM2 | 2B | cloning | 7445ms | 5081ms | 1.2× | 5.7 GB | |
+| [IndexTTS-2](https://github.com/index-tts/index-tts) (Bilibili Index) | 1.5B | default | 7065ms | 5966ms | 1.1× | 7.2 GB | source-clone install; ~5 GB weights; emotion-conditioning support |
+| IndexTTS-2 | 1.5B | cloning | 7486ms | 6072ms | 1.1× | 7.3 GB | |
+| [Qwen3-TTS-Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | default | 11253ms | 10096ms | 0.6× | 4.5 GB | 10-lang cloning; warm RTF below realtime — slower than vendor's claimed 97ms streaming TTFA |
+| Qwen3-TTS Base | 1.7B | cloning (short) | 4420ms | 3247ms | 0.6× | 4.4 GB | **only completed 1/5 prompts** at 600s timeout — 15s reference + long text pushes generation past 5-10min per cell |
+| [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) | 1B | default | 14563ms | 15925ms | 0.5× | 3.5 GB | conversational TTS via ChatML; HF manual-approval gated. Mimi codec 24kHz |
+| Sesame CSM-1B | 1B | cloning | 14866ms | 12321ms | 0.5× | 3.5 GB | |
+| [MARS5-TTS](https://github.com/Camb-ai/MARS5-TTS) (CAMB.AI) | 1.2B | default | 32717ms | 32115ms | 0.2× | 6.0 GB | unexpectedly slow on CUDA — torch.hub model load + AR generation. AGPL-3.0 |
+| MARS5-TTS | 1.2B | cloning | 43620ms | 39235ms | 0.1× | 6.9 GB | |
+| [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | 100M | n/a | — | — | — | — | CPU-only (no CUDA path in the harness) |
 
 **Top-line takeaway on CUDA:**
 
@@ -252,17 +251,24 @@ python speak.py chatterbox --reference reference/myvoice.wav
 
 `--reference` auto-skips models that can only use predefined voices (Kokoro, KittenTTS, Piper, VibeVoice, Magpie, Supertonic).
 
-### Subjective cloning quality notes
+### Subjective cloning quality ranking (May 2026)
 
-Numbers tell you which model is fast; ears tell you which one is *good*. Tested on Windows + RTX 5090 with `chris_hemsworth_15s.wav` reference (the cut version — full 67s wav blew through NeuTTS's 2048-token context):
+Numbers tell you which model is fast; ears tell you which one is *good*. After a full listening pass on the RTX 5090 cloning bench ([`2026-05-24_0154`](https://5uck1ess.github.io/tts-bench/2026-05-24_0154/report.html), `chris_hemsworth_15s.wav` reference, 5 prompts × every cloning-capable model), ranked best → worst by accent preservation and naturalness:
 
-1. **OmniVoice — best cloning fidelity** (top of the listening test). Surprisingly preserves the **source accent** (Chris Hemsworth's Australian came through), which most zero-shot cloners flatten to neutral American. Caveat: audible artifacts (glitches / noise) layered on top of the cloned voice. If those can be tamed it's the pick.
-2. **ChatterBox — second best.** Cleaner output than OmniVoice (no artifacts), but doesn't carry the accent as faithfully. Right answer when you want clean audio and accent isn't critical.
-3. **Coqui XTTS-v2** — clone fidelity weaker than ChatterBox. Multilingual baseline is its strongest reason to keep around.
-4. **Pocket-TTS** — terrible at cloning (output is mostly artifacts, not usable). Keep it for **predefined voices only** — it's the fastest cloning-capable model in that mode.
-5. **NeuTTS Air / Nano** — works, but on long-form inputs both truncated at exactly 1.9s in our compare run; likely a GGUF context/decode cap that needs investigation.
+1. **OmniVoice — #1.** Keeps Chris Hemsworth's Australian accent better than any other model, prosody natural. Some artifacts in the audio but the cloned voice itself is the closest match to the reference.
+2. **ChatterBox** — strong second. Keeps the accent well, clean output. Trade-off vs OmniVoice is mostly RTF (2× warm vs 9.2×).
+3. **IndexTTS-2** — also good, accent preserved. Slower than the top two (1.1× warm RTF) but the quality holds.
+4. **F5-TTS** — decent on timbre, **prosody is the weak point** — phrasing feels off / unnatural pauses. Best cloning RTF after OmniVoice though (5.3×).
+5. **VoxCPM2** — sounds okay as a general TTS but **cloning isn't its strong suit**; the cloned voice drifts from the reference. Use it for default-voice multilingual instead.
+6. **Sesame CSM-1B** — accent comes through but the voice doesn't come out as **deep as the reference**, and it inserts **fake pauses** mid-sentence (likely an artifact of being trained on conversational turn chunks).
+7. **Coqui XTTS-v2** — multilingual baseline. Cloning behind ChatterBox/IndexTTS/F5.
+8. **Qwen3-TTS Base** — mid. The model is a competent TTS but **cloning fidelity is weak**; timbre wanders away from the reference. Cloning also scales poorly with reference length — only the shortest prompt completed at the 600s timeout on the 15s ref.
+9. **NeuTTS Air / Nano** — **doesn't work for cloning** in this test (output unrelated to reference voice, plus the long-form truncation issue from the compare pass). Keep for default-voice usage.
+10. **MARS5-TTS** — **doesn't work** — output didn't match the reference, plus 0.1× warm RTF makes it unusable regardless. Bottom of the list.
 
-These are first-pass impressions on a single reference; replication with other references (jo, juliette) recommended before treating them as definitive.
+Pocket-TTS isn't ranked here — it's CPU-only and its gated cloning path produced unusable artifacts in the earlier compare pass.
+
+These are first-pass impressions on a single reference; replication with another reference (e.g. a clean female voice) recommended before treating the ordering as definitive — especially the middle of the pack.
 
 ---
 

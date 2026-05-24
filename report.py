@@ -294,6 +294,31 @@ def _fmt_mb(x):
     return f"{x:.0f} MB"
 
 
+# Display sizes for the Size column. Numbers are the model's weight count
+# (params), not weights-on-disk. Hand-curated — keep in sync with README.
+MODEL_SIZE = {
+    "pocket":      "100M",
+    "neutts_air":  "748M",
+    "neutts_nano": "748M",
+    "luxtts":      "—",
+    "chatterbox":  "1.2B",
+    "f5tts":       "330M",
+    "coqui":       "750M",
+    "vibevoice":   "0.5B",
+    "omnivoice":   "~1B",
+    "voxcpm":      "2B",
+    "magpie":      "357M",
+    "qwentts":     "1.7B",
+    "indextts":    "1.5B",
+    "sesame":      "1B",
+    "mars5":       "1.2B",
+    "kokoro":      "82M",
+    "kittentts":   "<100M",
+    "piper":       "~25MB",
+    "supertonic":  "99M",
+}
+
+
 def _ds(val):
     """data-sort attribute for numeric cells; empty when None."""
     return f' data-sort="{val}"' if val is not None else ' data-sort=""'
@@ -405,7 +430,7 @@ def build_report(run_dir: Path) -> Path:
                        f'"{escape(text)}"</span>')
 
         out.append('<table><thead><tr>')
-        for col in ("Model", "Device", "TTFA cold", "TTFA warm",
+        for col in ("Model", "Size", "Device", "TTFA cold", "TTFA warm",
                     "RTF cold", "RTF warm", "Mem", "VRAM", "Audio (cold)"):
             out.append(f'<th>{col}</th>')
         out.append('</tr></thead><tbody>')
@@ -418,8 +443,11 @@ def build_report(run_dir: Path) -> Path:
             failed = next((r for r in cell_rows if not r["ok"]), None)
 
             dev_class = f"dev-{device}"
+            size_str = MODEL_SIZE.get(model, "—")
             out.append('<tr>')
-            out.append(f'<td>{escape(model)}</td><td class="{dev_class}">{escape(device)}</td>')
+            out.append(f'<td>{escape(model)}</td>'
+                       f'<td class="muted">{escape(size_str)}</td>'
+                       f'<td class="{dev_class}">{escape(device)}</td>')
 
             if not cold:
                 err = (failed.get("error") if failed else "") or "no successful run"
