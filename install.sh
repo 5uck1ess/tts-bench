@@ -259,5 +259,19 @@ else
     echo "indextts: already installed"
 fi
 
+# --- Sesame CSM-1B (conversational speech model, in-context cloning) ---
+echo; cyan "=== Sesame CSM-1B (conversational speech model, in-context cloning) ==="
+if [ ! -x venvs/sesame/bin/python ]; then
+    # Native transformers support since 4.52.1.
+    # MANUAL APPROVAL gating on HF - visit https://huggingface.co/sesame/csm-1b
+    # and click "Ask for access". After approval, `hf auth login` enables download.
+    uv venv venvs/sesame --python 3.11 || die "uv venv sesame"
+    uv pip install --python venvs/sesame/bin/python "transformers>=4.52.1" soundfile numpy librosa huggingface_hub \
+        || die "uv pip install sesame deps"
+    green "sesame: ok (CSM-1B; HF access REQUIRED - request at https://huggingface.co/sesame/csm-1b before running)"
+else
+    echo "sesame: already installed"
+fi
+
 echo
 green "Done. Run: python bench.py"

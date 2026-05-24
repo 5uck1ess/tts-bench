@@ -42,6 +42,7 @@ MODELS = {
     "magpie":      ("magpie",     "runners/magpie_runner.py",     None),
     "qwentts":     ("qwentts",    "runners/qwentts_runner.py",    "base"),
     "indextts":    ("indextts",   "runners/indextts_runner.py",   None),
+    "sesame":      ("sesame",     "runners/sesame_runner.py",     None),
 }
 
 

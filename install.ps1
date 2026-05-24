@@ -248,4 +248,18 @@ if (-not (Test-Path "venvs\indextts\Scripts\python.exe")) {
     Write-Host "indextts: already installed" -ForegroundColor Gray
 }
 
+Step "Sesame CSM-1B (conversational speech model, in-context cloning)"
+if (-not (Test-Path "venvs\sesame\Scripts\python.exe")) {
+    # Native transformers support since 4.52.1 - no separate pip package needed.
+    # MANUAL APPROVAL gating on HF: visit https://huggingface.co/sesame/csm-1b
+    # and click "Ask for access" before first use. After approval lands in your
+    # HF account, `hf auth login` will let the runner download weights.
+    Invoke-Checked "uv venv sesame" { uv venv venvs\sesame --python 3.11 }
+    Invoke-Checked "uv pip install sesame deps" { uv pip install --python venvs\sesame\Scripts\python.exe "transformers>=4.52.1" soundfile numpy librosa huggingface_hub }
+    Invoke-Checked "torch cu128 for sesame" { uv pip install --python venvs\sesame\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "sesame: ok (CSM-1B; HF access REQUIRED - request at https://huggingface.co/sesame/csm-1b before running)" -ForegroundColor Green
+} else {
+    Write-Host "sesame: already installed" -ForegroundColor Gray
+}
+
 Write-Host "`nDone. Run: python bench.py" -ForegroundColor Green
