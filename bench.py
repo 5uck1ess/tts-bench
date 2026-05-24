@@ -131,9 +131,32 @@ def detect_rig(label=None):
     return meta
 
 
-def write_meta(run_dir: Path, rig_label=None):
-    """Detect rig info and write meta.json into run_dir. Returns the meta dict."""
+def _auto_label(reference, models_filter, prompts_filter):
+    """Build a short human-readable label from the bench's filter args."""
+    parts = []
+    parts.append("cloning" if reference else "default voice")
+    if reference:
+        parts.append(Path(reference).stem)
+    if models_filter:
+        names = sorted(models_filter)
+        parts.append(",".join(names) if len(names) <= 3 else f"{len(names)} models")
+    if prompts_filter:
+        parts.append("prompts " + ",".join(str(x) for x in sorted(prompts_filter)))
+    return " · ".join(parts)
+
+
+def write_meta(run_dir: Path, rig_label=None, label=None,
+               reference=None, models_filter=None, prompts_filter=None):
+    """Detect rig info and write meta.json into run_dir. Returns the meta dict.
+
+    Includes the bench's filter arguments so the published index can label
+    each run without anyone having to click into it.
+    """
     meta = detect_rig(label=rig_label)
+    meta["label"] = label or _auto_label(reference, models_filter, prompts_filter)
+    meta["reference"] = Path(reference).name if reference else None
+    meta["models_filter"] = sorted(models_filter) if models_filter else None
+    meta["prompts_filter"] = sorted(prompts_filter) if prompts_filter else None
     (run_dir / "meta.json").write_text(
         json.dumps(meta, indent=2) + "\n", encoding="utf-8"
     )
@@ -165,6 +188,9 @@ def main() -> int:
                    help="Generations per cell (run 1 = cold, runs 2..N = warm). Default 3.")
     p.add_argument("--rig", default=None,
                    help="Short rig label (e.g. 'windows-5090'). Auto-detected if omitted.")
+    p.add_argument("--label", default=None,
+                   help="Human-readable label for this run (shown in the published index). "
+                        "Auto-derived from --reference and --models if omitted.")
     p.add_argument("--write-meta", metavar="DIR", default=None,
                    help="Just write meta.json into an existing results dir and exit (no bench run).")
     args = p.parse_args()
@@ -175,8 +201,11 @@ def main() -> int:
             run_dir = REPO / args.write_meta
         if not run_dir.exists():
             raise SystemExit(f"Not found: {run_dir}")
-        meta = write_meta(run_dir, rig_label=args.rig)
-        print(f"Wrote {run_dir}/meta.json — rig: {meta['rig']}")
+        meta = write_meta(run_dir, rig_label=args.rig, label=args.label,
+                          reference=args.reference,
+                          models_filter=set(args.models.split(",")) if args.models else None,
+                          prompts_filter={int(x) for x in args.prompts.split(",")} if args.prompts else None)
+        print(f"Wrote {run_dir}/meta.json — rig: {meta['rig']} — label: {meta['label']}")
         return 0
 
     if args.prompts:
@@ -196,9 +225,14 @@ def main() -> int:
     out_dir = REPO / "results" / datetime.now().strftime("%Y-%m-%d_%H%M")
     out_dir.mkdir(parents=True, exist_ok=True)
     csv_path = out_dir / "results.csv"
-    meta = write_meta(out_dir, rig_label=args.rig)
+    meta = write_meta(
+        out_dir, rig_label=args.rig, label=args.label,
+        reference=args.reference, models_filter=requested_models,
+        prompts_filter={int(x) for x in args.prompts.split(",")} if args.prompts else None,
+    )
     print(f"Output: {out_dir}")
-    print(f"Rig: {meta['rig']} ({meta.get('cpu') or '?'} / {meta.get('gpu') or 'no GPU detected'})\n")
+    print(f"Rig: {meta['rig']} ({meta.get('cpu') or '?'} / {meta.get('gpu') or 'no GPU detected'})")
+    print(f"Label: {meta['label']}\n")
     print(f"Plan: {len(selected_prompts)} prompts × {len(cells)} cells × {args.runs} runs/cell\n")
 
     rows = []

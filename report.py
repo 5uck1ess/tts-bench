@@ -382,6 +382,12 @@ def build_report(run_dir: Path) -> Path:
         out.append(f'<div class="meta"><strong>Rig:</strong> '
                    f'<code>{escape(meta.get("rig") or "?")}</code> — '
                    f'{escape(_rig_summary(meta))}</div>')
+        if meta.get("label"):
+            ref = meta.get("reference")
+            ref_html = (f' — ref <code>{escape(ref)}</code>'
+                        if ref else "")
+            out.append(f'<div class="meta"><strong>Label:</strong> '
+                       f'{escape(meta["label"])}{ref_html}</div>')
     out.extend([
         f'<div class="meta">{len(models_seen)} model(s) · '
         f'{len(devices_seen)} device(s) · '
@@ -486,6 +492,7 @@ def build_index() -> Path:
             "has_html": (d / "report.html").exists(),
             "rig": (meta or {}).get("rig"),
             "rig_full": _rig_summary(meta),
+            "label": (meta or {}).get("label"),
         })
 
     out = ['<!doctype html>',
@@ -497,7 +504,7 @@ def build_index() -> Path:
            '<h1>TTS Bench — All Runs</h1>',
            f'<div class="meta">{len(runs)} run(s) with <code>results.csv</code></div>',
            '<table><thead><tr>']
-    for col in ("Date", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
+    for col in ("Date", "Label", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
         out.append(f'<th>{col}</th>')
     out.append('</tr></thead><tbody>')
 
@@ -509,8 +516,12 @@ def build_index() -> Path:
                 if r["has_html"] else '<span class="muted">no report</span>')
         rig_cell = (f'<code title="{escape(r["rig_full"])}">{escape(r["rig"])}</code>'
                     if r["rig"] else '<span class="muted">—</span>')
+        label_cell = (escape(r["label"])
+                      if r["label"]
+                      else '<span class="muted">—</span>')
         out.append('<tr>')
         out.append(f"<td>{escape(r['name'])}</td>")
+        out.append(f"<td>{label_cell}</td>")
         out.append(f"<td>{rig_cell}</td>")
         out.append(f"<td{_ds(len(r['models']))}>{escape(models)}</td>")
         out.append(f"<td>{escape(', '.join(r['devices']))}</td>")

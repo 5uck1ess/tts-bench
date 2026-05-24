@@ -142,6 +142,7 @@ def build_pages_index():
             "ok": sum(1 for r in rows if r["ok"]),
             "rig": (meta or {}).get("rig"),
             "rig_full": _rig_summary(meta),
+            "label": (meta or {}).get("label"),
         })
 
     out = ['<!doctype html>',
@@ -157,7 +158,7 @@ def build_pages_index():
            '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>',
            f'<div class="meta">{len(runs)} published run(s)</div>',
            '<table><thead><tr>']
-    for col in ("Date", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
+    for col in ("Date", "Label", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
         out.append(f'<th>{col}</th>')
     out.append('</tr></thead><tbody>')
 
@@ -167,8 +168,12 @@ def build_pages_index():
                   else f"{len(r['models'])} models")
         rig_cell = (f'<code title="{escape(r["rig_full"])}">{escape(r["rig"])}</code>'
                     if r["rig"] else '<span class="muted">—</span>')
+        label_cell = (escape(r["label"])
+                      if r["label"]
+                      else '<span class="muted">—</span>')
         out.append('<tr>')
         out.append(f"<td>{escape(r['name'])}</td>")
+        out.append(f"<td>{label_cell}</td>")
         out.append(f"<td>{rig_cell}</td>")
         out.append(f"<td{_ds(len(r['models']))}>{escape(models)}</td>")
         out.append(f"<td>{escape(', '.join(r['devices']))}</td>")
