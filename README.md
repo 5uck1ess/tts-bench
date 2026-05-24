@@ -100,6 +100,19 @@ python compare.py "..." --no-play                         # silent batch run
 
 Wavs land in `results/compare/<timestamp>/<model>_<device>.wav` so you can re-listen later.
 
+### Reviewing bench results in the browser
+
+`bench.py` writes a self-contained dark-mode `report.html` next to each run's `results.csv` — sortable-looking table of TTFA cold/warm + RTF cold/warm per (model, device, prompt), with an inline `<audio>` player per cell so you can click-play each wav without leaving the page. A top-level `results/index.html` lists every run with a link to its report.
+
+```powershell
+python report.py results/2026-05-23_1409          # one report
+python report.py results/2026-05-23_1409 --open   # ... and open it in a browser
+python report.py --all                            # regenerate everything
+python report.py --index                          # just rebuild results/index.html
+```
+
+No dependencies — pure stdlib + a small HTML/CSS template. Reports regenerate from `results.csv`, so you can tweak `report.py` and re-run `--all` to refresh historical runs.
+
 ### Voice cloning
 
 Three flavors of "zero-shot cloning" are supported, with slightly different reference-file requirements:
@@ -241,9 +254,10 @@ Models that were evaluated for inclusion and intentionally left out, with the re
 ```
 tts-bench/
 ├── harness.py            # shared model registry + subprocess plumbing (imported by all 3 tools)
-├── bench.py              # formal benchmark — CSV + per-prompt summary
+├── bench.py              # formal benchmark — CSV + per-prompt summary + auto-generates report.html
 ├── compare.py            # one-shot A/B listening tool — every model × every device, plays out loud
 ├── speak.py              # interactive REPL — feel warm-run latency for one model
+├── report.py             # build dark-mode HTML report (table + inline audio players) from a results/ dir
 ├── install.ps1           # Windows installer
 ├── install.sh            # macOS / Linux installer
 ├── runners/

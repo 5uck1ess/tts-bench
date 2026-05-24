@@ -132,7 +132,14 @@ def main() -> int:
                     print(cold_msg)
             print()
 
-    print(f"Done. CSV: {csv_path}\n")
+    print(f"Done. CSV: {csv_path}")
+    try:
+        from report import build_report, build_index
+        html_path = build_report(out_dir)
+        build_index()
+        print(f"Report: {html_path}\n")
+    except Exception as e:
+        print(f"(report generation skipped: {e})\n")
     _print_summary(rows, selected_prompts)
     return 0
 
