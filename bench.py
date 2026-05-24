@@ -240,6 +240,7 @@ def main() -> int:
                   "run_index", "is_cold",
                   "ttfa_ms", "gen_s", "audio_s", "rtf",
                   "peak_mem_mb", "peak_vram_mb",
+                  "naq", "naq_harm", "naq_buzz",
                   "wall_s", "ok", "error"]
 
     with csv_path.open("w", newline="", encoding="utf-8") as f:
@@ -266,6 +267,9 @@ def main() -> int:
                     rtf = (audio_s / gen_s) if (audio_s and gen_s) else None
                     peak_mem = r.get("peak_mem_mb")
                     peak_vram = r.get("peak_vram_mb")
+                    naq = r.get("naq")
+                    naq_harm = r.get("naq_harm")
+                    naq_buzz = r.get("naq_buzz")
 
                     row = {
                         "prompt_id": prompt_id,
@@ -281,6 +285,9 @@ def main() -> int:
                         "rtf": round(rtf, 2) if rtf else "",
                         "peak_mem_mb": round(peak_mem, 1) if peak_mem is not None else "",
                         "peak_vram_mb": round(peak_vram, 1) if peak_vram is not None else "",
+                        "naq": round(naq, 1) if naq is not None else "",
+                        "naq_harm": round(naq_harm, 1) if naq_harm is not None else "",
+                        "naq_buzz": round(naq_buzz, 1) if naq_buzz is not None else "",
                         "wall_s": round(r.get("wall_s", 0), 3),
                         "ok": r.get("ok", False),
                         "error": (r.get("error") or "")[:200],

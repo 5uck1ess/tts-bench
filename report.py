@@ -294,6 +294,13 @@ def _fmt_mb(x):
     return f"{x:.0f} MB"
 
 
+def _fmt_naq(x):
+    """Format NAQ score 0-100; em-dash if missing."""
+    if x is None:
+        return "—"
+    return f"{x:.0f}"
+
+
 # Display sizes for the Size column. Numbers are the model's weight count
 # (params), not weights-on-disk. Hand-curated — keep in sync with README.
 MODEL_SIZE = {
@@ -362,7 +369,9 @@ def _read_csv(csv_path):
     with csv_path.open(encoding="utf-8") as f:
         for r in csv.DictReader(f):
             for k in ("ttfa_ms", "gen_s", "audio_s", "rtf",
-                      "peak_mem_mb", "peak_vram_mb", "wall_s"):
+                      "peak_mem_mb", "peak_vram_mb",
+                      "naq", "naq_harm", "naq_buzz",
+                      "wall_s"):
                 v = r.get(k)
                 r[k] = float(v) if v not in (None, "") else None
             r["run_index"] = int(r.get("run_index") or 0)
@@ -431,7 +440,7 @@ def build_report(run_dir: Path) -> Path:
 
         out.append('<table><thead><tr>')
         for col in ("Model", "Size", "Device", "TTFA cold", "TTFA warm",
-                    "RTF cold", "RTF warm", "Mem", "VRAM", "Audio (cold)"):
+                    "RTF cold", "RTF warm", "Mem", "VRAM", "NAQ", "Audio (cold)"):
             out.append(f'<th>{col}</th>')
         out.append('</tr></thead><tbody>')
 
@@ -451,7 +460,7 @@ def build_report(run_dir: Path) -> Path:
 
             if not cold:
                 err = (failed.get("error") if failed else "") or "no successful run"
-                out.append(f'<td colspan="7" class="fail">FAIL: {escape(err.strip()[:140])}</td>')
+                out.append(f'<td colspan="8" class="fail">FAIL: {escape(err.strip()[:140])}</td>')
                 out.append('</tr>')
                 continue
 
@@ -468,6 +477,15 @@ def build_report(run_dir: Path) -> Path:
 
             mem_cold = cold.get("peak_mem_mb")
             vram_cold = cold.get("peak_vram_mb")
+            naq_cold = cold.get("naq")
+            harm_cold = cold.get("naq_harm")
+            buzz_cold = cold.get("naq_buzz")
+            naq_tooltip = ""
+            if naq_cold is not None:
+                naq_tooltip = (
+                    f"HARM {_fmt_naq(harm_cold)}  "
+                    f"BUZZ {_fmt_naq(buzz_cold)}"
+                )
 
             wav_name = f"{model}_{device}_p{pid}.wav"
             audio_html = (f'<audio controls preload="none" src="{escape(wav_name)}"></audio>'
@@ -480,6 +498,10 @@ def build_report(run_dir: Path) -> Path:
             out.append(f'<td class="num"{_ds(rtf_warm)}>{_fmt_rtf(rtf_warm)}</td>')
             out.append(f'<td class="num"{_ds(mem_cold)}>{_fmt_mb(mem_cold)}</td>')
             out.append(f'<td class="num"{_ds(vram_cold)}>{_fmt_mb(vram_cold)}</td>')
+            out.append(
+                f'<td class="num"{_ds(naq_cold)} title="{escape(naq_tooltip)}">'
+                f'{_fmt_naq(naq_cold)}</td>'
+            )
             out.append(f'<td>{audio_html}</td>')
             out.append('</tr>')
 
