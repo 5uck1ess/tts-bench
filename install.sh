@@ -287,5 +287,20 @@ else
     echo "mars5: already installed"
 fi
 
+# --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
+echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
+if [ ! -x venvs/supertonic/bin/python ]; then
+    # Pure-ONNX runtime; no torch dependency. ~25MB weights auto-downloaded
+    # from HF (Supertone/supertonic) on first run.
+    # Open-weight release is fixed-voice only; cloning lives in the hosted
+    # Voice Builder / Supertone Play API.
+    uv venv venvs/supertonic --python 3.11 || die "uv venv supertonic"
+    uv pip install --python venvs/supertonic/bin/python supertonic soundfile psutil \
+        || die "uv pip install supertonic"
+    green "supertonic: ok (~99M ONNX, 31 langs, MIT code + OpenRAIL-M weights, CPU-only)"
+else
+    echo "supertonic: already installed"
+fi
+
 echo
 green "Done. Run: python bench.py"

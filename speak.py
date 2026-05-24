@@ -44,6 +44,7 @@ MODELS = {
     "indextts":    ("indextts",   "runners/indextts_runner.py",   None),
     "sesame":      ("sesame",     "runners/sesame_runner.py",     None),
     "mars5":       ("mars5",      "runners/mars5_runner.py",      None),
+    "supertonic":  ("supertonic", "runners/supertonic_runner.py", None),
 }
 
 

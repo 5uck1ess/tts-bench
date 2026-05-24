@@ -278,4 +278,17 @@ if (-not (Test-Path "venvs\mars5\Scripts\python.exe")) {
     Write-Host "mars5: already installed" -ForegroundColor Gray
 }
 
+Step "Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices)"
+if (-not (Test-Path "venvs\supertonic\Scripts\python.exe")) {
+    # Pure-ONNX runtime; no torch dependency. ~25MB weights auto-downloaded
+    # from HF (Supertone/supertonic) on first run.
+    # Open-weight release is fixed-voice only; cloning lives in the hosted
+    # Voice Builder / Supertone Play API.
+    Invoke-Checked "uv venv supertonic" { uv venv venvs\supertonic --python 3.11 }
+    Invoke-Checked "uv pip install supertonic" { uv pip install --python venvs\supertonic\Scripts\python.exe supertonic soundfile psutil }
+    Write-Host "supertonic: ok (~99M ONNX, 31 langs, MIT code + OpenRAIL-M weights, CPU-only)" -ForegroundColor Green
+} else {
+    Write-Host "supertonic: already installed" -ForegroundColor Gray
+}
+
 Write-Host "`nDone. Run: python bench.py" -ForegroundColor Green

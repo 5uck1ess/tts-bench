@@ -46,6 +46,7 @@ Same five prompts run on both rigs above. Numbers shown are from short prompts; 
 | **[KittenTTS](https://github.com/KittenML/KittenTTS)** (KittenML) | <100M / Apache 2.0 | 516ms | 487ms | 6.6× | EN only | 8 voices; non-streaming so TTFA == gen_s |
 | **[VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice)** (Microsoft, community fork) | 0.5B / MIT | ~3.9s | ~3.7s | **~0.5×** | EN only (7 preset voices) | streaming-class but heavy diffusion; DDPM steps tunable (5 default). Predefined `.pt` voice embeddings auto-downloaded |
 | [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) (NVIDIA, NeMo) | 357M / NVIDIA Open Model License | pending | pending | pending (CUDA: ~1.0× cold smoke) | 9 (en/es/de/it/vi/zh/fr/hi/ja) | fixed speaker embeddings (this checkpoint variant); HF accept-terms gated; install skips `[tts]` extra to avoid `pynini` on Windows — runner forces `apply_TN=False` to compensate |
+| **[Supertonic](https://github.com/supertone-inc/supertonic)** (Supertone Inc., ONNX) | ~99M / MIT code + OpenRAIL-M weights | 560ms | **509ms** | **6.1×** | 31 (ar/bg/hr/cs/da/nl/en/et/fi/fr/de/el/hi/hu/id/it/ja/ko/lv/lt/pl/pt/ro/ru/sk/sl/es/sv/tr/uk/vi) | pure-ONNX runtime, no torch dep — tiny venv. Open-weight release is fixed-voice only (cloning via hosted Voice Builder / Supertone Play API). 44.1 kHz output |
 
 #### Zero-shot voice cloning models (accept a reference wav at inference time)
 
@@ -199,7 +200,7 @@ python compare.py "..." --reference reference/myvoice.wav
 python speak.py chatterbox --reference reference/myvoice.wav
 ```
 
-`--reference` auto-skips models that can only use predefined voices (Kokoro, KittenTTS, Piper, VibeVoice, Magpie).
+`--reference` auto-skips models that can only use predefined voices (Kokoro, KittenTTS, Piper, VibeVoice, Magpie, Supertonic).
 
 ### Subjective cloning quality notes
 
@@ -346,7 +347,8 @@ tts-bench/
 │   ├── qwentts_runner.py
 │   ├── indextts_runner.py
 │   ├── sesame_runner.py
-│   └── mars5_runner.py
+│   ├── mars5_runner.py
+│   └── supertonic_runner.py
 ├── reference/            # voice cloning reference audio (.wav + .txt pairs)
 ├── venvs/                # one isolated venv per model (gitignored)
 └── results/              # bench output WAVs + CSV (gitignored)
@@ -358,7 +360,8 @@ tts-bench/
 
 MIT for the bench code in this repo. **Each TTS model has its own license** — check the linked upstream repos above before deploying any of them in a product. Quick reference:
 
-- MIT: [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts), [Piper](https://github.com/OHF-voice/piper1-gpl), [ChatterBox](https://github.com/resemble-ai/chatterbox), [F5-TTS](https://github.com/SWivid/F5-TTS), [VibeVoice (community fork)](https://github.com/vibevoice-community/VibeVoice)
+- MIT: [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts), [Piper](https://github.com/OHF-voice/piper1-gpl), [ChatterBox](https://github.com/resemble-ai/chatterbox), [F5-TTS](https://github.com/SWivid/F5-TTS), [VibeVoice (community fork)](https://github.com/vibevoice-community/VibeVoice), [Supertonic](https://github.com/supertone-inc/supertonic) (sample code; model weights are **OpenRAIL-M**, see below)
+- **OpenRAIL-M (use-based, commercial-permissive):** [Supertonic model weights](https://huggingface.co/Supertone/supertonic) — read the license for the use restrictions.
 - Apache 2.0: [NeuTTS](https://github.com/neuphonic/neutts), [Kokoro](https://github.com/hexgrad/kokoro), [KittenTTS](https://github.com/KittenML/KittenTTS), [LuxTTS](https://github.com/ysharma3501/LuxTTS)
 - **CPML 1.0 (non-commercial):** [Coqui XTTS-v2](https://huggingface.co/coqui/XTTS-v2) — research / personal use only. The harness auto-accepts via `COQUI_TOS_AGREED=1`.
 - **NVIDIA Open Model License:** [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) — commercial use permitted with terms; HF accept-terms gated.
