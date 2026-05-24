@@ -12,7 +12,6 @@
 
 ## Future
 
-- [ ] **NAQ v2** — add naturalness features (F0 contour variance, dynamic range, syllable rhythm entropy) alongside artifact features. Fit to subjective ranking. Track 2 in current design cycle.
 - [ ] **Community voting system** — head-to-head sample voting on the gh-pages reports → labeled ground truth for NAQ refinement
 - [ ] Prefer 48 kHz output models for new additions (preference, not hard gate)
 - [ ] Buy Me a Coffee / Sponsor link (defer until external traction)

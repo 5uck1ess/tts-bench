@@ -755,10 +755,10 @@ _READING_GUIDE = {
         '<div class="reading-guide">'
         '<strong>NAQ</strong> (Naturalness-Artifact Quotient): 0-100 objective quality score; '
         'higher = more natural. '
-        'Composed of <strong>ARTIFACT</strong> macro (artifact absence: HARM + BUZZ) and '
-        '<strong>NATURALNESS</strong> macro (positive prosody: DYN + PROSODY + RHYTHM + PITCH_MVMT) '
-        'at 50/50. Hover any NAQ cell for the two-macro breakdown. '
-        '<a href="https://github.com/5uck1ess/tts-bench/blob/main/docs/naq.md">Full spec →</a>'
+        'Combines two factor groups: <strong>ARTIFACT</strong> (cues for absence of vocoder '
+        'artifacts) and <strong>NATURALNESS</strong> (cues for expressive prosody). '
+        'Hover any NAQ cell for the per-macro breakdown. '
+        '<a href="https://github.com/5uck1ess/tts-bench/blob/main/docs/naq.md">How to read →</a>'
         '</div>'
     ),
     "samples": (

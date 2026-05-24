@@ -98,16 +98,18 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ---
 
-## Quality scoring: NAQ v2
+## Quality scoring: NAQ
 
-**Naturalness-Artifact Quotient** — objective 0-100 per-wav score with two macros at 50/50:
+**Naturalness-Artifact Quotient** — an objective 0-100 score per generated wav. Higher = more natural; lower = more roboty / vocoder-artifacted. Computed automatically for the cold run of every bench cell and reported in `quality.html`.
 
-- **ARTIFACT** = mean of HARM (harmonic-to-noise ratio) + BUZZ (4-8 kHz vocoder hash). Captures absence of audible artifacts.
-- **NATURALNESS** = mean of DYN (dynamic range) + PROSODY (F0 variance) + RHYTHM (IOI entropy) + PITCH_MVMT (frame-to-frame F0 movement). Captures presence of positive naturalness cues.
+Two factor groups feed the score:
 
-NAQ v2 = 0.5 × ARTIFACT + 0.5 × NATURALNESS. Higher = more natural; lower = more roboty / vocoder-artifacted. Computed for the cold run of every cell. Hover any NAQ cell in the quality report for the two-macro breakdown.
+- **ARTIFACT** — acoustic cues for the *absence* of vocoder artifacts (noise, buzz, phase issues).
+- **NATURALNESS** — acoustic cues for the *presence* of expressive speech (dynamics, prosody, rhythm, pitch movement).
 
-Full spec, formula, edge cases: **[docs/naq.md](docs/naq.md)**.
+Both macros are surfaced in the quality report so you can see whether a model loses ground on artifacts, naturalness, or both. The exact features and weights are kept opaque on purpose; they will change as voting data accumulates.
+
+How to read the number: **[docs/naq.md](docs/naq.md)**.
 
 ---
 
