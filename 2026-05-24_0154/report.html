@@ -1,0 +1,772 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>TTS Bench — 2026-05-24_0154</title>
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #1a1a1a;
+    --panel: #242424;
+    --text: #e0e0e0;
+    --muted: #888;
+    --accent: #6cf;
+    --num: #cfc;
+    --fail: #f88;
+    --border: #333;
+    --row-hover: #2a2a2a;
+    --th-bg: #2c2c2c;
+    --th-hover: #353535;
+    --input-bg: #2a2a2a;
+    --input-border: #444;
+    --controls-border: #2a2a2a;
+    --dev-cpu: #ddd;
+    --dev-cuda: #9cf;
+    --dev-mps: #fc9;
+    --lang: #6cf;
+    --prompt-text: #9c9;
+    --code-bg: #2a2a2a;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --text: #1a1d22;
+    --muted: #6b7280;
+    --accent: #1a73e8;
+    --num: #137333;
+    --fail: #c5221f;
+    --border: #e2e6eb;
+    --row-hover: #f0f4f8;
+    --th-bg: #eef1f4;
+    --th-hover: #e2e6eb;
+    --input-bg: #ffffff;
+    --input-border: #cdd3da;
+    --controls-border: #e2e6eb;
+    --dev-cpu: #555;
+    --dev-cuda: #1a73e8;
+    --dev-mps: #c2410c;
+    --lang: #1a73e8;
+    --prompt-text: #2d6a4f;
+    --code-bg: #eef1f4;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+         background: var(--bg); color: var(--text);
+         margin: 0; padding: 1.5rem 2rem 3rem;
+         max-width: 1400px; margin-inline: auto;
+         transition: background 0.15s, color 0.15s; }
+  h1, h2 { color: var(--text); margin-top: 0; }
+  h1 { font-size: 1.5em; }
+  h2 { font-size: 1.05em; }
+  .meta { color: var(--muted); font-size: 0.88em; margin-bottom: 0.4rem; }
+  .prompt { background: var(--panel); padding: 1rem 1.2rem;
+            border-radius: 10px; margin-bottom: 1.4rem;
+            border: 1px solid var(--border); }
+  .prompt-text { color: var(--prompt-text); font-style: italic;
+                 display: block; margin: 0.2rem 0 0.8rem 0; }
+  .lang { color: var(--lang); font-style: normal; margin-right: 0.4rem;
+          font-weight: 500; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { padding: 7px 10px; text-align: left;
+           border-bottom: 1px solid var(--border); }
+  th { background: var(--th-bg); color: var(--text);
+       cursor: pointer; user-select: none; white-space: nowrap;
+       font-weight: 600; }
+  th:hover { background: var(--th-hover); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums;
+           color: var(--num); }
+  td.fail { color: var(--fail); font-style: italic; }
+  td.dev-cuda { color: var(--dev-cuda); }
+  td.dev-mps  { color: var(--dev-mps); }
+  td.dev-cpu  { color: var(--dev-cpu); }
+  .muted { color: var(--muted); }
+  audio { width: 220px; height: 30px; vertical-align: middle; }
+  tr:hover td { background: var(--row-hover); }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px;
+         font-size: 0.92em; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .nav { margin-bottom: 0.6rem; }
+  .controls { position: sticky; top: 0; background: var(--bg); z-index: 10;
+              padding: 0.7rem 0 0.7rem; margin-bottom: 1rem;
+              display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+              border-bottom: 1px solid var(--controls-border); }
+  .controls input { background: var(--input-bg); color: var(--text);
+                    border: 1px solid var(--input-border);
+                    border-radius: 6px; padding: 7px 11px; font: inherit;
+                    min-width: 320px; }
+  .controls input:focus { outline: none; border-color: var(--accent); }
+  .controls .hint { color: var(--muted); font-size: 0.85em; }
+  .controls button { background: var(--input-bg); color: var(--text);
+                     border: 1px solid var(--input-border);
+                     border-radius: 6px; padding: 6px 12px; font: inherit;
+                     cursor: pointer; transition: border-color 0.15s; }
+  .controls button:hover { border-color: var(--accent); }
+  .spacer { flex: 1; }
+</style>
+</head><body>
+<div class="controls">
+<input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
+<button type="button" id="reset-sort">reset sort</button>
+<span class="hint">click any column header to sort</span>
+<span class="spacer"></span>
+<button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
+</div>
+<div class="nav"><a href="../index.html">← all runs</a></div>
+<h1>TTS Bench — 2026-05-24_0154</h1>
+<div class="meta"><strong>Rig:</strong> <code>windows-5090</code> — AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11</div>
+<div class="meta">11 model(s) · 1 device(s) · 5 prompt(s) · 3 run(s) per cell</div>
+<div class="meta">Source: <code>results.csv</code></div>
+<div class="prompt"><h2>Prompt 1</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"Open the browser and read my email."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Mem</th>
+<th>VRAM</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>chatterbox</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="2738.0">2.74s</td>
+<td class="num" data-sort="1230.55">1.23s</td>
+<td class="num" data-sort="0.8181154127100074">0.82×</td>
+<td class="num" data-sort="1.4464746371212212">1.45×</td>
+<td class="num" data-sort="3018.6">2.95 GB</td>
+<td class="num" data-sort="3478.7">3.40 GB</td>
+<td><audio controls preload="none" src="chatterbox_cuda_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>coqui</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1462.0">1.46s</td>
+<td class="num" data-sort="559.3">559ms</td>
+<td class="num" data-sort="1.9630642954856363">1.96×</td>
+<td class="num" data-sort="4.005949997018309">4.01×</td>
+<td class="num" data-sort="2346.3">2.29 GB</td>
+<td class="num" data-sort="1905.7">1.86 GB</td>
+<td><audio controls preload="none" src="coqui_cuda_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>f5tts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1275.7">1.28s</td>
+<td class="num" data-sort="789.2">789ms</td>
+<td class="num" data-sort="1.4799717801991061">1.48×</td>
+<td class="num" data-sort="2.3924533323673662">2.39×</td>
+<td class="num" data-sort="2727.7">2.66 GB</td>
+<td class="num" data-sort="772.7">773 MB</td>
+<td><audio controls preload="none" src="f5tts_cuda_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>indextts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="3905.5">3.91s</td>
+<td class="num" data-sort="2597.05">2.60s</td>
+<td class="num" data-sort="0.6421712968890027">0.64×</td>
+<td class="num" data-sort="0.978972123666104">0.98×</td>
+<td class="num" data-sort="4101.5">4.01 GB</td>
+<td class="num" data-sort="7351.2">7.18 GB</td>
+<td><audio controls preload="none" src="indextts_cuda_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>mars5</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="32059.5">32.06s</td>
+<td class="num" data-sort="30060.449999999997">30.06s</td>
+<td class="num" data-sort="0.012632760960089834">0.01×</td>
+<td class="num" data-sort="0.01705954754387088">0.02×</td>
+<td class="num" data-sort="2269.8">2.22 GB</td>
+<td class="num" data-sort="6603.2">6.45 GB</td>
+<td><audio controls preload="none" src="mars5_cuda_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>neutts_air</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1080.2">1.08s</td>
+<td class="num" data-sort="381.5">382ms</td>
+<td class="num" data-sort="0.3332716163673394">0.33×</td>
+<td class="num" data-sort="1.0470598220692744">1.05×</td>
+<td class="num" data-sort="3520.1">3.44 GB</td>
+<td class="num" data-sort="3335.9">3.26 GB</td>
+<td><audio controls preload="none" src="neutts_air_cuda_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>neutts_nano</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="688.1">688ms</td>
+<td class="num" data-sort="309.85">310ms</td>
+<td class="num" data-sort="0.639441941578259">0.64×</td>
+<td class="num" data-sort="1.8011652991706546">1.80×</td>
+<td class="num" data-sort="2525.3">2.47 GB</td>
+<td class="num" data-sort="3335.9">3.26 GB</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1256.4">1.26s</td>
+<td class="num" data-sort="834.25">834ms</td>
+<td class="num" data-sort="2.1092008914358487">2.11×</td>
+<td class="num" data-sort="3.0630142280236274">3.06×</td>
+<td class="num" data-sort="2304.7">2.25 GB</td>
+<td class="num" data-sort="2475.6">2.42 GB</td>
+<td><audio controls preload="none" src="omnivoice_cuda_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>qwentts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="4420.1">4.42s</td>
+<td class="num" data-sort="3247.0">3.25s</td>
+<td class="num" data-sort="0.3981810366281306">0.40×</td>
+<td class="num" data-sort="0.5908661576147355">0.59×</td>
+<td class="num" data-sort="2461.9">2.40 GB</td>
+<td class="num" data-sort="4544.4">4.44 GB</td>
+<td><audio controls preload="none" src="qwentts_cuda_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>sesame</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="8443.1">8.44s</td>
+<td class="num" data-sort="5322.8">5.32s</td>
+<td class="num" data-sort="0.388482903199062">0.39×</td>
+<td class="num" data-sort="0.480836565258449">0.48×</td>
+<td class="num" data-sort="2477.2">2.42 GB</td>
+<td class="num" data-sort="3624.4">3.54 GB</td>
+<td><audio controls preload="none" src="sesame_cuda_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>voxcpm</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="4023.1">4.02s</td>
+<td class="num" data-sort="1612.4">1.61s</td>
+<td class="num" data-sort="0.596554895478611">0.60×</td>
+<td class="num" data-sort="1.1444886464085688">1.14×</td>
+<td class="num" data-sort="9767.1">9.54 GB</td>
+<td class="num" data-sort="5843.9">5.71 GB</td>
+<td><audio controls preload="none" src="voxcpm_cuda_p1.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 2</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"I&#x27;ll start a new git branch, push the changes, and open a pull request when the tests pass."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Mem</th>
+<th>VRAM</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>chatterbox</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="3254.6">3.25s</td>
+<td class="num" data-sort="2426.25">2.43s</td>
+<td class="num" data-sort="1.2536102746881337">1.25×</td>
+<td class="num" data-sort="1.978436712745265">1.98×</td>
+<td class="num" data-sort="3086.7">3.01 GB</td>
+<td class="num" data-sort="3507.6">3.43 GB</td>
+<td><audio controls preload="none" src="chatterbox_cuda_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>coqui</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="2065.7">2.07s</td>
+<td class="num" data-sort="1311.0">1.31s</td>
+<td class="num" data-sort="2.9849445708476545">2.98×</td>
+<td class="num" data-sort="3.9983705025460567">4.00×</td>
+<td class="num" data-sort="2300.0">2.25 GB</td>
+<td class="num" data-sort="1953.0">1.91 GB</td>
+<td><audio controls preload="none" src="coqui_cuda_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>f5tts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1406.5">1.41s</td>
+<td class="num" data-sort="926.45">926ms</td>
+<td class="num" data-sort="3.5186633487380017">3.52×</td>
+<td class="num" data-sort="5.344629499527143">5.34×</td>
+<td class="num" data-sort="2729.4">2.67 GB</td>
+<td class="num" data-sort="785.3">785 MB</td>
+<td><audio controls preload="none" src="f5tts_cuda_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>indextts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="6139.2">6.14s</td>
+<td class="num" data-sort="4522.6">4.52s</td>
+<td class="num" data-sort="0.9323690383111807">0.93×</td>
+<td class="num" data-sort="1.1261998238178368">1.13×</td>
+<td class="num" data-sort="4095.3">4.00 GB</td>
+<td class="num" data-sort="7351.2">7.18 GB</td>
+<td><audio controls preload="none" src="indextts_cuda_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>mars5</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="42724.7">42.72s</td>
+<td class="num" data-sort="34066.6">34.07s</td>
+<td class="num" data-sort="0.11890077636589608">0.12×</td>
+<td class="num" data-sort="0.05871122345644403">0.06×</td>
+<td class="num" data-sort="2258.8">2.21 GB</td>
+<td class="num" data-sort="7005.3">6.84 GB</td>
+<td><audio controls preload="none" src="mars5_cuda_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>neutts_air</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1210.9">1.21s</td>
+<td class="num" data-sort="492.75">493ms</td>
+<td class="num" data-sort="1.3195753546978868">1.32×</td>
+<td class="num" data-sort="1.4918940354992398">1.49×</td>
+<td class="num" data-sort="3569.7">3.49 GB</td>
+<td class="num" data-sort="3336.1">3.26 GB</td>
+<td><audio controls preload="none" src="neutts_air_cuda_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>neutts_nano</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="768.8">769ms</td>
+<td class="num" data-sort="314.2">314ms</td>
+<td class="num" data-sort="2.1423666742961776">2.14×</td>
+<td class="num" data-sort="2.5099195939240313">2.51×</td>
+<td class="num" data-sort="3223.4">3.15 GB</td>
+<td class="num" data-sort="3336.1">3.26 GB</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1242.0">1.24s</td>
+<td class="num" data-sort="867.05">867ms</td>
+<td class="num" data-sort="5.314009661835748">5.31×</td>
+<td class="num" data-sort="7.589097652364675">7.59×</td>
+<td class="num" data-sort="2298.4">2.24 GB</td>
+<td class="num" data-sort="2475.6">2.42 GB</td>
+<td><audio controls preload="none" src="omnivoice_cuda_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>qwentts</td><td class="dev-cuda">cuda</td>
+<td colspan="7" class="fail">FAIL: timeout 300s</td>
+</tr>
+<tr>
+<td>sesame</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="12512.6">12.51s</td>
+<td class="num" data-sort="9650.75">9.65s</td>
+<td class="num" data-sort="0.43476176014577306">0.43×</td>
+<td class="num" data-sort="0.4932046419623962">0.49×</td>
+<td class="num" data-sort="2457.2">2.40 GB</td>
+<td class="num" data-sort="3624.4">3.54 GB</td>
+<td><audio controls preload="none" src="sesame_cuda_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>voxcpm</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="6603.7">6.60s</td>
+<td class="num" data-sort="4428.35">4.43s</td>
+<td class="num" data-sort="0.8722382906552387">0.87×</td>
+<td class="num" data-sort="1.1924584868223111">1.19×</td>
+<td class="num" data-sort="9139.5">8.93 GB</td>
+<td class="num" data-sort="5843.9">5.71 GB</td>
+<td><audio controls preload="none" src="voxcpm_cuda_p2.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 3</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"The Parakeet TDT zero point six billion parameter model achieves one point six nine percent word error rate on LibriSpeech test-clean, beating Whisper Large V3 at two point seven percent while running at over two thousand times realtime on a single GPU."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Mem</th>
+<th>VRAM</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>chatterbox</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="7346.3">7.35s</td>
+<td class="num" data-sort="6310.7">6.31s</td>
+<td class="num" data-sort="2.0037297687271143">2.00×</td>
+<td class="num" data-sort="2.32617029886001">2.33×</td>
+<td class="num" data-sort="3060.3">2.99 GB</td>
+<td class="num" data-sort="3741.0">3.65 GB</td>
+<td><audio controls preload="none" src="chatterbox_cuda_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>coqui</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="5150.8">5.15s</td>
+<td class="num" data-sort="4207.85">4.21s</td>
+<td class="num" data-sort="3.524695192979731">3.52×</td>
+<td class="num" data-sort="4.082645846591215">4.08×</td>
+<td class="num" data-sort="2398.5">2.34 GB</td>
+<td class="num" data-sort="2205.1">2.15 GB</td>
+<td><audio controls preload="none" src="coqui_cuda_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>f5tts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="2315.1">2.32s</td>
+<td class="num" data-sort="1769.65">1.77s</td>
+<td class="num" data-sort="5.860222020647056">5.86×</td>
+<td class="num" data-sort="7.666623599302392">7.67×</td>
+<td class="num" data-sort="2692.0">2.63 GB</td>
+<td class="num" data-sort="884.6">885 MB</td>
+<td><audio controls preload="none" src="f5tts_cuda_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>indextts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="12970.4">12.97s</td>
+<td class="num" data-sort="11470.4">11.47s</td>
+<td class="num" data-sort="1.1323474989206193">1.13×</td>
+<td class="num" data-sort="1.2276391709688277">1.23×</td>
+<td class="num" data-sort="4117.1">4.02 GB</td>
+<td class="num" data-sort="7856.6">7.67 GB</td>
+<td><audio controls preload="none" src="indextts_cuda_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>mars5</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="56921.7">56.92s</td>
+<td class="num" data-sort="53771.100000000006">53.77s</td>
+<td class="num" data-sort="0.1635053064121416">0.16×</td>
+<td class="num" data-sort="0.09682866455607599">0.10×</td>
+<td class="num" data-sort="2259.9">2.21 GB</td>
+<td class="num" data-sort="7466.3">7.29 GB</td>
+<td><audio controls preload="none" src="mars5_cuda_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>neutts_air</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1305.9">1.31s</td>
+<td class="num" data-sort="453.5">454ms</td>
+<td class="num" data-sort="1.4602418648587483">1.46×</td>
+<td class="num" data-sort="1.5795720450792967">1.58×</td>
+<td class="num" data-sort="3657.5">3.57 GB</td>
+<td class="num" data-sort="3336.1">3.26 GB</td>
+<td><audio controls preload="none" src="neutts_air_cuda_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>neutts_nano</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="787.2">787ms</td>
+<td class="num" data-sort="302.65">303ms</td>
+<td class="num" data-sort="2.4115956516306385">2.41×</td>
+<td class="num" data-sort="2.5934196060663703">2.59×</td>
+<td class="num" data-sort="3288.8">3.21 GB</td>
+<td class="num" data-sort="3336.1">3.26 GB</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1354.1">1.35s</td>
+<td class="num" data-sort="942.25">942ms</td>
+<td class="num" data-sort="13.98715013662211">13.99×</td>
+<td class="num" data-sort="20.175100289768675">20.18×</td>
+<td class="num" data-sort="2294.9">2.24 GB</td>
+<td class="num" data-sort="2475.6">2.42 GB</td>
+<td><audio controls preload="none" src="omnivoice_cuda_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>qwentts</td><td class="dev-cuda">cuda</td>
+<td colspan="7" class="fail">FAIL: timeout 300s</td>
+</tr>
+<tr>
+<td>sesame</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="21511.8">21.51s</td>
+<td class="num" data-sort="19884.8">19.88s</td>
+<td class="num" data-sort="0.46486114597569705">0.46×</td>
+<td class="num" data-sort="0.5028997137607161">0.50×</td>
+<td class="num" data-sort="2477.7">2.42 GB</td>
+<td class="num" data-sort="3624.5">3.54 GB</td>
+<td><audio controls preload="none" src="sesame_cuda_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>voxcpm</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="13175.1">13.18s</td>
+<td class="num" data-sort="11237.7">11.24s</td>
+<td class="num" data-sort="1.0565384702962406">1.06×</td>
+<td class="num" data-sort="1.2031118187195737">1.20×</td>
+<td class="num" data-sort="9629.7">9.40 GB</td>
+<td class="num" data-sort="5843.9">5.71 GB</td>
+<td><audio controls preload="none" src="voxcpm_cuda_p3.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 4</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"Run pytest tests slash test underscore voice dot py with verbose flag and capture flag set to no."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Mem</th>
+<th>VRAM</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>chatterbox</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="4534.5">4.53s</td>
+<td class="num" data-sort="3365.55">3.37s</td>
+<td class="num" data-sort="1.6407542176645715">1.64×</td>
+<td class="num" data-sort="2.1034389205254156">2.10×</td>
+<td class="num" data-sort="3023.7">2.95 GB</td>
+<td class="num" data-sort="3567.7">3.48 GB</td>
+<td><audio controls preload="none" src="chatterbox_cuda_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>coqui</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="2210.4">2.21s</td>
+<td class="num" data-sort="1698.9">1.70s</td>
+<td class="num" data-sort="3.0017191458559536">3.00×</td>
+<td class="num" data-sort="4.1786848068665225">4.18×</td>
+<td class="num" data-sort="2364.0">2.31 GB</td>
+<td class="num" data-sort="1962.7">1.92 GB</td>
+<td><audio controls preload="none" src="coqui_cuda_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>f5tts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1388.8">1.39s</td>
+<td class="num" data-sort="897.05">897ms</td>
+<td class="num" data-sort="3.8018433179723505">3.80×</td>
+<td class="num" data-sort="5.88768349692319">5.89×</td>
+<td class="num" data-sort="2729.4">2.67 GB</td>
+<td class="num" data-sort="786.6">787 MB</td>
+<td><audio controls preload="none" src="f5tts_cuda_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>indextts</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="6928.0">6.93s</td>
+<td class="num" data-sort="5698.1">5.70s</td>
+<td class="num" data-sort="0.9502020785219399">0.95×</td>
+<td class="num" data-sort="1.1611052995414062">1.16×</td>
+<td class="num" data-sort="4102.4">4.01 GB</td>
+<td class="num" data-sort="7384.2">7.21 GB</td>
+<td><audio controls preload="none" src="indextts_cuda_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>mars5</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="42773.3">42.77s</td>
+<td class="num" data-sort="39040.1">39.04s</td>
+<td class="num" data-sort="0.12157116705982471">0.12×</td>
+<td class="num" data-sort="0.08706112076666">0.09×</td>
+<td class="num" data-sort="2275.5">2.22 GB</td>
+<td class="num" data-sort="7014.2">6.85 GB</td>
+<td><audio controls preload="none" src="mars5_cuda_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>neutts_air</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1209.6">1.21s</td>
+<td class="num" data-sort="462.9">463ms</td>
+<td class="num" data-sort="1.4922912029021353">1.49×</td>
+<td class="num" data-sort="1.5941285306563064">1.59×</td>
+<td class="num" data-sort="2962.5">2.89 GB</td>
+<td class="num" data-sort="3336.1">3.26 GB</td>
+<td><audio controls preload="none" src="neutts_air_cuda_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>neutts_nano</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="755.4">755ms</td>
+<td class="num" data-sort="307.5">308ms</td>
+<td class="num" data-sort="2.2398905702316836">2.24×</td>
+<td class="num" data-sort="2.7099484126646733">2.71×</td>
+<td class="num" data-sort="2569.3">2.51 GB</td>
+<td class="num" data-sort="3336.1">3.26 GB</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1252.1">1.25s</td>
+<td class="num" data-sort="848.9000000000001">849ms</td>
+<td class="num" data-sort="5.646513856720709">5.65×</td>
+<td class="num" data-sort="8.52968601321633">8.53×</td>
+<td class="num" data-sort="2298.7">2.24 GB</td>
+<td class="num" data-sort="2475.6">2.42 GB</td>
+<td><audio controls preload="none" src="omnivoice_cuda_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>qwentts</td><td class="dev-cuda">cuda</td>
+<td colspan="7" class="fail">FAIL: timeout 300s</td>
+</tr>
+<tr>
+<td>sesame</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="16998.3">17.00s</td>
+<td class="num" data-sort="14424.800000000001">14.42s</td>
+<td class="num" data-sort="0.45180988687104">0.45×</td>
+<td class="num" data-sort="0.490516312578963">0.49×</td>
+<td class="num" data-sort="2510.0">2.45 GB</td>
+<td class="num" data-sort="3624.4">3.54 GB</td>
+<td><audio controls preload="none" src="sesame_cuda_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>voxcpm</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="7170.8">7.17s</td>
+<td class="num" data-sort="5483.65">5.48s</td>
+<td class="num" data-sort="0.9148212193897473">0.91×</td>
+<td class="num" data-sort="1.196313912876307">1.20×</td>
+<td class="num" data-sort="9685.2">9.46 GB</td>
+<td class="num" data-sort="5843.9">5.71 GB</td>
+<td><audio controls preload="none" src="voxcpm_cuda_p4.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 5</h2>
+<span class="prompt-text"><span class="lang">[fr]</span>"Bonjour, je m&#x27;appelle Cicero et je vais vous aider avec votre code aujourd&#x27;hui."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Mem</th>
+<th>VRAM</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>coqui</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1593.0">1.59s</td>
+<td class="num" data-sort="1166.4">1.17s</td>
+<td class="num" data-sort="2.879472693032015">2.88×</td>
+<td class="num" data-sort="4.036290391414525">4.04×</td>
+<td class="num" data-sort="2323.0">2.27 GB</td>
+<td class="num" data-sort="1921.7">1.88 GB</td>
+<td><audio controls preload="none" src="coqui_cuda_p5.wav"></audio></td>
+</tr>
+<tr>
+<td>neutts_nano</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="707.7">708ms</td>
+<td class="num" data-sort="298.2">298ms</td>
+<td class="num" data-sort="2.350129456283609">2.35×</td>
+<td class="num" data-sort="2.7423261608201415">2.74×</td>
+<td class="num" data-sort="3228.7">3.15 GB</td>
+<td class="num" data-sort="3336.1">3.26 GB</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p5.wav"></audio></td>
+</tr>
+<tr>
+<td>omnivoice</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1230.1">1.23s</td>
+<td class="num" data-sort="851.7">852ms</td>
+<td class="num" data-sort="4.812616860417852">4.81×</td>
+<td class="num" data-sort="6.805082262517528">6.81×</td>
+<td class="num" data-sort="2308.6">2.25 GB</td>
+<td class="num" data-sort="2475.6">2.42 GB</td>
+<td><audio controls preload="none" src="omnivoice_cuda_p5.wav"></audio></td>
+</tr>
+<tr>
+<td>qwentts</td><td class="dev-cuda">cuda</td>
+<td colspan="7" class="fail">FAIL: timeout 300s</td>
+</tr>
+<tr>
+<td>voxcpm</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="6253.7">6.25s</td>
+<td class="num" data-sort="2641.25">2.64s</td>
+<td class="num" data-sort="0.8954698818299566">0.90×</td>
+<td class="num" data-sort="1.1511405069951945">1.15×</td>
+<td class="num" data-sort="9700.6">9.47 GB</td>
+<td class="num" data-sort="5843.9">5.71 GB</td>
+<td><audio controls preload="none" src="voxcpm_cuda_p5.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<script>
+(function(){
+  // ---------- theme toggle ----------
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(name) {
+    document.documentElement.setAttribute('data-theme', name);
+    themeBtn.textContent = name === 'light' ? '☀ light' : '☾ dark';
+    try { localStorage.setItem('tts-bench-theme', name); } catch (e) {}
+  }
+  let stored = null;
+  try { stored = localStorage.getItem('tts-bench-theme'); } catch (e) {}
+  applyTheme(stored === 'light' ? 'light' : 'dark');
+  themeBtn.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- sort + filter ----------
+  const tables = document.querySelectorAll('table');
+  const filterInput = document.getElementById('filter');
+  const resetBtn = document.getElementById('reset-sort');
+  const sortState = { col: -1, dir: 0 };
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach(th => { th.dataset.label = th.textContent; });
+    table.querySelectorAll('tbody tr').forEach((row, i) => { row.dataset.origIdx = String(i); });
+  });
+
+  function applyFilter() {
+    const q = filterInput.value.toLowerCase().trim();
+    tables.forEach(t => {
+      t.querySelectorAll('tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+    });
+  }
+  filterInput.addEventListener('input', applyFilter);
+
+  function cellSortValue(row, colIdx) {
+    const cell = row.children[colIdx];
+    if (!cell) return Number.POSITIVE_INFINITY;
+    if (cell.hasAttribute('data-sort')) {
+      const raw = cell.getAttribute('data-sort');
+      if (raw === '' || raw === null) return Number.POSITIVE_INFINITY;
+      const v = parseFloat(raw);
+      return Number.isNaN(v) ? Number.POSITIVE_INFINITY : v;
+    }
+    return cell.textContent.toLowerCase();
+  }
+
+  function renderArrows() {
+    tables.forEach(t => {
+      t.querySelectorAll('thead th').forEach((th, i) => {
+        const arrow = (i === sortState.col && sortState.dir !== 0)
+                    ? (sortState.dir === 1 ? ' ▲' : ' ▼') : '';
+        th.textContent = th.dataset.label + arrow;
+      });
+    });
+  }
+
+  function restoreOrder() {
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => parseInt(a.dataset.origIdx) - parseInt(b.dataset.origIdx));
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  function sortAll(colIdx) {
+    if (sortState.col === colIdx) {
+      sortState.dir = sortState.dir === 1 ? -1 : (sortState.dir === -1 ? 0 : 1);
+    } else {
+      sortState.col = colIdx;
+      sortState.dir = 1;
+    }
+    renderArrows();
+
+    if (sortState.dir === 0) {
+      restoreOrder();
+      return;
+    }
+
+    const dir = sortState.dir;
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const aSpan = a.querySelector('td[colspan]') !== null;
+        const bSpan = b.querySelector('td[colspan]') !== null;
+        if (aSpan !== bSpan) return aSpan ? 1 : -1;
+        const av = cellSortValue(a, colIdx);
+        const bv = cellSortValue(b, colIdx);
+        if (av < bv) return -dir;
+        if (av > bv) return dir;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach((th, idx) => {
+      th.addEventListener('click', () => sortAll(idx));
+    });
+  });
+
+  resetBtn.addEventListener('click', () => {
+    sortState.col = -1; sortState.dir = 0;
+    renderArrows();
+    restoreOrder();
+    filterInput.value = '';
+    applyFilter();
+  });
+})();
+</script>
+</body></html>
