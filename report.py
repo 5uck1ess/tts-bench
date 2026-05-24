@@ -456,8 +456,12 @@ def _build_context(rows, run_dir, meta):
 
     Returns a dict with:
       per_cell:    {(prompt_id, model, device) -> {"cold": row|None, "warms": [row], "fail": row|None}}
-      per_model:   {(model, device) -> aggregated dict with avg TTFA/RTF, peak mem/vram, avg NAQ, n_ok, n_total}
-      per_prompt:  {prompt_id -> [{model, device, naq, ttfa_warm, rtf_warm, wav, wav_exists, naq_harm, naq_buzz} ranked by NAQ desc, ok only]}
+                   Note: only the FIRST failure row per cell is retained in "fail".
+                   Subsequent failures for the same cell are dropped.
+      per_model:   {(model, device) -> aggregated dict with avg TTFA/RTF, peak mem/vram, avg NAQ,
+                    n_ok, n_fail, n_total}
+      per_prompt:  {prompt_id -> [{model, device, naq, ttfa_warm, rtf_warm, wav, wav_exists,
+                    naq_harm, naq_buzz} ranked by NAQ desc, successful-cold rows only]}
       tldr_speed:  {"predefined": (model, device, rtf_warm, ttfa_warm) | None,
                     "cloning":    (model, device, rtf_warm, ttfa_warm) | None}
       tldr_quality:{"predefined": [(model, device, naq) top 3],
@@ -478,6 +482,8 @@ def _build_context(rows, run_dir, meta):
     prompts_seen = _sort_prompt_ids({r["prompt_id"] for r in rows})
     models_seen = sorted({r["model"] for r in rows})
     devices_seen = sorted({r["device"] for r in rows})
+    # Intentionally caps fail at 1 per cell (matches the first-failure-wins above)
+    # so the "N runs per cell" badge reflects warm-run count, not failure noise.
     runs_per_cell = max(
         (1 if c["cold"] else 0) + len(c["warms"]) + (1 if c["fail"] else 0)
         for c in cells.values()
@@ -533,6 +539,7 @@ def _build_context(rows, run_dir, meta):
             "peak_vram": _maxv(b["peak_vram"]),
             "naq":       _avg(b["naq"]),
             "n_ok":      len(b["ok_prompts"]),
+            "n_fail":    len(b["fail_prompts"]),
             "n_total":   len(b["all_prompts"]),
         }
 
