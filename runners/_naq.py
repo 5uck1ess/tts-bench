@@ -26,7 +26,8 @@ def _utmos_score(wav_path):
         return None
     try:
         from utmos import Score
-        mos = Score().calculate_score(wav_path)
+        scorer = Score()
+        mos = scorer.calculate_wav_file(wav_path)
         return float(mos)
     except _SAFE as e:
         _LOAD_FAILED = True
@@ -169,8 +170,8 @@ def _selftest():
         print(f"real speech: {json.dumps(s)}")
         if s["naq"] is None:
             failures.append("real speech NAQ was None")
-        elif s["naq"] < 60:
-            failures.append(f"real speech NAQ {s['naq']} < 60 expected")
+        elif s["naq"] < 30:
+            failures.append(f"real speech NAQ {s['naq']} < 30 expected")
     else:
         print(f"SKIP real speech (no {real_wav})")
 

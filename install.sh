@@ -313,5 +313,14 @@ for v in venvs/*/bin/python; do
 done
 green "psutil: ensured in all venvs"
 
+# --- NAQ deps in every venv (utmos + librosa + scipy for naq scoring) ---
+echo; cyan "=== NAQ deps in every venv (utmos + librosa + scipy for naq scoring) ==="
+for v in venvs/*/bin/python; do
+    if [ -x "$v" ]; then
+        uv pip install --python "$v" utmos librosa scipy --quiet >/dev/null 2>&1 || true
+    fi
+done
+green "naq deps: ensured in all venvs"
+
 echo
 green "Done. Run: python bench.py"
