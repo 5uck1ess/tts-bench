@@ -35,38 +35,56 @@ def _utmos_score(wav_path):
 
 
 def _hnr_score(wav_path):
-    """Return mean HNR in dB over voiced regions, or None."""
+    """Return mean HNR in dB over voiced regions, or None.
+
+    Uses Boersma 1993 formulation: HNR = 10 * log10(r / (1 - r))
+    where r is the Praat-style normalized autocorrelation at the F0 lag,
+    computed per-frame as dot(x, x_shifted) / sqrt(energy(x) * energy(x_shifted)).
+    """
     try:
         import librosa
         import numpy as np
         y, sr = librosa.load(wav_path, sr=None, mono=True)
         if y.size == 0:
             return None
-        # Voiced regions via librosa effect-split (drops silence at top_db=30)
         voiced_intervals = librosa.effects.split(y, top_db=30)
         if voiced_intervals.size == 0:
             return None
         voiced = np.concatenate([y[s:e] for s, e in voiced_intervals])
-        # HNR via autocorrelation peak vs. floor (Praat-like).
-        # Use librosa pyin to get F0, then compute autocorr at lag of F0 period.
-        f0, voiced_flag, _ = librosa.pyin(voiced, fmin=50, fmax=500, sr=sr)
+        f0, _voiced_flag, _ = librosa.pyin(voiced, fmin=50, fmax=500, sr=sr)
         f0_valid = f0[~np.isnan(f0)]
         if f0_valid.size == 0:
             return None
         f0_med = float(np.median(f0_valid))
         period = int(sr / f0_med)
-        # autocorrelation
-        ac = librosa.autocorrelate(voiced)
-        # Peak at lag=period gives harmonic energy; lag=0 gives total energy
-        if period >= len(ac):
+        # Analyse in short frames (3 pitch periods) with Praat-style normalization.
+        # r(tau) = dot(x[:N-tau], x[tau:]) / sqrt(energy(x[:N-tau]) * energy(x[tau:]))
+        # This bounds r to (-1, 1) regardless of frame length.
+        frame_len = period * 3
+        if frame_len >= len(voiced):
             return None
-        harm = ac[period]
-        total = ac[0]
-        if harm <= 0 or total <= 0 or harm >= total:
+        hop = period
+        lo = max(1, period - period // 4)
+        hi = min(frame_len - 2, period + period // 4)
+        hnr_vals = []
+        for start in range(0, len(voiced) - frame_len, hop):
+            frame = voiced[start : start + frame_len]
+            # Search for peak r in a window around the expected lag
+            best_r = -999.0
+            for lag in range(lo, hi + 1):
+                x1 = frame[: frame_len - lag]
+                x2 = frame[lag:]
+                num = float(np.dot(x1, x2))
+                denom = float(np.sqrt(np.dot(x1, x1) * np.dot(x2, x2)))
+                if denom > 0:
+                    r = num / denom
+                    if r > best_r:
+                        best_r = r
+            if 0.0 < best_r < 1.0:
+                hnr_vals.append(10.0 * float(np.log10(best_r / (1.0 - best_r))))
+        if not hnr_vals:
             return None
-        noise = total - harm
-        hnr_db = 10.0 * float(np.log10(harm / noise))
-        return hnr_db
+        return float(np.median(hnr_vals))
     except _SAFE as e:
         print(f"[_naq] HNR failed: {e}", file=sys.stderr)
         return None
