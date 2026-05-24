@@ -171,6 +171,23 @@ STYLE = """<style>
                    padding: 0.4rem 0; margin-bottom: 0.8rem;
                    border-bottom: 1px solid var(--border); font-size: 0.9em; }
   .prompt-jumper a { margin-right: 0.6rem; }
+
+  /* Lens-to-lens nav tabs at top of each lens page */
+  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem; }
+  .lens-tab { display: inline-block; padding: 4px 12px; border-radius: 6px;
+              border: 1px solid var(--border); color: var(--text);
+              text-decoration: none; font-size: 0.92em;
+              transition: border-color 0.15s, background 0.15s; }
+  .lens-tab:hover { border-color: var(--accent); text-decoration: none; }
+  .lens-tab.active { background: var(--accent); color: var(--bg);
+                     border-color: var(--accent); }
+
+  /* "Reading this report" explainer above tables */
+  .reading-guide { background: var(--panel); border-left: 3px solid var(--muted);
+                   padding: 0.55rem 0.9rem; margin: 0.7rem 0 1rem;
+                   border-radius: 4px; font-size: 0.88em; color: var(--text); }
+  .reading-guide strong { color: var(--accent); }
+  .reading-guide a { color: var(--accent); }
 </style>"""
 
 
@@ -673,6 +690,52 @@ def _render_lens_picker(ctx):
     return "\n".join(out)
 
 
+_LENSES = (("speed", "Speed"), ("quality", "Quality"), ("samples", "Samples"))
+
+_READING_GUIDE = {
+    "speed": (
+        '<div class="reading-guide">'
+        '<strong>TTFA</strong> = time to first audio (ms; lower is better). '
+        '<strong>RTF</strong> = real-time factor (× realtime; higher is better; e.g. 10× means '
+        '10 sec of audio generated per 1 sec of compute). '
+        '<strong>Cold</strong> = first run after process start; <strong>warm</strong> = subsequent runs. '
+        '<strong>NAQ</strong> = quality score 0-100 (click NAQ pill to jump to quality lens).'
+        '</div>'
+    ),
+    "quality": (
+        '<div class="reading-guide">'
+        '<strong>NAQ</strong> (Naturalness-Artifact Quotient): 0-100 objective quality score; '
+        'higher = more natural. '
+        'Composed of <strong>ARTIFACT</strong> macro (artifact absence: HARM + BUZZ) and '
+        '<strong>NATURALNESS</strong> macro (positive prosody: DYN + PROSODY + RHYTHM + PITCH_MVMT) '
+        'at 50/50. Hover any NAQ cell for the two-macro breakdown. '
+        '<a href="https://github.com/5uck1ess/tts-bench/blob/main/docs/naq.md">Full spec →</a>'
+        '</div>'
+    ),
+    "samples": (
+        '<div class="reading-guide">'
+        'Each prompt section shows every model\'s audio output, ranked by '
+        '<strong>NAQ</strong> (0-100 quality score; higher = better). '
+        'Click any audio player to hear that model\'s rendering.'
+        '</div>'
+    ),
+}
+
+
+def _lens_nav(active):
+    """Emit the nav strip with lens tabs (Speed / Quality / Samples) + 'all runs' link.
+
+    `active` is one of "speed", "quality", "samples". The matching tab gets
+    .lens-tab.active styling so the user can see which page they're on.
+    """
+    parts = ['<div class="nav"><span class="lens-tabs">']
+    for slug, label in _LENSES:
+        cls = "lens-tab active" if slug == active else "lens-tab"
+        parts.append(f'<a class="{cls}" href="{slug}.html">{label}</a>')
+    parts.append('</span> · <a href="../index.html">all runs</a></div>')
+    return "".join(parts)
+
+
 def _render_speed(ctx):
     """Render speed.html — aggregated per (model, device), no audio."""
     meta = ctx["meta"]
@@ -683,9 +746,7 @@ def _render_speed(ctx):
            STYLE,
            '</head><body>',
            CONTROLS,
-           '<div class="nav">'
-           '<a href="index.html">← lens picker</a> · '
-           '<a href="../index.html">all runs</a></div>',
+           _lens_nav("speed"),
            f'<h1>TTS Bench — Speed — {escape(ctx["run_name"])}</h1>']
     if meta:
         out.append(f'<div class="meta"><strong>Rig:</strong> '
@@ -696,6 +757,8 @@ def _render_speed(ctx):
             ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
             out.append(f'<div class="meta"><strong>Label:</strong> '
                        f'{escape(meta["label"])}{ref_html}</div>')
+
+    out.append(_READING_GUIDE["speed"])
 
     # TLDR
     out.append('<div class="tldr"><h2>Speed winners</h2>')
@@ -791,9 +854,7 @@ def _render_quality(ctx):
            STYLE,
            '</head><body>',
            CONTROLS,
-           '<div class="nav">'
-           '<a href="index.html">← lens picker</a> · '
-           '<a href="../index.html">all runs</a></div>',
+           _lens_nav("quality"),
            f'<h1>TTS Bench — Quality — {escape(ctx["run_name"])}</h1>']
     if meta:
         out.append(f'<div class="meta"><strong>Rig:</strong> '
@@ -804,6 +865,8 @@ def _render_quality(ctx):
             ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
             out.append(f'<div class="meta"><strong>Label:</strong> '
                        f'{escape(meta["label"])}{ref_html}</div>')
+
+    out.append(_READING_GUIDE["quality"])
 
     # TLDR
     out.append('<div class="tldr"><h2>Quality winners (NAQ)</h2>')
@@ -904,9 +967,7 @@ def _render_samples(ctx):
            STYLE,
            '</head><body>',
            CONTROLS,
-           '<div class="nav">'
-           '<a href="index.html">← lens picker</a> · '
-           '<a href="../index.html">all runs</a></div>',
+           _lens_nav("samples"),
            f'<h1>TTS Bench — Samples — {escape(ctx["run_name"])}</h1>']
     if meta:
         out.append(f'<div class="meta"><strong>Rig:</strong> '
@@ -919,6 +980,8 @@ def _render_samples(ctx):
                        f'{escape(meta["label"])}{ref_html}</div>')
     out.append(f'<div class="meta">{len(prompts)} prompt(s) · '
                f'one section per prompt · all models ranked by NAQ within each</div>')
+
+    out.append(_READING_GUIDE["samples"])
 
     if len(prompts) > 3:
         out.append('<nav class="prompt-jumper">Jump to: ')
