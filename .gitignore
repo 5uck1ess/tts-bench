@@ -2,6 +2,7 @@
 .obsidian/
 venvs/
 results/
+_gh-pages/
 reference/*.wav
 reference/*.mp3
 reference/*.m4a
