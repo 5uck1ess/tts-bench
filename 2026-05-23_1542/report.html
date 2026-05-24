@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>TTS Bench — 2026-05-23_1542</title>
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #1a1a1a;
+    --panel: #242424;
+    --text: #e0e0e0;
+    --muted: #888;
+    --accent: #6cf;
+    --num: #cfc;
+    --fail: #f88;
+    --border: #333;
+    --row-hover: #2a2a2a;
+    --th-bg: #2c2c2c;
+    --th-hover: #353535;
+    --input-bg: #2a2a2a;
+    --input-border: #444;
+    --controls-border: #2a2a2a;
+    --dev-cpu: #ddd;
+    --dev-cuda: #9cf;
+    --dev-mps: #fc9;
+    --lang: #6cf;
+    --prompt-text: #9c9;
+    --code-bg: #2a2a2a;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --text: #1a1d22;
+    --muted: #6b7280;
+    --accent: #1a73e8;
+    --num: #137333;
+    --fail: #c5221f;
+    --border: #e2e6eb;
+    --row-hover: #f0f4f8;
+    --th-bg: #eef1f4;
+    --th-hover: #e2e6eb;
+    --input-bg: #ffffff;
+    --input-border: #cdd3da;
+    --controls-border: #e2e6eb;
+    --dev-cpu: #555;
+    --dev-cuda: #1a73e8;
+    --dev-mps: #c2410c;
+    --lang: #1a73e8;
+    --prompt-text: #2d6a4f;
+    --code-bg: #eef1f4;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+         background: var(--bg); color: var(--text);
+         margin: 0; padding: 1.5rem 2rem 3rem;
+         max-width: 1400px; margin-inline: auto;
+         transition: background 0.15s, color 0.15s; }
+  h1, h2 { color: var(--text); margin-top: 0; }
+  h1 { font-size: 1.5em; }
+  h2 { font-size: 1.05em; }
+  .meta { color: var(--muted); font-size: 0.88em; margin-bottom: 0.4rem; }
+  .prompt { background: var(--panel); padding: 1rem 1.2rem;
+            border-radius: 10px; margin-bottom: 1.4rem;
+            border: 1px solid var(--border); }
+  .prompt-text { color: var(--prompt-text); font-style: italic;
+                 display: block; margin: 0.2rem 0 0.8rem 0; }
+  .lang { color: var(--lang); font-style: normal; margin-right: 0.4rem;
+          font-weight: 500; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { padding: 7px 10px; text-align: left;
+           border-bottom: 1px solid var(--border); }
+  th { background: var(--th-bg); color: var(--text);
+       cursor: pointer; user-select: none; white-space: nowrap;
+       font-weight: 600; }
+  th:hover { background: var(--th-hover); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums;
+           color: var(--num); }
+  td.fail { color: var(--fail); font-style: italic; }
+  td.dev-cuda { color: var(--dev-cuda); }
+  td.dev-mps  { color: var(--dev-mps); }
+  td.dev-cpu  { color: var(--dev-cpu); }
+  .muted { color: var(--muted); }
+  audio { width: 220px; height: 30px; vertical-align: middle; }
+  tr:hover td { background: var(--row-hover); }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px;
+         font-size: 0.92em; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .nav { margin-bottom: 0.6rem; }
+  .controls { position: sticky; top: 0; background: var(--bg); z-index: 10;
+              padding: 0.7rem 0 0.7rem; margin-bottom: 1rem;
+              display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+              border-bottom: 1px solid var(--controls-border); }
+  .controls input { background: var(--input-bg); color: var(--text);
+                    border: 1px solid var(--input-border);
+                    border-radius: 6px; padding: 7px 11px; font: inherit;
+                    min-width: 320px; }
+  .controls input:focus { outline: none; border-color: var(--accent); }
+  .controls .hint { color: var(--muted); font-size: 0.85em; }
+  .controls button { background: var(--input-bg); color: var(--text);
+                     border: 1px solid var(--input-border);
+                     border-radius: 6px; padding: 6px 12px; font: inherit;
+                     cursor: pointer; transition: border-color 0.15s; }
+  .controls button:hover { border-color: var(--accent); }
+  .spacer { flex: 1; }
+</style>
+</head><body>
+<div class="controls">
+<input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
+<button type="button" id="reset-sort">reset sort</button>
+<span class="hint">click any column header to sort</span>
+<span class="spacer"></span>
+<button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
+</div>
+<div class="nav"><a href="../index.html">← all runs</a></div>
+<h1>TTS Bench — 2026-05-23_1542</h1>
+<div class="meta">4 model(s) · 2 device(s) · 5 prompt(s) · 3 run(s) per cell</div>
+<div class="meta">Source: <code>results.csv</code></div>
+<div class="prompt"><h2>Prompt 1</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"Open the browser and read my email."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>kittentts</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="369.6">370ms</td>
+<td class="num" data-sort="349.79999999999995">350ms</td>
+<td class="num" data-sort="7.372835497835498">7.37×</td>
+<td class="num" data-sort="7.8228201266351345">7.82×</td>
+<td><audio controls preload="none" src="kittentts_cpu_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>kokoro</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="501.3">501ms</td>
+<td class="num" data-sort="279.95000000000005">280ms</td>
+<td class="num" data-sort="5.285201435979259">5.29×</td>
+<td class="num" data-sort="9.468262128304337">9.47×</td>
+<td><audio controls preload="none" src="kokoro_cpu_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>kokoro</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="7110.8">7.11s</td>
+<td class="num" data-sort="193.85">194ms</td>
+<td class="num" data-sort="0.37267255442425606">0.37×</td>
+<td class="num" data-sort="13.682402018284309">13.68×</td>
+<td><audio controls preload="none" src="kokoro_mps_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>piper</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="320.1">320ms</td>
+<td class="num" data-sort="60.8">61ms</td>
+<td class="num" data-sort="6.561524047470331">6.56×</td>
+<td class="num" data-sort="33.29401517811327">33.29×</td>
+<td><audio controls preload="none" src="piper_cpu_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>vibevoice</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="6571.0">6.57s</td>
+<td class="num" data-sort="8136.099999999999">8.14s</td>
+<td class="num" data-sort="0.3450007609191904">0.35×</td>
+<td class="num" data-sort="0.3196450642356329">0.32×</td>
+<td><audio controls preload="none" src="vibevoice_cpu_p1.wav"></audio></td>
+</tr>
+<tr>
+<td>vibevoice</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="7030.9">7.03s</td>
+<td class="num" data-sort="2718.55">2.72s</td>
+<td class="num" data-sort="0.34135032499395523">0.34×</td>
+<td class="num" data-sort="1.0799435165715812">1.08×</td>
+<td><audio controls preload="none" src="vibevoice_mps_p1.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 2</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"I&#x27;ll start a new git branch, push the changes, and open a pull request when the tests pass."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>kittentts</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="701.9">702ms</td>
+<td class="num" data-sort="655.9">656ms</td>
+<td class="num" data-sort="8.013962102863657">8.01×</td>
+<td class="num" data-sort="8.606430693055565">8.61×</td>
+<td><audio controls preload="none" src="kittentts_cpu_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>kokoro</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="695.1">695ms</td>
+<td class="num" data-sort="587.3">587ms</td>
+<td class="num" data-sort="8.416055243849804">8.42×</td>
+<td class="num" data-sort="9.963784507641218">9.96×</td>
+<td><audio controls preload="none" src="kokoro_cpu_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>kokoro</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="1957.2">1.96s</td>
+<td class="num" data-sort="383.75">384ms</td>
+<td class="num" data-sort="2.988963825873697">2.99×</td>
+<td class="num" data-sort="15.247045692287442">15.25×</td>
+<td><audio controls preload="none" src="kokoro_mps_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>piper</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="215.3">215ms</td>
+<td class="num" data-sort="191.2">191ms</td>
+<td class="num" data-sort="26.180974477958237">26.18×</td>
+<td class="num" data-sort="30.079014456303007">30.08×</td>
+<td><audio controls preload="none" src="piper_cpu_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>vibevoice</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="16792.6">16.79s</td>
+<td class="num" data-sort="18163.1">18.16s</td>
+<td class="num" data-sort="0.3811202553505711">0.38×</td>
+<td class="num" data-sort="0.37073141278445443">0.37×</td>
+<td><audio controls preload="none" src="vibevoice_cpu_p2.wav"></audio></td>
+</tr>
+<tr>
+<td>vibevoice</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="7706.3">7.71s</td>
+<td class="num" data-sort="5723.6">5.72s</td>
+<td class="num" data-sort="0.8996535302285144">0.90×</td>
+<td class="num" data-sort="1.1255662043213182">1.13×</td>
+<td><audio controls preload="none" src="vibevoice_mps_p2.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 3</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"The Parakeet TDT zero point six billion parameter model achieves one point six nine percent word error rate on LibriSpeech test-clean, beating Whisper Large V3 at two point seven percent while running at over two thousand times realtime on a single GPU."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>kittentts</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="1829.9">1.83s</td>
+<td class="num" data-sort="2312.05">2.31s</td>
+<td class="num" data-sort="8.921252527460517">8.92×</td>
+<td class="num" data-sort="7.078914760346949">7.08×</td>
+<td><audio controls preload="none" src="kittentts_cpu_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>kokoro</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="1974.6">1.97s</td>
+<td class="num" data-sort="1661.8">1.66s</td>
+<td class="num" data-sort="9.01448394611567">9.01×</td>
+<td class="num" data-sort="10.71191244895643">10.71×</td>
+<td><audio controls preload="none" src="kokoro_cpu_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>kokoro</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="2542.9">2.54s</td>
+<td class="num" data-sort="1085.0">1.08s</td>
+<td class="num" data-sort="6.999882024460263">7.00×</td>
+<td class="num" data-sort="16.405921418872907">16.41×</td>
+<td><audio controls preload="none" src="kokoro_mps_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>piper</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="454.1">454ms</td>
+<td class="num" data-sort="453.65">454ms</td>
+<td class="num" data-sort="33.20792079207921">33.21×</td>
+<td class="num" data-sort="33.57737994159719">33.58×</td>
+<td><audio controls preload="none" src="piper_cpu_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>vibevoice</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="74787.7">74.79s</td>
+<td class="num" data-sort="52088.45">52.09s</td>
+<td class="num" data-sort="0.2585050750323917">0.26×</td>
+<td class="num" data-sort="0.38906676281542957">0.39×</td>
+<td><audio controls preload="none" src="vibevoice_cpu_p3.wav"></audio></td>
+</tr>
+<tr>
+<td>vibevoice</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="19137.1">19.14s</td>
+<td class="num" data-sort="17150.55">17.15s</td>
+<td class="num" data-sort="1.0311384692560523">1.03×</td>
+<td class="num" data-sort="1.1262676390178554">1.13×</td>
+<td><audio controls preload="none" src="vibevoice_mps_p3.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 4</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"Run pytest tests slash test underscore voice dot py with verbose flag and capture flag set to no."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>kittentts</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="814.0">814ms</td>
+<td class="num" data-sort="805.5">806ms</td>
+<td class="num" data-sort="8.445945945945947">8.45×</td>
+<td class="num" data-sort="8.54104364907948">8.54×</td>
+<td><audio controls preload="none" src="kittentts_cpu_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>kokoro</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="790.1">790ms</td>
+<td class="num" data-sort="696.65">697ms</td>
+<td class="num" data-sort="8.922921149221617">8.92×</td>
+<td class="num" data-sort="10.124155020466269">10.12×</td>
+<td><audio controls preload="none" src="kokoro_cpu_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>kokoro</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="1988.3">1.99s</td>
+<td class="num" data-sort="443.45">443ms</td>
+<td class="num" data-sort="3.545742594175929">3.55×</td>
+<td class="num" data-sort="15.898198257847056">15.90×</td>
+<td><audio controls preload="none" src="kokoro_mps_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>piper</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="202.9">203ms</td>
+<td class="num" data-sort="193.5">194ms</td>
+<td class="num" data-sort="28.780127889818">28.78×</td>
+<td class="num" data-sort="31.263955128116237">31.26×</td>
+<td><audio controls preload="none" src="piper_cpu_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>vibevoice</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="23069.8">23.07s</td>
+<td class="num" data-sort="23686.8">23.69s</td>
+<td class="num" data-sort="0.369877502189009">0.37×</td>
+<td class="num" data-sort="0.38027280251560924">0.38×</td>
+<td><audio controls preload="none" src="vibevoice_cpu_p4.wav"></audio></td>
+</tr>
+<tr>
+<td>vibevoice</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="9166.4">9.17s</td>
+<td class="num" data-sort="7554.549999999999">7.55s</td>
+<td class="num" data-sort="0.9308998079944144">0.93×</td>
+<td class="num" data-sort="1.1294792354215373">1.13×</td>
+<td><audio controls preload="none" src="vibevoice_mps_p4.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt"><h2>Prompt 5</h2>
+<span class="prompt-text"><span class="lang">[fr]</span>"Bonjour, je m&#x27;appelle Cicero et je vais vous aider avec votre code aujourd&#x27;hui."</span>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th>TTFA cold</th>
+<th>TTFA warm</th>
+<th>RTF cold</th>
+<th>RTF warm</th>
+<th>Audio (cold)</th>
+</tr></thead><tbody>
+<tr>
+<td>kokoro</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="1010.6">1.01s</td>
+<td class="num" data-sort="481.5">482ms</td>
+<td class="num" data-sort="4.997031466455571">5.00×</td>
+<td class="num" data-sort="10.488069461098506">10.49×</td>
+<td><audio controls preload="none" src="kokoro_cpu_p5.wav"></audio></td>
+</tr>
+<tr>
+<td>kokoro</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="1376.8">1.38s</td>
+<td class="num" data-sort="325.35">325ms</td>
+<td class="num" data-sort="3.667925624636839">3.67×</td>
+<td class="num" data-sort="15.5222476882206">15.52×</td>
+<td><audio controls preload="none" src="kokoro_mps_p5.wav"></audio></td>
+</tr>
+<tr>
+<td>piper</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="145.4">145ms</td>
+<td class="num" data-sort="109.85">110ms</td>
+<td class="num" data-sort="28.846945778997945">28.85×</td>
+<td class="num" data-sort="36.6950443898652">36.70×</td>
+<td><audio controls preload="none" src="piper_cpu_p5.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<script>
+(function(){
+  // ---------- theme toggle ----------
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(name) {
+    document.documentElement.setAttribute('data-theme', name);
+    themeBtn.textContent = name === 'light' ? '☀ light' : '☾ dark';
+    try { localStorage.setItem('tts-bench-theme', name); } catch (e) {}
+  }
+  let stored = null;
+  try { stored = localStorage.getItem('tts-bench-theme'); } catch (e) {}
+  applyTheme(stored === 'light' ? 'light' : 'dark');
+  themeBtn.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- sort + filter ----------
+  const tables = document.querySelectorAll('table');
+  const filterInput = document.getElementById('filter');
+  const resetBtn = document.getElementById('reset-sort');
+  const sortState = { col: -1, dir: 0 };
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach(th => { th.dataset.label = th.textContent; });
+    table.querySelectorAll('tbody tr').forEach((row, i) => { row.dataset.origIdx = String(i); });
+  });
+
+  function applyFilter() {
+    const q = filterInput.value.toLowerCase().trim();
+    tables.forEach(t => {
+      t.querySelectorAll('tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+    });
+  }
+  filterInput.addEventListener('input', applyFilter);
+
+  function cellSortValue(row, colIdx) {
+    const cell = row.children[colIdx];
+    if (!cell) return Number.POSITIVE_INFINITY;
+    if (cell.hasAttribute('data-sort')) {
+      const raw = cell.getAttribute('data-sort');
+      if (raw === '' || raw === null) return Number.POSITIVE_INFINITY;
+      const v = parseFloat(raw);
+      return Number.isNaN(v) ? Number.POSITIVE_INFINITY : v;
+    }
+    return cell.textContent.toLowerCase();
+  }
+
+  function renderArrows() {
+    tables.forEach(t => {
+      t.querySelectorAll('thead th').forEach((th, i) => {
+        const arrow = (i === sortState.col && sortState.dir !== 0)
+                    ? (sortState.dir === 1 ? ' ▲' : ' ▼') : '';
+        th.textContent = th.dataset.label + arrow;
+      });
+    });
+  }
+
+  function restoreOrder() {
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => parseInt(a.dataset.origIdx) - parseInt(b.dataset.origIdx));
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  function sortAll(colIdx) {
+    if (sortState.col === colIdx) {
+      sortState.dir = sortState.dir === 1 ? -1 : (sortState.dir === -1 ? 0 : 1);
+    } else {
+      sortState.col = colIdx;
+      sortState.dir = 1;
+    }
+    renderArrows();
+
+    if (sortState.dir === 0) {
+      restoreOrder();
+      return;
+    }
+
+    const dir = sortState.dir;
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const aSpan = a.querySelector('td[colspan]') !== null;
+        const bSpan = b.querySelector('td[colspan]') !== null;
+        if (aSpan !== bSpan) return aSpan ? 1 : -1;
+        const av = cellSortValue(a, colIdx);
+        const bv = cellSortValue(b, colIdx);
+        if (av < bv) return -dir;
+        if (av > bv) return dir;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach((th, idx) => {
+      th.addEventListener('click', () => sortAll(idx));
+    });
+  });
+
+  resetBtn.addEventListener('click', () => {
+    sortState.col = -1; sortState.dir = 0;
+    renderArrows();
+    restoreOrder();
+    filterInput.value = '';
+    applyFilter();
+  });
+})();
+</script>
+</body></html>
