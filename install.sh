@@ -104,8 +104,8 @@ else
     echo "piper: already installed"
 fi
 
-# --- ChatterBox-TTS ---
-echo; cyan "=== ChatterBox-TTS ==="
+# --- ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ---
+echo; cyan "=== ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ==="
 if [ ! -x venvs/chatterbox/bin/python ]; then
     uv venv venvs/chatterbox --python 3.11 || die "uv venv chatterbox"
     uv pip install --python venvs/chatterbox/bin/python chatterbox-tts soundfile numpy \
@@ -113,7 +113,12 @@ if [ ! -x venvs/chatterbox/bin/python ]; then
     # perth (ChatterBox watermarker) imports pkg_resources (removed in setuptools 80+)
     uv pip install --python venvs/chatterbox/bin/python "setuptools<80" \
         || die "uv pip install setuptools"
-    green "chatterbox: ok (GPU-targeted — expect <0.2x RTF on CPU)"
+    # Chatterbox Turbo (~744M GPT2-based AR model, Dec 2025). Same venv, same runner
+    # dispatched via --variant turbo. Weights auto-download from ResembleAI/chatterbox-turbo
+    # on first use; the turbo checkpoint uses the base tokenizer from ResembleAI/chatterbox.
+    # On CUDA Linux systems, swap in cu128 wheels for Blackwell; on Mac the default torch is fine.
+    # uv pip install --python venvs/chatterbox/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+    green "chatterbox: ok (base 1.2B GPU-targeted + Turbo ~744M AR; both via --variant)"
 else
     echo "chatterbox: already installed"
 fi

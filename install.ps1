@@ -98,14 +98,19 @@ if (-not (Test-Path "venvs\piper\Scripts\python.exe")) {
     Write-Host "piper: already installed" -ForegroundColor Gray
 }
 
-Step "ChatterBox-TTS"
+Step "ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv)"
 if (-not (Test-Path "venvs\chatterbox\Scripts\python.exe")) {
     Invoke-Checked "uv venv chatterbox" { uv venv venvs\chatterbox --python 3.11 }
     Invoke-Checked "uv pip install chatterbox" { uv pip install --python venvs\chatterbox\Scripts\python.exe chatterbox-tts soundfile numpy }
     # perth (ChatterBox's audio watermarker) imports pkg_resources, which was removed
     # in setuptools 80+. Pin to <80 to keep the import working.
     Invoke-Checked "setuptools<80 (perth watermarker compat)" { uv pip install --python venvs\chatterbox\Scripts\python.exe "setuptools<80" }
-    Write-Host "chatterbox: ok (GPU-targeted - expect under 0.2x RTF on CPU)" -ForegroundColor Green
+    # Chatterbox Turbo (~744M GPT2-based AR model, Dec 2025). Same venv, same runner
+    # dispatched via --variant turbo. Weights auto-download from ResembleAI/chatterbox-turbo
+    # on first use; the turbo checkpoint uses the base tokenizer from ResembleAI/chatterbox.
+    # cu128 wheels for Blackwell (RTX 5090, sm_120).
+    Invoke-Checked "torch cu128 for chatterbox" { uv pip install --python venvs\chatterbox\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "chatterbox: ok (base 1.2B GPU-targeted + Turbo ~744M AR; both via --variant)" -ForegroundColor Green
 } else {
     Write-Host "chatterbox: already installed" -ForegroundColor Gray
 }
