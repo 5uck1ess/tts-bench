@@ -1,0 +1,291 @@
+"""Publish a bench run to the gh-pages branch for GitHub Pages hosting.
+
+Copies a chosen results/<date>/ subdir (report.html + wavs + CSV) to a
+worktree on the gh-pages branch, rebuilds a top-level index of published
+runs, commits, and pushes. After GitHub Pages is enabled in repo settings
+(branch: gh-pages, folder: /):
+
+    https://<user>.github.io/<repo>/                       <- index
+    https://<user>.github.io/<repo>/<run-name>/report.html <- one run
+
+The master branch is never touched — gh-pages is managed via a separate
+git worktree at _gh-pages/.
+
+Usage:
+    python publish.py results/2026-05-23_2203          # publish + push
+    python publish.py results/2026-05-23_2203 --no-push # commit only
+    python publish.py --list                            # list published runs
+"""
+
+import argparse
+import shutil
+import subprocess
+import sys
+from html import escape
+from pathlib import Path
+
+from report import (
+    STYLE, CONTROLS, SCRIPT,
+    _ds, _read_csv, _sort_prompt_ids, build_report,
+)
+
+REPO = Path(__file__).parent
+WORKTREE = REPO / "_gh-pages"
+BRANCH = "gh-pages"
+
+
+def _git(*args, cwd=REPO, check=True, capture=True):
+    if capture:
+        r = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
+    else:
+        r = subprocess.run(["git", *args], cwd=cwd, text=True)
+    if check and r.returncode != 0:
+        msg = (r.stderr or r.stdout or "").strip() if capture else ""
+        raise SystemExit(f"git {' '.join(args)} failed (cwd={cwd}):\n{msg}")
+    return (r.stdout or "").strip()
+
+
+def _branch_exists_local(branch):
+    return bool(_git("branch", "--list", branch).strip())
+
+
+def _branch_exists_remote(branch):
+    return bool(_git("ls-remote", "--heads", "origin", branch, check=False).strip())
+
+
+def _count_published():
+    if not WORKTREE.exists():
+        return 0
+    return sum(
+        1 for d in WORKTREE.iterdir()
+        if d.is_dir() and not d.name.startswith(".") and (d / "report.html").exists()
+    )
+
+
+def ensure_worktree():
+    """Ensure _gh-pages/ exists and is checked out to the gh-pages branch."""
+    _git("worktree", "prune", check=False)
+
+    if WORKTREE.exists() and (WORKTREE / ".git").exists():
+        cur = _git("branch", "--show-current", cwd=WORKTREE)
+        if cur != BRANCH:
+            raise SystemExit(f"_gh-pages/ is on branch '{cur}', expected '{BRANCH}'.")
+        return
+
+    if _branch_exists_local(BRANCH):
+        print(f"Adding worktree from local '{BRANCH}' branch...")
+        _git("worktree", "add", str(WORKTREE), BRANCH)
+        return
+
+    if _branch_exists_remote(BRANCH):
+        print(f"Adding worktree tracking origin/{BRANCH}...")
+        _git("worktree", "add", "-b", BRANCH, str(WORKTREE), f"origin/{BRANCH}")
+        return
+
+    print(f"No '{BRANCH}' branch found — creating it as an orphan...")
+    # git 2.42+ supports `git worktree add --orphan`; fall back if older.
+    r = subprocess.run(
+        ["git", "worktree", "add", "--orphan", "-b", BRANCH, str(WORKTREE)],
+        cwd=REPO, capture_output=True, text=True,
+    )
+    if r.returncode != 0:
+        # Older git path: detach worktree, then checkout --orphan, then wipe.
+        _git("worktree", "add", "--detach", str(WORKTREE), "HEAD")
+        _git("checkout", "--orphan", BRANCH, cwd=WORKTREE)
+        for item in WORKTREE.iterdir():
+            if item.name == ".git":
+                continue
+            shutil.rmtree(item) if item.is_dir() else item.unlink()
+        _git("rm", "-rf", "--cached", ".", cwd=WORKTREE, check=False)
+
+    (WORKTREE / ".nojekyll").write_text("")
+    (WORKTREE / "README.md").write_text(
+        "# TTS Bench — Published Runs\n\n"
+        "This branch hosts the static HTML reports + audio for "
+        "[tts-bench](https://github.com/5uck1ess/tts-bench).\n"
+        "Open `index.html` for the run list.\n",
+        encoding="utf-8",
+    )
+    _git("add", "-A", cwd=WORKTREE)
+    _git("commit", "-m", f"Initialize {BRANCH} branch", cwd=WORKTREE)
+
+
+def build_pages_index():
+    """Build _gh-pages/index.html listing all published runs."""
+    runs = []
+    for d in sorted(WORKTREE.iterdir(), reverse=True):
+        if not d.is_dir() or d.name.startswith("."):
+            continue
+        csv_path = d / "results.csv"
+        if not csv_path.exists():
+            continue
+        try:
+            rows = _read_csv(csv_path)
+        except Exception:
+            continue
+        if not rows:
+            continue
+        runs.append({
+            "name": d.name,
+            "models": sorted({r["model"] for r in rows}),
+            "devices": sorted({r["device"] for r in rows}),
+            "prompts": _sort_prompt_ids({r["prompt_id"] for r in rows}),
+            "rows": len(rows),
+            "ok": sum(1 for r in rows if r["ok"]),
+        })
+
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           '<title>TTS Bench — Published Runs</title>',
+           STYLE,
+           '</head><body>',
+           CONTROLS,
+           '<h1>TTS Bench — Published Runs</h1>',
+           '<div class="meta">Open-source TTS models benchmarked side-by-side on CPU and CUDA. '
+           'Each report has inline audio players so you can listen to every model × prompt combo '
+           'without downloading anything. '
+           '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>',
+           f'<div class="meta">{len(runs)} published run(s)</div>',
+           '<table><thead><tr>']
+    for col in ("Date", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
+        out.append(f'<th>{col}</th>')
+    out.append('</tr></thead><tbody>')
+
+    for r in runs:
+        models = (", ".join(r["models"])
+                  if len(r["models"]) <= 5
+                  else f"{len(r['models'])} models")
+        out.append('<tr>')
+        out.append(f"<td>{escape(r['name'])}</td>")
+        out.append(f"<td{_ds(len(r['models']))}>{escape(models)}</td>")
+        out.append(f"<td>{escape(', '.join(r['devices']))}</td>")
+        out.append(f"<td class='num'{_ds(len(r['prompts']))}>{len(r['prompts'])}</td>")
+        out.append(f"<td class='num'{_ds(r['rows'])}>{r['rows']}</td>")
+        out.append(f"<td class='num'{_ds(r['ok'])}>{r['ok']}/{r['rows']}</td>")
+        out.append(f'<td><a href="{escape(r["name"])}/report.html">view</a></td>')
+        out.append('</tr>')
+
+    out.append('</tbody></table>')
+    out.append(SCRIPT)
+    out.append('</body></html>')
+
+    (WORKTREE / "index.html").write_text("\n".join(out), encoding="utf-8")
+
+
+def _pages_url():
+    try:
+        remote = _git("config", "--get", "remote.origin.url")
+    except SystemExit:
+        return None
+    s = remote.rstrip("/").removesuffix(".git").replace("git@github.com:", "github.com/")
+    if s.startswith("https://"):
+        s = s[len("https://"):]
+    parts = s.split("/")
+    if len(parts) < 3 or "github.com" not in parts[0]:
+        return None
+    return f"https://{parts[1]}.github.io/{parts[2]}/"
+
+
+def list_published():
+    if not WORKTREE.exists():
+        print("No _gh-pages/ worktree yet — nothing has been published.")
+        return
+    runs = sorted(
+        [d.name for d in WORKTREE.iterdir()
+         if d.is_dir() and not d.name.startswith(".") and (d / "report.html").exists()],
+        reverse=True,
+    )
+    if not runs:
+        print("No published runs.")
+        return
+    print(f"{len(runs)} published run(s):")
+    for name in runs:
+        print(f"  {name}")
+    url = _pages_url()
+    if url:
+        print(f"\nIndex (once Pages is enabled): {url}")
+
+
+def publish(run_dir: Path, no_push: bool = False) -> None:
+    if not run_dir.exists():
+        raise SystemExit(f"Not found: {run_dir}")
+    if not (run_dir / "results.csv").exists():
+        raise SystemExit(f"No results.csv in {run_dir}")
+
+    if not (run_dir / "report.html").exists():
+        print(f"No report.html in {run_dir.name} — building it from CSV...")
+        build_report(run_dir)
+
+    ensure_worktree()
+
+    dest = WORKTREE / run_dir.name
+    if dest.exists():
+        print(f"Overwriting existing {dest.relative_to(REPO)}")
+        shutil.rmtree(dest)
+    dest.mkdir()
+
+    for src in (run_dir / "report.html", run_dir / "results.csv"):
+        shutil.copy2(src, dest)
+    wavs = list(run_dir.glob("*.wav"))
+    for wav in wavs:
+        shutil.copy2(wav, dest)
+    total_bytes = sum(p.stat().st_size for p in dest.iterdir())
+    print(f"Copied report.html + results.csv + {len(wavs)} wav(s) "
+          f"({total_bytes / 1024 / 1024:.1f} MB)")
+
+    (WORKTREE / ".nojekyll").touch()
+    build_pages_index()
+    print(f"Rebuilt index.html — {_count_published()} run(s) total")
+
+    _git("add", "-A", cwd=WORKTREE)
+    if not _git("diff", "--cached", "--name-only", cwd=WORKTREE):
+        print("No changes — already up to date.")
+        return
+    _git("commit", "-m", f"Publish bench run {run_dir.name}", cwd=WORKTREE)
+    print(f"Committed to {BRANCH}.")
+
+    if no_push:
+        print(f"\n--no-push: skipping push. Push manually with:\n  "
+              f"git -C {WORKTREE} push -u origin {BRANCH}")
+        return
+
+    if _branch_exists_remote(BRANCH):
+        _git("push", "origin", BRANCH, cwd=WORKTREE, capture=False)
+    else:
+        _git("push", "-u", "origin", BRANCH, cwd=WORKTREE, capture=False)
+        print("\nFirst push of gh-pages — now enable Pages in repo settings:")
+        print("  Settings → Pages → Source: 'Deploy from a branch' → Branch: gh-pages / root")
+
+    url = _pages_url()
+    if url:
+        print(f"\nPublished. After Pages finishes deploying (~30s):")
+        print(f"  Index:  {url}")
+        print(f"  Report: {url}{run_dir.name}/report.html")
+
+
+def main() -> int:
+    p = argparse.ArgumentParser(
+        description="Publish a bench run to gh-pages for GitHub Pages hosting.")
+    p.add_argument("run_dir", nargs="?", help="results/<date> dir to publish.")
+    p.add_argument("--no-push", action="store_true",
+                   help="Commit to gh-pages but don't push to origin.")
+    p.add_argument("--list", action="store_true",
+                   help="List runs already published to gh-pages and exit.")
+    args = p.parse_args()
+
+    if args.list:
+        list_published()
+        return 0
+
+    if not args.run_dir:
+        p.error("Provide a run dir (e.g. results/2026-05-23_2203) or --list.")
+
+    run_dir = Path(args.run_dir)
+    if not run_dir.is_absolute():
+        run_dir = REPO / args.run_dir
+    publish(run_dir, no_push=args.no_push)
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

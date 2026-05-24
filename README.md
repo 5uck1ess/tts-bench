@@ -145,7 +145,21 @@ python report.py --all                            # regenerate everything
 python report.py --index                          # just rebuild results/index.html
 ```
 
-No dependencies — pure stdlib + a small HTML/CSS template. Reports regenerate from `results.csv`, so you can tweak `report.py` and re-run `--all` to refresh historical runs.
+No dependencies — pure stdlib + a small HTML/CSS template. The report has a light/dark theme toggle (top-right, persisted to localStorage), sortable columns (click any header), and a live row filter. Reports regenerate from `results.csv`, so you can tweak `report.py` and re-run `--all` to refresh historical runs.
+
+### Publishing reports to GitHub Pages
+
+`publish.py` ships a chosen run to a `gh-pages` branch (managed via a git worktree at `_gh-pages/`, never touches master) so anyone can view it without cloning the repo.
+
+```powershell
+python publish.py results/2026-05-23_2203          # publish + push
+python publish.py results/2026-05-23_2203 --no-push # commit to gh-pages, push later
+python publish.py --list                            # show what's already published
+```
+
+After the first push, enable Pages in GitHub repo settings → Pages → Source: "Deploy from a branch" → Branch: `gh-pages` / root. Reports land at `https://<user>.github.io/<repo>/<run-name>/report.html`; the root index lists all published runs.
+
+The `gh-pages` branch holds report HTML + wavs + CSV — so audio playback works for any visitor (no need to clone the repo to hear the samples). Cross-machine workflow: each machine publishes its own runs (since the wavs stay on the machine that produced them — they're gitignored on master). The `_gh-pages/` worktree is created lazily on first `python publish.py` call; on second machines it tracks the existing remote `gh-pages` branch automatically.
 
 ### Voice cloning
 
@@ -296,7 +310,8 @@ tts-bench/
 ├── bench.py              # formal benchmark — CSV + per-prompt summary + auto-generates report.html
 ├── compare.py            # one-shot A/B listening tool — every model × every device, plays out loud
 ├── speak.py              # interactive REPL — feel warm-run latency for one model
-├── report.py             # build dark-mode HTML report (table + inline audio players) from a results/ dir
+├── report.py             # build HTML report (table + inline audio players, light/dark, sort, filter) from a results/ dir
+├── publish.py            # ship a chosen run to the gh-pages branch for GitHub Pages hosting (managed via a git worktree at _gh-pages/)
 ├── install.ps1           # Windows installer
 ├── install.sh            # macOS / Linux installer
 ├── runners/
