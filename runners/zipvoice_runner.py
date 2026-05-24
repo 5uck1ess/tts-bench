@@ -34,6 +34,7 @@ Multilingual: zh + en (Emilia tokenizer).
 
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -58,6 +59,47 @@ def _read_ref_transcript(ref_wav: str | None) -> str | None:
     if txt_path.exists():
         return txt_path.read_text(encoding="utf-8").strip()
     return None
+
+
+def _maybe_clip_reference(wav_path: str, ref_text: str, max_sec: float = 3.0):
+    """Clip the reference wav + text proportionally if wav > max_sec.
+
+    ZipVoice's docs recommend 1-3s reference clips for inference. A longer
+    reference (e.g. our standard 15s chris_hemsworth) causes generation to
+    balloon to ~5 min per prompt. We clip in-runner so the global reference
+    file stays the same as other models, but ZipVoice sees a 3s slice.
+
+    Word-boundary alignment can't be inferred without ASR, so the transcript
+    is trimmed by word count proportional to the audio fraction kept. This
+    is approximate but adequate for flow-matching's acoustic-conditioning
+    use of the prompt (the prompt is used for voice characteristics, not for
+    strict text alignment).
+
+    Returns (clipped_wav_path, clipped_text). The clipped wav is written to
+    a temp file; if no clipping was needed the original path/text are
+    returned unchanged.
+    """
+    import tempfile
+    import soundfile as sf
+
+    y, sr = sf.read(wav_path)
+    if y.ndim > 1:
+        y = y.mean(axis=1)
+    duration = len(y) / sr
+    if duration <= max_sec:
+        return wav_path, ref_text
+
+    clip_samples = int(max_sec * sr)
+    y_clip = y[:clip_samples]
+
+    words = ref_text.split()
+    n_words = max(1, int(len(words) * max_sec / duration))
+    text_clip = " ".join(words[:n_words])
+
+    fd, clip_path = tempfile.mkstemp(suffix=".wav", prefix="zipvoice_ref_")
+    os.close(fd)
+    sf.write(clip_path, y_clip, sr)
+    return clip_path, text_clip
 
 
 def _load_model(device_str: str):
@@ -138,6 +180,11 @@ def main() -> int:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"reference transcript missing: expected {Path(ref_wav).with_suffix('.txt')}"}))
         return 1
+
+    # ZipVoice's inference time balloons on references >5s (upstream
+    # recommends 1-3s). Clip to first 3s if needed; transcript is trimmed
+    # proportionally by word count.
+    ref_wav, ref_text = _maybe_clip_reference(ref_wav, ref_text, max_sec=3.0)
 
     # ------------------------------------------------------------------ load
     try:
