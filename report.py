@@ -777,6 +777,112 @@ def _render_speed(ctx):
     return "\n".join(out)
 
 
+def _render_quality(ctx):
+    """Render quality.html — per-prompt grouping, NAQ-first columns, audio embedded."""
+    meta = ctx["meta"]
+    has_ref = bool((meta or {}).get("reference"))
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           f'<title>TTS Bench — Quality — {escape(ctx["run_name"])}</title>',
+           STYLE,
+           '</head><body>',
+           CONTROLS,
+           '<div class="nav">'
+           '<a href="index.html">← lens picker</a> · '
+           '<a href="../index.html">all runs</a></div>',
+           f'<h1>TTS Bench — Quality — {escape(ctx["run_name"])}</h1>']
+    if meta:
+        out.append(f'<div class="meta"><strong>Rig:</strong> '
+                   f'<code>{escape(meta.get("rig") or "?")}</code> — '
+                   f'{escape(_rig_summary(meta))}</div>')
+        if meta.get("label"):
+            ref = meta.get("reference")
+            ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
+            out.append(f'<div class="meta"><strong>Label:</strong> '
+                       f'{escape(meta["label"])}{ref_html}</div>')
+
+    # TLDR
+    out.append('<div class="tldr"><h2>Quality winners (NAQ)</h2>')
+    def _fmt_top(entries, label):
+        if not entries:
+            return f'<p>{label}: <span class="muted">no data</span></p>'
+        parts = [f'<strong>{escape(m)}</strong> ({_fmt_naq(n)})'
+                 for (m, _d, n) in entries]
+        return f'<p>{label}: {" · ".join(parts)}</p>'
+    if has_ref:
+        out.append(_fmt_top(ctx["tldr_quality"]["cloning"], "Top 3 (this cloning run)"))
+    else:
+        out.append(_fmt_top(ctx["tldr_quality"]["predefined"], "Top 3 predefined-voice"))
+        out.append(_fmt_top(ctx["tldr_quality"]["cloning"],    "Top 3 cloning-capable"))
+    out.append('</div>')
+
+    # Per-prompt tables
+    cols = ("Model", "Device", "NAQ", "HARM", "BUZZ", "Size",
+            "TTFA warm", "RTF warm", "Audio (cold)")
+    naq_idx = cols.index("NAQ")
+    for pid in ctx["prompts_seen"]:
+        out.append(f'<div class="prompt"><h2>Prompt {escape(pid)}</h2>')
+        ptext = PROMPT_INFO.get(pid)
+        if ptext:
+            lang, text = ptext
+            out.append(f'<span class="prompt-text"><span class="lang">[{escape(lang)}]</span>'
+                       f'"{escape(text)}"</span>')
+        out.append('<table><thead><tr>')
+        for c in cols:
+            out.append(f'<th>{c}</th>')
+        out.append('</tr></thead><tbody>')
+
+        cell_keys = sorted([k for k in ctx["per_cell"] if k[0] == pid],
+                           key=lambda k: (k[1], k[2]))
+        for (_, model, dev) in cell_keys:
+            c = ctx["per_cell"][(pid, model, dev)]
+            row_id = f"quality-{model}-{dev}-p{pid}".lower().replace("/", "-")
+            dev_class = f"dev-{dev}"
+            size_str = MODEL_SIZE.get(model, "—")
+            if not c["cold"]:
+                err = (c["fail"].get("error") if c["fail"] else "") or "no successful run"
+                out.append(
+                    f'<tr id="{escape(row_id)}">'
+                    f'<td>{escape(model)}</td>'
+                    f'<td class="{dev_class}">{escape(dev)}</td>'
+                    f'<td colspan="{len(cols)-2}" class="fail">FAIL: {escape(err.strip()[:140])}</td>'
+                    '</tr>'
+                )
+                continue
+            cold = c["cold"]
+            warm_ttfas = [w["ttfa_ms"] for w in c["warms"]]
+            ttfa_warm = (sum(warm_ttfas) / len(warm_ttfas)) if warm_ttfas else None
+            def _rtf(r):
+                a, g = r["audio_s"], r["gen_s"]
+                return (a / g) if (a and g) else None
+            warm_rtfs = [v for v in (_rtf(w) for w in c["warms"]) if v is not None]
+            rtf_warm = (sum(warm_rtfs) / len(warm_rtfs)) if warm_rtfs else None
+
+            wav_name = f"{model}_{dev}_p{pid}.wav"
+            audio_html = (f'<audio controls preload="none" src="{escape(wav_name)}"></audio>'
+                          if (ctx["run_dir"] / wav_name).exists()
+                          else '<span class="muted">missing</span>')
+
+            out.append(f'<tr id="{escape(row_id)}">')
+            out.append(f'<td>{escape(model)}</td>'
+                       f'<td class="{dev_class}">{escape(dev)}</td>')
+            out.append(f'<td class="num"{_ds(cold.get("naq"))}>{_fmt_naq(cold.get("naq"))}</td>')
+            out.append(f'<td class="num"{_ds(cold.get("naq_harm"))}>{_fmt_naq(cold.get("naq_harm"))}</td>')
+            out.append(f'<td class="num"{_ds(cold.get("naq_buzz"))}>{_fmt_naq(cold.get("naq_buzz"))}</td>')
+            out.append(f'<td class="muted">{escape(size_str)}</td>')
+            out.append(f'<td class="num pill"{_ds(ttfa_warm)}>{_fmt_ttfa(ttfa_warm)}</td>')
+            out.append(f'<td class="num pill"{_ds(rtf_warm)}>{_fmt_rtf(rtf_warm)}</td>')
+            out.append(f'<td>{audio_html}</td>')
+            out.append('</tr>')
+        out.append('</tbody></table></div>')
+
+    # Default sort: NAQ desc (applies to all tables — sortAll sorts every table)
+    out.append(f'<script>window.__defaultSort = {{colIdx: {naq_idx}, dir: -1}};</script>')
+    out.append(SCRIPT)
+    out.append('</body></html>')
+    return "\n".join(out)
+
+
 def build_report(run_dir: Path) -> Path:
     csv_path = run_dir / "results.csv"
     if not csv_path.exists():
