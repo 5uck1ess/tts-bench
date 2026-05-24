@@ -1,17 +1,18 @@
 """NAQ — Naturalness-Artifact Quotient. Per-wav objective quality score.
 
-NAQ = 0.65 * HARM_score + 0.35 * BUZZ_score
-where each sub-score is normalized to [0, 100].
+NAQ v2 structure (two macros, each 0-100):
+  naq_artifact: mean of non-null sub-scores in {HARM, BUZZ}
+    HARM: HNR (dB) clamped [0,30] -> hnr/30*100   (Boersma 1993)
+    BUZZ: 4-8 kHz spectral flatness inverted -> (1-flatness)*100
+  naq_naturalness: PROSODY and PITCH_MVMT sub-scores (Task 2+)
+  naq (composite): mean(naq_artifact, naq_naturalness) when both present
 
-Sub-scores:
-  HARM_score: HNR (dB) clamped to [0, 30] -> hnr / 30 * 100
-              (Boersma 1993, normalized autocorrelation at the F0 lag)
-  BUZZ_score: 4-8 kHz spectral flatness inverted -> (1 - flatness) * 100
-              (the vocoder "buzziness" band; flat spectra = artifacted)
+pyin is extracted once via _voiced_f0() and shared across HARM, PROSODY,
+and PITCH_MVMT to avoid redundant ~1s calls.
 
 A learned-MOS predictor (UTMOS/DNSMOS) was considered but dropped: portable
 install across 18+ heterogeneous venvs and CPU-only venvs (Piper, KittenTTS,
-Supertonic) was infeasible. The remaining two sub-scores capture the
+Supertonic) was infeasible. The remaining sub-scores capture the
 artifact axes the user explicitly cared about (vocoder buzz + phase noise);
 overall "naturalness" prediction is left for a future enhancement.
 
@@ -25,12 +26,15 @@ import sys
 _SAFE = (ImportError, RuntimeError, AttributeError, OSError, ValueError)
 
 
-def _hnr_score(wav_path):
-    """Return median HNR in dB over voiced regions, or None.
+def _voiced_f0(wav_path):
+    """Return (sr, voiced_audio, f0_hz_array, valid_mask), or None.
 
-    Uses Boersma 1993 formulation: HNR = 10 * log10(r / (1 - r))
-    where r is the Praat-style normalized autocorrelation at the F0 lag,
-    computed per-frame as dot(x, x_shifted) / sqrt(energy(x) * energy(x_shifted)).
+    voiced_audio: concatenated voiced regions (mono float32).
+    f0_hz_array: librosa.pyin output aligned to voiced_audio frames; NaN for unvoiced frames.
+    valid_mask: boolean array same length as f0_hz_array, True where F0 is not NaN.
+
+    Returns None if librosa unavailable, no voiced regions, or pyin returned no valid F0.
+    Called by HARM, PROSODY, and PITCH_MVMT to avoid redundant pyin calls (~1 sec each).
     """
     try:
         import librosa
@@ -43,14 +47,28 @@ def _hnr_score(wav_path):
             return None
         voiced = np.concatenate([y[s:e] for s, e in voiced_intervals])
         f0, _voiced_flag, _ = librosa.pyin(voiced, fmin=50, fmax=500, sr=sr)
-        f0_valid = f0[~np.isnan(f0)]
+        valid = ~np.isnan(f0)
+        if not valid.any():
+            return None
+        return sr, voiced, f0, valid
+    except _SAFE as e:
+        print(f"[_naq] voiced_f0 failed: {e}", file=sys.stderr)
+        return None
+
+
+def _hnr_score(sr, voiced, f0, valid):
+    """Return median HNR in dB over voiced regions, or None.
+
+    Uses Boersma 1993 formulation: HNR = 10 * log10(r / (1 - r))
+    where r is the Praat-style normalized autocorrelation at the F0 lag.
+    """
+    try:
+        import numpy as np
+        f0_valid = f0[valid]
         if f0_valid.size == 0:
             return None
         f0_med = float(np.median(f0_valid))
         period = int(sr / f0_med)
-        # Analyse in short frames (3 pitch periods) with Praat-style normalization.
-        # r(tau) = dot(x[:N-tau], x[tau:]) / sqrt(energy(x[:N-tau]) * energy(x[tau:]))
-        # This bounds r to (-1, 1) regardless of frame length.
         frame_len = period * 3
         if frame_len >= len(voiced):
             return None
@@ -106,28 +124,39 @@ def _buzz_flatness(wav_path):
 
 
 def score(wav_path):
-    """Return {naq, naq_harm, naq_buzz} for a wav file.
+    """Return {naq, naq_artifact, naq_naturalness} for a wav file.
 
     All three fields are floats in [0, 100] on success, or None on failure
-    of that sub-score. The composite `naq` is None if either sub-score is None.
+    of that macro. The composite `naq` is None if either macro is None.
     """
-    out = {"naq": None, "naq_harm": None, "naq_buzz": None}
+    out = {"naq": None, "naq_artifact": None, "naq_naturalness": None}
     try:
         if not os.path.exists(wav_path):
             return out
     except _SAFE:
         return out
 
-    hnr_db = _hnr_score(wav_path)
+    f0_data = _voiced_f0(wav_path)
+    if f0_data is not None:
+        sr, voiced, f0, valid = f0_data
+        hnr_db = _hnr_score(sr, voiced, f0, valid)
+    else:
+        hnr_db = None
+
     flat = _buzz_flatness(wav_path)
 
-    if hnr_db is not None:
-        out["naq_harm"] = round(max(0.0, min(100.0, hnr_db / 30.0 * 100.0)), 1)
-    if flat is not None:
-        out["naq_buzz"] = round(max(0.0, min(100.0, (1.0 - flat) * 100.0)), 1)
+    harm = None if hnr_db is None else round(max(0.0, min(100.0, hnr_db / 30.0 * 100.0)), 1)
+    buzz = None if flat is None else round(max(0.0, min(100.0, (1.0 - flat) * 100.0)), 1)
 
-    if out["naq_harm"] is not None and out["naq_buzz"] is not None:
-        out["naq"] = round(0.65 * out["naq_harm"] + 0.35 * out["naq_buzz"], 1)
+    # Artifact macro: mean of non-null among {HARM, BUZZ}; requires >=1.
+    artifact_vals = [v for v in (harm, buzz) if v is not None]
+    if artifact_vals:
+        out["naq_artifact"] = round(sum(artifact_vals) / len(artifact_vals), 1)
+
+    if out["naq_artifact"] is not None:
+        # Naturalness macro will be filled in by later tasks; for now leave None.
+        # Composite is None until both macros compute.
+        pass
     return out
 
 
@@ -146,10 +175,10 @@ def _selftest():
     if os.path.exists(real_wav):
         s = score(real_wav)
         print(f"real speech: {json.dumps(s)}")
-        if s["naq"] is None:
-            failures.append("real speech NAQ was None")
-        elif s["naq"] < 10:
-            failures.append(f"real speech NAQ {s['naq']} < 10 (clean speech should beat noise floor)")
+        if s["naq_artifact"] is None:
+            failures.append("real speech naq_artifact was None")
+        elif s["naq_artifact"] < 10:
+            failures.append(f"real speech naq_artifact {s['naq_artifact']} < 10")
     else:
         print(f"SKIP real speech (no {real_wav})")
 
@@ -160,8 +189,8 @@ def _selftest():
         sf.write(noise_path, noise, 48000)
         s = score(noise_path)
         print(f"white noise: {json.dumps(s)}")
-        # White noise: harm path returns None (no periodicity), so composite is None.
-        # If composite slips through, it should still be low.
+        # White noise: harm path returns None (no periodicity).
+        # naq_artifact may still compute from BUZZ alone; composite naq stays None.
         if s["naq"] is not None and s["naq"] > 40:
             failures.append(f"white noise NAQ {s['naq']} > 40 unexpected")
     finally:
@@ -173,8 +202,8 @@ def _selftest():
         sf.write(silence_path, np.zeros(48000, dtype="float32"), 48000)
         s = score(silence_path)
         print(f"silence:     {json.dumps(s)}")
-        if s["naq"] is not None:
-            failures.append(f"silence NAQ was {s['naq']} (expected None)")
+        if s["naq_artifact"] is not None:
+            failures.append(f"silence naq_artifact was {s['naq_artifact']} (expected None)")
     finally:
         os.unlink(silence_path)
 
