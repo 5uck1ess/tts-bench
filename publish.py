@@ -65,7 +65,7 @@ def _count_published():
         return 0
     return sum(
         1 for d in WORKTREE.iterdir()
-        if d.is_dir() and not d.name.startswith(".") and (d / "report.html").exists()
+        if d.is_dir() and not d.name.startswith(".") and (d / "index.html").exists()
     )
 
 
@@ -210,7 +210,7 @@ def list_published():
         return
     runs = sorted(
         [d.name for d in WORKTREE.iterdir()
-         if d.is_dir() and not d.name.startswith(".") and (d / "report.html").exists()],
+         if d.is_dir() and not d.name.startswith(".") and (d / "index.html").exists()],
         reverse=True,
     )
     if not runs:
@@ -230,8 +230,8 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
     if not (run_dir / "results.csv").exists():
         raise SystemExit(f"No results.csv in {run_dir}")
 
-    if not (run_dir / "report.html").exists():
-        print(f"No report.html in {run_dir.name} — building it from CSV...")
+    if not (run_dir / "index.html").exists():
+        print(f"No index.html in {run_dir.name} — building it from CSV...")
         build_report(run_dir)
 
     ensure_worktree()
@@ -242,8 +242,12 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
         shutil.rmtree(dest)
     dest.mkdir()
 
-    for src in (run_dir / "report.html", run_dir / "results.csv"):
-        shutil.copy2(src, dest)
+    html_files = ("index.html", "speed.html", "quality.html", "samples.html",
+                  "report.html", "results.csv")
+    for fname in html_files:
+        src = run_dir / fname
+        if src.exists():
+            shutil.copy2(src, dest)
     meta_src = run_dir / "meta.json"
     if meta_src.exists():
         shutil.copy2(meta_src, dest)
@@ -289,6 +293,55 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
         print(f"  Report: {url}{run_dir.name}/report.html")
 
 
+def rebuild_all(no_push: bool = False) -> None:
+    """Regenerate every results/<dated>/ via build_report, then republish each to gh-pages."""
+    if not (REPO / "results").exists():
+        raise SystemExit("No results/ dir; nothing to rebuild.")
+    ensure_worktree()
+    dirs = sorted(
+        [d for d in (REPO / "results").iterdir()
+         if d.is_dir() and (d / "results.csv").exists()],
+        reverse=True,
+    )
+    if not dirs:
+        raise SystemExit("No results/<dated>/ subdirs with results.csv.")
+    for d in dirs:
+        print(f"Rebuilding {d.name}...")
+        build_report(d)
+        dest = WORKTREE / d.name
+        if dest.exists():
+            shutil.rmtree(dest)
+        dest.mkdir()
+        for fname in ("index.html", "speed.html", "quality.html", "samples.html",
+                      "report.html", "results.csv"):
+            src = d / fname
+            if src.exists():
+                shutil.copy2(src, dest)
+        meta_src = d / "meta.json"
+        if meta_src.exists():
+            shutil.copy2(meta_src, dest)
+        for wav in d.glob("*.wav"):
+            shutil.copy2(wav, dest)
+    (WORKTREE / ".nojekyll").touch()
+    build_pages_index()
+    print(f"Rebuilt {len(dirs)} run(s); index updated.")
+
+    _git("add", "-A", cwd=WORKTREE)
+    if not _git("diff", "--cached", "--name-only", cwd=WORKTREE):
+        print("No changes — already up to date.")
+        return
+    _git("commit", "-m", "Rebuild gh-pages with three-lens layout", cwd=WORKTREE)
+    print("Committed to gh-pages.")
+    if no_push:
+        print(f"--no-push: skipping push. Push manually with:\n  "
+              f"git -C {WORKTREE} push origin {BRANCH}")
+        return
+    if _branch_exists_remote(BRANCH):
+        _git("push", "origin", BRANCH, cwd=WORKTREE, capture=False)
+    else:
+        _git("push", "-u", "origin", BRANCH, cwd=WORKTREE, capture=False)
+
+
 def main() -> int:
     p = argparse.ArgumentParser(
         description="Publish a bench run to gh-pages for GitHub Pages hosting.")
@@ -297,7 +350,13 @@ def main() -> int:
                    help="Commit to gh-pages but don't push to origin.")
     p.add_argument("--list", action="store_true",
                    help="List runs already published to gh-pages and exit.")
+    p.add_argument("--rebuild-all", action="store_true",
+                   help="Regenerate every results/<dated>/ and republish to gh-pages.")
     args = p.parse_args()
+
+    if args.rebuild_all:
+        rebuild_all(no_push=args.no_push)
+        return 0
 
     if args.list:
         list_published()
