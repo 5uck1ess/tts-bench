@@ -362,51 +362,88 @@ def _fmt_naq(x):
 
 # Display sizes for the Size column. Numbers are the model's weight count
 # (params), not weights-on-disk. Hand-curated — keep in sync with README.
+# Display name shown in the rendered HTML for each venv-keyed model.
+# CSV column still uses the raw venv key; this is presentation-only.
+# Keys not present here fall through to the raw key (Title-cased by convention).
+MODEL_DISPLAY_NAMES = {
+    "sesame":        "Sesame CSM-1B",
+    "coqui":         "Coqui XTTS-v2",
+    "vibevoice":     "VibeVoice Realtime 0.5B",
+    "vibevoice_15b": "VibeVoice 1.5B",
+    "qwentts":       "Qwen3-TTS 1.7B",
+    "qwentts_fast":  "Qwen3-TTS 1.7B (CUDA-graph)",
+    "neutts_air":    "NeuTTS Air",
+    "neutts_nano":   "NeuTTS Nano",
+    "voxcpm":        "VoxCPM2 2B",
+    "mars5":         "Mars5-TTS",
+    "pocket":        "Pocket-TTS",
+    "magpie":        "Magpie-TTS",
+    "indextts":      "IndexTTS-2",
+    "f5tts":         "F5-TTS",
+    "chatterbox":    "Chatterbox",
+    "omnivoice":     "OmniVoice",
+    "piper":         "Piper",
+    "kokoro":        "Kokoro",
+    "kittentts":     "KittenTTS",
+    "supertonic":    "Supertonic",
+    "luxtts":        "LuxTTS",
+}
+
+
+def _display_name(model):
+    """Return display name for a model venv key; falls back to raw key."""
+    return MODEL_DISPLAY_NAMES.get(model, model)
+
+
 MODEL_SIZE = {
-    "pocket":      "100M",
-    "neutts_air":  "748M",
-    "neutts_nano": "748M",
-    "luxtts":      "—",
-    "chatterbox":  "1.2B",
-    "f5tts":       "330M",
-    "coqui":       "750M",
-    "vibevoice":   "0.5B",
-    "omnivoice":   "~1B",
-    "voxcpm":      "2B",
-    "magpie":      "357M",
-    "qwentts":     "1.7B",
-    "indextts":    "1.5B",
-    "sesame":      "1B",
-    "mars5":       "1.2B",
-    "kokoro":      "82M",
-    "kittentts":   "<100M",
-    "piper":       "~25MB",
-    "supertonic":  "99M",
+    "pocket":        "100M",
+    "neutts_air":    "748M",
+    "neutts_nano":   "748M",
+    "luxtts":        "—",
+    "chatterbox":    "1.2B",
+    "f5tts":         "330M",
+    "coqui":         "750M",
+    "vibevoice":     "0.5B",
+    "vibevoice_15b": "3B",
+    "omnivoice":     "~1B",
+    "voxcpm":        "2B",
+    "magpie":        "357M",
+    "qwentts":       "1.7B",
+    "qwentts_fast":  "1.7B",
+    "indextts":      "1.5B",
+    "sesame":        "1B",
+    "mars5":         "1.2B",
+    "kokoro":        "82M",
+    "kittentts":     "<100M",
+    "piper":         "~25MB",
+    "supertonic":    "99M",
 }
 
 # Whether a model supports zero-shot voice cloning at runtime.
 # "predefined": fixed speaker(s) / preset voices only.
 # "cloning":    accepts a reference wav (or wav+text) at inference and matches that voice.
 MODEL_KIND = {
-    "piper":       "predefined",
-    "kokoro":      "predefined",
-    "kittentts":   "predefined",
-    "magpie":      "predefined",
-    "vibevoice":   "predefined",
-    "supertonic":  "predefined",
-    "luxtts":      "predefined",
-    "pocket":      "cloning",
-    "chatterbox":  "cloning",
-    "f5tts":       "cloning",
-    "indextts":    "cloning",
-    "omnivoice":   "cloning",
-    "voxcpm":      "cloning",
-    "coqui":       "cloning",
-    "qwentts":     "cloning",
-    "sesame":      "cloning",
-    "mars5":       "cloning",
-    "neutts_air":  "cloning",
-    "neutts_nano": "cloning",
+    "piper":         "predefined",
+    "kokoro":        "predefined",
+    "kittentts":     "predefined",
+    "magpie":        "predefined",
+    "vibevoice":     "predefined",
+    "vibevoice_15b": "predefined",
+    "supertonic":    "predefined",
+    "luxtts":        "predefined",
+    "pocket":        "cloning",
+    "chatterbox":    "cloning",
+    "f5tts":         "cloning",
+    "indextts":      "cloning",
+    "omnivoice":     "cloning",
+    "voxcpm":        "cloning",
+    "coqui":         "cloning",
+    "qwentts":       "cloning",
+    "qwentts_fast":  "cloning",
+    "sesame":        "cloning",
+    "mars5":         "cloning",
+    "neutts_air":    "cloning",
+    "neutts_nano":   "cloning",
 }
 
 
@@ -767,7 +804,7 @@ def _render_speed(ctx):
         if not entry:
             return f'<p>{label}: <span class="muted">no data</span></p>'
         model, dev, rtf, ttfa = entry
-        return (f'<p>{label}: <strong>{escape(model)}</strong> ({escape(dev)}) — '
+        return (f'<p>{label}: <strong>{escape(_display_name(model))}</strong> ({escape(dev)}) — '
                 f'{_fmt_rtf(rtf)} warm RTF, {_fmt_ttfa(ttfa)} warm TTFA</p>')
     if has_ref:
         # Cloning-only run; collapse to single line
@@ -813,13 +850,13 @@ def _render_speed(ctx):
             )
             err = (err_row.get("error") if err_row else "") or "no successful run"
             out.append(f'<tr id="{escape(row_id)}">'
-                       f'<td>{escape(model)}</td>'
+                       f'<td>{escape(_display_name(model))}</td>'
                        f'<td class="{dev_class}">{escape(dev)}</td>'
                        f'<td colspan="{len(cols)-2}" class="fail">FAIL: {escape(err.strip()[:140])}</td>'
                        '</tr>')
             continue
         out.append(f'<tr id="{escape(row_id)}">')
-        out.append(f'<td>{escape(model)}{partial_tag}</td>'
+        out.append(f'<td>{escape(_display_name(model))}{partial_tag}</td>'
                    f'<td class="{dev_class}">{escape(dev)}</td>')
         out.append(f'<td class="num"{_ds(a["ttfa_cold"])}>{_fmt_ttfa(a["ttfa_cold"])}</td>')
         out.append(f'<td class="num"{_ds(a["ttfa_warm"])}>{_fmt_ttfa(a["ttfa_warm"])}</td>')
@@ -873,7 +910,7 @@ def _render_quality(ctx):
     def _fmt_top(entries, label):
         if not entries:
             return f'<p>{label}: <span class="muted">no data</span></p>'
-        parts = [f'<strong>{escape(m)}</strong> ({_fmt_naq(n)})'
+        parts = [f'<strong>{escape(_display_name(m))}</strong> ({_fmt_naq(n)})'
                  for (m, _d, n) in entries]
         return f'<p>{label}: {" · ".join(parts)}</p>'
     if has_ref:
@@ -912,7 +949,7 @@ def _render_quality(ctx):
                 err = (c["fail"].get("error") if c["fail"] else "") or "no successful run"
                 out.append(
                     f'<tr id="{escape(row_id)}">'
-                    f'<td>{escape(model)}</td>'
+                    f'<td>{escape(_display_name(model))}</td>'
                     f'<td class="{dev_class}">{escape(dev)}</td>'
                     f'<td colspan="{len(cols)-2}" class="fail">FAIL: {escape(err.strip()[:140])}</td>'
                     '</tr>'
@@ -933,7 +970,7 @@ def _render_quality(ctx):
                           else '<span class="muted">missing</span>')
 
             out.append(f'<tr id="{escape(row_id)}">')
-            out.append(f'<td>{escape(model)}</td>'
+            out.append(f'<td>{escape(_display_name(model))}</td>'
                        f'<td class="{dev_class}">{escape(dev)}</td>')
             naq_val = cold.get("naq")
             naq_art = cold.get("naq_artifact")
@@ -1015,7 +1052,7 @@ def _render_samples(ctx):
             )
             out.append(f'<tr id="{escape(row_id)}">')
             out.append(f'<td class="num" data-sort="{rank}">{rank}</td>')
-            out.append(f'<td>{escape(it["model"])}</td>')
+            out.append(f'<td>{escape(_display_name(it["model"]))}</td>')
             out.append(f'<td class="{dev_class}">{escape(it["device"])}</td>')
             out.append(f'<td class="num"{_ds(it["naq"])}>{_fmt_naq(it["naq"])}</td>')
             out.append(f'<td class="num pill"{_ds(it["ttfa_warm"])}>{_fmt_ttfa(it["ttfa_warm"])}</td>')
