@@ -1,0 +1,1284 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>TTS Bench — Samples — linux-cloning</title>
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #1a1a1a;
+    --panel: #242424;
+    --text: #e0e0e0;
+    --muted: #888;
+    --accent: #6cf;
+    --num: #cfc;
+    --fail: #f88;
+    --border: #333;
+    --row-hover: #2a2a2a;
+    --th-bg: #2c2c2c;
+    --th-hover: #353535;
+    --input-bg: #2a2a2a;
+    --input-border: #444;
+    --controls-border: #2a2a2a;
+    --dev-cpu: #ddd;
+    --dev-cuda: #9cf;
+    --dev-mps: #fc9;
+    --lang: #6cf;
+    --prompt-text: #9c9;
+    --code-bg: #2a2a2a;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --text: #1a1d22;
+    --muted: #6b7280;
+    --accent: #1a73e8;
+    --num: #137333;
+    --fail: #c5221f;
+    --border: #e2e6eb;
+    --row-hover: #f0f4f8;
+    --th-bg: #eef1f4;
+    --th-hover: #e2e6eb;
+    --input-bg: #ffffff;
+    --input-border: #cdd3da;
+    --controls-border: #e2e6eb;
+    --dev-cpu: #555;
+    --dev-cuda: #1a73e8;
+    --dev-mps: #c2410c;
+    --lang: #1a73e8;
+    --prompt-text: #2d6a4f;
+    --code-bg: #eef1f4;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+         background: var(--bg); color: var(--text);
+         margin: 0; padding: 1.5rem 2rem 3rem;
+         max-width: 1400px; margin-inline: auto;
+         transition: background 0.15s, color 0.15s; }
+  h1, h2 { color: var(--text); margin-top: 0; }
+  h1 { font-size: 1.5em; }
+  h2 { font-size: 1.05em; }
+  .meta { color: var(--muted); font-size: 0.88em; margin-bottom: 0.4rem; }
+  .prompt { background: var(--panel); padding: 1rem 1.2rem;
+            border-radius: 10px; margin-bottom: 1.4rem;
+            border: 1px solid var(--border); }
+  .prompt-text { color: var(--prompt-text); font-style: italic;
+                 display: block; margin: 0.2rem 0 0.8rem 0; }
+  .lang { color: var(--lang); font-style: normal; margin-right: 0.4rem;
+          font-weight: 500; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { padding: 7px 10px; text-align: left;
+           border-bottom: 1px solid var(--border); }
+  th { background: var(--th-bg); color: var(--text);
+       cursor: pointer; user-select: none; white-space: nowrap;
+       font-weight: 600; }
+  th:hover { background: var(--th-hover); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums;
+           color: var(--num); }
+  th.num { text-align: right; }
+  td.fail { color: var(--fail); font-style: italic; }
+  td.dev-cuda { color: var(--dev-cuda); }
+  td.dev-mps  { color: var(--dev-mps); }
+  td.dev-cpu  { color: var(--dev-cpu); }
+  .muted { color: var(--muted); }
+  audio { width: 220px; height: 30px; vertical-align: middle; }
+  tr:hover td { background: var(--row-hover); }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px;
+         font-size: 0.92em; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .nav { margin-bottom: 0.6rem; }
+  .controls { position: sticky; top: 0; background: var(--bg); z-index: 10;
+              padding: 0.7rem 0 0.7rem; margin-bottom: 1rem;
+              display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+              border-bottom: 1px solid var(--controls-border); }
+  .controls input { background: var(--input-bg); color: var(--text);
+                    border: 1px solid var(--input-border);
+                    border-radius: 6px; padding: 7px 11px; font: inherit;
+                    min-width: 320px; }
+  .controls input:focus { outline: none; border-color: var(--accent); }
+  .controls .hint { color: var(--muted); font-size: 0.85em; }
+  .controls button { background: var(--input-bg); color: var(--text);
+                     border: 1px solid var(--input-border);
+                     border-radius: 6px; padding: 6px 12px; font: inherit;
+                     cursor: pointer; transition: border-color 0.15s; }
+  .controls button:hover { border-color: var(--accent); }
+  .spacer { flex: 1; }
+
+  /* Lens picker grid */
+  .lens-grid { display: grid; grid-template-columns: repeat(3, 1fr);
+               gap: 1rem; margin: 1.5rem 0; }
+  @media (max-width: 760px) { .lens-grid { grid-template-columns: 1fr; } }
+  .lens-card { background: var(--panel); border: 1px solid var(--border);
+               border-radius: 10px; padding: 1.2rem 1.4rem;
+               transition: border-color 0.15s; }
+  .lens-card:hover { border-color: var(--accent); }
+  .lens-card a { display: block; text-decoration: none; color: var(--text); }
+  .lens-card h3 { margin: 0 0 0.4rem 0; font-size: 1.1em; color: var(--accent); }
+  .lens-card .desc { color: var(--muted); font-size: 0.9em; }
+
+  /* TLDR callout used by speed.html */
+  .tldr { background: var(--panel); border-left: 3px solid var(--accent);
+          padding: 0.8rem 1.1rem; margin: 1rem 0 1.4rem; border-radius: 4px; }
+  .tldr h2 { margin: 0 0 0.4rem 0; font-size: 1em; }
+  .tldr p { margin: 0.2rem 0; color: var(--text); }
+  .tldr strong { color: var(--accent); }
+
+  /* Secondary-axis "badge" pill cells */
+  td.pill { font-size: 0.82em; color: var(--muted); }
+  td.pill[data-sort] { font-variant-numeric: tabular-nums; }
+  td.pill a { color: inherit; }
+
+  /* Prompt jumper for samples.html */
+  .prompt-jumper { position: sticky; top: 3rem; background: var(--bg);
+                   padding: 0.4rem 0; margin-bottom: 0.8rem;
+                   border-bottom: 1px solid var(--border); font-size: 0.9em; }
+  .prompt-jumper a { margin-right: 0.6rem; }
+
+  /* Lens-to-lens nav tabs at top of each lens page */
+  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem;
+               align-items: center; }
+  .lens-tab { display: inline-block; padding: 4px 12px; border-radius: 6px;
+              border: 1px solid var(--border); color: var(--text);
+              text-decoration: none; font-size: 0.92em;
+              transition: border-color 0.15s, background 0.15s; }
+  .lens-tab:hover { border-color: var(--accent); text-decoration: none; }
+  .lens-tab.active { background: var(--accent); color: var(--bg);
+                     border-color: var(--accent); }
+  .lens-arrow { display: inline-block; padding: 4px 10px; border-radius: 6px;
+                border: 1px solid var(--border); color: var(--muted);
+                text-decoration: none; font-size: 0.92em;
+                transition: border-color 0.15s, color 0.15s; }
+  .lens-arrow:hover { border-color: var(--accent); color: var(--accent);
+                      text-decoration: none; }
+  .lens-arrow-disabled { opacity: 0.35; cursor: default;
+                         border-style: dashed; }
+  .lens-arrow-disabled:hover { border-color: var(--border); color: var(--muted); }
+
+  /* "Reading this report" explainer above tables */
+  .reading-guide { background: var(--panel); border-left: 3px solid var(--muted);
+                   padding: 0.55rem 0.9rem; margin: 0.7rem 0 1rem;
+                   border-radius: 4px; font-size: 0.88em; color: var(--text); }
+  .reading-guide strong { color: var(--accent); }
+  .reading-guide a { color: var(--accent); }
+</style>
+</head><body>
+<div class="controls">
+<input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
+<button type="button" id="reset-sort">reset sort</button>
+<span class="hint">click any column header to sort</span>
+<span class="spacer"></span>
+<button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
+</div>
+<div class="nav"><span class="lens-tabs"><a class="lens-arrow" href="speed.html" title="Previous lens: Speed">← Speed</a><a class="lens-tab" href="speed.html">Speed</a><a class="lens-tab active" href="samples.html">Samples</a><span class="lens-arrow lens-arrow-disabled"> →</span></span> · <a href="../index.html">all runs</a></div>
+<h1>TTS Bench — Samples — linux-cloning</h1>
+<div class="meta"><strong>Rig:</strong> <code>linux-3090</code> — AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic</div>
+<div class="meta"><strong>Label:</strong> cloning · chris_hemsworth_15s — ref <code>chris_hemsworth_15s.wav</code></div>
+<div class="meta">5 prompt(s) · one section per prompt · all models ranked by warm TTFA (fastest first) within each</div>
+<div class="reading-guide">Each prompt section shows every model's audio output, ordered by <strong>warm TTFA</strong> (fastest first). Click any audio player to hear that model's rendering.</div>
+<div class="prompt" style="border-left: 3px solid var(--accent);"><h2>Reference voice</h2><div class="meta">Each model below was given this clip + transcript as the voice to imitate. Source: <code>chris_hemsworth_15s.wav</code></div><audio controls preload="metadata" src="_reference.wav" style="width: 100%; max-width: 480px;"></audio></div>
+<nav class="prompt-jumper">Jump to: 
+<a href="#p1">P1</a> · <a href="#p2">P2</a> · <a href="#p3">P3</a> · <a href="#p4">P4</a> · <a href="#p5">P5</a>
+</nav>
+<div class="prompt" id="p1"><h2>Prompt 1</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"Open the browser and read my email."</span>
+<table><thead><tr>
+<th class="num">Rank</th>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA warm</th>
+<th>Audio</th>
+</tr></thead><tbody>
+<tr id="sample-p1-pocket-cpu">
+<td class="num" data-sort="1">1</td>
+<td>Pocket-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="80.85">81ms</td>
+<td><audio controls preload="none" src="pocket_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-luxtts-cuda">
+<td class="num" data-sort="2">2</td>
+<td>LuxTTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="194.75">195ms</td>
+<td><audio controls preload="none" src="luxtts_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-neutts_nano-cuda">
+<td class="num" data-sort="3">3</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="358.9">359ms</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-neutts_nano-cpu">
+<td class="num" data-sort="4">4</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="418.05">418ms</td>
+<td><audio controls preload="none" src="neutts_nano_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-neutts_air-cuda">
+<td class="num" data-sort="5">5</td>
+<td>NeuTTS Air</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="432.45">432ms</td>
+<td><audio controls preload="none" src="neutts_air_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-coqui-cuda">
+<td class="num" data-sort="6">6</td>
+<td>Coqui XTTS-v2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="474.7">475ms</td>
+<td><audio controls preload="none" src="coqui_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-neutts_air-cpu">
+<td class="num" data-sort="7">7</td>
+<td>NeuTTS Air</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="559.05">559ms</td>
+<td><audio controls preload="none" src="neutts_air_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-chatterbox_turbo-cuda">
+<td class="num" data-sort="8">8</td>
+<td>Chatterbox Turbo</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="631.1">631ms</td>
+<td><audio controls preload="none" src="chatterbox_turbo_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-qwentts_fast-cuda">
+<td class="num" data-sort="9">9</td>
+<td>Qwen3-TTS 1.7B (CUDA-graph)</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="767.0">767ms</td>
+<td><audio controls preload="none" src="qwentts_fast_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-chatterbox-cuda">
+<td class="num" data-sort="10">10</td>
+<td>Chatterbox</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1125.25">1.13s</td>
+<td><audio controls preload="none" src="chatterbox_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-omnivoice-cuda">
+<td class="num" data-sort="11">11</td>
+<td>OmniVoice</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1139.75">1.14s</td>
+<td><audio controls preload="none" src="omnivoice_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-f5tts-cuda">
+<td class="num" data-sort="12">12</td>
+<td>F5-TTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1140.8">1.14s</td>
+<td><audio controls preload="none" src="f5tts_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-voxcpm-cuda">
+<td class="num" data-sort="13">13</td>
+<td>VoxCPM2 2B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1222.15">1.22s</td>
+<td><audio controls preload="none" src="voxcpm_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-luxtts-cpu">
+<td class="num" data-sort="14">14</td>
+<td>LuxTTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="1292.05">1.29s</td>
+<td><audio controls preload="none" src="luxtts_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-dia-cuda">
+<td class="num" data-sort="15">15</td>
+<td>Dia 1.6B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1294.75">1.29s</td>
+<td><audio controls preload="none" src="dia_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-moss_tts_nano-cuda">
+<td class="num" data-sort="16">16</td>
+<td>MOSS-TTS-Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1965.0">1.97s</td>
+<td><audio controls preload="none" src="moss_tts_nano_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-indextts-cpu">
+<td class="num" data-sort="17">17</td>
+<td>IndexTTS-2</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="2798.4">2.80s</td>
+<td><audio controls preload="none" src="indextts_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-indextts-cuda">
+<td class="num" data-sort="18">18</td>
+<td>IndexTTS-2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="3088.7">3.09s</td>
+<td><audio controls preload="none" src="indextts_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-coqui-cpu">
+<td class="num" data-sort="19">19</td>
+<td>Coqui XTTS-v2</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="3149.05">3.15s</td>
+<td><audio controls preload="none" src="coqui_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-sesame-cuda">
+<td class="num" data-sort="20">20</td>
+<td>Sesame CSM-1B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="3335.6">3.34s</td>
+<td><audio controls preload="none" src="sesame_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-moss_tts_nano-cpu">
+<td class="num" data-sort="21">21</td>
+<td>MOSS-TTS-Nano</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="3519.3999999999996">3.52s</td>
+<td><audio controls preload="none" src="moss_tts_nano_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-chatterbox_turbo-cpu">
+<td class="num" data-sort="22">22</td>
+<td>Chatterbox Turbo</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="3910.35">3.91s</td>
+<td><audio controls preload="none" src="chatterbox_turbo_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-zipvoice-cpu">
+<td class="num" data-sort="23">23</td>
+<td>ZipVoice 123M</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="6968.9">6.97s</td>
+<td><audio controls preload="none" src="zipvoice_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-chatterbox-cpu">
+<td class="num" data-sort="24">24</td>
+<td>Chatterbox</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="8006.7">8.01s</td>
+<td><audio controls preload="none" src="chatterbox_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-voxcpm-cpu">
+<td class="num" data-sort="25">25</td>
+<td>VoxCPM2 2B</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="14187.75">14.19s</td>
+<td><audio controls preload="none" src="voxcpm_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-sesame-cpu">
+<td class="num" data-sort="26">26</td>
+<td>Sesame CSM-1B</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="27719.649999999998">27.72s</td>
+<td><audio controls preload="none" src="sesame_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-omnivoice-cpu">
+<td class="num" data-sort="27">27</td>
+<td>OmniVoice</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="35628.7">35.63s</td>
+<td><audio controls preload="none" src="omnivoice_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-f5tts-cpu">
+<td class="num" data-sort="28">28</td>
+<td>F5-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="45267.55">45.27s</td>
+<td><audio controls preload="none" src="f5tts_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-mars5-cpu">
+<td class="num" data-sort="29">29</td>
+<td>Mars5-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="68859.15">68.86s</td>
+<td><audio controls preload="none" src="mars5_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-mars5-cuda">
+<td class="num" data-sort="30">30</td>
+<td>Mars5-TTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="70396.25">70.40s</td>
+<td><audio controls preload="none" src="mars5_cuda_p1.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt" id="p2"><h2>Prompt 2</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"I&#x27;ll start a new git branch, push the changes, and open a pull request when the tests pass."</span>
+<table><thead><tr>
+<th class="num">Rank</th>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA warm</th>
+<th>Audio</th>
+</tr></thead><tbody>
+<tr id="sample-p2-pocket-cpu">
+<td class="num" data-sort="1">1</td>
+<td>Pocket-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="110.2">110ms</td>
+<td><audio controls preload="none" src="pocket_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-luxtts-cuda">
+<td class="num" data-sort="2">2</td>
+<td>LuxTTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="218.8">219ms</td>
+<td><audio controls preload="none" src="luxtts_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-neutts_nano-cuda">
+<td class="num" data-sort="3">3</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="342.65">343ms</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-neutts_nano-cpu">
+<td class="num" data-sort="4">4</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="377.65">378ms</td>
+<td><audio controls preload="none" src="neutts_nano_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-neutts_air-cuda">
+<td class="num" data-sort="5">5</td>
+<td>NeuTTS Air</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="425.8">426ms</td>
+<td><audio controls preload="none" src="neutts_air_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-neutts_air-cpu">
+<td class="num" data-sort="6">6</td>
+<td>NeuTTS Air</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="598.2">598ms</td>
+<td><audio controls preload="none" src="neutts_air_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-coqui-cuda">
+<td class="num" data-sort="7">7</td>
+<td>Coqui XTTS-v2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="998.3">998ms</td>
+<td><audio controls preload="none" src="coqui_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-chatterbox_turbo-cuda">
+<td class="num" data-sort="8">8</td>
+<td>Chatterbox Turbo</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1173.5">1.17s</td>
+<td><audio controls preload="none" src="chatterbox_turbo_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-omnivoice-cuda">
+<td class="num" data-sort="9">9</td>
+<td>OmniVoice</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1352.1">1.35s</td>
+<td><audio controls preload="none" src="omnivoice_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-f5tts-cuda">
+<td class="num" data-sort="10">10</td>
+<td>F5-TTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1502.9">1.50s</td>
+<td><audio controls preload="none" src="f5tts_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-luxtts-cpu">
+<td class="num" data-sort="11">11</td>
+<td>LuxTTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="2082.8">2.08s</td>
+<td><audio controls preload="none" src="luxtts_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-chatterbox-cuda">
+<td class="num" data-sort="12">12</td>
+<td>Chatterbox</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="2206.65">2.21s</td>
+<td><audio controls preload="none" src="chatterbox_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-moss_tts_nano-cuda">
+<td class="num" data-sort="13">13</td>
+<td>MOSS-TTS-Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="2273.7">2.27s</td>
+<td><audio controls preload="none" src="moss_tts_nano_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-voxcpm-cuda">
+<td class="num" data-sort="14">14</td>
+<td>VoxCPM2 2B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="2375.1000000000004">2.38s</td>
+<td><audio controls preload="none" src="voxcpm_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-indextts-cpu">
+<td class="num" data-sort="15">15</td>
+<td>IndexTTS-2</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="4245.05">4.25s</td>
+<td><audio controls preload="none" src="indextts_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-indextts-cuda">
+<td class="num" data-sort="16">16</td>
+<td>IndexTTS-2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="4616.75">4.62s</td>
+<td><audio controls preload="none" src="indextts_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-moss_tts_nano-cpu">
+<td class="num" data-sort="17">17</td>
+<td>MOSS-TTS-Nano</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="5400.6">5.40s</td>
+<td><audio controls preload="none" src="moss_tts_nano_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-sesame-cuda">
+<td class="num" data-sort="18">18</td>
+<td>Sesame CSM-1B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="6491.200000000001">6.49s</td>
+<td><audio controls preload="none" src="sesame_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-coqui-cpu">
+<td class="num" data-sort="19">19</td>
+<td>Coqui XTTS-v2</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="6812.4">6.81s</td>
+<td><audio controls preload="none" src="coqui_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-chatterbox_turbo-cpu">
+<td class="num" data-sort="20">20</td>
+<td>Chatterbox Turbo</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="7396.75">7.40s</td>
+<td><audio controls preload="none" src="chatterbox_turbo_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-dia-cuda">
+<td class="num" data-sort="21">21</td>
+<td>Dia 1.6B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="7856.95">7.86s</td>
+<td><audio controls preload="none" src="dia_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-zipvoice-cpu">
+<td class="num" data-sort="22">22</td>
+<td>ZipVoice 123M</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="13293.95">13.29s</td>
+<td><audio controls preload="none" src="zipvoice_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-chatterbox-cpu">
+<td class="num" data-sort="23">23</td>
+<td>Chatterbox</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="14359.599999999999">14.36s</td>
+<td><audio controls preload="none" src="chatterbox_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-voxcpm-cpu">
+<td class="num" data-sort="24">24</td>
+<td>VoxCPM2 2B</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="26353.2">26.35s</td>
+<td><audio controls preload="none" src="voxcpm_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-sesame-cpu">
+<td class="num" data-sort="25">25</td>
+<td>Sesame CSM-1B</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="38089.5">38.09s</td>
+<td><audio controls preload="none" src="sesame_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-omnivoice-cpu">
+<td class="num" data-sort="26">26</td>
+<td>OmniVoice</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="44052.65">44.05s</td>
+<td><audio controls preload="none" src="omnivoice_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-qwentts_fast-cuda">
+<td class="num" data-sort="27">27</td>
+<td>Qwen3-TTS 1.7B (CUDA-graph)</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="45493.95">45.49s</td>
+<td><audio controls preload="none" src="qwentts_fast_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-f5tts-cpu">
+<td class="num" data-sort="28">28</td>
+<td>F5-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="57960.899999999994">57.96s</td>
+<td><audio controls preload="none" src="f5tts_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-mars5-cpu">
+<td class="num" data-sort="29">29</td>
+<td>Mars5-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="72550.54999999999">72.55s</td>
+<td><audio controls preload="none" src="mars5_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-mars5-cuda">
+<td class="num" data-sort="30">30</td>
+<td>Mars5-TTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="80286.0">80.29s</td>
+<td><audio controls preload="none" src="mars5_cuda_p2.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt" id="p3"><h2>Prompt 3</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"The Parakeet TDT zero point six billion parameter model achieves one point six nine percent word error rate on LibriSpeech test-clean, beating Whisper Large V3 at two point seven percent while running at over two thousand times realtime on a single GPU."</span>
+<table><thead><tr>
+<th class="num">Rank</th>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA warm</th>
+<th>Audio</th>
+</tr></thead><tbody>
+<tr id="sample-p3-pocket-cpu">
+<td class="num" data-sort="1">1</td>
+<td>Pocket-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="135.35">135ms</td>
+<td><audio controls preload="none" src="pocket_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-luxtts-cuda">
+<td class="num" data-sort="2">2</td>
+<td>LuxTTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="332.15">332ms</td>
+<td><audio controls preload="none" src="luxtts_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-neutts_nano-cuda">
+<td class="num" data-sort="3">3</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="373.1">373ms</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-neutts_nano-cpu">
+<td class="num" data-sort="4">4</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="449.0">449ms</td>
+<td><audio controls preload="none" src="neutts_nano_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-neutts_air-cuda">
+<td class="num" data-sort="5">5</td>
+<td>NeuTTS Air</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="530.9">531ms</td>
+<td><audio controls preload="none" src="neutts_air_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-neutts_air-cpu">
+<td class="num" data-sort="6">6</td>
+<td>NeuTTS Air</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="594.45">594ms</td>
+<td><audio controls preload="none" src="neutts_air_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-omnivoice-cuda">
+<td class="num" data-sort="7">7</td>
+<td>OmniVoice</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="2230.4">2.23s</td>
+<td><audio controls preload="none" src="omnivoice_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-f5tts-cuda">
+<td class="num" data-sort="8">8</td>
+<td>F5-TTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="3140.45">3.14s</td>
+<td><audio controls preload="none" src="f5tts_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-chatterbox_turbo-cuda">
+<td class="num" data-sort="9">9</td>
+<td>Chatterbox Turbo</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="3322.5">3.32s</td>
+<td><audio controls preload="none" src="chatterbox_turbo_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-coqui-cuda">
+<td class="num" data-sort="10">10</td>
+<td>Coqui XTTS-v2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="3652.3500000000004">3.65s</td>
+<td><audio controls preload="none" src="coqui_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-qwentts_fast-cuda">
+<td class="num" data-sort="11">11</td>
+<td>Qwen3-TTS 1.7B (CUDA-graph)</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="3854.3">3.85s</td>
+<td><audio controls preload="none" src="qwentts_fast_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-luxtts-cpu">
+<td class="num" data-sort="12">12</td>
+<td>LuxTTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="5762.7">5.76s</td>
+<td><audio controls preload="none" src="luxtts_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-chatterbox-cuda">
+<td class="num" data-sort="13">13</td>
+<td>Chatterbox</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="6047.1">6.05s</td>
+<td><audio controls preload="none" src="chatterbox_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-moss_tts_nano-cuda">
+<td class="num" data-sort="14">14</td>
+<td>MOSS-TTS-Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="6810.450000000001">6.81s</td>
+<td><audio controls preload="none" src="moss_tts_nano_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-voxcpm-cuda">
+<td class="num" data-sort="15">15</td>
+<td>VoxCPM2 2B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="7417.85">7.42s</td>
+<td><audio controls preload="none" src="voxcpm_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-indextts-cpu">
+<td class="num" data-sort="16">16</td>
+<td>IndexTTS-2</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="11388.3">11.39s</td>
+<td><audio controls preload="none" src="indextts_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-indextts-cuda">
+<td class="num" data-sort="17">17</td>
+<td>IndexTTS-2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="12238.25">12.24s</td>
+<td><audio controls preload="none" src="indextts_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-sesame-cuda">
+<td class="num" data-sort="18">18</td>
+<td>Sesame CSM-1B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="13518.3">13.52s</td>
+<td><audio controls preload="none" src="sesame_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-moss_tts_nano-cpu">
+<td class="num" data-sort="19">19</td>
+<td>MOSS-TTS-Nano</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="14538.25">14.54s</td>
+<td><audio controls preload="none" src="moss_tts_nano_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-chatterbox_turbo-cpu">
+<td class="num" data-sort="20">20</td>
+<td>Chatterbox Turbo</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="21261.75">21.26s</td>
+<td><audio controls preload="none" src="chatterbox_turbo_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-dia-cuda">
+<td class="num" data-sort="21">21</td>
+<td>Dia 1.6B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="21733.2">21.73s</td>
+<td><audio controls preload="none" src="dia_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-coqui-cpu">
+<td class="num" data-sort="22">22</td>
+<td>Coqui XTTS-v2</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="25421.300000000003">25.42s</td>
+<td><audio controls preload="none" src="coqui_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-chatterbox-cpu">
+<td class="num" data-sort="23">23</td>
+<td>Chatterbox</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="42087.3">42.09s</td>
+<td><audio controls preload="none" src="chatterbox_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-voxcpm-cpu">
+<td class="num" data-sort="24">24</td>
+<td>VoxCPM2 2B</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="67857.5">67.86s</td>
+<td><audio controls preload="none" src="voxcpm_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-omnivoice-cpu">
+<td class="num" data-sort="25">25</td>
+<td>OmniVoice</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="69735.35">69.74s</td>
+<td><audio controls preload="none" src="omnivoice_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-sesame-cpu">
+<td class="num" data-sort="26">26</td>
+<td>Sesame CSM-1B</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="80937.6">80.94s</td>
+<td><audio controls preload="none" src="sesame_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-mars5-cuda">
+<td class="num" data-sort="27">27</td>
+<td>Mars5-TTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="104326.35">104.33s</td>
+<td><audio controls preload="none" src="mars5_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-mars5-cpu">
+<td class="num" data-sort="28">28</td>
+<td>Mars5-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="111826.45">111.83s</td>
+<td><audio controls preload="none" src="mars5_cpu_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-f5tts-cpu">
+<td class="num" data-sort="29">29</td>
+<td>F5-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="141439.8">141.44s</td>
+<td><audio controls preload="none" src="f5tts_cpu_p3.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt" id="p4"><h2>Prompt 4</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"Run pytest tests slash test underscore voice dot py with verbose flag and capture flag set to no."</span>
+<table><thead><tr>
+<th class="num">Rank</th>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA warm</th>
+<th>Audio</th>
+</tr></thead><tbody>
+<tr id="sample-p4-pocket-cpu">
+<td class="num" data-sort="1">1</td>
+<td>Pocket-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="107.7">108ms</td>
+<td><audio controls preload="none" src="pocket_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-luxtts-cuda">
+<td class="num" data-sort="2">2</td>
+<td>LuxTTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="219.55">220ms</td>
+<td><audio controls preload="none" src="luxtts_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-neutts_nano-cuda">
+<td class="num" data-sort="3">3</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="366.35">366ms</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-neutts_nano-cpu">
+<td class="num" data-sort="4">4</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="428.45">428ms</td>
+<td><audio controls preload="none" src="neutts_nano_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-neutts_air-cuda">
+<td class="num" data-sort="5">5</td>
+<td>NeuTTS Air</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="523.35">523ms</td>
+<td><audio controls preload="none" src="neutts_air_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-neutts_air-cpu">
+<td class="num" data-sort="6">6</td>
+<td>NeuTTS Air</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="596.85">597ms</td>
+<td><audio controls preload="none" src="neutts_air_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-chatterbox_turbo-cuda">
+<td class="num" data-sort="7">7</td>
+<td>Chatterbox Turbo</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1322.15">1.32s</td>
+<td><audio controls preload="none" src="chatterbox_turbo_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-omnivoice-cuda">
+<td class="num" data-sort="8">8</td>
+<td>OmniVoice</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1395.7">1.40s</td>
+<td><audio controls preload="none" src="omnivoice_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-f5tts-cuda">
+<td class="num" data-sort="9">9</td>
+<td>F5-TTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1555.9499999999998">1.56s</td>
+<td><audio controls preload="none" src="f5tts_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-coqui-cuda">
+<td class="num" data-sort="10">10</td>
+<td>Coqui XTTS-v2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1695.85">1.70s</td>
+<td><audio controls preload="none" src="coqui_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-luxtts-cpu">
+<td class="num" data-sort="11">11</td>
+<td>LuxTTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="2237.6000000000004">2.24s</td>
+<td><audio controls preload="none" src="luxtts_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-moss_tts_nano-cuda">
+<td class="num" data-sort="12">12</td>
+<td>MOSS-TTS-Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="2988.75">2.99s</td>
+<td><audio controls preload="none" src="moss_tts_nano_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-chatterbox-cuda">
+<td class="num" data-sort="13">13</td>
+<td>Chatterbox</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="3041.3">3.04s</td>
+<td><audio controls preload="none" src="chatterbox_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-voxcpm-cuda">
+<td class="num" data-sort="14">14</td>
+<td>VoxCPM2 2B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="3098.75">3.10s</td>
+<td><audio controls preload="none" src="voxcpm_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-indextts-cpu">
+<td class="num" data-sort="15">15</td>
+<td>IndexTTS-2</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="5004.45">5.00s</td>
+<td><audio controls preload="none" src="indextts_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-moss_tts_nano-cpu">
+<td class="num" data-sort="16">16</td>
+<td>MOSS-TTS-Nano</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="5892.75">5.89s</td>
+<td><audio controls preload="none" src="moss_tts_nano_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-indextts-cuda">
+<td class="num" data-sort="17">17</td>
+<td>IndexTTS-2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="6000.55">6.00s</td>
+<td><audio controls preload="none" src="indextts_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-chatterbox_turbo-cpu">
+<td class="num" data-sort="18">18</td>
+<td>Chatterbox Turbo</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="8852.4">8.85s</td>
+<td><audio controls preload="none" src="chatterbox_turbo_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-dia-cuda">
+<td class="num" data-sort="19">19</td>
+<td>Dia 1.6B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="8861.900000000001">8.86s</td>
+<td><audio controls preload="none" src="dia_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-coqui-cpu">
+<td class="num" data-sort="20">20</td>
+<td>Coqui XTTS-v2</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="8874.15">8.87s</td>
+<td><audio controls preload="none" src="coqui_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-sesame-cuda">
+<td class="num" data-sort="21">21</td>
+<td>Sesame CSM-1B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="9564.7">9.56s</td>
+<td><audio controls preload="none" src="sesame_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-zipvoice-cpu">
+<td class="num" data-sort="22">22</td>
+<td>ZipVoice 123M</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="15766.75">15.77s</td>
+<td><audio controls preload="none" src="zipvoice_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-chatterbox-cpu">
+<td class="num" data-sort="23">23</td>
+<td>Chatterbox</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="18601.9">18.60s</td>
+<td><audio controls preload="none" src="chatterbox_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-voxcpm-cpu">
+<td class="num" data-sort="24">24</td>
+<td>VoxCPM2 2B</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="37911.1">37.91s</td>
+<td><audio controls preload="none" src="voxcpm_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-omnivoice-cpu">
+<td class="num" data-sort="25">25</td>
+<td>OmniVoice</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="45422.9">45.42s</td>
+<td><audio controls preload="none" src="omnivoice_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-qwentts_fast-cuda">
+<td class="num" data-sort="26">26</td>
+<td>Qwen3-TTS 1.7B (CUDA-graph)</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="45620.5">45.62s</td>
+<td><audio controls preload="none" src="qwentts_fast_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-sesame-cpu">
+<td class="num" data-sort="27">27</td>
+<td>Sesame CSM-1B</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="58881.1">58.88s</td>
+<td><audio controls preload="none" src="sesame_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-f5tts-cpu">
+<td class="num" data-sort="28">28</td>
+<td>F5-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="59691.7">59.69s</td>
+<td><audio controls preload="none" src="f5tts_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-mars5-cpu">
+<td class="num" data-sort="29">29</td>
+<td>Mars5-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="90096.35">90.10s</td>
+<td><audio controls preload="none" src="mars5_cpu_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-mars5-cuda">
+<td class="num" data-sort="30">30</td>
+<td>Mars5-TTS</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="96207.95">96.21s</td>
+<td><audio controls preload="none" src="mars5_cuda_p4.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt" id="p5"><h2>Prompt 5</h2>
+<span class="prompt-text"><span class="lang">[fr]</span>"Bonjour, je m&#x27;appelle Cicero et je vais vous aider avec votre code aujourd&#x27;hui."</span>
+<table><thead><tr>
+<th class="num">Rank</th>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA warm</th>
+<th>Audio</th>
+</tr></thead><tbody>
+<tr id="sample-p5-pocket-cpu">
+<td class="num" data-sort="1">1</td>
+<td>Pocket-TTS</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="320.5">320ms</td>
+<td><audio controls preload="none" src="pocket_cpu_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-neutts_nano-cuda">
+<td class="num" data-sort="2">2</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="342.65">343ms</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-neutts_nano-cpu">
+<td class="num" data-sort="3">3</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="423.65">424ms</td>
+<td><audio controls preload="none" src="neutts_nano_cpu_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-coqui-cuda">
+<td class="num" data-sort="4">4</td>
+<td>Coqui XTTS-v2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="808.45">808ms</td>
+<td><audio controls preload="none" src="coqui_cuda_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-omnivoice-cuda">
+<td class="num" data-sort="5">5</td>
+<td>OmniVoice</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1326.05">1.33s</td>
+<td><audio controls preload="none" src="omnivoice_cuda_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-voxcpm-cuda">
+<td class="num" data-sort="6">6</td>
+<td>VoxCPM2 2B</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1372.8">1.37s</td>
+<td><audio controls preload="none" src="voxcpm_cuda_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-qwentts_fast-cuda">
+<td class="num" data-sort="7">7</td>
+<td>Qwen3-TTS 1.7B (CUDA-graph)</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1410.75">1.41s</td>
+<td><audio controls preload="none" src="qwentts_fast_cuda_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-moss_tts_nano-cuda">
+<td class="num" data-sort="8">8</td>
+<td>MOSS-TTS-Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="2062.4">2.06s</td>
+<td><audio controls preload="none" src="moss_tts_nano_cuda_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-moss_tts_nano-cpu">
+<td class="num" data-sort="9">9</td>
+<td>MOSS-TTS-Nano</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="3793.45">3.79s</td>
+<td><audio controls preload="none" src="moss_tts_nano_cpu_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-coqui-cpu">
+<td class="num" data-sort="10">10</td>
+<td>Coqui XTTS-v2</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="5994.45">5.99s</td>
+<td><audio controls preload="none" src="coqui_cpu_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-zipvoice-cpu">
+<td class="num" data-sort="11">11</td>
+<td>ZipVoice 123M</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="12854.05">12.85s</td>
+<td><audio controls preload="none" src="zipvoice_cpu_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-voxcpm-cpu">
+<td class="num" data-sort="12">12</td>
+<td>VoxCPM2 2B</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="18722.050000000003">18.72s</td>
+<td><audio controls preload="none" src="voxcpm_cpu_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-omnivoice-cpu">
+<td class="num" data-sort="13">13</td>
+<td>OmniVoice</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="42369.05">42.37s</td>
+<td><audio controls preload="none" src="omnivoice_cpu_p5.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<script>
+(function(){
+  // ---------- theme toggle ----------
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(name) {
+    document.documentElement.setAttribute('data-theme', name);
+    themeBtn.textContent = name === 'light' ? '☀ light' : '☾ dark';
+    try { localStorage.setItem('tts-bench-theme', name); } catch (e) {}
+  }
+  let stored = null;
+  try { stored = localStorage.getItem('tts-bench-theme'); } catch (e) {}
+  applyTheme(stored === 'light' ? 'light' : 'dark');
+  themeBtn.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- sort + filter ----------
+  const tables = document.querySelectorAll('table');
+  const filterInput = document.getElementById('filter');
+  const resetBtn = document.getElementById('reset-sort');
+  const sortState = { col: -1, dir: 0 };
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach(th => { th.dataset.label = th.textContent; });
+    table.querySelectorAll('tbody tr').forEach((row, i) => { row.dataset.origIdx = String(i); });
+  });
+
+  function applyFilter() {
+    const q = filterInput.value.toLowerCase().trim();
+    tables.forEach(t => {
+      t.querySelectorAll('tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+    });
+  }
+  filterInput.addEventListener('input', applyFilter);
+
+  function cellSortValue(row, colIdx) {
+    const cell = row.children[colIdx];
+    if (!cell) return Number.POSITIVE_INFINITY;
+    if (cell.hasAttribute('data-sort')) {
+      const raw = cell.getAttribute('data-sort');
+      if (raw === '' || raw === null) return Number.POSITIVE_INFINITY;
+      const v = parseFloat(raw);
+      return Number.isNaN(v) ? Number.POSITIVE_INFINITY : v;
+    }
+    return cell.textContent.toLowerCase();
+  }
+
+  function renderArrows() {
+    tables.forEach(t => {
+      t.querySelectorAll('thead th').forEach((th, i) => {
+        const arrow = (i === sortState.col && sortState.dir !== 0)
+                    ? (sortState.dir === 1 ? ' ▲' : ' ▼') : '';
+        th.textContent = th.dataset.label + arrow;
+      });
+    });
+  }
+
+  function restoreOrder() {
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => parseInt(a.dataset.origIdx) - parseInt(b.dataset.origIdx));
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  function sortAll(colIdx, explicitDir) {
+    if (explicitDir === 1 || explicitDir === -1) {
+      sortState.col = colIdx;
+      sortState.dir = explicitDir;
+    } else if (sortState.col === colIdx) {
+      sortState.dir = sortState.dir === 1 ? -1 : (sortState.dir === -1 ? 0 : 1);
+    } else {
+      sortState.col = colIdx;
+      sortState.dir = 1;
+    }
+    renderArrows();
+
+    if (sortState.dir === 0) {
+      restoreOrder();
+      return;
+    }
+
+    const dir = sortState.dir;
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const aSpan = a.querySelector('td[colspan]') !== null;
+        const bSpan = b.querySelector('td[colspan]') !== null;
+        if (aSpan !== bSpan) return aSpan ? 1 : -1;
+        const av = cellSortValue(a, colIdx);
+        const bv = cellSortValue(b, colIdx);
+        if (av < bv) return -dir;
+        if (av > bv) return dir;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach((th, idx) => {
+      th.addEventListener('click', () => sortAll(idx));
+    });
+  });
+
+  resetBtn.addEventListener('click', () => {
+    sortState.col = -1; sortState.dir = 0;
+    renderArrows();
+    restoreOrder();
+    filterInput.value = '';
+    applyFilter();
+  });
+
+  // Page-load default sort: pages can set window.__defaultSort = {colIdx, dir}
+  // (set in a tiny inline <script> earlier in the page).
+  if (window.__defaultSort &&
+      typeof window.__defaultSort.colIdx === 'number' &&
+      (window.__defaultSort.dir === 1 || window.__defaultSort.dir === -1)) {
+    sortAll(window.__defaultSort.colIdx, window.__defaultSort.dir);
+  }
+})();
+</script>
+</body></html>
