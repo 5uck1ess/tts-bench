@@ -228,7 +228,10 @@ if (-not (Test-Path "venvs\magpie\Scripts\python.exe")) {
     # do_tts(apply_TN=False) to avoid the pynini-using code path at inference.
     Invoke-Checked "uv pip install nemo_toolkit (core, no [tts])" { uv pip install --python venvs\magpie\Scripts\python.exe nemo_toolkit }
     # NeMo core deps (lightning pinned to <=2.4 per NeMo's requirements_lightning.txt).
-    Invoke-Checked "uv pip install nemo core deps" { uv pip install --python venvs\magpie\Scripts\python.exe hydra-core omegaconf "lightning>2.2.1,<=2.4.0" "pytorch-lightning>2.2.1,<=2.4.0" fiddle cloudpickle wrapt "ruamel.yaml" wget braceexpand webdataset huggingface_hub editdistance "jiwer>=3.1.0,<4.0.0" "peft<=0.18.0" wandb sacremoses "sentencepiece<1.0.0" "datasets>=3.2.0" inflect }
+    # Pin hydra-core>=1.3 + omegaconf>=2.3 — nemo_toolkit's default resolver picks
+    # hydra-core 1.0.7 / omegaconf 2.0.6 which trip on Python 3.11's stricter
+    # dataclass rules ("mutable default ... Override"). Same fix as f5tts/indextts.
+    Invoke-Checked "uv pip install nemo core deps" { uv pip install --python venvs\magpie\Scripts\python.exe "hydra-core>=1.3" "omegaconf>=2.3" "lightning>2.2.1,<=2.4.0" "pytorch-lightning>2.2.1,<=2.4.0" fiddle cloudpickle wrapt "ruamel.yaml" wget braceexpand webdataset huggingface_hub editdistance "jiwer>=3.1.0,<4.0.0" "peft<=0.18.0" wandb sacremoses "sentencepiece<1.0.0" "datasets>=3.2.0" inflect }
     Invoke-Checked "uv pip install nemo TTS safe deps" { uv pip install --python venvs\magpie\Scripts\python.exe attrdict "cdifflib==1.2.6" einops kornia librosa matplotlib nltk pandas seaborn }
     # NeMo telemetry trio - required at import time even if not used.
     Invoke-Checked "uv pip install nemo nv_one_logger telemetry" { uv pip install --python venvs\magpie\Scripts\python.exe nv_one_logger_core nv_one_logger_training_telemetry nv_one_logger_pytorch_lightning_integration }

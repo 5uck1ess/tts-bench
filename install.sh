@@ -280,7 +280,10 @@ if [ ! -x venvs/magpie/bin/python ]; then
     # and so the runner's do_tts(apply_TN=False) call path is consistent.
     uv pip install --python venvs/magpie/bin/python nemo_toolkit \
         || die "uv pip install nemo_toolkit"
-    uv pip install --python venvs/magpie/bin/python hydra-core omegaconf "lightning>2.2.1,<=2.4.0" "pytorch-lightning>2.2.1,<=2.4.0" fiddle cloudpickle wrapt "ruamel.yaml" wget braceexpand webdataset huggingface_hub editdistance "jiwer>=3.1.0,<4.0.0" "peft<=0.18.0" wandb sacremoses "sentencepiece<1.0.0" "datasets>=3.2.0" inflect \
+    # Pin hydra-core>=1.3 + omegaconf>=2.3 — nemo_toolkit's default resolver picks
+    # hydra-core 1.0.7 / omegaconf 2.0.6 which trip Python 3.11's stricter dataclass
+    # rules ("mutable default ... Override"). Same fix as f5tts/indextts.
+    uv pip install --python venvs/magpie/bin/python "hydra-core>=1.3" "omegaconf>=2.3" "lightning>2.2.1,<=2.4.0" "pytorch-lightning>2.2.1,<=2.4.0" fiddle cloudpickle wrapt "ruamel.yaml" wget braceexpand webdataset huggingface_hub editdistance "jiwer>=3.1.0,<4.0.0" "peft<=0.18.0" wandb sacremoses "sentencepiece<1.0.0" "datasets>=3.2.0" inflect \
         || die "uv pip install nemo core deps"
     uv pip install --python venvs/magpie/bin/python attrdict "cdifflib==1.2.6" einops kornia librosa matplotlib nltk pandas seaborn \
         || die "uv pip install nemo TTS safe deps"
