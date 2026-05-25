@@ -160,7 +160,7 @@ STYLE = """<style>
   .lens-card h3 { margin: 0 0 0.4rem 0; font-size: 1.1em; color: var(--accent); }
   .lens-card .desc { color: var(--muted); font-size: 0.9em; }
 
-  /* TLDR callout used by speed.html + quality.html */
+  /* TLDR callout used by speed.html */
   .tldr { background: var(--panel); border-left: 3px solid var(--accent);
           padding: 0.8rem 1.1rem; margin: 1rem 0 1.4rem; border-radius: 4px; }
   .tldr h2 { margin: 0 0 0.4rem 0; font-size: 1em; }
@@ -382,13 +382,50 @@ def _humanize_error(err):
     this device's memory, not that the rig broke."""
     e = (err or "").strip()
     low = e.lower()
+    if not e or e == "no successful run":
+        return "no successful run"
     if "outofmemory" in low or "out of memory" in low:
         if "cuda" in low or "gpu" in low:
             return "Skipped — out of GPU memory (model exceeds this GPU's VRAM)"
         return "Skipped — out of memory (model exceeds available RAM)"
-    if not e or e == "no successful run":
-        return "no successful run"
-    return f"FAIL: {e.splitlines()[0][:140]}"
+    if "timeout" in low and "s" in low:
+        # "timeout 600s" → 600
+        import re
+        m = re.search(r"timeout\s+(\d+)s", low)
+        if m:
+            secs = int(m.group(1))
+            return f"Timed out after {secs // 60} min — model too slow at this prompt length"
+        return "Timed out — model too slow at this prompt length"
+    if "torchcodec" in low or "libtorchcodec" in low:
+        return "Audio loader needs FFmpeg DLLs (not present on this platform)"
+    if "flash_attn" in low and ("not installed" in low or "no module" in low):
+        return "Needs flash_attn (no wheel for this Python/torch/OS combo)"
+    if "no module named" in low and "luxtts" in low or "no module named 'zipvoice'" in low:
+        return "LuxTTS install failed (piper-phonemize has no Windows wheels)"
+    if "no module named" in low:
+        import re
+        m = re.search(r"no module named ['\"]?([^'\"\s]+)['\"]?", low)
+        if m:
+            return f"Missing dependency '{m.group(1)}' — install incomplete on this platform"
+        return "Missing dependency — install incomplete on this platform"
+    if "repo id must use alphanumeric" in low:
+        return "transformers/Windows repo-id path bug (workaround pending)"
+    if "mutable default" in low and "override" in low:
+        return "hydra-core/omegaconf too old for Python 3.11 (deps need bump)"
+    if ("typeerror" in low and "'nonetype' object cannot be interpreted as an integer" in low):
+        return "Upstream config field missing — dep version mismatch"
+    if "cuda error" in low or "cuda runtime" in low:
+        return "CUDA runtime error — likely driver/version mismatch"
+    if "cuda requested but not available" in low:
+        return "CUDA not available on this rig"
+    if "mps requested but not available" in low:
+        return "MPS not available on this rig"
+    if "cuda only" in low or "cuda-only" in low:
+        return "Model is GPU-only — CPU/MPS not supported"
+    if "reference" in low and ("not found" in low or "missing" in low):
+        return "Reference wav missing for voice cloning"
+    # Fallback: surface the first line, trimmed.
+    return f"Failed: {e.splitlines()[0][:140]}"
 
 
 # Display sizes for the Size column. Numbers are the model's weight count
@@ -1038,7 +1075,7 @@ def _render_quality(ctx):
                     f'<tr id="{escape(row_id)}">'
                     f'<td>{escape(_display_name(model))}</td>'
                     f'<td class="{dev_class}">{escape(dev)}</td>'
-                    f'<td colspan="{len(cols)-2}" class="fail">FAIL: {escape(err.strip()[:140])}</td>'
+                    f'<td colspan="{len(cols)-2}" class="fail">{escape(_humanize_error(err))}</td>'
                     '</tr>'
                 )
                 continue
@@ -1107,6 +1144,22 @@ def _render_samples(ctx):
                f'one section per prompt · all models ranked by {rank_basis} within each</div>')
 
     out.append(_READING_GUIDE["samples"])
+
+    # Reference-voice player for cloning runs: each model in the table below
+    # is trying to imitate this voice, so the listener needs to hear it to
+    # judge fidelity. publish.py copies the source wav into the slug dir as
+    # `_reference.wav`; if absent (older runs / non-cloning runs) we skip.
+    ref_meta = (meta or {}).get("reference") if meta else None
+    if ref_meta and (ctx["run_dir"] / "_reference.wav").exists():
+        out.append(
+            '<div class="prompt" style="border-left: 3px solid var(--accent);">'
+            '<h2>Reference voice</h2>'
+            f'<div class="meta">Each model below was given this clip + transcript as the voice to imitate. '
+            f'Source: <code>{escape(ref_meta)}</code></div>'
+            '<audio controls preload="metadata" src="_reference.wav" '
+            'style="width: 100%; max-width: 480px;"></audio>'
+            '</div>'
+        )
 
     if len(prompts) > 3:
         out.append('<nav class="prompt-jumper">Jump to: ')

@@ -18,6 +18,7 @@ Usage:
 """
 
 import argparse
+import json
 import shutil
 import subprocess
 import sys
@@ -318,6 +319,22 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
     wavs = list(run_dir.glob("*.wav"))
     for wav in wavs:
         shutil.copy2(wav, dest)
+
+    # Cloning runs: copy the reference wav into the slug as `_reference.wav` so
+    # the samples page can include a "this is the voice we cloned" player at the
+    # top. meta.json stores the path the bench was invoked with, which is repo-
+    # relative; resolve from REPO if not absolute.
+    if meta_src.exists():
+        try:
+            meta_data = json.loads(meta_src.read_text(encoding="utf-8"))
+        except Exception:
+            meta_data = {}
+        ref_rel = meta_data.get("reference")
+        if ref_rel:
+            ref_path = Path(ref_rel) if Path(ref_rel).is_absolute() else REPO / ref_rel
+            if ref_path.exists():
+                shutil.copy2(ref_path, dest / "_reference.wav")
+
     total_bytes = sum(p.stat().st_size for p in dest.iterdir())
     has_meta = " + meta.json" if meta_src.exists() else ""
     print(f"Copied report.html + results.csv{has_meta} + {len(wavs)} wav(s) "
