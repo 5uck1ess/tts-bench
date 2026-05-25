@@ -32,7 +32,7 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from report import (
-    STYLE, CONTROLS, SCRIPT,
+    STYLE, CONTROLS, SCRIPT, SHOW_NAQ_PUBLIC,
     _ds, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
 )
 
@@ -195,11 +195,17 @@ def build_pages_index():
            CONTROLS,
            LOGO_HEADER,
            '<h1>Published Runs</h1>',
-           '<div class="meta">Open-source TTS models benchmarked side-by-side: '
-           '<strong>speed</strong> (TTFA, RTF) and <strong>voice cloning</strong>. '
-           'Each run has inline audio so you can listen '
-           'to every model × prompt without downloading. '
-           '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>',
+           ('<div class="meta">Open-source TTS models benchmarked side-by-side. Three axes: '
+            '<strong>speed</strong> (TTFA, RTF), <strong>quality</strong> (NAQ), '
+            '<strong>voice cloning</strong>. Each run has inline audio so you can listen '
+            'to every model × prompt without downloading. '
+            '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>'
+            if SHOW_NAQ_PUBLIC else
+            '<div class="meta">Open-source TTS models benchmarked side-by-side: '
+            '<strong>speed</strong> (TTFA, RTF) and <strong>voice cloning</strong>. '
+            'Each run has inline audio so you can listen to every model × prompt '
+            'without downloading. '
+            '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>'),
            f'<div class="meta">{len(runs)} published run(s)</div>',
            '<table><thead><tr>']
     for col in ("Date", "Label", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
@@ -228,13 +234,11 @@ def build_pages_index():
         out.append(f"<td class='num'{_ds(r['rows'])}>{r['rows']}</td>")
         out.append(f"<td class='num'{_ds(r['ok'])}>{r['ok']}/{r['rows']}</td>")
         if r.get("has_index"):
-            out.append(
-                f'<td>'
-                f'<a href="{escape(r["name"])}/speed.html">speed</a> · '
-                f'<a href="{escape(r["name"])}/quality.html">quality</a> · '
-                f'<a href="{escape(r["name"])}/samples.html">samples</a>'
-                f'</td>'
-            )
+            parts = [f'<a href="{escape(r["name"])}/speed.html">speed</a>']
+            if SHOW_NAQ_PUBLIC:
+                parts.append(f'<a href="{escape(r["name"])}/quality.html">quality</a>')
+            parts.append(f'<a href="{escape(r["name"])}/samples.html">samples</a>')
+            out.append(f'<td>{" · ".join(parts)}</td>')
         else:
             out.append(f'<td><a href="{escape(r["name"])}/report.html">view (legacy)</a></td>')
         out.append('</tr>')
