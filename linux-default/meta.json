@@ -1,0 +1,17 @@
+{
+  "rig": "linux-3090",
+  "os": "Linux 6.8.0-117-generic",
+  "os_version": "#117-Ubuntu SMP PREEMPT_DYNAMIC Tue May  5 19:26:24 UTC 2026",
+  "python": "3.11.15",
+  "cpu": "AMD Ryzen 9 5900XT 16-Core Processor",
+  "cpu_cores_logical": 32,
+  "cpu_cores_physical": null,
+  "ram_gb": 63,
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "gpu_vram_gb": 24,
+  "captured_at": "2026-05-24T22:15:27Z",
+  "label": "default voice",
+  "reference": null,
+  "models_filter": null,
+  "prompts_filter": null
+}
