@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>TTS Bench — Speed — mac-default</title>
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #1a1a1a;
+    --panel: #242424;
+    --text: #e0e0e0;
+    --muted: #888;
+    --accent: #6cf;
+    --num: #cfc;
+    --fail: #f88;
+    --border: #333;
+    --row-hover: #2a2a2a;
+    --th-bg: #2c2c2c;
+    --th-hover: #353535;
+    --input-bg: #2a2a2a;
+    --input-border: #444;
+    --controls-border: #2a2a2a;
+    --dev-cpu: #ddd;
+    --dev-cuda: #9cf;
+    --dev-mps: #fc9;
+    --lang: #6cf;
+    --prompt-text: #9c9;
+    --code-bg: #2a2a2a;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --text: #1a1d22;
+    --muted: #6b7280;
+    --accent: #1a73e8;
+    --num: #137333;
+    --fail: #c5221f;
+    --border: #e2e6eb;
+    --row-hover: #f0f4f8;
+    --th-bg: #eef1f4;
+    --th-hover: #e2e6eb;
+    --input-bg: #ffffff;
+    --input-border: #cdd3da;
+    --controls-border: #e2e6eb;
+    --dev-cpu: #555;
+    --dev-cuda: #1a73e8;
+    --dev-mps: #c2410c;
+    --lang: #1a73e8;
+    --prompt-text: #2d6a4f;
+    --code-bg: #eef1f4;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+         background: var(--bg); color: var(--text);
+         margin: 0; padding: 1.5rem 2rem 3rem;
+         max-width: 1400px; margin-inline: auto;
+         transition: background 0.15s, color 0.15s; }
+  h1, h2 { color: var(--text); margin-top: 0; }
+  h1 { font-size: 1.5em; }
+  h2 { font-size: 1.05em; }
+  .meta { color: var(--muted); font-size: 0.88em; margin-bottom: 0.4rem; }
+  .prompt { background: var(--panel); padding: 1rem 1.2rem;
+            border-radius: 10px; margin-bottom: 1.4rem;
+            border: 1px solid var(--border); }
+  .prompt-text { color: var(--prompt-text); font-style: italic;
+                 display: block; margin: 0.2rem 0 0.8rem 0; }
+  .lang { color: var(--lang); font-style: normal; margin-right: 0.4rem;
+          font-weight: 500; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { padding: 7px 10px; text-align: left;
+           border-bottom: 1px solid var(--border); }
+  th { background: var(--th-bg); color: var(--text);
+       cursor: pointer; user-select: none; white-space: nowrap;
+       font-weight: 600; }
+  th:hover { background: var(--th-hover); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums;
+           color: var(--num); }
+  th.num { text-align: right; }
+  td.fail { color: var(--fail); font-style: italic; }
+  td.dev-cuda { color: var(--dev-cuda); }
+  td.dev-mps  { color: var(--dev-mps); }
+  td.dev-cpu  { color: var(--dev-cpu); }
+  .muted { color: var(--muted); }
+  audio { width: 220px; height: 30px; vertical-align: middle; }
+  tr:hover td { background: var(--row-hover); }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px;
+         font-size: 0.92em; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .nav { margin-bottom: 0.6rem; }
+  .controls { position: sticky; top: 0; background: var(--bg); z-index: 10;
+              padding: 0.7rem 0 0.7rem; margin-bottom: 1rem;
+              display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+              border-bottom: 1px solid var(--controls-border); }
+  .controls input { background: var(--input-bg); color: var(--text);
+                    border: 1px solid var(--input-border);
+                    border-radius: 6px; padding: 7px 11px; font: inherit;
+                    min-width: 320px; }
+  .controls input:focus { outline: none; border-color: var(--accent); }
+  .controls .hint { color: var(--muted); font-size: 0.85em; }
+  .controls button { background: var(--input-bg); color: var(--text);
+                     border: 1px solid var(--input-border);
+                     border-radius: 6px; padding: 6px 12px; font: inherit;
+                     cursor: pointer; transition: border-color 0.15s; }
+  .controls button:hover { border-color: var(--accent); }
+  .spacer { flex: 1; }
+
+  /* Lens picker grid */
+  .lens-grid { display: grid; grid-template-columns: repeat(3, 1fr);
+               gap: 1rem; margin: 1.5rem 0; }
+  @media (max-width: 760px) { .lens-grid { grid-template-columns: 1fr; } }
+  .lens-card { background: var(--panel); border: 1px solid var(--border);
+               border-radius: 10px; padding: 1.2rem 1.4rem;
+               transition: border-color 0.15s; }
+  .lens-card:hover { border-color: var(--accent); }
+  .lens-card a { display: block; text-decoration: none; color: var(--text); }
+  .lens-card h3 { margin: 0 0 0.4rem 0; font-size: 1.1em; color: var(--accent); }
+  .lens-card .desc { color: var(--muted); font-size: 0.9em; }
+
+  /* TLDR callout used by speed.html + quality.html */
+  .tldr { background: var(--panel); border-left: 3px solid var(--accent);
+          padding: 0.8rem 1.1rem; margin: 1rem 0 1.4rem; border-radius: 4px; }
+  .tldr h2 { margin: 0 0 0.4rem 0; font-size: 1em; }
+  .tldr p { margin: 0.2rem 0; color: var(--text); }
+  .tldr strong { color: var(--accent); }
+
+  /* Secondary-axis "badge" pill cells */
+  td.pill { font-size: 0.82em; color: var(--muted); }
+  td.pill[data-sort] { font-variant-numeric: tabular-nums; }
+  td.pill a { color: inherit; }
+
+  /* Prompt jumper for samples.html */
+  .prompt-jumper { position: sticky; top: 3rem; background: var(--bg);
+                   padding: 0.4rem 0; margin-bottom: 0.8rem;
+                   border-bottom: 1px solid var(--border); font-size: 0.9em; }
+  .prompt-jumper a { margin-right: 0.6rem; }
+
+  /* Lens-to-lens nav tabs at top of each lens page */
+  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem;
+               align-items: center; }
+  .lens-tab { display: inline-block; padding: 4px 12px; border-radius: 6px;
+              border: 1px solid var(--border); color: var(--text);
+              text-decoration: none; font-size: 0.92em;
+              transition: border-color 0.15s, background 0.15s; }
+  .lens-tab:hover { border-color: var(--accent); text-decoration: none; }
+  .lens-tab.active { background: var(--accent); color: var(--bg);
+                     border-color: var(--accent); }
+  .lens-arrow { display: inline-block; padding: 4px 10px; border-radius: 6px;
+                border: 1px solid var(--border); color: var(--muted);
+                text-decoration: none; font-size: 0.92em;
+                transition: border-color 0.15s, color 0.15s; }
+  .lens-arrow:hover { border-color: var(--accent); color: var(--accent);
+                      text-decoration: none; }
+  .lens-arrow-disabled { opacity: 0.35; cursor: default;
+                         border-style: dashed; }
+  .lens-arrow-disabled:hover { border-color: var(--border); color: var(--muted); }
+
+  /* "Reading this report" explainer above tables */
+  .reading-guide { background: var(--panel); border-left: 3px solid var(--muted);
+                   padding: 0.55rem 0.9rem; margin: 0.7rem 0 1rem;
+                   border-radius: 4px; font-size: 0.88em; color: var(--text); }
+  .reading-guide strong { color: var(--accent); }
+  .reading-guide a { color: var(--accent); }
+</style>
+</head><body>
+<div class="controls">
+<input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
+<button type="button" id="reset-sort">reset sort</button>
+<span class="hint">click any column header to sort</span>
+<span class="spacer"></span>
+<button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
+</div>
+<div class="nav"><span class="lens-tabs"><span class="lens-arrow lens-arrow-disabled">← </span><a class="lens-tab active" href="speed.html">Speed</a><a class="lens-tab" href="samples.html">Samples</a><a class="lens-arrow" href="samples.html" title="Next lens: Samples">Samples →</a></span> · <a href="../index.html">all runs</a></div>
+<h1>TTS Bench — Speed — mac-default</h1>
+<div class="meta"><strong>Rig:</strong> <code>mac-m4</code> — Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0</div>
+<div class="meta"><strong>Label:</strong> default voice</div>
+<div class="reading-guide"><strong>TTFA</strong> = time to first audio (ms; lower is better). <strong>RTF</strong> = real-time factor (× realtime; higher is better; e.g. 10× means 10 sec of audio generated per 1 sec of compute). <strong>Cold</strong> = first run after process start; <strong>warm</strong> = subsequent runs.</div>
+<div class="tldr"><h2>Speed winners</h2>
+<p>Fastest predefined-voice: <strong>Piper</strong> (cpu) — 32.14× warm RTF, 208ms warm TTFA</p>
+<p>Fastest cloning-capable: <strong>Pocket-TTS</strong> (cpu) — 7.82× warm RTF, 44ms warm TTFA</p>
+</div>
+<table><thead><tr>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA cold</th>
+<th class="num">TTFA warm</th>
+<th class="num">RTF cold</th>
+<th class="num">RTF warm</th>
+<th class="num">Peak RAM</th>
+<th class="num">Peak VRAM</th>
+<th>Size</th>
+</tr></thead><tbody>
+<tr id="speed-piper-cpu">
+<td>Piper</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="228.1">228ms</td>
+<td class="num" data-sort="207.68">208ms</td>
+<td class="num" data-sort="27.467545709806284">27.47×</td>
+<td class="num" data-sort="32.144479528212415">32.14×</td>
+<td class="num" data-sort="560.6">561 MB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">~25MB</td>
+</tr>
+<tr id="speed-kokoro-mps">
+<td>Kokoro</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="919.5">920ms</td>
+<td class="num" data-sort="489.36">489ms</td>
+<td class="num" data-sort="7.583917252775954">7.58×</td>
+<td class="num" data-sort="15.280360827342943">15.28×</td>
+<td class="num" data-sort="1288.8">1.26 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">82M</td>
+</tr>
+<tr id="speed-kokoro-cpu">
+<td>Kokoro</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="913.8">914ms</td>
+<td class="num" data-sort="748.62">749ms</td>
+<td class="num" data-sort="7.7757904856671445">7.78×</td>
+<td class="num" data-sort="10.041998828077446">10.04×</td>
+<td class="num" data-sort="2547.2">2.49 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">82M</td>
+</tr>
+<tr id="speed-kittentts-cpu">
+<td>KittenTTS</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="994.0">994ms</td>
+<td class="num" data-sort="1009.8875">1.01s</td>
+<td class="num" data-sort="8.09843984304633">8.10×</td>
+<td class="num" data-sort="8.081079601819305">8.08×</td>
+<td class="num" data-sort="385.1">385 MB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">&lt;100M</td>
+</tr>
+<tr id="speed-pocket-cpu">
+<td>Pocket-TTS</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="89.2">89ms</td>
+<td class="num" data-sort="43.589999999999996">44ms</td>
+<td class="num" data-sort="7.5033584973674206">7.50×</td>
+<td class="num" data-sort="7.823738142830213">7.82×</td>
+<td class="num" data-sort="1732.3">1.69 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">100M</td>
+</tr>
+<tr id="speed-soprano-cpu">
+<td>Soprano 80M</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="912.075">912ms</td>
+<td class="num" data-sort="906.1125">906ms</td>
+<td class="num" data-sort="7.14744725027326">7.15×</td>
+<td class="num" data-sort="7.154474777499389">7.15×</td>
+<td class="num" data-sort="1213.4">1.18 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">80M</td>
+</tr>
+<tr id="speed-soprano-mps">
+<td>Soprano 80M</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="2482.85">2.48s</td>
+<td class="num" data-sort="1304.2125">1.30s</td>
+<td class="num" data-sort="2.764975187843381">2.76×</td>
+<td class="num" data-sort="5.16363644948598">5.16×</td>
+<td class="num" data-sort="1682.4">1.64 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">80M</td>
+</tr>
+<tr id="speed-supertonic-cpu">
+<td>Supertonic</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="1860.28">1.86s</td>
+<td class="num" data-sort="1574.8799999999999">1.57s</td>
+<td class="num" data-sort="4.175201214098117">4.18×</td>
+<td class="num" data-sort="4.8124090962575305">4.81×</td>
+<td class="num" data-sort="968.2">968 MB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">99M</td>
+</tr>
+<tr id="speed-neutts_nano-cpu">
+<td>NeuTTS Nano</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="740.1600000000001">740ms</td>
+<td class="num" data-sort="265.95">266ms</td>
+<td class="num" data-sort="2.302755346721441">2.30×</td>
+<td class="num" data-sort="3.1008727686100857">3.10×</td>
+<td class="num" data-sort="5974.1">5.83 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">748M</td>
+</tr>
+<tr id="speed-neutts_nano-mps">
+<td>NeuTTS Nano</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="1450.16">1.45s</td>
+<td class="num" data-sort="463.65">464ms</td>
+<td class="num" data-sort="1.81269274883002">1.81×</td>
+<td class="num" data-sort="2.957046843162341">2.96×</td>
+<td class="num" data-sort="1309.4">1.28 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">748M</td>
+</tr>
+<tr id="speed-neutts_air-cpu">
+<td>NeuTTS Air</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="1380.25">1.38s</td>
+<td class="num" data-sort="358.425">358ms</td>
+<td class="num" data-sort="1.5470443850114568">1.55×</td>
+<td class="num" data-sort="2.1590877264566064">2.16×</td>
+<td class="num" data-sort="6264.0">6.12 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">748M</td>
+</tr>
+<tr id="speed-neutts_air-mps">
+<td>NeuTTS Air</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="2319.75">2.32s</td>
+<td class="num" data-sort="583.15">583ms</td>
+<td class="num" data-sort="1.2975835100097421">1.30×</td>
+<td class="num" data-sort="2.0811259764072596">2.08×</td>
+<td class="num" data-sort="1590.3">1.55 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">748M</td>
+</tr>
+<tr id="speed-coqui-mps">
+<td>Coqui XTTS-v2</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="17809.82">17.81s</td>
+<td class="num" data-sort="7823.719999999999">7.82s</td>
+<td class="num" data-sort="1.1394730056431612">1.14×</td>
+<td class="num" data-sort="1.6993743616837675">1.70×</td>
+<td class="num" data-sort="1886.4">1.84 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">750M</td>
+</tr>
+<tr id="speed-chatterbox_turbo-mps">
+<td>Chatterbox Turbo</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="9953.025">9.95s</td>
+<td class="num" data-sort="5065.1875">5.07s</td>
+<td class="num" data-sort="0.7452475277306978">0.75×</td>
+<td class="num" data-sort="1.4420036968466257">1.44×</td>
+<td class="num" data-sort="2351.0">2.30 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">744M</td>
+</tr>
+<tr id="speed-coqui-cpu">
+<td>Coqui XTTS-v2</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="6009.92">6.01s</td>
+<td class="num" data-sort="5479.09">5.48s</td>
+<td class="num" data-sort="1.4109250729836182">1.41×</td>
+<td class="num" data-sort="1.4258259149043435">1.43×</td>
+<td class="num" data-sort="4722.7">4.61 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">750M</td>
+</tr>
+<tr id="speed-chatterbox_turbo-cpu">
+<td>Chatterbox Turbo</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="6528.2">6.53s</td>
+<td class="num" data-sort="6445.825">6.45s</td>
+<td class="num" data-sort="1.0741715894337425">1.07×</td>
+<td class="num" data-sort="1.1353017618565573">1.14×</td>
+<td class="num" data-sort="4911.7">4.80 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">744M</td>
+</tr>
+<tr id="speed-vibevoice-mps">
+<td>VibeVoice Realtime 0.5B</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="9560.1">9.56s</td>
+<td class="num" data-sort="8304.6">8.30s</td>
+<td class="num" data-sort="0.9764518217237048">0.98×</td>
+<td class="num" data-sort="1.1260076447361724">1.13×</td>
+<td class="num" data-sort="837.8">838 MB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">0.5B</td>
+</tr>
+<tr id="speed-omnivoice-mps">
+<td>OmniVoice <span class="muted">(4/5 ok)</span></td><td class="dev-mps">mps</td>
+<td class="num" data-sort="5258.55">5.26s</td>
+<td class="num" data-sort="5059.3125">5.06s</td>
+<td class="num" data-sort="0.8325068804032238">0.83×</td>
+<td class="num" data-sort="0.9048506984933877">0.90×</td>
+<td class="num" data-sort="981.4">981 MB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">~1B</td>
+</tr>
+<tr id="speed-omnivoice-cpu">
+<td>OmniVoice</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="13289.74">13.29s</td>
+<td class="num" data-sort="11227.31">11.23s</td>
+<td class="num" data-sort="0.4657057219466051">0.47×</td>
+<td class="num" data-sort="0.5741238368661461">0.57×</td>
+<td class="num" data-sort="3676.5">3.59 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">~1B</td>
+</tr>
+<tr id="speed-magpie-cpu">
+<td>Magpie-TTS</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="25550.6">25.55s</td>
+<td class="num" data-sort="26193.68">26.19s</td>
+<td class="num" data-sort="0.3976712449873004">0.40×</td>
+<td class="num" data-sort="0.3995429856346361">0.40×</td>
+<td class="num" data-sort="4806.1">4.69 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">357M</td>
+</tr>
+<tr id="speed-chatterbox-cpu">
+<td>Chatterbox</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="18765.65">18.77s</td>
+<td class="num" data-sort="17077.4875">17.08s</td>
+<td class="num" data-sort="0.32696339824637155">0.33×</td>
+<td class="num" data-sort="0.3695991096248671">0.37×</td>
+<td class="num" data-sort="4941.7">4.83 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">1.2B</td>
+</tr>
+<tr id="speed-vibevoice-cpu">
+<td>VibeVoice Realtime 0.5B</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="25448.8">25.45s</td>
+<td class="num" data-sort="25099.9875">25.10s</td>
+<td class="num" data-sort="0.3763804125474914">0.38×</td>
+<td class="num" data-sort="0.3628467774005945">0.36×</td>
+<td class="num" data-sort="3245.9">3.17 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">0.5B</td>
+</tr>
+<tr id="speed-chatterbox-mps">
+<td>Chatterbox</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="25954.725">25.95s</td>
+<td class="num" data-sort="31347.3375">31.35s</td>
+<td class="num" data-sort="0.2656212100485603">0.27×</td>
+<td class="num" data-sort="0.29428496596796044">0.29×</td>
+<td class="num" data-sort="697.9">698 MB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">1.2B</td>
+</tr>
+<tr id="speed-qwentts-cpu">
+<td>Qwen3-TTS 1.7B</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="24523.66">24.52s</td>
+<td class="num" data-sort="25111.83">25.11s</td>
+<td class="num" data-sort="0.24634056624504677">0.25×</td>
+<td class="num" data-sort="0.24171272975612373">0.24×</td>
+<td class="num" data-sort="4021.3">3.93 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">1.7B</td>
+</tr>
+<tr id="speed-sesame-cpu">
+<td>Sesame CSM-1B</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="38670.0">38.67s</td>
+<td class="num" data-sort="31300.8125">31.30s</td>
+<td class="num" data-sort="0.1921550510140663">0.19×</td>
+<td class="num" data-sort="0.23729920899994256">0.24×</td>
+<td class="num" data-sort="6226.6">6.08 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">1B</td>
+</tr>
+<tr id="speed-voxcpm-cpu">
+<td>VoxCPM2 2B</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="28361.1">28.36s</td>
+<td class="num" data-sort="52127.89">52.13s</td>
+<td class="num" data-sort="0.2918958048948357">0.29×</td>
+<td class="num" data-sort="0.1688755280097076">0.17×</td>
+<td class="num" data-sort="143.9">144 MB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">2B</td>
+</tr>
+<tr id="speed-indextts-cpu">
+<td>IndexTTS-2</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="80003.05">80.00s</td>
+<td class="num" data-sort="48397.0125">48.40s</td>
+<td class="num" data-sort="0.0776400475947954">0.08×</td>
+<td class="num" data-sort="0.144219694535195">0.14×</td>
+<td class="num" data-sort="317.7">318 MB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">1.5B</td>
+</tr>
+<tr id="speed-f5tts-mps">
+<td>F5-TTS</td><td class="dev-mps">mps</td>
+<td class="num" data-sort="45425.725">45.43s</td>
+<td class="num" data-sort="45541.45">45.54s</td>
+<td class="num" data-sort="0.09435144645483873">0.09×</td>
+<td class="num" data-sort="0.09411331454139989">0.09×</td>
+<td class="num" data-sort="1321.9">1.29 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">330M</td>
+</tr>
+<tr id="speed-f5tts-cpu">
+<td>F5-TTS</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="47263.55">47.26s</td>
+<td class="num" data-sort="47151.225">47.15s</td>
+<td class="num" data-sort="0.09099924525238894">0.09×</td>
+<td class="num" data-sort="0.09122203210397516">0.09×</td>
+<td class="num" data-sort="3392.9">3.31 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">330M</td>
+</tr>
+<tr id="speed-luxtts-cpu"><td>LuxTTS</td><td class="dev-cpu">cpu</td><td colspan="7" class="fail">FAIL: load failed: ModuleNotFoundError: No module named &#x27;luxtts&#x27;</td></tr>
+<tr id="speed-luxtts-mps"><td>LuxTTS</td><td class="dev-mps">mps</td><td colspan="7" class="fail">FAIL: load failed: ModuleNotFoundError: No module named &#x27;luxtts&#x27;</td></tr>
+<tr id="speed-zipvoice-cpu"><td>ZipVoice 123M</td><td class="dev-cpu">cpu</td><td colspan="7" class="fail">FAIL: reference transcript missing: expected /Users/anotherlostsoul/Documents/LocalDev/tts-bench/reference/chris_hemsworth_15s.txt</td></tr>
+<tr id="speed-zipvoice-mps"><td>ZipVoice 123M</td><td class="dev-mps">mps</td><td colspan="7" class="fail">FAIL: reference transcript missing: expected /Users/anotherlostsoul/Documents/LocalDev/tts-bench/reference/chris_hemsworth_15s.txt</td></tr>
+<tr id="speed-mars5-cpu"><td>Mars5-TTS</td><td class="dev-cpu">cpu</td><td colspan="7" class="fail">FAIL: timeout 600s</td></tr>
+<tr id="speed-vibevoice_15b-cpu"><td>VibeVoice 1.5B</td><td class="dev-cpu">cpu</td><td colspan="7" class="fail">FAIL: load failed: FileNotFoundError: Voice reference wav not found: /Users/anotherlostsoul/Documents/LocalDev/tts-bench/reference/chris_hemsworth</td></tr>
+<tr id="speed-vibevoice_15b-mps"><td>VibeVoice 1.5B</td><td class="dev-mps">mps</td><td colspan="7" class="fail">FAIL: load failed: RuntimeError: Invalid buffer size: 10.94 GiB</td></tr>
+</tbody></table>
+<script>window.__defaultSort = {colIdx: 5, dir: -1};</script>
+<script>
+(function(){
+  // ---------- theme toggle ----------
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(name) {
+    document.documentElement.setAttribute('data-theme', name);
+    themeBtn.textContent = name === 'light' ? '☀ light' : '☾ dark';
+    try { localStorage.setItem('tts-bench-theme', name); } catch (e) {}
+  }
+  let stored = null;
+  try { stored = localStorage.getItem('tts-bench-theme'); } catch (e) {}
+  applyTheme(stored === 'light' ? 'light' : 'dark');
+  themeBtn.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- sort + filter ----------
+  const tables = document.querySelectorAll('table');
+  const filterInput = document.getElementById('filter');
+  const resetBtn = document.getElementById('reset-sort');
+  const sortState = { col: -1, dir: 0 };
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach(th => { th.dataset.label = th.textContent; });
+    table.querySelectorAll('tbody tr').forEach((row, i) => { row.dataset.origIdx = String(i); });
+  });
+
+  function applyFilter() {
+    const q = filterInput.value.toLowerCase().trim();
+    tables.forEach(t => {
+      t.querySelectorAll('tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+    });
+  }
+  filterInput.addEventListener('input', applyFilter);
+
+  function cellSortValue(row, colIdx) {
+    const cell = row.children[colIdx];
+    if (!cell) return Number.POSITIVE_INFINITY;
+    if (cell.hasAttribute('data-sort')) {
+      const raw = cell.getAttribute('data-sort');
+      if (raw === '' || raw === null) return Number.POSITIVE_INFINITY;
+      const v = parseFloat(raw);
+      return Number.isNaN(v) ? Number.POSITIVE_INFINITY : v;
+    }
+    return cell.textContent.toLowerCase();
+  }
+
+  function renderArrows() {
+    tables.forEach(t => {
+      t.querySelectorAll('thead th').forEach((th, i) => {
+        const arrow = (i === sortState.col && sortState.dir !== 0)
+                    ? (sortState.dir === 1 ? ' ▲' : ' ▼') : '';
+        th.textContent = th.dataset.label + arrow;
+      });
+    });
+  }
+
+  function restoreOrder() {
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => parseInt(a.dataset.origIdx) - parseInt(b.dataset.origIdx));
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  function sortAll(colIdx, explicitDir) {
+    if (explicitDir === 1 || explicitDir === -1) {
+      sortState.col = colIdx;
+      sortState.dir = explicitDir;
+    } else if (sortState.col === colIdx) {
+      sortState.dir = sortState.dir === 1 ? -1 : (sortState.dir === -1 ? 0 : 1);
+    } else {
+      sortState.col = colIdx;
+      sortState.dir = 1;
+    }
+    renderArrows();
+
+    if (sortState.dir === 0) {
+      restoreOrder();
+      return;
+    }
+
+    const dir = sortState.dir;
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const aSpan = a.querySelector('td[colspan]') !== null;
+        const bSpan = b.querySelector('td[colspan]') !== null;
+        if (aSpan !== bSpan) return aSpan ? 1 : -1;
+        const av = cellSortValue(a, colIdx);
+        const bv = cellSortValue(b, colIdx);
+        if (av < bv) return -dir;
+        if (av > bv) return dir;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach((th, idx) => {
+      th.addEventListener('click', () => sortAll(idx));
+    });
+  });
+
+  resetBtn.addEventListener('click', () => {
+    sortState.col = -1; sortState.dir = 0;
+    renderArrows();
+    restoreOrder();
+    filterInput.value = '';
+    applyFilter();
+  });
+
+  // Page-load default sort: pages can set window.__defaultSort = {colIdx, dir}
+  // (set in a tiny inline <script> earlier in the page).
+  if (window.__defaultSort &&
+      typeof window.__defaultSort.colIdx === 'number' &&
+      (window.__defaultSort.dir === 1 || window.__defaultSort.dir === -1)) {
+    sortAll(window.__defaultSort.colIdx, window.__defaultSort.dir);
+  }
+})();
+</script>
+</body></html>
