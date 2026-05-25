@@ -163,6 +163,11 @@ if [ ! -x venvs/f5tts/bin/python ]; then
     # Mac/Linux generally have FFmpeg DLLs available, but consistency helps.
     uv pip install --python venvs/f5tts/bin/python "datasets<3.0" \
         || die "uv pip install datasets"
+    # f5-tts pins hydra-core 1.0.7 + omegaconf 2.0.6 which trip on Python 3.11's
+    # stricter dataclass rules (mutable default ValueError). Bump to versions
+    # that accept frozen field types.
+    uv pip install --python venvs/f5tts/bin/python --upgrade "hydra-core>=1.3" "omegaconf>=2.3" \
+        || die "uv pip install hydra-core/omegaconf upgrade"
     green "f5tts: ok (GPU-targeted — expect <0.1x RTF on CPU)"
 else
     echo "f5tts: already installed"
@@ -340,6 +345,11 @@ if [ ! -x venvs/indextts/bin/python ]; then
     fi
     uv pip install --python venvs/indextts/bin/python -e venvs/indextts/src soundfile numpy huggingface_hub \
         || die "uv pip install indextts source"
+    # IndexTTS-2 transitively pins omegaconf 2.0.6 (returns None for missing
+    # keys instead of raising AttributeError, breaking RepCodec init) and a
+    # protobuf >= 4 wheel that conflicts with its own legacy _pb2 stubs.
+    uv pip install --python venvs/indextts/bin/python --upgrade "omegaconf>=2.3" "protobuf<3.21" \
+        || die "uv pip install indextts omegaconf/protobuf pins"
     green "indextts: ok (zero-shot cloning, wav only, weights auto-download from HF on first use)"
 else
     echo "indextts: already installed"

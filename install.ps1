@@ -124,6 +124,10 @@ if (-not (Test-Path "venvs\f5tts\Scripts\python.exe")) {
     # torchcodec via its audio feature. Pin datasets<3.0 and the runner
     # monkey-patches torchaudio.load to use soundfile directly.
     Invoke-Checked "datasets<3.0 (avoid torchcodec import)" { uv pip install --python venvs\f5tts\Scripts\python.exe "datasets<3.0" }
+    # f5-tts pins hydra-core 1.0.7 + omegaconf 2.0.6 which trip on Python 3.11's
+    # stricter dataclass rules (mutable default ValueError). Bump to versions
+    # that accept frozen field types.
+    Invoke-Checked "hydra-core/omegaconf py3.11 fix" { uv pip install --python venvs\f5tts\Scripts\python.exe --upgrade "hydra-core>=1.3" "omegaconf>=2.3" }
     Write-Host "f5tts: ok (GPU-targeted - expect under 0.1x RTF on CPU)" -ForegroundColor Green
 } else {
     Write-Host "f5tts: already installed" -ForegroundColor Gray
@@ -290,6 +294,10 @@ if (-not (Test-Path "venvs\indextts\Scripts\python.exe")) {
     Invoke-Checked "uv pip install indextts source" { uv pip install --python venvs\indextts\Scripts\python.exe -e venvs\indextts\src soundfile numpy huggingface_hub }
     # cu128 wheels for Blackwell (RTX 5090, sm_120).
     Invoke-Checked "torch cu128 for indextts" { uv pip install --python venvs\indextts\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    # IndexTTS-2 transitively pins omegaconf 2.0.6 (returns None for missing
+    # keys instead of raising AttributeError, breaking RepCodec init) and a
+    # protobuf >= 4 wheel that conflicts with its own legacy _pb2 stubs.
+    Invoke-Checked "omegaconf 2.3 + protobuf 3.20 for indextts" { uv pip install --python venvs\indextts\Scripts\python.exe --upgrade "omegaconf>=2.3" "protobuf<3.21" }
     Write-Host "indextts: ok (zero-shot cloning, wav only, weights auto-download from HF on first use)" -ForegroundColor Green
 } else {
     Write-Host "indextts: already installed" -ForegroundColor Gray

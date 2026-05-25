@@ -90,7 +90,19 @@ def main() -> int:
         import torch
         import numpy as np
         import soundfile as sf
+        import torchaudio
         from dia.model import Dia, DEFAULT_SAMPLE_RATE
+
+        # Dia loads audio_prompt via torchaudio.load(), which on torch>=2.9
+        # routes through torchcodec — torchcodec's DLL can't load on Windows
+        # without FFmpeg on PATH. Monkey-patch with a soundfile fallback that
+        # returns the (Tensor[C,T], sr) shape torchaudio.load promises.
+        def _sf_load(path, channels_first=True, **_kwargs):
+            data, sr = sf.read(str(path), always_2d=True)  # (T, C) float64
+            tensor = torch.from_numpy(data.T.astype(np.float32))  # (C, T)
+            return (tensor if channels_first else tensor.T, sr)
+
+        torchaudio.load = _sf_load
 
         device = args.device if args.device in ("cpu", "cuda") else "cuda"
 
