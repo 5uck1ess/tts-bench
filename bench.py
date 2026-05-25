@@ -257,6 +257,10 @@ def main() -> int:
     print(f"Plan: {len(selected_prompts)} prompts × {len(cells)} cells × {args.runs} runs/cell\n")
 
     rows = []
+    # Cells that exhausted the per-cell wall once: a model too slow to finish a
+    # prompt within the timeout won't finish later (usually longer) prompts
+    # either, so skip it instead of re-paying a full timeout every prompt.
+    timed_out: set[tuple[str, str]] = set()
     fieldnames = ["prompt_id", "model", "device", "variant", "can_clone",
                   "run_index", "is_cold",
                   "ttfa_ms", "gen_s", "audio_s", "rtf",
@@ -274,11 +278,29 @@ def main() -> int:
                 if lang != "en" and not cell["multilingual"]:
                     continue
 
-                wav = out_dir / f"{cell['model']}_{cell['device']}_p{prompt_id}.wav"
+                key = (cell["model"], cell["device"])
                 label = f"  {cell['model']}/{cell['device']:<4}"
+                if key in timed_out:
+                    print(f"{label} skip (timed out on an earlier prompt)")
+                    skip_row = {fn: "" for fn in fieldnames}
+                    skip_row.update({
+                        "prompt_id": prompt_id, "model": cell["model"],
+                        "device": cell["device"], "variant": cell["variant"] or "",
+                        "can_clone": cell["can_clone"], "run_index": 0,
+                        "is_cold": True, "wall_s": 0, "ok": False,
+                        "error": "skipped: timed out on an earlier prompt",
+                    })
+                    writer.writerow(skip_row)
+                    rows.append(skip_row)
+                    f.flush()
+                    continue
+
+                wav = out_dir / f"{cell['model']}_{cell['device']}_p{prompt_id}.wav"
                 print(label, end=" ", flush=True)
 
                 run_results = run_cell(cell, text, wav, lang, args.runs, args.reference)
+                if any("timeout" in (r.get("error") or "") for r in run_results):
+                    timed_out.add(key)
 
                 for r in run_results:
                     run_index = r.get("run_index", 0)
