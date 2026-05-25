@@ -3,16 +3,29 @@
 Loads the model once, then does --runs generations back-to-back. Prints one JSON
 line per run on stdout. Writes the WAV from run 0 only.
 
-API is a best guess from the homebase notes — adjust after first run if wrong.
+LuxTTS ships as the `zipvoice` package (the GitHub repo `ysharma3501/LuxTTS`
+packages itself that way); the model class is `zipvoice.luxvoice.LuxTTS`. It is a
+prompt-cloning flow-matching model: encode a reference wav once with
+`encode_prompt(path)` (it auto-transcribes the prompt), then call
+`generate_speech(text, encode_dict)`, which returns a 48 kHz torch tensor.
 """
 
 import argparse
 import json
 import sys
 import time
+from pathlib import Path
 
 import _meminfo
 import _naq
+
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+# Default reference voice shared with the other cloning runners. LuxTTS clones
+# whatever reference it's given (and auto-transcribes it), so default-voice mode
+# points it at the shared sample: jo (en) / juliette (fr).
+DEFAULT_REFERENCE = {"en": "jo", "fr": "juliette"}
 
 
 def main() -> int:
@@ -26,13 +39,25 @@ def main() -> int:
     p.add_argument("--language", default="en")  # accepted for harness uniformity
     args = p.parse_args()
 
+    # Resolve the reference voice to clone (default-voice mode uses the shared sample).
+    if args.reference:
+        ref_wav = Path(args.reference)
+    else:
+        stem = DEFAULT_REFERENCE.get(args.language, "jo")
+        ref_wav = REPO_ROOT / "reference" / f"{stem}.wav"
+    if not ref_wav.exists():
+        print(json.dumps({"ok": False, "run_index": 0,
+                          "error": f"reference wav not found: {ref_wav}"}))
+        return 1
+
     try:
-        from luxtts import LuxTTS  # type: ignore
-        import numpy as np
+        from zipvoice.luxvoice import LuxTTS  # type: ignore  # repo packages itself as `zipvoice`
         import soundfile as sf
 
         tts = LuxTTS(device=args.device)
-        samplerate = 48000  # homebase note: LuxTTS outputs 48 kHz
+        # Encode the reference once (it auto-transcribes), then reuse for every run.
+        encode_dict = tts.encode_prompt(str(ref_wav))
+        samplerate = 48000  # vocos returns 48 kHz when return_smooth=False (the default)
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"load failed: {type(e).__name__}: {e}"}))
@@ -42,21 +67,10 @@ def main() -> int:
         try:
             _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
-            first = None
-            chunks = []
-
-            result = tts.tts(args.text, ref_audio=args.reference) if args.reference else tts.tts(args.text)
-            if hasattr(result, "__iter__") and not isinstance(result, (bytes, bytearray, str)):
-                for chunk in result:
-                    if first is None:
-                        first = time.perf_counter()
-                    chunks.append(np.asarray(chunk))
-            else:
-                first = time.perf_counter()
-                chunks.append(np.asarray(result))
-
+            # One-shot generation (no streaming API), so TTFA == total gen time.
+            wav = tts.generate_speech(args.text, encode_dict)
             t_end = time.perf_counter()
-            audio = np.concatenate(chunks) if chunks else np.zeros(0, dtype="float32")
+            audio = wav.squeeze().detach().cpu().numpy()
             audio_s = float(len(audio) / samplerate)
 
             if i == 0:
@@ -65,7 +79,7 @@ def main() -> int:
             print(json.dumps({
                 "ok": True,
                 "run_index": i,
-                "ttfa_ms": (first - t0) * 1000 if first else None,
+                "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0,
                 "audio_s": audio_s,
                 **_meminfo.sample(args.device),
