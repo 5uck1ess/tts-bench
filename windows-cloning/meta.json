@@ -10,7 +10,7 @@
   "gpu": "NVIDIA GeForce RTX 5090",
   "gpu_vram_gb": 32,
   "captured_at": "2026-05-25T00:17:33Z",
-  "label": "cloning · chris_hemsworth_15s · all models",
+  "label": "cloning \u00b7 chris_hemsworth_15s \u00b7 cloning-capable models",
   "reference": "chris_hemsworth_15s.wav",
   "models_filter": null,
   "prompts_filter": null
