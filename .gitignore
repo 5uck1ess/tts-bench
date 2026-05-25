@@ -11,6 +11,7 @@ reference/*.ogg
 reference/*.txt
 !reference/.gitkeep
 install.log
+logs/
 __pycache__/
 *.pyc
 smoke_*.py
