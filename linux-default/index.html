@@ -135,7 +135,8 @@
   .prompt-jumper a { margin-right: 0.6rem; }
 
   /* Lens-to-lens nav tabs at top of each lens page */
-  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem; }
+  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem;
+               align-items: center; }
   .lens-tab { display: inline-block; padding: 4px 12px; border-radius: 6px;
               border: 1px solid var(--border); color: var(--text);
               text-decoration: none; font-size: 0.92em;
@@ -143,6 +144,15 @@
   .lens-tab:hover { border-color: var(--accent); text-decoration: none; }
   .lens-tab.active { background: var(--accent); color: var(--bg);
                      border-color: var(--accent); }
+  .lens-arrow { display: inline-block; padding: 4px 10px; border-radius: 6px;
+                border: 1px solid var(--border); color: var(--muted);
+                text-decoration: none; font-size: 0.92em;
+                transition: border-color 0.15s, color 0.15s; }
+  .lens-arrow:hover { border-color: var(--accent); color: var(--accent);
+                      text-decoration: none; }
+  .lens-arrow-disabled { opacity: 0.35; cursor: default;
+                         border-style: dashed; }
+  .lens-arrow-disabled:hover { border-color: var(--border); color: var(--muted); }
 
   /* "Reading this report" explainer above tables */
   .reading-guide { background: var(--panel); border-left: 3px solid var(--muted);
@@ -166,7 +176,6 @@
 <div class="meta">25 model(s) · 2 device(s) · 5 prompt(s) · 3 run(s) per cell</div>
 <div class="lens-grid">
 <div class="lens-card"><a href="speed.html"><h3>▶ Speed</h3><div class="desc">TTFA, RTF, memory · 25 models · sortable</div></a></div>
-<div class="lens-card"><a href="quality.html"><h3>▶ Quality</h3><div class="desc">NAQ + sub-scores · audio embedded · 25 models</div></a></div>
 <div class="lens-card"><a href="samples.html"><h3>▶ Samples</h3><div class="desc">By-prompt gallery · A/B every model</div></a></div>
 </div>
 <div class="meta"><a href="results.csv">results.csv</a> · <a href="meta.json">meta.json</a></div>
