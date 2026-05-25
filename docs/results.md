@@ -41,35 +41,43 @@ Same five prompts run on both rigs above. Numbers shown are from short prompts; 
 
 ### Mac — Apple M4 (10C, 16 GB) CPU + MPS
 
-Same harness, 5 prompts × 3 runs each, warm averages across all runnable prompts. ChatterBox / F5-TTS / Coqui XTTS not run on this rig — already labeled GPU-class for CPU; M4 CPU would be even worse.
+Same harness, 5 prompts × 3 runs each. TTFA from the short prompt; RTF is the warm average (runs 2-3). Full model set run this pass (May 2026) — including ChatterBox, F5-TTS, Coqui, IndexTTS-2, Sesame, Qwen3-TTS, etc. Models that measured **sub-realtime (<0.5× RTF) on the best Mac device** are tagged **gpu-class** and are now auto-skipped on a non-CUDA rig by default (`bench.py --all` forces them in); they're shown below with their real numbers so the gap is visible. Live audio + per-prompt detail: [mac-default](https://5uck1ess.github.io/tts-bench/mac-default/) and [mac-cloning](https://5uck1ess.github.io/tts-bench/mac-cloning/).
 
 #### Predefined-voice models
 
 | Model | Device | TTFA cold | TTFA warm | RTF warm | Notes |
 |---|---|---|---|---|---|
-| **[Piper](https://github.com/OHF-voice/piper1-gpl)** | cpu | **268ms** | **202ms** | **33.0×** | still the leader. 5× slower TTFA than Ryzen 9 but well above the headroom needed for an always-on agent |
-| **[Kokoro-82M](https://github.com/hexgrad/kokoro)** | mps | 2995ms | 486ms | **15.4×** | MPS gives ~50% RTF lift over CPU after warmup; cold-load tax (~3s) hits the first turn |
-| **[Kokoro-82M](https://github.com/hexgrad/kokoro)** | cpu | 994ms | 741ms | 10.2× | |
-| **[KittenTTS](https://github.com/KittenML/KittenTTS)** | cpu | 929ms | 1031ms | 8.0× | non-streaming so TTFA == gen_s; CPU-only (no MPS path in upstream) |
-| **[VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice)** | mps | 10760ms | 8287ms | **1.1×** | finally at realtime on MPS — CPU can't get there. Still 10s+ first-turn cold load |
-| **[VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice)** | cpu | 30305ms | 25519ms | 0.4× | below realtime on M4 CPU (Ryzen 9 hit ~0.5×; M4's fewer cores hurt diffusion) |
-| **[Magpie-TTS Multi 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m)** (NVIDIA NeMo) | cpu | 26716ms | 27459ms | 0.4× | 9 langs (en/es/de/it/vi/zh/fr/hi/ja). HF-gated; works once `hf auth login` is done. NeMo CPU is heavy — close to RTX 5090's 0.97× drops to 0.4× on M4 |
+| **[Piper](https://github.com/OHF-voice/piper1-gpl)** | cpu | **90ms** | **62ms** | **33.5×** | still the leader — drop-in for an always-on agent |
+| **[Kokoro-82M](https://github.com/hexgrad/kokoro)** | mps | 595ms | 193ms | **13.8×** | MPS adds ~50% RTF over CPU after warmup |
+| **[Kokoro-82M](https://github.com/hexgrad/kokoro)** | cpu | 507ms | 299ms | 9.0× | |
+| **[KittenTTS](https://github.com/KittenML/KittenTTS)** | cpu | 316ms | 331ms | 8.2× | non-streaming so TTFA ≈ gen_s; CPU-only |
+| **[Soprano](https://github.com/ekwek1/soprano)** (80M) | cpu | 341ms | 324ms | 6.1× | EN only, 32 kHz |
+| **[Soprano](https://github.com/ekwek1/soprano)** (80M) | mps | 750ms | 427ms | 4.7× | |
+| **[Supertonic](https://github.com/supertone-inc/supertonic)** (~99M ONNX) | cpu | 1952ms | 681ms | 4.2× | 31 langs; pure-ONNX, no torch dep |
+| [VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice) | mps | 3288ms | 2642ms | 1.1× | only diffusion-class predefined model to reach realtime on MPS |
+| [VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice) | cpu | 6478ms | 6977ms | 0.3× | CPU diffusion isn't viable |
+| [Magpie-TTS Multi 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) (NVIDIA NeMo) | cpu | 5690ms | 6268ms | 0.5× | **gpu-class** — 9 langs; HF-gated. NeMo CPU is heavy |
+| [VibeVoice-1.5B](https://github.com/vibevoice-community/VibeVoice) | cpu / mps | — | — | — | cpu needs a local 15 s ref wav (not shipped); mps OOMs at ~10.9 GiB on 16 GB (see [known-issues.md](known-issues.md)) |
 
 #### Zero-shot voice cloning models
 
+Reference: `reference/jo.wav` + transcript. Viable on Mac (≥ ~0.8× warm RTF):
+
 | Model | Device | TTFA cold | TTFA warm | RTF warm | Cloning ref | Notes |
 |---|---|---|---|---|---|---|
-| **[Pocket-TTS](https://github.com/kyutai-labs/pocket-tts)** (predefined mode) | cpu | **77ms** | **42ms** | **7.8×** | wav or voice name | fastest cloning-capable option here too. M4 single-thread perf actually beats Ryzen 9 on TTFA |
-| [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | cpu | 815ms | 270ms | 3.0× | wav + transcript | multilingual via separate `.gguf` per language |
-| [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | mps | 1491ms | 444ms | 2.8× | wav + transcript | MPS gives no win — GGUF inference runs CPU-side via llama-cpp |
-| [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | cpu | 1436ms | 364ms | 2.1× | wav + transcript | ~2.4× faster than Windows numbers thanks to M4 single-thread |
-| [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | mps | 2399ms | 568ms | 2.1× | wav + transcript | same — MPS doesn't help GGUF path |
-| **[OmniVoice](https://huggingface.co/k2-fsa/OmniVoice)** (k2-fsa, 600+ langs) | mps | 5802ms | 5064ms | **0.9×** | wav + transcript | nearly realtime on MPS for short/medium prompts. **Long prompts (30+ words) OOM the MPS allocator** on 16 GB at ~3.4 GiB — 1 of 5 prompts failed |
-| [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) (k2-fsa, 600+ langs) | cpu | 13653ms | 11444ms | 0.6× | wav + transcript | below realtime on CPU, expected for diffusion-LM |
-| [VoxCPM-0.5B](https://huggingface.co/openbmb/VoxCPM-0.5B) (OpenBMB) | cpu | 10883ms | 9582ms | 0.7× | wav only | no MPS path in harness; reasonably close to RTX 5090's 1.0× — VoxCPM is less GPU-dependent than the others |
-| [LuxTTS](https://github.com/ysharma3501/LuxTTS) (zipvoice-based) | — | — | — | — | wav | install blocked on arm64 Mac too (see [known-issues.md](known-issues.md)) |
+| **[Pocket-TTS](https://github.com/kyutai-labs/pocket-tts)** | cpu | **33ms** | **29ms** | **8.8×** | wav or voice name | fastest cloning-capable option; BYO-voice path is HF accept-terms gated |
+| [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | cpu | 684ms | 281ms | 2.8× | wav + transcript | multilingual via separate `.gguf` per language |
+| [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | mps | 1579ms | 490ms | 2.2× | wav + transcript | MPS gives no win — GGUF runs CPU-side via llama-cpp |
+| [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | cpu | 1337ms | 354ms | 2.1× | wav + transcript | ~2.4× faster TTFA than the Windows CPU numbers (M4 single-thread) |
+| [Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS) | mps | 3739ms | 1377ms | 2.0× | wav (no transcript) | multilingual cloning baseline; CPML 1.0 non-commercial |
+| [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | mps | 2182ms | 545ms | 1.9× | wav + transcript | same — MPS doesn't help GGUF |
+| [Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS) | cpu | 2369ms | 2108ms | 1.4× | wav (no transcript) | |
+| [ChatterBox Turbo](https://github.com/resemble-ai/chatterbox) (~744M AR) | mps | 3902ms | 2033ms | 1.1× | wav (no transcript) | the Turbo variant clears realtime on MPS; base ChatterBox does not |
+| [ChatterBox Turbo](https://github.com/resemble-ai/chatterbox) (~744M AR) | cpu | 3158ms | 2627ms | 0.8× | wav (no transcript) | |
 
-**Top-line takeaway on Mac:** Piper wins again (33× RTF, 202ms warm TTFA — drop-in for an always-on agent). Among cloning models, **Pocket-TTS is the clear winner on M4** — its 42ms warm TTFA actually beats the Windows number, because Pocket-TTS is single-thread dominated and M4 has strong single-thread perf. VibeVoice/MPS is the only diffusion-class model that reaches realtime on this machine; CPU diffusion isn't viable. NeuTTS gets no MPS benefit because its hot path is GGUF (llama-cpp, CPU-side). The new GPU-class additions (OmniVoice, VoxCPM, Magpie) all land sub-realtime on M4 — useful as "works at all on a Mac" data points, not as deploy candidates.
+**gpu-class on Mac (sub-realtime; auto-skipped by default, shown for reference):** ChatterBox base (mps 0.5× / cpu 0.3×), Sesame CSM-1B (0.2×), Qwen3-TTS Base (0.2×), IndexTTS-2 (0.1×), OmniVoice (cpu 0.1–0.2×; mps OOMs under cloning), F5-TTS (≤0.1×), ZipVoice (cpu ~0.1×; mps OOMs on 16 GB; crashes on the longest prompt). **Timed out (>600 s/cell):** MARS5, VoxCPM. **Install-blocked:** LuxTTS (no arm64 `piper-phonemize` wheel). See [known-issues.md](known-issues.md).
+
+**Top-line takeaway on Mac:** Piper wins predefined again (33.5× RTF, 62 ms warm TTFA — drop-in for an always-on agent), with Kokoro close behind on MPS (13.8×). Among cloning models, **Pocket-TTS is the clear winner on M4** — 29 ms warm TTFA, 8.8× RTF, single-thread-dominated so M4 actually beats the Ryzen 9. NeuTTS (2–3× RTF), Coqui (1.4–2.0×), and ChatterBox **Turbo** (the new ~744M variant, 0.8–1.1×) round out the viable cloning set. Everything heavier — base ChatterBox, OmniVoice, VoxCPM, Qwen3-TTS, IndexTTS-2, Sesame, F5-TTS, MARS5 — lands sub-realtime or OOMs on 16 GB and is tagged gpu-class: useful "works at all on a Mac" data points, not deploy candidates.
 
 ### Windows desktop — RTX 5090 CUDA
 
@@ -120,6 +128,6 @@ Two runs reported per model: **default voice** (the cloning model with its bundl
 - *Cloning, slowest:* MARS5 at 0.1× RTF and Qwen3-TTS Base at 0.5-0.6× — both genuinely sub-realtime on a 5090, with Qwen also hitting the 10-min per-cell wall on the 15-second reference (only the shortest prompt completed for cloning).
 - *VRAM budget:* the heaviest cloning models (IndexTTS-2 at 7.3 GB, MARS5 at 6.9 GB, VoxCPM2 at 5.7 GB) all comfortably fit a 16 GB GPU; the 32 GB on this rig is overkill.
 
-Raw CSVs live alongside their reports — Mac runs are in `_gh-pages/2026-05-23_*` (since `results/` is gitignored and per-machine).
+Raw CSVs live alongside their reports on the [Demos site](https://5uck1ess.github.io/tts-bench/) — Mac runs are published as `mac-default` / `mac-cloning` (local copies in `_gh-pages/mac-*`, since `results/` is gitignored and per-machine).
 
 Caveats: one machine, one run. Re-bench on your own hardware before committing — see [known-issues.md](known-issues.md) for examples of model README claims that didn't survive contact with a real install.
