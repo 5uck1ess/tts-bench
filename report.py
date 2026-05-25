@@ -376,6 +376,21 @@ def _fmt_naq(x):
     return f"{x:.0f}"
 
 
+def _humanize_error(err):
+    """Turn a raw runner error into a reader-friendly reason so a failed cell
+    doesn't read like a hardware fault. An OOM means the model is too big for
+    this device's memory, not that the rig broke."""
+    e = (err or "").strip()
+    low = e.lower()
+    if "outofmemory" in low or "out of memory" in low:
+        if "cuda" in low or "gpu" in low:
+            return "Skipped — out of GPU memory (model exceeds this GPU's VRAM)"
+        return "Skipped — out of memory (model exceeds available RAM)"
+    if not e or e == "no successful run":
+        return "no successful run"
+    return f"FAIL: {e.splitlines()[0][:140]}"
+
+
 # Display sizes for the Size column. Numbers are the model's weight count
 # (params), not weights-on-disk. Hand-curated — keep in sync with README.
 # Display name shown in the rendered HTML for each venv-keyed model.
@@ -917,7 +932,7 @@ def _render_speed(ctx):
             out.append(f'<tr id="{escape(row_id)}">'
                        f'<td>{escape(_display_name(model))}</td>'
                        f'<td class="{dev_class}">{escape(dev)}</td>'
-                       f'<td colspan="{len(cols)-2}" class="fail">FAIL: {escape(err.strip()[:140])}</td>'
+                       f'<td colspan="{len(cols)-2}" class="fail">{escape(_humanize_error(err))}</td>'
                        '</tr>')
             continue
         out.append(f'<tr id="{escape(row_id)}">')
