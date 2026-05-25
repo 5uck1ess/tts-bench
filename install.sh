@@ -240,9 +240,14 @@ if [ ! -x venvs/zipvoice/bin/python ]; then
     uv pip install --python venvs/zipvoice/bin/python -r venvs/zipvoice/src/requirements.txt \
         || die "uv pip install zipvoice requirements"
     # k2 is NOT required for inference — skip it.
-    # Pin to 2.8.0: torchaudio>=2.9.0 requires torchcodec which has no Windows wheels.
-    # CUDA users on Blackwell can install cu128 torch 2.8.0 manually:
-    # uv pip install --python venvs/zipvoice/bin/python "torch==2.8.0+cu128" "torchaudio==2.8.0+cu128" --index-url https://download.pytorch.org/whl/cu128
+    # requirements.txt pulls torch 2.11+, whose torchaudio routes audio loading through
+    # torchcodec — install it so reference wavs load. torchcodec needs FFmpeg shared libs
+    # (FFmpeg 4-8); zipvoice_runner.py adds the ffmpeg lib dir to LD_LIBRARY_PATH at runtime
+    # so a non-standard FFmpeg (e.g. linuxbrew) is found. Windows needs the "full-shared"
+    # FFmpeg build (ships DLLs). To skip torchcodec entirely, pin torch<2.9 instead, e.g.:
+    #   uv pip install --python venvs/zipvoice/bin/python "torch==2.8.0+cu128" "torchaudio==2.8.0+cu128" --index-url https://download.pytorch.org/whl/cu128
+    uv pip install --python venvs/zipvoice/bin/python torchcodec \
+        || yellow "zipvoice: torchcodec install failed — reference loading will fail (pin torch<2.9 to avoid it)"
     green "zipvoice: ok (zero-shot cloning zh+en, 123M, weights auto-download from HF on first use)"
 else
     echo "zipvoice: already installed"

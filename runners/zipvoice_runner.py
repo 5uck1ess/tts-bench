@@ -39,6 +39,34 @@ import sys
 import time
 from pathlib import Path
 
+
+def _ensure_ffmpeg_libs():
+    """ZipVoice loads audio via torchaudio 2.11+, which routes through torchcodec;
+    torchcodec needs FFmpeg's shared libs on the loader path. When FFmpeg comes from
+    a non-standard prefix (e.g. linuxbrew) its lib dir isn't searched, so the load
+    fails with "Could not load libtorchcodec". Find the ffmpeg lib dir and re-exec
+    once with it on LD_LIBRARY_PATH. No-op if already on the path or no ffmpeg found."""
+    if os.environ.get("_ZIPVOICE_FFMPEG_LDPATH"):
+        return
+    import shutil
+    cands = []
+    ff = shutil.which("ffmpeg")
+    if ff:
+        cands.append(Path(ff).resolve().parent.parent / "lib")
+    cands += [Path("/home/linuxbrew/.linuxbrew/lib"),
+              Path("/usr/lib/x86_64-linux-gnu"), Path("/usr/local/lib")]
+    libdirs = [str(d) for d in cands if d.is_dir() and any(d.glob("libavcodec.so*"))]
+    cur = os.environ.get("LD_LIBRARY_PATH", "")
+    missing = [d for d in libdirs if d not in cur.split(":")]
+    if not missing:
+        return
+    os.environ["LD_LIBRARY_PATH"] = ":".join(missing + ([cur] if cur else []))
+    os.environ["_ZIPVOICE_FFMPEG_LDPATH"] = "1"
+    os.execv(sys.executable, [sys.executable] + sys.argv)
+
+
+_ensure_ffmpeg_libs()
+
 import _meminfo
 import _naq
 
