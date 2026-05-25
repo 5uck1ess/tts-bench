@@ -116,7 +116,7 @@
   .lens-card h3 { margin: 0 0 0.4rem 0; font-size: 1.1em; color: var(--accent); }
   .lens-card .desc { color: var(--muted); font-size: 0.9em; }
 
-  /* TLDR callout used by speed.html + quality.html */
+  /* TLDR callout used by speed.html */
   .tldr { background: var(--panel); border-left: 3px solid var(--accent);
           padding: 0.8rem 1.1rem; margin: 1rem 0 1.4rem; border-radius: 4px; }
   .tldr h2 { margin: 0 0 0.4rem 0; font-size: 1em; }
@@ -175,6 +175,7 @@
 <div class="meta"><strong>Label:</strong> cloning · jo — ref <code>jo.wav</code></div>
 <div class="meta">5 prompt(s) · one section per prompt · all models ranked by warm TTFA (fastest first) within each</div>
 <div class="reading-guide">Each prompt section shows every model's audio output, ordered by <strong>warm TTFA</strong> (fastest first). Click any audio player to hear that model's rendering.</div>
+<div class="prompt" style="border-left: 3px solid var(--accent);"><h2>Reference voice</h2><div class="meta">Each model below was given this clip + transcript as the voice to imitate. Source: <code>jo.wav</code></div><audio controls preload="metadata" src="_reference.wav" style="width: 100%; max-width: 480px;"></audio></div>
 <nav class="prompt-jumper">Jump to: 
 <a href="#p1">P1</a> · <a href="#p2">P2</a> · <a href="#p3">P3</a> · <a href="#p4">P4</a> · <a href="#p5">P5</a>
 </nav>
@@ -285,22 +286,29 @@
 <td class="num pill" data-sort="23785.15">23.79s</td>
 <td><audio controls preload="none" src="omnivoice_cpu_p1.wav"></audio></td>
 </tr>
-<tr id="sample-p1-indextts-cpu">
+<tr id="sample-p1-zipvoice-cpu">
 <td class="num" data-sort="15">15</td>
+<td>ZipVoice 123M</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="24594.550000000003">24.59s</td>
+<td><audio controls preload="none" src="zipvoice_cpu_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-indextts-cpu">
+<td class="num" data-sort="16">16</td>
 <td>IndexTTS-2</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="26612.9">26.61s</td>
 <td><audio controls preload="none" src="indextts_cpu_p1.wav"></audio></td>
 </tr>
 <tr id="sample-p1-f5tts-mps">
-<td class="num" data-sort="16">16</td>
+<td class="num" data-sort="17">17</td>
 <td>F5-TTS</td>
 <td class="dev-mps">mps</td>
 <td class="num pill" data-sort="30702.550000000003">30.70s</td>
 <td><audio controls preload="none" src="f5tts_mps_p1.wav"></audio></td>
 </tr>
 <tr id="sample-p1-f5tts-cpu">
-<td class="num" data-sort="17">17</td>
+<td class="num" data-sort="18">18</td>
 <td>F5-TTS</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="34436.7">34.44s</td>
@@ -414,29 +422,36 @@
 <td class="num pill" data-sort="28294.75">28.29s</td>
 <td><audio controls preload="none" src="omnivoice_cpu_p2.wav"></audio></td>
 </tr>
-<tr id="sample-p2-f5tts-mps">
+<tr id="sample-p2-zipvoice-cpu">
 <td class="num" data-sort="15">15</td>
+<td>ZipVoice 123M</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="33315.5">33.32s</td>
+<td><audio controls preload="none" src="zipvoice_cpu_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-f5tts-mps">
+<td class="num" data-sort="16">16</td>
 <td>F5-TTS</td>
 <td class="dev-mps">mps</td>
 <td class="num pill" data-sort="39408.350000000006">39.41s</td>
 <td><audio controls preload="none" src="f5tts_mps_p2.wav"></audio></td>
 </tr>
 <tr id="sample-p2-f5tts-cpu">
-<td class="num" data-sort="16">16</td>
+<td class="num" data-sort="17">17</td>
 <td>F5-TTS</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="42091.75">42.09s</td>
 <td><audio controls preload="none" src="f5tts_cpu_p2.wav"></audio></td>
 </tr>
 <tr id="sample-p2-chatterbox-mps">
-<td class="num" data-sort="17">17</td>
+<td class="num" data-sort="18">18</td>
 <td>Chatterbox</td>
 <td class="dev-mps">mps</td>
 <td class="num pill" data-sort="54247.25">54.25s</td>
 <td><audio controls preload="none" src="chatterbox_mps_p2.wav"></audio></td>
 </tr>
 <tr id="sample-p2-omnivoice-mps">
-<td class="num" data-sort="18">18</td>
+<td class="num" data-sort="19">19</td>
 <td>OmniVoice</td>
 <td class="dev-mps">mps</td>
 <td class="num pill" data-sort="">—</td>
@@ -700,6 +715,13 @@
 <td class="num pill" data-sort="51180.4">51.18s</td>
 <td><audio controls preload="none" src="chatterbox_mps_p4.wav"></audio></td>
 </tr>
+<tr id="sample-p4-zipvoice-cpu">
+<td class="num" data-sort="18">18</td>
+<td>ZipVoice 123M</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="">—</td>
+<td><audio controls preload="none" src="zipvoice_cpu_p4.wav"></audio></td>
+</tr>
 </tbody></table></div>
 <div class="prompt" id="p5"><h2>Prompt 5</h2>
 <span class="prompt-text"><span class="lang">[fr]</span>"Bonjour, je m&#x27;appelle Cicero et je vais vous aider avec votre code aujourd&#x27;hui."</span>
@@ -758,6 +780,13 @@
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="27159.9">27.16s</td>
 <td><audio controls preload="none" src="omnivoice_cpu_p5.wav"></audio></td>
+</tr>
+<tr id="sample-p5-zipvoice-cpu">
+<td class="num" data-sort="8">8</td>
+<td>ZipVoice 123M</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="54917.2">54.92s</td>
+<td><audio controls preload="none" src="zipvoice_cpu_p5.wav"></audio></td>
 </tr>
 </tbody></table></div>
 <script>
