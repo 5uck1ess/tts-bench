@@ -33,7 +33,9 @@ MODELS = [
     ("omnivoice",   "omnivoice",  "runners/omnivoice_runner.py",  True,  ["cpu", "cuda", "mps"], None,   True),
     ("zipvoice",    "zipvoice",   "runners/zipvoice_runner.py",   True,  ["cpu", "cuda", "mps"], None,   True),
     ("voxcpm",      "voxcpm",     "runners/voxcpm_runner.py",     True,  ["cpu", "cuda"],        None,   True),
-    ("qwentts",      "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base", True),
+    # base qwentts: cloning disabled — long prompts blow the 600s cell timeout on
+    # this autoregressive sampler. qwentts_fast (CUDA-graph) handles cloning instead.
+    ("qwentts",      "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base", False),
     ("qwentts_fast", "qwentts_fast", "runners/qwentts_fast_runner.py", True,  ["cuda"],         "base", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   False, ["cpu", "cuda"],        None,   True),
     ("sesame",      "sesame",     "runners/sesame_runner.py",     False, ["cpu", "cuda"],        None,   "gated"),
