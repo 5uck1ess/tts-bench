@@ -384,7 +384,9 @@ def _humanize_error(err):
     low = e.lower()
     if not e or e == "no successful run":
         return "no successful run"
-    if "outofmemory" in low or "out of memory" in low:
+    # "invalid buffer size" is how MPS reports an allocation it can't satisfy —
+    # an out-of-memory by another name.
+    if "outofmemory" in low or "out of memory" in low or "invalid buffer size" in low:
         if "cuda" in low or "gpu" in low:
             return "Skipped — out of GPU memory (model exceeds this GPU's VRAM)"
         return "Skipped — out of memory (model exceeds available RAM)"
