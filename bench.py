@@ -160,6 +160,19 @@ def write_meta(run_dir: Path, rig_label=None, label=None,
     (run_dir / "meta.json").write_text(
         json.dumps(meta, indent=2) + "\n", encoding="utf-8"
     )
+    # Cloning runs: stage the reference wav as `_reference.wav` so the samples
+    # report can embed an A/B player above the per-model rows. report.py +
+    # publish.py both look for this name in the run dir.
+    if reference:
+        ref_src = Path(reference)
+        if ref_src.exists():
+            import shutil
+            try:
+                shutil.copy2(ref_src, run_dir / "_reference.wav")
+            except OSError as e:
+                print(f"warning: could not stage _reference.wav into {run_dir}: {e}")
+        else:
+            print(f"warning: reference wav not found at {ref_src} — samples page will skip the A/B player")
     return meta
 
 
