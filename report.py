@@ -173,7 +173,8 @@ STYLE = """<style>
   .prompt-jumper a { margin-right: 0.6rem; }
 
   /* Lens-to-lens nav tabs at top of each lens page */
-  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem; }
+  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem;
+               align-items: center; }
   .lens-tab { display: inline-block; padding: 4px 12px; border-radius: 6px;
               border: 1px solid var(--border); color: var(--text);
               text-decoration: none; font-size: 0.92em;
@@ -181,6 +182,12 @@ STYLE = """<style>
   .lens-tab:hover { border-color: var(--accent); text-decoration: none; }
   .lens-tab.active { background: var(--accent); color: var(--bg);
                      border-color: var(--accent); }
+  .lens-arrow { display: inline-block; padding: 4px 10px; border-radius: 6px;
+                border: 1px solid var(--border); color: var(--muted);
+                text-decoration: none; font-size: 0.92em;
+                transition: border-color 0.15s, color 0.15s; }
+  .lens-arrow:hover { border-color: var(--accent); color: var(--accent);
+                      text-decoration: none; }
 
   /* "Reading this report" explainer above tables */
   .reading-guide { background: var(--panel); border-left: 3px solid var(--muted);
@@ -772,15 +779,31 @@ _READING_GUIDE = {
 
 
 def _lens_nav(active):
-    """Emit the nav strip with lens tabs (Speed / Quality / Samples) + 'all runs' link.
+    """Emit the nav strip with prev/next arrows + lens tabs + 'all runs' link.
 
     `active` is one of "speed", "quality", "samples". The matching tab gets
     .lens-tab.active styling so the user can see which page they're on.
+    Prev/next arrows wrap around (Samples → wraps to Speed, Speed ← wraps to
+    Samples) so the three lens reports form a circular tour.
     """
+    slugs = [s for s, _ in _LENSES]
+    labels = {s: l for s, l in _LENSES}
+    idx = slugs.index(active)
+    prev_slug = slugs[(idx - 1) % len(slugs)]
+    next_slug = slugs[(idx + 1) % len(slugs)]
+
     parts = ['<div class="nav"><span class="lens-tabs">']
+    parts.append(
+        f'<a class="lens-arrow" href="{prev_slug}.html" '
+        f'title="Previous lens: {labels[prev_slug]}">← {labels[prev_slug]}</a>'
+    )
     for slug, label in _LENSES:
         cls = "lens-tab active" if slug == active else "lens-tab"
         parts.append(f'<a class="{cls}" href="{slug}.html">{label}</a>')
+    parts.append(
+        f'<a class="lens-arrow" href="{next_slug}.html" '
+        f'title="Next lens: {labels[next_slug]}">{labels[next_slug]} →</a>'
+    )
     parts.append('</span> · <a href="../index.html">all runs</a></div>')
     return "".join(parts)
 
