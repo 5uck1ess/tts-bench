@@ -194,6 +194,9 @@ STYLE = """<style>
                 transition: border-color 0.15s, color 0.15s; }
   .lens-arrow:hover { border-color: var(--accent); color: var(--accent);
                       text-decoration: none; }
+  .lens-arrow-disabled { opacity: 0.35; cursor: default;
+                         border-style: dashed; }
+  .lens-arrow-disabled:hover { border-color: var(--border); color: var(--muted); }
 
   /* "Reading this report" explainer above tables */
   .reading-guide { background: var(--panel); border-left: 3px solid var(--muted);
@@ -801,29 +804,35 @@ _READING_GUIDE = {
 def _lens_nav(active):
     """Emit the nav strip with prev/next arrows + lens tabs + 'all runs' link.
 
-    `active` is one of "speed", "quality", "samples". The matching tab gets
-    .lens-tab.active styling so the user can see which page they're on.
-    Prev/next arrows wrap around (Samples → wraps to Speed, Speed ← wraps to
-    Samples) so the three lens reports form a circular tour.
+    `active` is one of the slugs in _LENSES. Arrows are bounded — at the
+    first lens the ← arrow renders disabled (no link); at the last lens
+    the → arrow renders disabled. No wraparound, so the report tour ends
+    at the natural edges instead of cycling infinitely.
     """
     slugs = [s for s, _ in _LENSES]
     labels = {s: l for s, l in _LENSES}
     idx = slugs.index(active)
-    prev_slug = slugs[(idx - 1) % len(slugs)]
-    next_slug = slugs[(idx + 1) % len(slugs)]
+    prev_slug = slugs[idx - 1] if idx > 0 else None
+    next_slug = slugs[idx + 1] if idx < len(slugs) - 1 else None
 
     parts = ['<div class="nav"><span class="lens-tabs">']
-    parts.append(
-        f'<a class="lens-arrow" href="{prev_slug}.html" '
-        f'title="Previous lens: {labels[prev_slug]}">← {labels[prev_slug]}</a>'
-    )
+    if prev_slug is not None:
+        parts.append(
+            f'<a class="lens-arrow" href="{prev_slug}.html" '
+            f'title="Previous lens: {labels[prev_slug]}">← {labels[prev_slug]}</a>'
+        )
+    else:
+        parts.append('<span class="lens-arrow lens-arrow-disabled">← </span>')
     for slug, label in _LENSES:
         cls = "lens-tab active" if slug == active else "lens-tab"
         parts.append(f'<a class="{cls}" href="{slug}.html">{label}</a>')
-    parts.append(
-        f'<a class="lens-arrow" href="{next_slug}.html" '
-        f'title="Next lens: {labels[next_slug]}">{labels[next_slug]} →</a>'
-    )
+    if next_slug is not None:
+        parts.append(
+            f'<a class="lens-arrow" href="{next_slug}.html" '
+            f'title="Next lens: {labels[next_slug]}">{labels[next_slug]} →</a>'
+        )
+    else:
+        parts.append('<span class="lens-arrow lens-arrow-disabled"> →</span>')
     parts.append('</span> · <a href="../index.html">all runs</a></div>')
     return "".join(parts)
 
