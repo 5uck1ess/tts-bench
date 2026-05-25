@@ -29,6 +29,26 @@ score() returns nulls and the bench continues.
 import os
 import sys
 
+# Numba (pulled in transitively by librosa.pyin / onset_detect) segfaults on
+# some arm64-macOS venvs when it loads stale or version-mismatched objects from
+# its default on-disk cache: running pyin and onset_detect in the same process
+# crashes with SIGSEGV (observed in the NeuTTS venv: numba 0.65 / llvmlite 0.47
+# / librosa 0.11). Pinning a dedicated, writable cache dir forces a clean
+# recompile and makes scoring deterministic. Must run before librosa/numba are
+# first imported — safe here because every runner imports _naq before its model
+# libs, and the librosa/numba imports below are lazy (inside the feature fns).
+# See docs/known-issues.md ("NeuTTS — NAQ scoring segfault on Apple Silicon").
+_NUMBA_CACHE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".numba_cache"
+)
+try:
+    os.makedirs(_NUMBA_CACHE, exist_ok=True)
+    os.environ.setdefault("NUMBA_CACHE_DIR", _NUMBA_CACHE)
+except OSError as e:
+    # Read-only repo dir: fall back to numba's default cache (no worse than
+    # before this guard existed); just note it so the cause isn't invisible.
+    print(f"[_naq] could not set NUMBA_CACHE_DIR={_NUMBA_CACHE}: {e}", file=sys.stderr)
+
 _SAFE = (ImportError, RuntimeError, AttributeError, OSError, ValueError)
 
 
