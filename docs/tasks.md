@@ -12,6 +12,7 @@
 
 ## Future
 
+- [ ] **NAQ redesign (v3)** — current ARTIFACT macro (HNR-driven) anti-correlates with expressive speech: punishes natural noisiness (breath, plosives, sibilance) and rewards stationary tonal output. NATURALNESS macro rewards raw F0 variance regardless of whether it's linguistically appropriate. Needs features that proxy what they're named for, not what's easy to measure. Score is hidden from public HTML until then (`SHOW_NAQ_PUBLIC` in report.py)
 - [ ] **Community voting system** — head-to-head sample voting on the gh-pages reports → labeled ground truth for NAQ refinement
 - [ ] Prefer 48 kHz output models for new additions (preference, not hard gate)
 - [ ] Buy Me a Coffee / Sponsor link (defer until external traction)

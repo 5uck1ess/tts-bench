@@ -1,12 +1,14 @@
 # Methodology
 
-## Why three axes
+## Why these axes
 
-Open TTS models advertise speed numbers from cherry-picked hardware, often confusing cold and warm starts, and never tell you what the output sounds like. tts-bench measures three things, on whatever hardware you point it at:
+Open TTS models advertise speed numbers from cherry-picked hardware, often confusing cold and warm starts, and never tell you what the output sounds like. tts-bench measures, on whatever hardware you point it at:
 
 - **Speed** — cold + warm TTFA, RTF, peak RAM, peak VRAM. Cold = first run after process start. Warm = subsequent runs.
-- **Quality (NAQ)** — objective 0-100 per-wav score combining two factor groups: ARTIFACT (cues for absence of vocoder artifacts) and NATURALNESS (cues for expressive prosody). Captures both axes, not just one. Best-effort acoustic proxy until voting-system ground truth ships. See [naq.md](naq.md).
+- **Samples** — every model × prompt × device combination rendered with an inline audio player so you can pick by ear.
 - **Voice cloning** — same prompts, same reference voice, ranked subjectively. See [cloning.md](cloning.md).
+
+An objective quality score (NAQ) is computed into the CSV and paused from publication while the algorithm is redesigned — the current features didn't track subjective ranking closely enough to surface.
 
 ## Why cold vs warm
 

@@ -6,11 +6,12 @@
   </picture>
 </p>
 
-Bench for local TTS models. Three lenses, on whatever hardware you put it on:
+Bench for local TTS models. Two lenses, on whatever hardware you put it on:
 
 - **Speed** — cold + warm **TTFA** (time to first audio), **RTF** (real-time factor; higher = faster than realtime), memory, on CPU / CUDA / Apple Silicon
-- **Quality** — **NAQ** (Naturalness-Artifact Quotient), an objective 0-100 score covering vocoder artifacts and prosodic naturalness
-- **Samples** — every model × prompt × rig, inline audio players, ranked by NAQ
+- **Samples** — every model × prompt × rig with inline audio players, so you can pick a model by listening
+
+An objective quality score (NAQ) was prototyped and is currently paused for redesign — the v2 features didn't track subjective ranking closely enough to publish. The bench still computes it into the CSV; the HTML report omits it until a refit lands.
 
 ---
 
@@ -53,14 +54,14 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 - CUDA (RTX 5090): **Kokoro** — 69ms warm TTFA, 101× RTF
 - CPU + MPS (Apple M4, 16 GB): **Piper** — 202ms warm TTFA, 33× RTF
 
-**Best sounding (NAQ v1):** *Pending — only the most recent bench cell ships with NAQ; full back-fill needs a fresh bench pass on each rig. Run `python bench.py` then check `quality.html` on your gh-pages report. See [docs/naq.md](docs/naq.md) for the score definition; v2 with naturalness features is on the way.*
+**Best sounding:** *No objective ranking right now — the NAQ score is paused pending redesign. Open any [Demos report](https://5uck1ess.github.io/tts-bench/) and listen via the Samples lens.*
 
 **Best cloning (subjective rank):**
 - 1. **OmniVoice** — accent preserved, top of listening test
 - 2. **ChatterBox** — strong second, clean output
 - 3. **IndexTTS-2** — also good, accent preserved
 
-[→ full per-rig results](docs/results.md) · [→ NAQ details](docs/naq.md) · [→ full cloning ranking](docs/cloning.md)
+[→ full per-rig results](docs/results.md) · [→ full cloning ranking](docs/cloning.md)
 
 ---
 
@@ -98,21 +99,6 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ---
 
-## Quality scoring: NAQ
-
-**Naturalness-Artifact Quotient** — an objective 0-100 score per generated wav. Higher = more natural; lower = more roboty / vocoder-artifacted. Computed automatically for the cold run of every bench cell and reported in `quality.html`.
-
-Two factor groups feed the score:
-
-- **ARTIFACT** — acoustic cues for the *absence* of vocoder artifacts (noise, buzz, phase issues).
-- **NATURALNESS** — acoustic cues for the *presence* of expressive speech (dynamics, prosody, rhythm, pitch movement).
-
-Both macros are surfaced in the quality report so you can see whether a model loses ground on artifacts, naturalness, or both. The exact features and weights are kept opaque on purpose; they will change as voting data accumulates.
-
-How to read the number: **[docs/naq.md](docs/naq.md)**.
-
----
-
 ## Voice cloning
 
 Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
@@ -136,13 +122,12 @@ If you reproduce on different hardware, file an issue or PR with your results an
 ## Docs
 
 - [Full results tables](docs/results.md) — per-rig, per-prompt, per-model
-- [NAQ score spec](docs/naq.md) — what the quality score is and how it's computed
 - [Cloning ranking](docs/cloning.md) — 10-model subjective ranking, reference format docs
 - [Architecture](docs/architecture.md) — bench design, runner protocol, adding a model
 - [Known issues](docs/known-issues.md) — per-model gotchas + per-license table
 - [Considered but skipped](docs/considered.md) — models evaluated and excluded
 - [Tasks & pending work](docs/tasks.md) — open issues, planned features
-- [Methodology](docs/methodology.md) — why three axes, why cold + warm, why reproducible
+- [Methodology](docs/methodology.md) — what's measured, why cold + warm, why reproducible
 
 ---
 

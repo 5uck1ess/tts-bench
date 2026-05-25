@@ -32,6 +32,12 @@ from pathlib import Path
 REPO = Path(__file__).parent
 RESULTS = REPO / "results"
 
+# NAQ is computed by the bench and stored in results.csv unconditionally, but
+# the rendered HTML hides it (no quality lens, no NAQ column on speed/samples,
+# no global-index quality link) while calibration is in progress. Flip back to
+# True once the score correlates with subjective ranking.
+SHOW_NAQ_PUBLIC = False
+
 try:
     from bench import PROMPTS as _BENCH_PROMPTS
     PROMPT_INFO = {str(pid): (lang, text) for pid, lang, text in _BENCH_PROMPTS}
@@ -641,8 +647,13 @@ def _build_context(rows, run_dir, meta):
                 "naq_artifact": cold.get("naq_artifact"),
                 "naq_naturalness": cold.get("naq_naturalness"),
             })
-        # Sort by NAQ desc; rows with no NAQ sink to the bottom
-        items.sort(key=lambda it: (it["naq"] is None, -(it["naq"] or 0)))
+        # Sort: by NAQ desc when public; otherwise by warm TTFA asc (fastest first).
+        # Missing values sink to the bottom in either mode.
+        if SHOW_NAQ_PUBLIC:
+            items.sort(key=lambda it: (it["naq"] is None, -(it["naq"] or 0)))
+        else:
+            items.sort(key=lambda it: (it["ttfa_warm"] is None,
+                                       it["ttfa_warm"] or float("inf")))
         per_prompt[pid] = items
 
     def _pick_best_speed(kind):
@@ -725,12 +736,13 @@ def _render_lens_picker(ctx):
         f'<div class="desc">TTFA, RTF, memory · {n_models} models · sortable</div>'
         '</a></div>'
     )
-    out.append(
-        '<div class="lens-card"><a href="quality.html">'
-        '<h3>▶ Quality</h3>'
-        f'<div class="desc">NAQ + sub-scores · audio embedded · {n_models} models</div>'
-        '</a></div>'
-    )
+    if SHOW_NAQ_PUBLIC:
+        out.append(
+            '<div class="lens-card"><a href="quality.html">'
+            '<h3>▶ Quality</h3>'
+            f'<div class="desc">NAQ + sub-scores · audio embedded · {n_models} models</div>'
+            '</a></div>'
+        )
     out.append(
         '<div class="lens-card"><a href="samples.html">'
         '<h3>▶ Samples</h3>'
@@ -746,7 +758,11 @@ def _render_lens_picker(ctx):
     return "\n".join(out)
 
 
-_LENSES = (("speed", "Speed"), ("quality", "Quality"), ("samples", "Samples"))
+_LENSES = (
+    (("speed", "Speed"), ("quality", "Quality"), ("samples", "Samples"))
+    if SHOW_NAQ_PUBLIC else
+    (("speed", "Speed"), ("samples", "Samples"))
+)
 
 _READING_GUIDE = {
     "speed": (
@@ -754,9 +770,10 @@ _READING_GUIDE = {
         '<strong>TTFA</strong> = time to first audio (ms; lower is better). '
         '<strong>RTF</strong> = real-time factor (× realtime; higher is better; e.g. 10× means '
         '10 sec of audio generated per 1 sec of compute). '
-        '<strong>Cold</strong> = first run after process start; <strong>warm</strong> = subsequent runs. '
-        '<strong>NAQ</strong> = quality score 0-100 (click NAQ pill to jump to quality lens).'
-        '</div>'
+        '<strong>Cold</strong> = first run after process start; <strong>warm</strong> = subsequent runs.'
+        + (' <strong>NAQ</strong> = quality score 0-100 (click NAQ pill to jump to quality lens).'
+           if SHOW_NAQ_PUBLIC else '')
+        + '</div>'
     ),
     "quality": (
         '<div class="reading-guide">'
@@ -770,10 +787,13 @@ _READING_GUIDE = {
     ),
     "samples": (
         '<div class="reading-guide">'
-        'Each prompt section shows every model\'s audio output, ranked by '
-        '<strong>NAQ</strong> (0-100 quality score; higher = better). '
-        'Click any audio player to hear that model\'s rendering.'
-        '</div>'
+        + ('Each prompt section shows every model\'s audio output, ranked by '
+           '<strong>NAQ</strong> (0-100 quality score; higher = better). '
+           if SHOW_NAQ_PUBLIC else
+           'Each prompt section shows every model\'s audio output, ordered by '
+           '<strong>warm TTFA</strong> (fastest first). ')
+        + 'Click any audio player to hear that model\'s rendering.'
+        + '</div>'
     ),
 }
 
@@ -851,8 +871,9 @@ def _render_speed(ctx):
     out.append('</div>')
 
     # Table
-    cols = ("Model", "Device", "TTFA cold", "TTFA warm",
-            "RTF cold", "RTF warm", "Peak RAM", "Peak VRAM", "Size", "NAQ")
+    base_cols = ("Model", "Device", "TTFA cold", "TTFA warm",
+                 "RTF cold", "RTF warm", "Peak RAM", "Peak VRAM", "Size")
+    cols = base_cols + (("NAQ",) if SHOW_NAQ_PUBLIC else ())
     num_cols = {"TTFA cold", "TTFA warm", "RTF cold", "RTF warm",
                 "Peak RAM", "Peak VRAM", "NAQ"}
     rtf_warm_idx = cols.index("RTF warm")
@@ -900,12 +921,13 @@ def _render_speed(ctx):
         out.append(f'<td class="num"{_ds(a["peak_mem"])}>{_fmt_mb(a["peak_mem"])}</td>')
         out.append(f'<td class="num"{_ds(a["peak_vram"])}>{_fmt_mb(a["peak_vram"])}</td>')
         out.append(f'<td class="muted">{escape(size_str)}</td>')
-        naq_val = a["naq"]
-        out.append(
-            f'<td class="num pill"{_ds(naq_val)}>'
-            f'<a href="quality.html" title="See NAQ details on quality view">{_fmt_naq(naq_val)}</a>'
-            '</td>'
-        )
+        if SHOW_NAQ_PUBLIC:
+            naq_val = a["naq"]
+            out.append(
+                f'<td class="num pill"{_ds(naq_val)}>'
+                f'<a href="quality.html" title="See NAQ details on quality view">{_fmt_naq(naq_val)}</a>'
+                '</td>'
+            )
         out.append('</tr>')
     out.append('</tbody></table>')
 
@@ -1050,8 +1072,9 @@ def _render_samples(ctx):
             ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
             out.append(f'<div class="meta"><strong>Label:</strong> '
                        f'{escape(meta["label"])}{ref_html}</div>')
+    rank_basis = "NAQ" if SHOW_NAQ_PUBLIC else "warm TTFA (fastest first)"
     out.append(f'<div class="meta">{len(prompts)} prompt(s) · '
-               f'one section per prompt · all models ranked by NAQ within each</div>')
+               f'one section per prompt · all models ranked by {rank_basis} within each</div>')
 
     out.append(_READING_GUIDE["samples"])
 
@@ -1060,7 +1083,9 @@ def _render_samples(ctx):
         out.append(" · ".join(f'<a href="#p{escape(pid)}">P{escape(pid)}</a>' for pid in prompts))
         out.append('</nav>')
 
-    cols = ("Rank", "Model", "Device", "NAQ", "TTFA warm", "Audio")
+    cols = (("Rank", "Model", "Device", "NAQ", "TTFA warm", "Audio")
+            if SHOW_NAQ_PUBLIC else
+            ("Rank", "Model", "Device", "TTFA warm", "Audio"))
     num_cols = {"Rank", "NAQ", "TTFA warm"}
     for pid in prompts:
         items = ctx["per_prompt"].get(pid, [])
@@ -1089,7 +1114,8 @@ def _render_samples(ctx):
             out.append(f'<td class="num" data-sort="{rank}">{rank}</td>')
             out.append(f'<td>{escape(_display_name(it["model"]))}</td>')
             out.append(f'<td class="{dev_class}">{escape(it["device"])}</td>')
-            out.append(f'<td class="num"{_ds(it["naq"])}>{_fmt_naq(it["naq"])}</td>')
+            if SHOW_NAQ_PUBLIC:
+                out.append(f'<td class="num"{_ds(it["naq"])}>{_fmt_naq(it["naq"])}</td>')
             out.append(f'<td class="num pill"{_ds(it["ttfa_warm"])}>{_fmt_ttfa(it["ttfa_warm"])}</td>')
             out.append(f'<td>{audio_html}</td>')
             out.append('</tr>')
@@ -1115,7 +1141,11 @@ def build_report(run_dir: Path) -> Path:
 
     (run_dir / "index.html").write_text(_render_lens_picker(ctx), encoding="utf-8")
     (run_dir / "speed.html").write_text(_render_speed(ctx), encoding="utf-8")
-    (run_dir / "quality.html").write_text(_render_quality(ctx), encoding="utf-8")
+    if SHOW_NAQ_PUBLIC:
+        (run_dir / "quality.html").write_text(_render_quality(ctx), encoding="utf-8")
+    else:
+        # Hide a previously-written quality page if the calibration gate flipped off.
+        (run_dir / "quality.html").unlink(missing_ok=True)
     (run_dir / "samples.html").write_text(_render_samples(ctx), encoding="utf-8")
 
     # Legacy report.html — emit a small redirect stub so any external link still works.
@@ -1181,11 +1211,11 @@ def build_index() -> Path:
                   if len(r["models"]) <= 5
                   else f"{len(r['models'])} models")
         if r["has_index"]:
-            link = (
-                f'<a href="{escape(r["name"])}/speed.html">speed</a> · '
-                f'<a href="{escape(r["name"])}/quality.html">quality</a> · '
-                f'<a href="{escape(r["name"])}/samples.html">samples</a>'
-            )
+            parts = [f'<a href="{escape(r["name"])}/speed.html">speed</a>']
+            if SHOW_NAQ_PUBLIC:
+                parts.append(f'<a href="{escape(r["name"])}/quality.html">quality</a>')
+            parts.append(f'<a href="{escape(r["name"])}/samples.html">samples</a>')
+            link = " · ".join(parts)
         elif (RESULTS / r["name"] / "report.html").exists():
             link = f'<a href="{escape(r["name"])}/report.html">view (legacy)</a>'
         else:
@@ -1254,7 +1284,8 @@ def main() -> int:
         raise SystemExit(f"Not found: {run_dir}")
 
     html = build_report(run_dir)
-    print(f"wrote {html.relative_to(REPO)} (+ speed.html, quality.html, samples.html)")
+    lens_files = "speed.html, quality.html, samples.html" if SHOW_NAQ_PUBLIC else "speed.html, samples.html"
+    print(f"wrote {html.relative_to(REPO)} (+ {lens_files})")
     build_index()
     if args.open:
         webbrowser.open(html.as_uri())
