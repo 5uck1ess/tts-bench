@@ -124,11 +124,20 @@ def main() -> int:
         dtype = torch.bfloat16 if device.type == "cuda" else torch.float32
         attn = _resolve_attn_implementation(device, dtype)
 
-        processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
+        # Windows + AutoProcessor + trust_remote_code: transformers 5.x's
+        # path-normalize step turns "OpenMOSS-Team/MOSS-TTS" into a Windows
+        # backslash form before the HF Hub repo-id regex sees it, so it raises
+        # "Repo id must use alphanumeric chars...". Workaround: pre-download via
+        # snapshot_download (uses huggingface_hub's own repo-id parser) and load
+        # the processor + model from the resulting local path.
+        from huggingface_hub import snapshot_download
+        model_dir = snapshot_download(MODEL_ID)
+
+        processor = AutoProcessor.from_pretrained(model_dir, trust_remote_code=True)
         processor.audio_tokenizer = processor.audio_tokenizer.to(device)
 
         model = AutoModel.from_pretrained(
-            MODEL_ID,
+            model_dir,
             trust_remote_code=True,
             attn_implementation=attn,
             torch_dtype=dtype,
