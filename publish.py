@@ -18,6 +18,7 @@ Usage:
 """
 
 import argparse
+import csv
 import json
 import shutil
 import subprocess
@@ -285,6 +286,28 @@ def list_published():
         print(f"\nIndex (once Pages is enabled): {url}")
 
 
+def _publish_csv(src: Path, dest_dir: Path) -> None:
+    """Copy results.csv to the published dir, dropping NAQ columns unless
+    SHOW_NAQ_PUBLIC is set. The NAQ score and its sub-features are kept private
+    (possible paper), so the public CSV must never carry any 'naq*' column.
+    Every rig publishes through here, so the scrub lives at the copy boundary
+    rather than as a manual post-step that's easy to forget. The local
+    results.csv is left intact."""
+    if SHOW_NAQ_PUBLIC:
+        shutil.copy2(src, dest_dir / src.name)
+        return
+    with src.open(newline="", encoding="utf-8") as f:
+        rows = list(csv.reader(f))
+    if not rows:
+        shutil.copy2(src, dest_dir / src.name)
+        return
+    keep = [i for i, col in enumerate(rows[0]) if "naq" not in col.lower()]
+    with (dest_dir / src.name).open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        for row in rows:
+            w.writerow([row[i] for i in keep if i < len(row)])
+
+
 def publish(run_dir: Path, no_push: bool = False) -> None:
     if not run_dir.exists():
         raise SystemExit(f"Not found: {run_dir}")
@@ -329,7 +352,10 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
     for fname in html_files:
         src = run_dir / fname
         if src.exists():
-            shutil.copy2(src, dest)
+            if fname == "results.csv":
+                _publish_csv(src, dest)
+            else:
+                shutil.copy2(src, dest)
     if meta_src.exists():
         shutil.copy2(meta_src, dest)
     else:
@@ -398,7 +424,10 @@ def rebuild_all(no_push: bool = False) -> None:
                       "report.html", "results.csv"):
             src = d / fname
             if src.exists():
-                shutil.copy2(src, dest)
+                if fname == "results.csv":
+                    _publish_csv(src, dest)
+                else:
+                    shutil.copy2(src, dest)
         meta_src = d / "meta.json"
         if meta_src.exists():
             shutil.copy2(meta_src, dest)
