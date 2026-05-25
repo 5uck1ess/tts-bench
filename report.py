@@ -420,6 +420,8 @@ MODEL_DISPLAY_NAMES = {
     "kokoro":        "Kokoro",
     "kittentts":     "KittenTTS",
     "soprano":       "Soprano 80M",
+    "moss_tts_nano": "MOSS-TTS-Nano",
+    "moss_tts":      "MOSS-TTS",
     "supertonic":    "Supertonic",
     "luxtts":        "LuxTTS",
 }
@@ -455,6 +457,8 @@ MODEL_SIZE = {
     "kittentts":     "<100M",
     "piper":         "~25MB",
     "soprano":       "80M",
+    "moss_tts_nano": "100M",
+    "moss_tts":      "8B",
     "supertonic":    "99M",
 }
 
@@ -487,6 +491,8 @@ MODEL_KIND = {
     "dia":           "cloning",
     "neutts_air":    "cloning",
     "neutts_nano":   "cloning",
+    "moss_tts_nano": "cloning",
+    "moss_tts":      "cloning",
 }
 
 

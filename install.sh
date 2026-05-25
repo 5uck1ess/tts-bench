@@ -417,6 +417,65 @@ else
     echo "soprano: already installed"
 fi
 
+# --- MOSS-TTS-Nano 100M (OpenMOSS/MOSI.AI, Apache 2.0, zero-shot cloning, 48kHz) ---
+echo; cyan "=== MOSS-TTS-Nano 100M (OpenMOSS/MOSI.AI, Apache 2.0, zero-shot cloning, 48kHz) ==="
+if [ ! -x venvs/moss_tts_nano/bin/python ]; then
+    # No PyPI wheel that ships the model code — install editable from source clone.
+    # Upstream README recommends Python 3.12. The package's pyproject exposes
+    # both the `moss_tts_nano` package + top-level py-modules (infer, app, ...),
+    # so an editable install also makes `from moss_tts_nano.defaults import ...`
+    # and `import infer` available at the repo root.
+    uv venv venvs/moss_tts_nano --python 3.12 || die "uv venv moss_tts_nano"
+    if [ ! -d venvs/moss_tts_nano/src ]; then
+        git clone --depth 1 https://github.com/OpenMOSS/MOSS-TTS-Nano venvs/moss_tts_nano/src \
+            || die "git clone MOSS-TTS-Nano"
+    fi
+    uv pip install --python venvs/moss_tts_nano/bin/python -e venvs/moss_tts_nano/src \
+        || die "uv pip install moss-tts-nano editable"
+    # The README notes WeTextProcessing + pynini are optional (the runner sets
+    # enable_wetext_processing=0 to skip them). Pynini has wheels on Mac/Linux
+    # but we deliberately skip the WeTextProcessing dep for cross-platform parity
+    # with the Windows path — the upstream "normalize_tts_text" robust cleanup
+    # is still applied at inference.
+    uv pip install --python venvs/moss_tts_nano/bin/python soundfile numpy \
+        || die "uv pip install moss_tts_nano deps"
+    # On CUDA Linux, swap in cu128 wheels for Blackwell; on Mac/CPU-only the default torch is fine.
+    # Pin torch == 2.8.0: torch 2.9+ routes torchaudio.load() through torchcodec, whose
+    # libtorchcodec*.dll needs FFmpeg shared DLLs on PATH. Linux usually ships those
+    # via apt but Windows doesn't; we pin globally so the venv layout matches across rigs.
+    # uv pip install --python venvs/moss_tts_nano/bin/python --reinstall "torch==2.8.0" "torchaudio==2.8.0" --index-url https://download.pytorch.org/whl/cu128
+    green "moss_tts_nano: ok (~100M params, 48kHz, voice cloning; weights auto-download from OpenMOSS-Team/MOSS-TTS-Nano on first use)"
+else
+    echo "moss_tts_nano: already installed"
+fi
+
+# --- MOSS-TTS flagship (OpenMOSS, Apache 2.0, 8B Qwen3-backbone zero-shot cloning, 20 langs) ---
+echo; cyan "=== MOSS-TTS flagship (OpenMOSS, Apache 2.0, 8B Qwen3-backbone zero-shot cloning, 20 langs) ==="
+if [ ! -x venvs/moss_tts/bin/python ]; then
+    # Source-clone install — upstream pins torch==2.9.1+cu128 + transformers==5.0.0
+    # via the [torch-runtime] extra. Python 3.12 per upstream README.
+    uv venv venvs/moss_tts --python 3.12 || die "uv venv moss_tts"
+    if [ ! -d venvs/moss_tts/src ]; then
+        git clone --depth 1 https://github.com/OpenMOSS/MOSS-TTS venvs/moss_tts/src \
+            || die "git clone MOSS-TTS"
+    fi
+    # `.[torch-runtime]` pulls torch==2.9.1+cu128, torchaudio==2.9.1+cu128,
+    # torchcodec, transformers==5.0.0 from the pytorch cu128 index.
+    uv pip install --python venvs/moss_tts/bin/python \
+        --extra-index-url https://download.pytorch.org/whl/cu128 \
+        -e "venvs/moss_tts/src[torch-runtime]" \
+        || die "uv pip install moss-tts torch-runtime"
+    uv pip install --python venvs/moss_tts/bin/python soundfile \
+        || die "uv pip install moss_tts deps"
+    # Pin torch == 2.8.0: 2.9+ routes torchaudio.load() through torchcodec, which
+    # needs FFmpeg shared DLLs (no Windows wheels). 2.8.0 still uses soundfile.
+    uv pip install --python venvs/moss_tts/bin/python --reinstall "torch==2.8.0" "torchaudio==2.8.0" --index-url https://download.pytorch.org/whl/cu128 \
+        || die "uv pip install moss_tts torch 2.8.0 pin"
+    green "moss_tts: ok (8B Qwen3 backbone, 20 langs, 24kHz, voice cloning; ~16GB weights auto-download from OpenMOSS-Team/MOSS-TTS on first use)"
+else
+    echo "moss_tts: already installed"
+fi
+
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
 if [ ! -x venvs/supertonic/bin/python ]; then

@@ -65,7 +65,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (25)
+## Models tracked (27)
 
 | Model | Params | Predefined | Cloning | Multilingual | SR | License |
 |---|---|---|---|---|---|---|
@@ -94,6 +94,8 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | NeuTTS Air | 748M | — | ✓ | — | 24k | Apache 2.0 |
 | NeuTTS Nano | 748M | — | ✓ | — | 24k | Apache 2.0 |
 | Dia 1.6B | 1.6B | — | ✓ | — | 44.1k | Apache 2.0 |
+| MOSS-TTS-Nano | 100M | — | ✓ | ✓ (zh+en) | **48k** | Apache 2.0 |
+| MOSS-TTS | 8B (Qwen3) | — | ✓ | ✓ (20) | 24k | Apache 2.0 |
 
 Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-issues.md)**. Models considered but excluded: **[docs/considered.md](docs/considered.md)**.
 

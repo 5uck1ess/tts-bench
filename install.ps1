@@ -359,6 +359,58 @@ if (-not (Test-Path "venvs\soprano\Scripts\python.exe")) {
     Write-Host "soprano: already installed" -ForegroundColor Gray
 }
 
+Step "MOSS-TTS-Nano 100M (OpenMOSS/MOSI.AI, Apache 2.0, zero-shot cloning, 48kHz)"
+if (-not (Test-Path "venvs\moss_tts_nano\Scripts\python.exe")) {
+    # No PyPI wheel that ships the model code — install editable from source clone.
+    # Upstream README recommends Python 3.12. The package's setup.py exposes
+    # `moss-tts-nano` console-script + top-level py-modules (infer, app, etc.),
+    # so an editable install also makes `from moss_tts_nano.defaults import ...`
+    # and `import infer` available at the repo root.
+    Invoke-Checked "uv venv moss_tts_nano" { uv venv venvs\moss_tts_nano --python 3.12 }
+    if (-not (Test-Path "venvs\moss_tts_nano\src")) {
+        Invoke-Checked "git clone MOSS-TTS-Nano" { git clone --depth 1 https://github.com/OpenMOSS/MOSS-TTS-Nano venvs\moss_tts_nano\src }
+    }
+    # Editable install pulls the pyproject deps (torch 2.7, transformers 4.57.1, etc).
+    Invoke-Checked "uv pip install moss-tts-nano editable" { uv pip install --python venvs\moss_tts_nano\Scripts\python.exe -e venvs\moss_tts_nano\src }
+    # The README notes WeTextProcessing + pynini are optional (the runner sets
+    # enable_wetext_processing=0 to skip them). Pynini has no Windows wheel and
+    # needs OpenFST/bazel to build, so we deliberately skip both — the upstream
+    # text normalizer ("normalize_tts_text") is still applied.
+    Invoke-Checked "uv pip install moss_tts_nano deps" { uv pip install --python venvs\moss_tts_nano\Scripts\python.exe soundfile numpy }
+    # Upstream pins torch 2.7 (cu126). Reinstall cu128 wheels for Blackwell (5090, sm_120).
+    # Pin torch == 2.8.0: 2.9+ routes torchaudio.load() through torchcodec, whose
+    # libtorchcodec*.dll needs FFmpeg shared DLLs on PATH (not present on stock
+    # Windows). 2.8.0 still uses the soundfile backend.
+    Invoke-Checked "torch cu128 for moss_tts_nano" { uv pip install --python venvs\moss_tts_nano\Scripts\python.exe --reinstall "torch==2.8.0" "torchaudio==2.8.0" --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "moss_tts_nano: ok (~100M params, 48kHz, voice cloning; weights auto-download from OpenMOSS-Team/MOSS-TTS-Nano on first use)" -ForegroundColor Green
+} else {
+    Write-Host "moss_tts_nano: already installed" -ForegroundColor Gray
+}
+
+Step "MOSS-TTS flagship (OpenMOSS, Apache 2.0, 8B Qwen3-backbone zero-shot cloning, 20 langs)"
+if (-not (Test-Path "venvs\moss_tts\Scripts\python.exe")) {
+    # Source-clone install. Upstream's [torch-runtime] extra pins torch==2.9.1
+    # which routes torchaudio.load() through torchcodec — torchcodec's DLL fails
+    # to load on Windows without FFmpeg shared libs on PATH. Install everything
+    # else from the [torch-runtime] extra, then downgrade torch/torchaudio to
+    # 2.8.0 so we get the soundfile backend.
+    Invoke-Checked "uv venv moss_tts" { uv venv venvs\moss_tts --python 3.12 }
+    if (-not (Test-Path "venvs\moss_tts\src")) {
+        Invoke-Checked "git clone MOSS-TTS" { git clone --depth 1 https://github.com/OpenMOSS/MOSS-TTS venvs\moss_tts\src }
+    }
+    Invoke-Checked "uv pip install moss-tts torch-runtime" {
+        uv pip install --python venvs\moss_tts\Scripts\python.exe `
+            --extra-index-url https://download.pytorch.org/whl/cu128 `
+            -e "venvs\moss_tts\src[torch-runtime]"
+    }
+    Invoke-Checked "uv pip install moss_tts deps" { uv pip install --python venvs\moss_tts\Scripts\python.exe soundfile }
+    # Pin torch == 2.8.0 (avoid torchcodec — see comment above + moss_tts_nano block).
+    Invoke-Checked "torch 2.8.0 for moss_tts" { uv pip install --python venvs\moss_tts\Scripts\python.exe --reinstall "torch==2.8.0" "torchaudio==2.8.0" --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "moss_tts: ok (8B Qwen3 backbone, 20 langs, 24kHz, voice cloning; ~16GB weights auto-download from OpenMOSS-Team/MOSS-TTS on first use)" -ForegroundColor Green
+} else {
+    Write-Host "moss_tts: already installed" -ForegroundColor Gray
+}
+
 Step "Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices)"
 if (-not (Test-Path "venvs\supertonic\Scripts\python.exe")) {
     # Pure-ONNX runtime; no torch dependency. ~25MB weights auto-downloaded

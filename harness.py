@@ -49,6 +49,8 @@ MODELS = [
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], "1.5b", False),
     ("magpie",      "magpie",     "runners/magpie_runner.py",     True,  ["cpu", "cuda"],        None,   False),
     ("soprano",     "soprano",    "runners/soprano_runner.py",    False, ["cpu", "cuda", "mps"], None,   False),
+    ("moss_tts_nano", "moss_tts_nano", "runners/moss_tts_nano_runner.py", True,  ["cpu", "cuda", "mps"], None, True),
+    ("moss_tts",      "moss_tts",      "runners/moss_tts_runner.py",      True,  ["cuda"],               None, True),
     ("supertonic",  "supertonic", "runners/supertonic_runner.py", True,  ["cpu"],                None,   False),
 ]
 
