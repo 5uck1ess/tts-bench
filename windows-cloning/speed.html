@@ -116,7 +116,7 @@
   .lens-card h3 { margin: 0 0 0.4rem 0; font-size: 1.1em; color: var(--accent); }
   .lens-card .desc { color: var(--muted); font-size: 0.9em; }
 
-  /* TLDR callout used by speed.html + quality.html */
+  /* TLDR callout used by speed.html */
   .tldr { background: var(--panel); border-left: 3px solid var(--accent);
           padding: 0.8rem 1.1rem; margin: 1rem 0 1.4rem; border-radius: 4px; }
   .tldr h2 { margin: 0 0 0.4rem 0; font-size: 1em; }
@@ -172,7 +172,7 @@
 <div class="nav"><span class="lens-tabs"><span class="lens-arrow lens-arrow-disabled">← </span><a class="lens-tab active" href="speed.html">Speed</a><a class="lens-tab" href="samples.html">Samples</a><a class="lens-arrow" href="samples.html" title="Next lens: Samples">Samples →</a></span> · <a href="../index.html">all runs</a></div>
 <h1>TTS Bench — Speed — windows-cloning</h1>
 <div class="meta"><strong>Rig:</strong> <code>windows-5090</code> — AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11</div>
-<div class="meta"><strong>Label:</strong> cloning · chris_hemsworth_15s · all models — ref <code>chris_hemsworth_15s.wav</code></div>
+<div class="meta"><strong>Label:</strong> cloning · chris_hemsworth_15s · all models · NAQ v2 — ref <code>chris_hemsworth_15s.wav</code></div>
 <div class="reading-guide"><strong>TTFA</strong> = time to first audio (ms; lower is better). <strong>RTF</strong> = real-time factor (× realtime; higher is better; e.g. 10× means 10 sec of audio generated per 1 sec of compute). <strong>Cold</strong> = first run after process start; <strong>warm</strong> = subsequent runs.</div>
 <div class="tldr"><h2>Speed winners</h2>
 <p>Fastest (this cloning run): <strong>OmniVoice</strong> (cuda) — 9.75× warm RTF, 803ms warm TTFA</p>
@@ -191,17 +191,27 @@
 <tr id="speed-omnivoice-cuda">
 <td>OmniVoice</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="1202.1799999999998">1.20s</td>
-<td class="num" data-sort="803.1000000000001">803ms</td>
+<td class="num" data-sort="803.1">803ms</td>
 <td class="num" data-sort="6.665529913640964">6.67×</td>
-<td class="num" data-sort="9.746976761160637">9.75×</td>
+<td class="num" data-sort="9.746976761160639">9.75×</td>
 <td class="num" data-sort="2325.4">2.27 GB</td>
 <td class="num" data-sort="2475.6">2.42 GB</td>
 <td class="muted">~1B</td>
 </tr>
+<tr id="speed-f5tts-cuda">
+<td>F5-TTS</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="1560.45">1.56s</td>
+<td class="num" data-sort="1056.6">1.06s</td>
+<td class="num" data-sort="3.745561500812155">3.75×</td>
+<td class="num" data-sort="5.499127245328558">5.50×</td>
+<td class="num" data-sort="2732.4">2.67 GB</td>
+<td class="num" data-sort="883.2">883 MB</td>
+<td class="muted">330M</td>
+</tr>
 <tr id="speed-coqui-cuda">
 <td>Coqui XTTS-v2</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="2017.5">2.02s</td>
-<td class="num" data-sort="1508.4600000000003">1.51s</td>
+<td class="num" data-sort="1508.46">1.51s</td>
 <td class="num" data-sort="3.018619704206639">3.02×</td>
 <td class="num" data-sort="4.762144591858729">4.76×</td>
 <td class="num" data-sort="2404.1">2.35 GB</td>
@@ -213,7 +223,7 @@
 <td class="num" data-sort="2656.85">2.66s</td>
 <td class="num" data-sort="1588.65">1.59s</td>
 <td class="num" data-sort="2.4273820358385256">2.43×</td>
-<td class="num" data-sort="4.152656182052022">4.15×</td>
+<td class="num" data-sort="4.152656182052021">4.15×</td>
 <td class="num" data-sort="2756.1">2.69 GB</td>
 <td class="num" data-sort="3410.1">3.33 GB</td>
 <td class="muted">744M</td>
@@ -230,10 +240,10 @@
 </tr>
 <tr id="speed-qwentts_fast-cuda">
 <td>Qwen3-TTS 1.7B (CUDA-graph)</td><td class="dev-cuda">cuda</td>
-<td class="num" data-sort="34053.840000000004">34.05s</td>
+<td class="num" data-sort="34053.84">34.05s</td>
 <td class="num" data-sort="25831.15">25.83s</td>
 <td class="num" data-sort="2.9353444249532172">2.94×</td>
-<td class="num" data-sort="3.890890083678495">3.89×</td>
+<td class="num" data-sort="3.8908900836784945">3.89×</td>
 <td class="num" data-sort="2581.3">2.52 GB</td>
 <td class="num" data-sort="5073.7">4.95 GB</td>
 <td class="muted">1.7B</td>
@@ -241,7 +251,7 @@
 <tr id="speed-neutts_nano-cuda">
 <td>NeuTTS Nano</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="738.22">738ms</td>
-<td class="num" data-sort="304.82000000000005">305ms</td>
+<td class="num" data-sort="304.82">305ms</td>
 <td class="num" data-sort="1.7905939580694281">1.79×</td>
 <td class="num" data-sort="2.4356536355273875">2.44×</td>
 <td class="num" data-sort="3301.6">3.22 GB</td>
@@ -250,7 +260,7 @@
 </tr>
 <tr id="speed-chatterbox-cuda">
 <td>Chatterbox</td><td class="dev-cuda">cuda</td>
-<td class="num" data-sort="4013.9500000000003">4.01s</td>
+<td class="num" data-sort="4013.95">4.01s</td>
 <td class="num" data-sort="2881.375">2.88s</td>
 <td class="num" data-sort="1.6322601374991952">1.63×</td>
 <td class="num" data-sort="2.3278251464937125">2.33×</td>
@@ -260,7 +270,7 @@
 </tr>
 <tr id="speed-neutts_nano-cpu">
 <td>NeuTTS Nano</td><td class="dev-cpu">cpu</td>
-<td class="num" data-sort="753.9799999999999">754ms</td>
+<td class="num" data-sort="753.98">754ms</td>
 <td class="num" data-sort="338.31">338ms</td>
 <td class="num" data-sort="1.4691399511568641">1.47×</td>
 <td class="num" data-sort="1.902799965881299">1.90×</td>
@@ -268,15 +278,45 @@
 <td class="num" data-sort="">—</td>
 <td class="muted">748M</td>
 </tr>
+<tr id="speed-moss_tts_nano-cuda">
+<td>MOSS-TTS-Nano</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="5593.44">5.59s</td>
+<td class="num" data-sort="4872.65">4.87s</td>
+<td class="num" data-sort="1.3428905499952914">1.34×</td>
+<td class="num" data-sort="1.6600926720010054">1.66×</td>
+<td class="num" data-sort="2477.6">2.42 GB</td>
+<td class="num" data-sort="909.7">910 MB</td>
+<td class="muted">100M</td>
+</tr>
 <tr id="speed-neutts_air-cuda">
 <td>NeuTTS Air</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="1163.65">1.16s</td>
-<td class="num" data-sort="438.23750000000007">438ms</td>
-<td class="num" data-sort="1.2031938347156517">1.20×</td>
-<td class="num" data-sort="1.6409637081947537">1.64×</td>
+<td class="num" data-sort="438.2375">438ms</td>
+<td class="num" data-sort="1.2031938347156519">1.20×</td>
+<td class="num" data-sort="1.640963708194754">1.64×</td>
 <td class="num" data-sort="3660.3">3.57 GB</td>
 <td class="num" data-sort="3336.1">3.26 GB</td>
 <td class="muted">748M</td>
+</tr>
+<tr id="speed-indextts-cpu">
+<td>IndexTTS-2</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="5774.0">5.77s</td>
+<td class="num" data-sort="4865.6375">4.87s</td>
+<td class="num" data-sort="1.200084186278941">1.20×</td>
+<td class="num" data-sort="1.4691935201594535">1.47×</td>
+<td class="num" data-sort="5675.7">5.54 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">1.5B</td>
+</tr>
+<tr id="speed-moss_tts-cuda">
+<td>MOSS-TTS</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="5443.42">5.44s</td>
+<td class="num" data-sort="4734.42">4.73s</td>
+<td class="num" data-sort="1.3113600728902686">1.31×</td>
+<td class="num" data-sort="1.4440458592207888">1.44×</td>
+<td class="num" data-sort="2148.0">2.10 GB</td>
+<td class="num" data-sort="23382.8">22.83 GB</td>
+<td class="muted">8B</td>
 </tr>
 <tr id="speed-neutts_air-cpu">
 <td>NeuTTS Air</td><td class="dev-cpu">cpu</td>
@@ -292,25 +332,45 @@
 <td>VoxCPM2 2B</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="6355.0">6.36s</td>
 <td class="num" data-sort="4717.87">4.72s</td>
-<td class="num" data-sort="0.9623628591748415">0.96×</td>
-<td class="num" data-sort="1.331569560044125">1.33×</td>
+<td class="num" data-sort="0.9623628591748414">0.96×</td>
+<td class="num" data-sort="1.3315695600441249">1.33×</td>
 <td class="num" data-sort="2549.8">2.49 GB</td>
 <td class="num" data-sort="5843.9">5.71 GB</td>
 <td class="muted">2B</td>
 </tr>
+<tr id="speed-indextts-cuda">
+<td>IndexTTS-2</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="6801.875">6.80s</td>
+<td class="num" data-sort="5659.9125">5.66s</td>
+<td class="num" data-sort="1.0275378745134178">1.03×</td>
+<td class="num" data-sort="1.25680925662213">1.26×</td>
+<td class="num" data-sort="4149.2">4.05 GB</td>
+<td class="num" data-sort="7890.2">7.71 GB</td>
+<td class="muted">1.5B</td>
+</tr>
+<tr id="speed-moss_tts_nano-cpu">
+<td>MOSS-TTS-Nano</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="5691.82">5.69s</td>
+<td class="num" data-sort="5035.76">5.04s</td>
+<td class="num" data-sort="1.1620297313251342">1.16×</td>
+<td class="num" data-sort="1.2546815386466408">1.25×</td>
+<td class="num" data-sort="3118.1">3.05 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">100M</td>
+</tr>
 <tr id="speed-coqui-cpu">
 <td>Coqui XTTS-v2</td><td class="dev-cpu">cpu</td>
-<td class="num" data-sort="9933.220000000001">9.93s</td>
+<td class="num" data-sort="9933.22">9.93s</td>
 <td class="num" data-sort="8764.47">8.76s</td>
 <td class="num" data-sort="0.8441685833918713">0.84×</td>
-<td class="num" data-sort="0.8479224278883073">0.85×</td>
+<td class="num" data-sort="0.8479224278883072">0.85×</td>
 <td class="num" data-sort="3508.0">3.43 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">750M</td>
 </tr>
 <tr id="speed-chatterbox_turbo-cpu">
 <td>Chatterbox Turbo</td><td class="dev-cpu">cpu</td>
-<td class="num" data-sort="10836.974999999999">10.84s</td>
+<td class="num" data-sort="10836.975">10.84s</td>
 <td class="num" data-sort="9365.824999999999">9.37s</td>
 <td class="num" data-sort="0.6777775843146354">0.68×</td>
 <td class="num" data-sort="0.7115877999481575">0.71×</td>
@@ -348,10 +408,20 @@
 <td class="num" data-sort="3624.5">3.54 GB</td>
 <td class="muted">1B</td>
 </tr>
+<tr id="speed-dia-cuda">
+<td>Dia 1.6B</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="13794.85">13.79s</td>
+<td class="num" data-sort="11452.5625">11.45s</td>
+<td class="num" data-sort="0.3736324380016667">0.37×</td>
+<td class="num" data-sort="0.5004631638924645">0.50×</td>
+<td class="num" data-sort="4523.0">4.42 GB</td>
+<td class="num" data-sort="4932.9">4.82 GB</td>
+<td class="muted">1.6B</td>
+</tr>
 <tr id="speed-zipvoice-cpu">
 <td>ZipVoice 123M</td><td class="dev-cpu">cpu</td>
-<td class="num" data-sort="50027.119999999995">50.03s</td>
-<td class="num" data-sort="47064.02">47.06s</td>
+<td class="num" data-sort="50027.12">50.03s</td>
+<td class="num" data-sort="47064.020000000004">47.06s</td>
 <td class="num" data-sort="0.30079967333273705">0.30×</td>
 <td class="num" data-sort="0.42582709482993375">0.43×</td>
 <td class="num" data-sort="40608.4">39.66 GB</td>
@@ -361,7 +431,7 @@
 <tr id="speed-voxcpm-cpu">
 <td>VoxCPM2 2B</td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="18122.3">18.12s</td>
-<td class="num" data-sort="16042.700000000003">16.04s</td>
+<td class="num" data-sort="16042.7">16.04s</td>
 <td class="num" data-sort="0.3395832765151865">0.34×</td>
 <td class="num" data-sort="0.39082928532511063">0.39×</td>
 <td class="num" data-sort="7710.1">7.53 GB</td>
@@ -372,8 +442,8 @@
 <td>Chatterbox</td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="17387.5">17.39s</td>
 <td class="num" data-sort="17392.325">17.39s</td>
-<td class="num" data-sort="0.36464347861265">0.36×</td>
-<td class="num" data-sort="0.3819702061271478">0.38×</td>
+<td class="num" data-sort="0.36464347861264995">0.36×</td>
+<td class="num" data-sort="0.38197020612714777">0.38×</td>
 <td class="num" data-sort="4836.9">4.72 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">1.2B</td>
@@ -381,7 +451,7 @@
 <tr id="speed-qwentts-cpu">
 <td>Qwen3-TTS 1.7B <span class="muted">(2/5 ok)</span></td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="18226.05">18.23s</td>
-<td class="num" data-sort="18315.675000000003">18.32s</td>
+<td class="num" data-sort="18315.675">18.32s</td>
 <td class="num" data-sort="0.14385188399478238">0.14×</td>
 <td class="num" data-sort="0.16145064204370124">0.16×</td>
 <td class="num" data-sort="9428.4">9.21 GB</td>
@@ -393,7 +463,7 @@
 <td class="num" data-sort="54743.8">54.74s</td>
 <td class="num" data-sort="53279.9">53.28s</td>
 <td class="num" data-sort="0.13737559288571577">0.14×</td>
-<td class="num" data-sort="0.1392445768748134">0.14×</td>
+<td class="num" data-sort="0.13924457687481342">0.14×</td>
 <td class="num" data-sort="4077.8">3.98 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">~1B</td>
@@ -403,7 +473,7 @@
 <td class="num" data-sort="48900.75">48.90s</td>
 <td class="num" data-sort="48636.5">48.64s</td>
 <td class="num" data-sort="0.11679639043756074">0.12×</td>
-<td class="num" data-sort="0.12196197210176872">0.12×</td>
+<td class="num" data-sort="0.1219619721017687">0.12×</td>
 <td class="num" data-sort="6469.8">6.32 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">1B</td>
@@ -418,6 +488,16 @@
 <td class="num" data-sort="">—</td>
 <td class="muted">1.2B</td>
 </tr>
+<tr id="speed-f5tts-cpu">
+<td>F5-TTS</td><td class="dev-cpu">cpu</td>
+<td class="num" data-sort="71352.9">71.35s</td>
+<td class="num" data-sort="71178.15">71.18s</td>
+<td class="num" data-sort="0.08094220770075981">0.08×</td>
+<td class="num" data-sort="0.08119689612440635">0.08×</td>
+<td class="num" data-sort="2773.8">2.71 GB</td>
+<td class="num" data-sort="">—</td>
+<td class="muted">330M</td>
+</tr>
 <tr id="speed-mars5-cuda">
 <td>Mars5-TTS</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="41119.975">41.12s</td>
@@ -428,12 +508,7 @@
 <td class="num" data-sort="7407.2">7.23 GB</td>
 <td class="muted">1.2B</td>
 </tr>
-<tr id="speed-luxtts-cpu"><td>LuxTTS</td><td class="dev-cpu">cpu</td><td colspan="7" class="fail">FAIL: load failed: ModuleNotFoundError: No module named &#x27;luxtts&#x27;</td></tr>
-<tr id="speed-f5tts-cpu"><td>F5-TTS</td><td class="dev-cpu">cpu</td><td colspan="7" class="fail">FAIL: load failed: ValueError: mutable default &lt;class &#x27;hydra.conf.JobConf.JobConfig.OverrideDirname&#x27;&gt; for field override_dirname is not allowed: u</td></tr>
-<tr id="speed-f5tts-cuda"><td>F5-TTS</td><td class="dev-cuda">cuda</td><td colspan="7" class="fail">FAIL: load failed: ValueError: mutable default &lt;class &#x27;hydra.conf.JobConf.JobConfig.OverrideDirname&#x27;&gt; for field override_dirname is not allowed: u</td></tr>
-<tr id="speed-indextts-cpu"><td>IndexTTS-2</td><td class="dev-cpu">cpu</td><td colspan="7" class="fail">FAIL: load failed: TypeError: &#x27;NoneType&#x27; object cannot be interpreted as an integer</td></tr>
-<tr id="speed-indextts-cuda"><td>IndexTTS-2</td><td class="dev-cuda">cuda</td><td colspan="7" class="fail">FAIL: load failed: TypeError: &#x27;NoneType&#x27; object cannot be interpreted as an integer</td></tr>
-<tr id="speed-dia-cuda"><td>Dia 1.6B</td><td class="dev-cuda">cuda</td><td colspan="7" class="fail">FAIL: ImportError: TorchCodec is required for load_with_torchcodec. Please install torchcodec to use this function.</td></tr>
+<tr id="speed-luxtts-cpu"><td>LuxTTS</td><td class="dev-cpu">cpu</td><td colspan="7" class="fail">LuxTTS install failed (piper-phonemize has no Windows wheels)</td></tr>
 </tbody></table>
 <script>window.__defaultSort = {colIdx: 5, dir: -1};</script>
 <script>
