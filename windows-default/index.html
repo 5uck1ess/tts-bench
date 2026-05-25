@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<title>TTS Bench — Published Runs</title>
-<link rel="icon" type="image/svg+xml" href="logo-mark.svg"><link rel="icon" type="image/png" sizes="32x32" href="favicon.png"><link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
+<title>TTS Bench — windows-default</title>
 <style>
   :root {
     color-scheme: dark light;
@@ -159,7 +158,6 @@
   .reading-guide strong { color: var(--accent); }
   .reading-guide a { color: var(--accent); }
 </style>
-<style>.site-header{margin:1rem 0 1.25rem;}.site-logo{display:block;height:auto;max-width:min(320px,80vw);}.site-logo--light{display:none;}[data-theme="light"] .site-logo--dark{display:none;}[data-theme="light"] .site-logo--light{display:block;}</style>
 </head><body>
 <div class="controls">
 <input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
@@ -168,132 +166,16 @@
 <span class="spacer"></span>
 <button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
 </div>
-<header class="site-header"><img class="site-logo site-logo--dark" src="logo-flat-dark.svg" alt="tts-bench" width="320" height="auto"><img class="site-logo site-logo--light" src="logo-flat-light.svg" alt="tts-bench" width="320" height="auto"></header>
-<h1>Published Runs</h1>
-<div class="meta">Open-source TTS models benchmarked side-by-side. Three axes: <strong>speed</strong> (TTFA, RTF), <strong>quality</strong> (NAQ), <strong>voice cloning</strong>. Each run has inline audio so you can listen to every model × prompt without downloading. <a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>
-<div class="meta">10 published run(s)</div>
-<table><thead><tr>
-<th>Date</th>
-<th>Label</th>
-<th>Rig</th>
-<th>Models</th>
-<th>Devices</th>
-<th>Prompts</th>
-<th>Rows</th>
-<th>OK</th>
-<th>Report</th>
-</tr></thead><tbody>
-<tr>
-<td><a href='windows-default/index.html'>windows-default</a></td>
-<td>default voice · all models · NAQ v2</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="25">25 models</td>
-<td>cpu, cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="510">510</td>
-<td class='num' data-sort="477">477/510</td>
-<td><a href="windows-default/speed.html">speed</a> · <a href="windows-default/quality.html">quality</a> · <a href="windows-default/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='linux-default/index.html'>linux-default</a></td>
-<td>default voice</td>
-<td><code title="AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic">linux-3090</code></td>
-<td data-sort="25">25 models</td>
-<td>cpu, cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="536">536</td>
-<td class='num' data-sort="510">510/536</td>
-<td><a href="linux-default/speed.html">speed</a> · <a href="linux-default/quality.html">quality</a> · <a href="linux-default/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='2026-05-24_1001/index.html'>2026-05-24_1001</a></td>
-<td>default voice · supertonic · prompts 1</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="1">supertonic</td>
-<td>cpu</td>
-<td class='num' data-sort="1">1</td>
-<td class='num' data-sort="2">2</td>
-<td class='num' data-sort="2">2/2</td>
-<td><a href="2026-05-24_1001/speed.html">speed</a> · <a href="2026-05-24_1001/quality.html">quality</a> · <a href="2026-05-24_1001/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='2026-05-24_0154/index.html'>2026-05-24_0154</a></td>
-<td>cloning · chris_hemsworth_15s</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="11">11 models</td>
-<td>cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="139">139</td>
-<td class='num' data-sort="135">135/139</td>
-<td><a href="2026-05-24_0154/speed.html">speed</a> · <a href="2026-05-24_0154/quality.html">quality</a> · <a href="2026-05-24_0154/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='2026-05-24_0120/index.html'>2026-05-24_0120</a></td>
-<td>default voice</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="14">14 models</td>
-<td>cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="189">189</td>
-<td class='num' data-sort="189">189/189</td>
-<td><a href="2026-05-24_0120/speed.html">speed</a> · <a href="2026-05-24_0120/quality.html">quality</a> · <a href="2026-05-24_0120/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='2026-05-23_2250/index.html'>2026-05-23_2250</a></td>
-<td>default voice · full CPU pass</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="14">14 models</td>
-<td>cpu</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="184">184</td>
-<td class='num' data-sort="180">180/184</td>
-<td><a href="2026-05-23_2250/speed.html">speed</a> · <a href="2026-05-23_2250/quality.html">quality</a> · <a href="2026-05-23_2250/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='2026-05-23_2203/index.html'>2026-05-23_2203</a></td>
-<td>default voice · first CUDA pass</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="10">10 models</td>
-<td>cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="130">130</td>
-<td class='num' data-sort="126">126/130</td>
-<td><a href="2026-05-23_2203/speed.html">speed</a> · <a href="2026-05-23_2203/quality.html">quality</a> · <a href="2026-05-23_2203/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='2026-05-23_2152/report.html'>2026-05-23_2152</a></td>
-<td>default voice · late additions (omnivoice/voxcpm/magpie)</td>
-<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
-<td data-sort="3">magpie, omnivoice, voxcpm</td>
-<td>cpu, mps</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="58">58</td>
-<td class='num' data-sort="57">57/58</td>
-<td><a href="2026-05-23_2152/report.html">view (legacy)</a></td>
-</tr>
-<tr>
-<td><a href='2026-05-23_1600/report.html'>2026-05-23_1600</a></td>
-<td>cloning · pass 2 (jo/juliette refs)</td>
-<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
-<td data-sort="4">luxtts, neutts_air, neutts_nano, pocket</td>
-<td>cpu, mps</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="77">77</td>
-<td class='num' data-sort="69">69/77</td>
-<td><a href="2026-05-23_1600/report.html">view (legacy)</a></td>
-</tr>
-<tr>
-<td><a href='2026-05-23_1542/report.html'>2026-05-23_1542</a></td>
-<td>default voice · predefined-voice pass 1</td>
-<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
-<td data-sort="4">kittentts, kokoro, piper, vibevoice</td>
-<td>cpu, mps</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="81">81</td>
-<td class='num' data-sort="81">81/81</td>
-<td><a href="2026-05-23_1542/report.html">view (legacy)</a></td>
-</tr>
-</tbody></table>
+<div class="nav"><a href="../index.html">← all runs</a></div>
+<h1>TTS Bench — windows-default</h1>
+<div class="meta"><strong>Rig:</strong> <code>windows-5090</code> — AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11</div>
+<div class="meta"><strong>Label:</strong> default voice · all models · NAQ v2</div>
+<div class="meta">25 model(s) · 2 device(s) · 5 prompt(s) · 3 run(s) per cell</div>
+<div class="lens-grid">
+<div class="lens-card"><a href="speed.html"><h3>▶ Speed</h3><div class="desc">TTFA, RTF, memory · 25 models · sortable</div></a></div>
+<div class="lens-card"><a href="samples.html"><h3>▶ Samples</h3><div class="desc">By-prompt gallery · A/B every model</div></a></div>
+</div>
+<div class="meta"><a href="results.csv">results.csv</a> · <a href="meta.json">meta.json</a></div>
 <script>
 (function(){
   // ---------- theme toggle ----------
