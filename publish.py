@@ -291,9 +291,30 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
     if not (run_dir / "results.csv").exists():
         raise SystemExit(f"No results.csv in {run_dir}")
 
-    if not (run_dir / "index.html").exists():
-        print(f"No index.html in {run_dir.name} — building it from CSV...")
-        build_report(run_dir)
+    meta_src = run_dir / "meta.json"
+
+    # Cloning runs: stage the reference clip into the run dir as `_reference.wav`
+    # BEFORE building, so build_report's samples page can embed a "voice we
+    # cloned" player (its render checks run_dir/_reference.wav). meta.json stores
+    # only the basename (bench.py: Path(reference).name) and clips live in
+    # reference/, so check there too — not just REPO.
+    if meta_src.exists():
+        try:
+            meta_data = json.loads(meta_src.read_text(encoding="utf-8"))
+        except Exception:
+            meta_data = {}
+        ref_rel = meta_data.get("reference")
+        if ref_rel:
+            p = Path(ref_rel)
+            candidates = ([p] if p.is_absolute()
+                          else [REPO / ref_rel, REPO / "reference" / p.name])
+            ref_path = next((c for c in candidates if c.exists()), None)
+            if ref_path:
+                shutil.copy2(ref_path, run_dir / "_reference.wav")
+
+    # Always (re)build so the published HTML reflects the current CSV, reference,
+    # and report.py — never ship a stale index/speed/samples page.
+    build_report(run_dir)
 
     ensure_worktree()
 
@@ -309,7 +330,6 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
         src = run_dir / fname
         if src.exists():
             shutil.copy2(src, dest)
-    meta_src = run_dir / "meta.json"
     if meta_src.exists():
         shutil.copy2(meta_src, dest)
     else:
@@ -319,21 +339,6 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
     wavs = list(run_dir.glob("*.wav"))
     for wav in wavs:
         shutil.copy2(wav, dest)
-
-    # Cloning runs: copy the reference wav into the slug as `_reference.wav` so
-    # the samples page can include a "this is the voice we cloned" player at the
-    # top. meta.json stores the path the bench was invoked with, which is repo-
-    # relative; resolve from REPO if not absolute.
-    if meta_src.exists():
-        try:
-            meta_data = json.loads(meta_src.read_text(encoding="utf-8"))
-        except Exception:
-            meta_data = {}
-        ref_rel = meta_data.get("reference")
-        if ref_rel:
-            ref_path = Path(ref_rel) if Path(ref_rel).is_absolute() else REPO / ref_rel
-            if ref_path.exists():
-                shutil.copy2(ref_path, dest / "_reference.wav")
 
     total_bytes = sum(p.stat().st_size for p in dest.iterdir())
     has_meta = " + meta.json" if meta_src.exists() else ""
