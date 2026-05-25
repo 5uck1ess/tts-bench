@@ -195,9 +195,9 @@ def build_pages_index():
            CONTROLS,
            LOGO_HEADER,
            '<h1>Published Runs</h1>',
-           '<div class="meta">Open-source TTS models benchmarked side-by-side. Three axes: '
-           '<strong>speed</strong> (TTFA, RTF), <strong>quality</strong> (NAQ), '
-           '<strong>voice cloning</strong>. Each run has inline audio so you can listen '
+           '<div class="meta">Open-source TTS models benchmarked side-by-side: '
+           '<strong>speed</strong> (TTFA, RTF) and <strong>voice cloning</strong>. '
+           'Each run has inline audio so you can listen '
            'to every model × prompt without downloading. '
            '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>',
            f'<div class="meta">{len(runs)} published run(s)</div>',
