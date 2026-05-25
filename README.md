@@ -29,7 +29,7 @@ Every model × prompt × device combination is rendered with an inline `<audio>`
 
 ## Quick start
 
-Requires [`uv`](https://github.com/astral-sh/uv) and Python 3.11. ~10-15 min install, ~60 GB disk for all models.
+Requires [`uv`](https://github.com/astral-sh/uv) and Python 3.11. ~10-15 min install; ~100 GB disk for the full set (~56 GB model weights + ~47 GB of per-model venvs).
 
 ```powershell
 # Windows
@@ -69,14 +69,14 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 | Model | Params | Predefined | Cloning | Multilingual | SR | License |
 |---|---|---|---|---|---|---|
-| Piper | ~25 MB | ✓ | — | ✓ | 22.05k | MIT |
+| Piper | ~15M | ✓ | — | ✓ | 22.05k | MIT |
 | Kokoro | 82M | ✓ | — | ✓ | 24k | Apache 2.0 |
 | KittenTTS | <100M | ✓ | — | — | 24k | Apache 2.0 |
 | Magpie-TTS | 357M | ✓ | — | ✓ (9) | 22.05k | NVIDIA OML |
 | VibeVoice Realtime 0.5B | 0.5B | ✓ | — | — | 24k | MIT |
-| VibeVoice 1.5B | 3B | ✓ | — | — | 24k | MIT |
+| VibeVoice 1.5B | 1.5B | ✓ | — | — | 24k | MIT |
 | Supertonic | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
-| LuxTTS | — | ✓ | — | — | 22.05k | MIT |
+| LuxTTS | ~123M | ✓ | — | — | 22.05k | MIT |
 | Soprano 80M | 80M | ✓ | — | — | 32k | Apache 2.0 |
 | Pocket-TTS | 100M | — | ✓ | — | 24k | Apache 2.0 |
 | ChatterBox | 1.2B | — | ✓ | — | 24k | MIT |

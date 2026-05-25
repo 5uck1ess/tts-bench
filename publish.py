@@ -210,7 +210,7 @@ def build_pages_index():
             '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>'),
            f'<div class="meta">{len(runs)} published run(s)</div>',
            '<table><thead><tr>']
-    for col in ("Date", "Label", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
+    for col in ("Run", "Label", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
         out.append(f'<th>{col}</th>')
     out.append('</tr></thead><tbody>')
 
