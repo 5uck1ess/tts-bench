@@ -1,0 +1,17 @@
+{
+  "rig": "mac-m4",
+  "os": "Darwin 25.5.0",
+  "os_version": "Darwin Kernel Version 25.5.0: Mon Apr 27 20:41:26 PDT 2026; root:xnu-12377.121.6~2/RELEASE_ARM64_T8132",
+  "python": "3.14.3",
+  "cpu": "Apple M4",
+  "cpu_cores_logical": 10,
+  "cpu_cores_physical": 10,
+  "ram_gb": 16,
+  "gpu": "Apple M4 GPU (MPS)",
+  "gpu_vram_gb": null,
+  "captured_at": "2026-05-25T01:19:15Z",
+  "label": "cloning \u00b7 jo",
+  "reference": "jo.wav",
+  "models_filter": null,
+  "prompts_filter": null
+}
