@@ -55,6 +55,19 @@ MODELS = [
 ]
 
 
+# GPU-class models: measured sub-realtime (<0.5x RTF) on the best available
+# CPU/MPS device, or they OOM / time out there. They only make sense on a CUDA
+# rig. On a machine where CUDA isn't available, build_cells skips them by
+# default (pass include_gpu_class=True / `bench.py --all` to force them in) so a
+# non-CUDA pass doesn't burn time on models that can't be deploy candidates
+# there. Tagged from the May 2026 Apple-M4 pass; they still run on Windows/Linux
+# CUDA rigs unchanged. See docs/known-issues.md.
+GPU_CLASS = {
+    "f5tts", "indextts", "voxcpm", "qwentts", "sesame", "mars5",
+    "chatterbox", "magpie",
+}
+
+
 def venv_python(venv_dir: str) -> Path:
     """Resolve the python.exe / bin/python path for a venv on this OS."""
     root = REPO / "venvs" / venv_dir
@@ -87,13 +100,18 @@ def detect_mps(py: Path) -> bool:
 
 
 def build_cells(reference=None, requested_models=None, requested_devices=None,
-                verbose=True):
+                verbose=True, include_gpu_class=False, skipped_out=None):
     """Return the list of runnable (model, device) cells on this machine.
 
     `requested_models` / `requested_devices`: optional sets to filter. If
     `reference` is truthy, predefined-voice-only models (can_clone=False) are
     skipped, matching bench.py's behavior. Cells with missing venvs or
     unavailable devices are silently dropped (with a printed note if verbose).
+
+    GPU-class models (see GPU_CLASS) are skipped on a rig where CUDA isn't
+    available unless `include_gpu_class` is True. When `skipped_out` is a list,
+    one dict per skipped (model, device) is appended so callers can mark them in
+    their output instead of dropping them silently.
     """
     cells = []
     for (model_name, venv_dir, runner_rel, multilingual,
@@ -109,6 +127,23 @@ def build_cells(reference=None, requested_models=None, requested_devices=None,
             continue
         cuda_ok = ("cuda" in model_devices) and detect_cuda(py)
         mps_ok = ("mps" in model_devices) and detect_mps(py)
+        if model_name in GPU_CLASS and not cuda_ok and not include_gpu_class:
+            if verbose:
+                print(f"skip {model_name}: gpu-class — sub-realtime without CUDA "
+                      f"on this rig (pass --all to include)")
+            if skipped_out is not None:
+                for device in model_devices:
+                    if device == "cuda":
+                        continue
+                    if requested_devices and device not in requested_devices:
+                        continue
+                    skipped_out.append({
+                        "model": model_name, "device": device,
+                        "variant": variant, "can_clone": can_clone,
+                        "multilingual": multilingual,
+                        "reason": "gpu-class: sub-realtime without CUDA (--all to include)",
+                    })
+            continue
         for device in model_devices:
             if device == "cuda" and not cuda_ok:
                 continue

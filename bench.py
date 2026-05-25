@@ -199,6 +199,9 @@ def main() -> int:
                         "Overwrites the slug dir if it exists (prompts unless --force).")
     p.add_argument("--force", action="store_true",
                    help="Skip the overwrite-confirm prompt when --canonical points at an existing dir.")
+    p.add_argument("--all", action="store_true",
+                   help="Include GPU-class models (see harness.GPU_CLASS) even on a non-CUDA rig. "
+                        "By default they're skipped there — sub-realtime, not deploy candidates.")
     args = p.parse_args()
 
     if args.write_meta:
@@ -250,10 +253,16 @@ def main() -> int:
     print(f"Rig: {meta['rig']} ({meta.get('cpu') or '?'} / {meta.get('gpu') or 'no GPU detected'})")
     print(f"Label: {meta['label']}\n")
 
-    cells = build_cells(args.reference, requested_models, requested_devices)
-    if not cells:
+    gpu_skipped = []
+    cells = build_cells(args.reference, requested_models, requested_devices,
+                        include_gpu_class=args.all, skipped_out=gpu_skipped)
+    if not cells and not gpu_skipped:
         print("No cells to run. Check --models / --devices and that venvs are installed.")
         return 2
+    if gpu_skipped:
+        names = sorted({s["model"] for s in gpu_skipped})
+        print(f"Skipping {len(names)} gpu-class model(s) on this non-CUDA rig "
+              f"(pass --all to include): {', '.join(names)}\n")
     print(f"Plan: {len(selected_prompts)} prompts × {len(cells)} cells × {args.runs} runs/cell\n")
 
     rows = []
@@ -271,6 +280,25 @@ def main() -> int:
     with csv_path.open("w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
+
+        # Record gpu-class skips so the report marks them instead of dropping
+        # them silently. One row per (model, device, prompt) the model would
+        # have run, mirroring how an executed cell appears.
+        for s in gpu_skipped:
+            for prompt_id, lang, text in selected_prompts:
+                if lang != "en" and not s.get("multilingual"):
+                    continue
+                skip_row = {fn: "" for fn in fieldnames}
+                skip_row.update({
+                    "prompt_id": prompt_id, "model": s["model"],
+                    "device": s["device"], "variant": s["variant"] or "",
+                    "can_clone": s["can_clone"], "run_index": 0,
+                    "is_cold": True, "wall_s": 0, "ok": False,
+                    "error": f"skipped: {s['reason']}",
+                })
+                writer.writerow(skip_row)
+                rows.append(skip_row)
+        f.flush()
 
         for prompt_id, lang, text in selected_prompts:
             print(f"===== Prompt {prompt_id} ({lang}): {text[:60]}{'...' if len(text) > 60 else ''} =====")
