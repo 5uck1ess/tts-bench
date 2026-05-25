@@ -31,6 +31,20 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
 
 ---
 
+## Skipped on Apple Silicon (Apple M4, 16 GB)
+
+These models produced no usable output on the Mac M4 bench pass, so they are marked **skipped** on this rig. They stay in the registry — most run on the Windows/Linux CUDA rigs; the gap is Apple-Silicon-specific (no arm64 wheel, MPS memory limits, or no MPS/CPU path at all).
+
+- **luxtts** — `ModuleNotFoundError` at load on cpu and mps; no `piper-phonemize` arm64-macOS wheel (see the LuxTTS entry above).
+- **mars5** — sub-realtime on M4 CPU, exceeds the 600 s per-cell timeout; no MPS path (cpu/cuda only).
+- **zipvoice** — cpu: `torchaudio.load`/`save` route through torchcodec, which needs FFmpeg libs absent on stock macOS; mps: OOM (~20 GiB allocation). Not pursued on Mac.
+- **vibevoice_15b** — cpu: needs a local 15 s reference wav that is not shipped; mps: OOM (~10.9 GiB). The 0.5B variant (`vibevoice`) runs fine on both.
+- **dia**, **qwentts_fast** — CUDA-only; torch reports no available device on Apple Silicon, so the harness builds no cells for them here.
+
+Partial — CPU usable, the rest skipped: **omnivoice/mps** (OOM on long-form or cloning prompts; cpu is fine) and **voxcpm** cloning (600 s timeout; default-voice cpu is fine).
+
+---
+
 ## Per-model licenses
 
 **Each TTS model has its own license** — check the linked upstream repos before deploying any of them in a product.
