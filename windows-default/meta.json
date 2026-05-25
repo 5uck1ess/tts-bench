@@ -10,7 +10,7 @@
   "gpu": "NVIDIA GeForce RTX 5090",
   "gpu_vram_gb": 32,
   "captured_at": "2026-05-24T21:50:20Z",
-  "label": "default voice \u00b7 all 27 models",
+  "label": "default voice",
   "reference": null,
   "models_filter": null,
   "prompts_filter": null
