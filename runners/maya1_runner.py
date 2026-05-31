@@ -51,6 +51,13 @@ EOH_ID = 128260
 SOA_ID = 128261
 TEXT_EOT_ID = 128009
 
+# Generation params (from the maya-research/maya1 model card).
+GEN_MAX_NEW_TOKENS = 2048          # from maya1 model card
+GEN_MIN_NEW_TOKENS = 28            # from maya1 model card: 4 SNAC frames x 7 slots
+GEN_TEMPERATURE = 0.4              # from maya1 model card
+GEN_TOP_P = 0.9                    # from maya1 model card
+GEN_REPETITION_PENALTY = 1.1       # from maya1 model card
+
 
 def _build_prompt(tok, description, text):
     """Wrap description + text in Maya1's header/speech framing tokens."""
@@ -160,6 +167,8 @@ def main() -> int:
             _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             if USE_MLX:
+                # NOTE: this MLX prompt framing intentionally differs from the transformers
+                # _build_prompt path (no header/speech tokens) and is untested on this rig.
                 chunks = [np.asarray(r.audio, dtype="float32")
                           for r in mlx_model.generate(text=f"{voice_desc}\n\n{text}")]
                 arr = np.concatenate(chunks).squeeze() if chunks else np.zeros(0, dtype="float32")
@@ -168,14 +177,14 @@ def main() -> int:
                 inputs = tok(prompt, return_tensors="pt").to(device)
                 out = lm.generate(
                     **inputs,
-                    max_new_tokens=2048,
-                    min_new_tokens=28,
-                    temperature=0.4,
-                    top_p=0.9,
-                    repetition_penalty=1.1,
+                    max_new_tokens=GEN_MAX_NEW_TOKENS,
+                    min_new_tokens=GEN_MIN_NEW_TOKENS,
+                    temperature=GEN_TEMPERATURE,
+                    top_p=GEN_TOP_P,
+                    repetition_penalty=GEN_REPETITION_PENALTY,
                     do_sample=True,
                     eos_token_id=CODE_END_TOKEN_ID,
-                    pad_token_id=tok.pad_token_id,
+                    pad_token_id=tok.pad_token_id or CODE_END_TOKEN_ID,
                 )
                 gen = out[0, inputs["input_ids"].shape[1]:]
                 arr = _decode_snac(snac_model, gen, device)
@@ -188,6 +197,7 @@ def main() -> int:
 
             print(json.dumps({
                 "ok": True, "run_index": run_index,
+                # Maya1 is non-streaming, so TTFA == gen_s.
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
                 **_meminfo.sample(args.device),
