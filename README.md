@@ -65,7 +65,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (27)
+## Models tracked (37)
 
 | Model | Params | Predefined | Cloning | Multilingual | SR | License |
 |---|---|---|---|---|---|---|
@@ -96,8 +96,20 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | Dia 1.6B | 1.6B | — | ✓ | — | 44.1k | Apache 2.0 |
 | MOSS-TTS-Nano | 100M | — | ✓ | ✓ (zh+en) | **48k** | Apache 2.0 |
 | MOSS-TTS | 8B (Qwen3) | — | ✓ | ✓ (20) | 24k | Apache 2.0 |
+| Maya1 | 3B | ✓ (voice desc) | — | — | 24k | Apache 2.0 |
+| Voxtral 4B TTS | 4B | ✓ (20) | ✓ | ✓ | 24k | CC-BY-NC 4.0 |
+| Fish Speech 1.5 | ~500M | — | ✓ | ✓ | **44.1k** | CC-BY-NC-SA 4.0 |
+| Fish Speech S2-Pro | 4B | — | ✓ | — | **44.1k** | Research (non-commercial) |
+| Zonos v0.1 | 1.6B | — | ✓ | ✓ | **44.1k** | Apache 2.0 |
+| OpenVoice v2 | ~100M | — | ✓ | ✓ | 22.05k | MIT |
+| StyleTTS 2 | ~148M | — | ✓ | — | 24k | MIT |
+| VibeVoice 7B | 7B | — | ✓ | — | 24k | MIT |
+| MetaVoice-1B | 1.2B | — | ✓ | — | **48k** | Apache 2.0 |
+| Step-Audio-EditX | 3B | — | ✓ | — | 24k | Apache 2.0 |
 
 Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-issues.md)**. Models considered but excluded: **[docs/considered.md](docs/considered.md)**.
+
+> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX are Linux-only (CUDA). The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
 
 ---
 
