@@ -35,9 +35,6 @@ import _meminfo
 import _naq
 
 
-REF_TEXT = "This is a reference voice sample used for zero-shot voice cloning."  # generic; accurate transcript would improve quality
-
-
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--text", default=None)
@@ -47,7 +44,7 @@ def main() -> int:
                    help="Reference wav path for zero-shot cloning (defaults to chris_hemsworth_15s.wav).")
     p.add_argument("--variant", default=None)        # unused
     p.add_argument("--runs", type=int, default=1)
-    p.add_argument("--language", default="en")
+    p.add_argument("--language", default="en")        # unused (Fish autodetects from text)
     p.add_argument("--stdin", action="store_true")
     args = p.parse_args()
     if not args.stdin and (args.text is None or args.out is None):
@@ -66,14 +63,16 @@ def main() -> int:
         # legacy dispatcher helper list_audio_backends() that fish's
         # ReferenceLoader calls at init, AND routes torchaudio.load() through
         # TorchCodec (not installed — needs FFmpeg shared DLLs on Windows). Shim
-        # both: advertise the soundfile backend, and replace load() with a
-        # soundfile reader (same workaround the f5tts runner uses). The [stable]
-        # extras that would have pinned torch<=2.4.1 / kept the old API are
-        # skipped on purpose — incompatible with cu128.
+        # both: this extends the soundfile-based torchaudio.load workaround the
+        # f5tts runner uses, plus a list_audio_backends stub that Fish's
+        # ReferenceLoader needs (f5tts only patches load(), it has no such stub).
+        # The [stable] extras that would have pinned torch<=2.4.1 / kept the old
+        # API are skipped on purpose — incompatible with cu128.
         if not hasattr(torchaudio, "list_audio_backends"):
             torchaudio.list_audio_backends = lambda: ["soundfile"]
 
         def _sf_load(path, **kwargs):  # ignores backend= kwarg; handles path or BytesIO
+            # ignores frame_offset/num_frames — reads the whole file, fine for short ref clips
             data, sr = sf.read(path, dtype="float32")
             if data.ndim == 1:
                 data = data[None, :]          # (1, T) mono
@@ -102,7 +101,15 @@ def main() -> int:
             precision=precision, compile=False)
         ref_wav = args.reference or str(
             Path(__file__).resolve().parent.parent / "reference" / "chris_hemsworth_15s.wav")
-        ref_bytes = open(ref_wav, "rb").read()
+        if not Path(ref_wav).exists():
+            raise FileNotFoundError(f"Voice reference wav not found: {ref_wav}")
+        with open(ref_wav, "rb") as f:
+            ref_bytes = f.read()
+        # Read a <reference>.txt sidecar transcript if present (f5tts convention);
+        # an accurate transcript improves clone quality. Fall back to a generic placeholder.
+        ref_txt = Path(ref_wav).with_suffix(".txt")
+        ref_text = ref_txt.read_text(encoding="utf-8").strip() if ref_txt.exists() \
+            else "This is a reference voice sample used for zero-shot voice cloning."
         samplerate = 44100  # Fish 1.5 native; keep native SR
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
@@ -115,7 +122,7 @@ def main() -> int:
             t0 = time.perf_counter()
             req = ServeTTSRequest(
                 text=text,
-                references=[ServeReferenceAudio(audio=ref_bytes, text=REF_TEXT)],
+                references=[ServeReferenceAudio(audio=ref_bytes, text=ref_text)],
                 streaming=False, format="wav")
             audio_np, sr = None, samplerate
             for result in engine.inference(req):
