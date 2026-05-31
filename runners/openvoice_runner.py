@@ -201,6 +201,7 @@ def main() -> int:
 
     def _one(text, out_path, run_index, write_wav):
         tmp_wav = None
+        warm_wav = None
         try:
             _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
@@ -208,21 +209,25 @@ def main() -> int:
             fd, tmp_wav = tempfile.mkstemp(suffix=".wav")
             os.close(fd)
             melo.tts_to_file(text, speaker_id, tmp_wav, speed=1.0, quiet=True)
-            # Step 3: re-tone toward the target speaker. We always run the convert
-            # to keep timing honest; only persist the wav on the first run.
+            # Step 3: re-tone toward the target speaker. convert() writes a wav as
+            # its output, so we always run it (honest timing) but only let the cold
+            # run write the real out_path. Warm runs convert to a throwaway temp —
+            # every run of a cell shares out_path, so writing warm output there
+            # would overwrite and then delete the cold sample wav.
+            if write_wav:
+                conv_target = out_path
+            else:
+                fd2, warm_wav = tempfile.mkstemp(suffix=".wav")
+                os.close(fd2)
+                conv_target = warm_wav
             converter.convert(audio_src_path=tmp_wav, src_se=src_se, tgt_se=tgt_se,
-                              output_path=out_path)
+                              output_path=conv_target)
             t_end = time.perf_counter()
 
-            data, sr = sf.read(out_path, dtype="float32")
+            data, sr = sf.read(conv_target, dtype="float32")
             if len(data) == 0:
                 raise RuntimeError("convert produced empty audio")
             audio_s = float(len(data) / sr)
-            if not write_wav:
-                try:
-                    os.remove(out_path)
-                except OSError:
-                    pass
 
             # Non-streaming: TTFA == full gen (audio not available until both
             # the base synthesis and the conversion finish).
@@ -241,11 +246,12 @@ def main() -> int:
             }), flush=True)
             return False
         finally:
-            if tmp_wav is not None:
-                try:
-                    os.remove(tmp_wav)
-                except OSError:
-                    pass
+            for pth in (tmp_wav, warm_wav):
+                if pth is not None:
+                    try:
+                        os.remove(pth)
+                    except OSError:
+                        pass
 
     if args.stdin:
         idx = 0
