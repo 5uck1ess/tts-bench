@@ -490,6 +490,44 @@ if (-not (Test-Path "venvs\zonos\Scripts\python.exe")) {
     Write-Host "zonos: ok (espeak-ng bundled via espeakng-loader, no system install)" -ForegroundColor Green
 } else { Write-Host "zonos: already installed" -ForegroundColor Gray }
 
+Step "OpenVoice v2 (myshell-ai, MeloTTS base + tone-color converter, zero-shot cloning, 22.05kHz)"
+if (-not (Test-Path "venvs\openvoice\Scripts\python.exe")) {
+    # OpenVoice v2 = MeloTTS (base TTS) + a ToneColorConverter (cloning). 3 in-process
+    # steps wrapped as one runner call. Python 3.11 (NOT 3.12 - fugashi, pulled by
+    # MeloTTS's Japanese path, has no prebuilt wheel for 3.12 and the source build needs
+    # MeCab; on 3.11 fugashi+mecab-python3 install cleanly from wheels).
+    #
+    # We deliberately do NOT `pip install -e` OpenVoice's setup.py: it pins
+    # faster-whisper==0.9.0 -> av==10.0.0 (fails to Cython-build on Windows) plus
+    # numpy==1.22 / librosa==0.9.1 / gradio that fight the MeloTTS+torch stack. The
+    # runner only needs ToneColorConverter (api.py), whose runtime deps come from
+    # the MeloTTS install; it adds venvs\openvoice\src to sys.path and instantiates
+    # the converter with enable_watermark=False so wavmark is never imported, and
+    # calls extract_se([ref]) directly (no faster-whisper VAD). So: clone the repo
+    # for its source + checkpoints, but skip the editable install.
+    #
+    # MeloTTS English uses g2p_en (CMUdict + NLTK), NOT espeak — no espeakng-loader
+    # needed. The runner pre-downloads the NLTK tagger/tokenizer tables g2p_en
+    # fetches at runtime.
+    Invoke-Checked "uv venv openvoice" { uv venv venvs\openvoice --python 3.11 }
+    Invoke-Checked "clone OpenVoice (source + checkpoints only; not pip-installed)" { git clone --depth 1 https://github.com/myshell-ai/OpenVoice venvs\openvoice\src }
+    Invoke-Checked "uv pip install MeloTTS (provides the runner's torch/numpy/soundfile/librosa)" { uv pip install --python venvs\openvoice\Scripts\python.exe "git+https://github.com/myshell-ai/MeloTTS.git" }
+    # MeloTTS may pull both mecab-python3 and python-mecab-ko; they conflict at import.
+    # Uninstall python-mecab-ko if it landed (harmless if absent).
+    & uv pip uninstall --python venvs\openvoice\Scripts\python.exe python-mecab-ko 2>&1 | Out-Null
+    # wavmark: the ToneColorConverter's audio watermarker (loaded in its __init__;
+    # enable_watermark defaults True and the False path is broken upstream — it
+    # forwards the kwarg to a base __init__ that rejects it). Watermark is inaudible.
+    Invoke-Checked "openvoice deps" { uv pip install --python venvs\openvoice\Scripts\python.exe soundfile numpy wavmark }
+    # unidic uses its OWN downloader (not pip) — fine inside a uv venv. ~1GB.
+    Invoke-Checked "unidic dict (~1GB)" { uv run --python venvs\openvoice\Scripts\python.exe -- python -m unidic download }
+    # torch cu128 LAST (Blackwell sm_120); MeloTTS pulls a non-cu128 torch otherwise.
+    Invoke-Checked "torch cu128 for openvoice (LAST)" { uv pip install --python venvs\openvoice\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    # OpenVoiceV2 checkpoints (converter + base-speaker SEs) into src\checkpoints_v2.
+    Invoke-Checked "download OpenVoiceV2 ckpts" { uv run --python venvs\openvoice\Scripts\python.exe -- hf download myshell-ai/OpenVoiceV2 --local-dir venvs\openvoice\src\checkpoints_v2 }
+    Write-Host "openvoice: ok (zero-shot tone-color cloning, 22.05kHz; MeloTTS base + ToneColorConverter)" -ForegroundColor Green
+} else { Write-Host "openvoice: already installed" -ForegroundColor Gray }
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.
