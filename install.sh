@@ -494,6 +494,94 @@ else
     echo "supertonic: already installed"
 fi
 
+# =========================================================================
+# Leaderboard-parity models — LINUX-ONLY (RED on Windows). Added 2026-05-31.
+# These four are not in install.ps1; they install/run only on the Linux CUDA rig.
+# =========================================================================
+
+# --- Fish Audio S2-Pro (fishaudio/fish-speech, DualAR + DAC, 44.1k, CC-BY-NC-SA-4.0) ---
+echo; cyan "=== Fish Audio S2-Pro (Linux-only, cloning) ==="
+if [ ! -x venvs/fish_s2/bin/python ]; then
+    uv venv venvs/fish_s2 --python 3.12 || die "uv venv fish_s2"
+    if [ ! -d venvs/fish_s2/src ]; then
+        git clone --depth 1 https://github.com/fishaudio/fish-speech venvs/fish_s2/src \
+            || die "git clone fish-speech"
+    fi
+    # fish-speech hard-deps pyaudio (live-mic only, unused by batch TTS) which needs
+    # portaudio.h. No sudo on the 3090 box → linuxbrew provides it.
+    if command -v brew >/dev/null 2>&1; then brew list portaudio >/dev/null 2>&1 || brew install portaudio; fi
+    BREW_PREFIX="$(brew --prefix 2>/dev/null || echo /home/linuxbrew/.linuxbrew)"
+    # Real `-e .` (NOT --no-deps): lets uv honor fish's pyproject override-dependencies
+    # (protobuf>=3.20), which otherwise conflicts with descript-audio-codec's protobuf<3.20.
+    # torch==2.8.0 is pinned by fish; the default PyPI wheel is +cu128 and runs on Ampere
+    # (torch 2.8 is NOT published on cu121/cu124 — do NOT add a cu121 reinstall here).
+    CPATH="$BREW_PREFIX/include:$CPATH" LIBRARY_PATH="$BREW_PREFIX/lib:$LIBRARY_PATH" \
+    PKG_CONFIG_PATH="$BREW_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH" \
+        uv pip install --python venvs/fish_s2/bin/python -e venvs/fish_s2/src soundfile huggingface_hub \
+        || die "uv pip install fish-speech"
+    green "fish_s2: ok (s2-pro weights ~11GB auto-download from HF on first run; CUDA-only, bf16 ~20GB peak)"
+else
+    echo "fish_s2: already installed"
+fi
+
+# --- MetaVoice-1B v0.1 (metavoiceio/metavoice-src, Apache-2.0, 48k, cloning, ≥30s ref) ---
+echo; cyan "=== MetaVoice-1B v0.1 (Linux-only, cloning) ==="
+if [ ! -x venvs/metavoice/bin/python ]; then
+    uv venv venvs/metavoice --python 3.10 || die "uv venv metavoice"
+    if [ ! -d venvs/metavoice/src ]; then
+        git clone --depth 1 https://github.com/metavoiceio/metavoice-src venvs/metavoice/src \
+            || die "git clone metavoice"
+    fi
+    # DeepFilterNet (df) needs a Rust toolchain (cargo) at build time.
+    command -v cargo >/dev/null 2>&1 || die "metavoice needs a Rust toolchain (cargo) for deepfilternet"
+    # audiocraft → av==11.0.0 has NO usable wheel; its sdist needs FFmpeg≤6 dev headers.
+    # linuxbrew's default ffmpeg is 8.x (PyAV 11 won't compile against it) → install ffmpeg@6
+    # and build av against it first, so the later `-e .` finds av satisfied.
+    if command -v brew >/dev/null 2>&1; then brew list ffmpeg@6 >/dev/null 2>&1 || brew install ffmpeg@6; fi
+    FF6="$(brew --prefix ffmpeg@6 2>/dev/null || echo /home/linuxbrew/.linuxbrew/opt/ffmpeg@6)"
+    PKG_CONFIG_PATH="$FF6/lib/pkgconfig:$PKG_CONFIG_PATH" LD_LIBRARY_PATH="$FF6/lib:$LD_LIBRARY_PATH" \
+        uv pip install --python venvs/metavoice/bin/python "av==11.0.0" \
+        || die "build av==11.0.0 against ffmpeg@6"
+    uv pip install --python venvs/metavoice/bin/python -e venvs/metavoice/src soundfile huggingface_hub \
+        || die "uv pip install metavoice"
+    # torch MUST be 2.2.1 (code calls torch._inductor.config.fx_graph_cache, added in 2.2;
+    # the repo's requirements.txt pin of 2.1.0 is stale). Match xformers to 2.2.x.
+    uv pip install --python venvs/metavoice/bin/python --reinstall "torch==2.2.1" "torchaudio==2.2.1" \
+        --index-url https://download.pytorch.org/whl/cu121 || die "torch 2.2.1 cu121 for metavoice"
+    uv pip install --python venvs/metavoice/bin/python --reinstall "xformers==0.0.25" || die "xformers for metavoice"
+    # Re-pin numpy<2 AFTER the torch reinstall — torch's cu121 deps pull numpy 2.x, which
+    # breaks inference with "RuntimeError: Numpy is not available".
+    uv pip install --python venvs/metavoice/bin/python "numpy<2" || die "numpy<2 for metavoice"
+    green "metavoice: ok (1B weights ~3GB auto-download; CUDA-only ~8GB; needs ≥30s ref, e.g. reference/chris_hemsworth.wav)"
+else
+    echo "metavoice: already installed"
+fi
+
+# --- Step-Audio-EditX (stepfun-ai, cloning-only, Linux-only, py3.12, torch 2.9, Apache-2.0) ---
+echo; cyan "=== Step-Audio-EditX (Linux-only, cloning) ==="
+if [ ! -x venvs/step_editx/bin/python ]; then
+    # Repo requires python >=3.12,<3.14 and torch>=2.9.1. Heavy: vllm + deepspeed (compiled)
+    # + bitsandbytes + funasr + onnxruntime-gpu + whisper. The liboptimus flash-attn lib is
+    # optional (graceful try/except) so no extra system libs are needed.
+    uv venv venvs/step_editx --python 3.12 || die "uv venv step_editx"
+    if [ ! -d venvs/step_editx/src ]; then
+        git clone --depth 1 https://github.com/stepfun-ai/Step-Audio-EditX venvs/step_editx/src \
+            || die "git clone step-audio-editx"
+    fi
+    uv pip install --python venvs/step_editx/bin/python -e venvs/step_editx/src soundfile huggingface_hub \
+        || die "uv pip install step-audio-editx"
+    # Step pins torchcodec>=0.9.1, but uv grabs the latest (0.13) which is built
+    # for a newer torch and fails with "undefined symbol: torch_from_blob" on
+    # torch 2.9.1. Pin the torch-2.9-compatible 0.9.1. (Runtime also needs FFmpeg 8
+    # libav*.so.60 — the runner ctypes-preloads them from linuxbrew; `brew install
+    # ffmpeg` provides them on a fresh box.)
+    uv pip install --python venvs/step_editx/bin/python "torchcodec==0.9.1" \
+        || die "torchcodec==0.9.1 for step_editx (torch 2.9 compat)"
+    green "step_editx: ok (Step-Audio-EditX ~8GB + Step-Audio-Tokenizer ~1.4GB auto-download; CUDA-only via vLLM)"
+else
+    echo "step_editx: already installed"
+fi
+
 # --- psutil in every venv (for bench memory tracking) ---
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.

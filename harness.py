@@ -38,6 +38,9 @@ MODELS = [
     ("qwentts",      "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base", False),
     ("qwentts_fast", "qwentts_fast", "runners/qwentts_fast_runner.py", True,  ["cuda"],         "base", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   False, ["cpu", "cuda"],        None,   True),
+    ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    False, ["cuda"],               None,   True),
+    ("metavoice",   "metavoice",  "runners/metavoice_runner.py",  False, ["cuda"],               None,   True),
+    ("step_editx",  "step_editx", "runners/step_editx_runner.py", False, ["cuda"],               None,   True),
     ("sesame",      "sesame",     "runners/sesame_runner.py",     False, ["cpu", "cuda"],        None,   "gated"),
     ("mars5",       "mars5",      "runners/mars5_runner.py",      False, ["cpu", "cuda"],        None,   True),
     ("dia",         "dia",        "runners/dia_runner.py",        False, ["cuda"],               None,   True),
@@ -65,6 +68,7 @@ MODELS = [
 GPU_CLASS = {
     "f5tts", "indextts", "voxcpm", "qwentts", "sesame", "mars5",
     "chatterbox", "magpie",
+    "fish_s2", "metavoice", "step_editx",
 }
 
 
