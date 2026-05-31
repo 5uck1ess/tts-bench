@@ -659,6 +659,34 @@ else
     echo "openvoice: already installed"
 fi
 
+# --- Voxtral-4B-TTS (mistralai, CC-BY-NC-4.0, 24kHz, preset voices / cloning) ---
+echo; cyan "=== Voxtral-4B-TTS (mistralai, CC-BY-NC-4.0, 24kHz) ==="
+if [ ! -x venvs/voxtral/bin/python ]; then
+    # Mac is Voxtral's primary rig: the clean path is MLX. The runner loads the
+    # 4-bit community port mlx-community/Voxtral-4B-TTS-2603-mlx-4bit (~2 GB, fits
+    # 16 GB) and is PRESET-VOICE-ONLY there (the mlx-audio port has no wav-cloning
+    # path; a --reference cell fails cleanly). On a CUDA rig the runner's cuda
+    # branch uses vllm-omni instead (in-proc Omni engine) — install that stack on
+    # Linux. Windows is RED for Voxtral (no vLLM wheel).
+    uv venv venvs/voxtral --python 3.12 || die "uv venv voxtral"
+    if [ "$(uname)" = "Darwin" ]; then
+        # Apple-Silicon MLX path (primary, hardware-tested on M4).
+        # mistral-common[audio] is REQUIRED: the MLX port builds the TTS prompt
+        # via the Mistral tekken speech tokenizer (encode_speech_request).
+        uv pip install --python venvs/voxtral/bin/python mlx-audio "mistral-common[audio]" soundfile numpy \
+            || die "uv pip install voxtral MLX deps (Mac)"
+    else
+        # Linux/CUDA vllm-omni path. vllm-omni declares no vllm pin; pin vllm to
+        # vllm-omni's minor (0.20.x) to avoid the mismatch warning, and the deploy
+        # YAML's gpu_memory_utilization may need lowering on <96 GB cards.
+        uv pip install --python venvs/voxtral/bin/python "vllm>=0.20,<0.21" "vllm-omni>=0.20,<0.21" soundfile numpy \
+            || die "uv pip install voxtral vllm-omni deps (Linux)"
+    fi
+    green "voxtral: ok"
+else
+    echo "voxtral: already installed"
+fi
+
 # --- psutil in every venv (for bench memory tracking) ---
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.

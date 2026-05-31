@@ -58,6 +58,10 @@ MODELS = [
     ("styletts2",   "styletts2",  "runners/styletts2_runner.py",  False, ["cpu", "cuda", "mps"], None,   True),
     ("zonos",       "zonos",      "runners/zonos_runner.py",      True,  ["cpu", "cuda"],        None,   True),
     ("openvoice",   "openvoice",  "runners/openvoice_runner.py",  True,  ["cpu", "cuda", "mps"], None,   True),
+    # Voxtral: mps/cpu -> MLX (preset-voice only on Apple Silicon); cuda -> vllm-omni.
+    # can_clone=True is for the cross-rig cuda path; the MLX runner fails a
+    # --reference cell cleanly rather than mislabeling default-voice audio.
+    ("voxtral",     "voxtral",    "runners/voxtral_runner.py",    True,  ["cpu", "cuda", "mps"], None,   True),
 ]
 
 
@@ -98,10 +102,21 @@ def detect_cuda(py: Path) -> bool:
 
 
 def detect_mps(py: Path) -> bool:
+    # Apple-Silicon GPU availability. Most venvs report it via torch's MPS
+    # backend; MLX-only venvs (e.g. voxtral, maya1's Mac path) have no torch, so
+    # fall back to MLX's own Metal probe. Either signal means the "mps" cell is
+    # runnable on this rig.
     return _probe(
         py,
-        "import torch; b = getattr(torch.backends, 'mps', None); "
-        "print(bool(b and b.is_available()))",
+        "ok = False\n"
+        "try:\n"
+        "    import torch; b = getattr(torch.backends, 'mps', None); ok = bool(b and b.is_available())\n"
+        "except Exception: pass\n"
+        "if not ok:\n"
+        "    try:\n"
+        "        import mlx.core as mx; ok = mx.metal.is_available()\n"
+        "    except Exception: pass\n"
+        "print(ok)",
     )
 
 
