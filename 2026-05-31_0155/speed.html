@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<title>TTS Bench — Published Runs</title>
-<link rel="icon" type="image/svg+xml" href="logo-mark.svg"><link rel="icon" type="image/png" sizes="32x32" href="favicon.png"><link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
+<title>TTS Bench — Speed — 2026-05-31_0155</title>
 <style>
   :root {
     color-scheme: dark light;
@@ -162,7 +161,6 @@
   .reading-guide strong { color: var(--accent); }
   .reading-guide a { color: var(--accent); }
 </style>
-<style>.site-header{margin:1rem 0 1.25rem;}.site-logo{display:block;height:auto;max-width:min(320px,80vw);}.site-logo--light{display:none;}[data-theme="light"] .site-logo--dark{display:none;}[data-theme="light"] .site-logo--light{display:block;}</style>
 </head><body>
 <div class="controls">
 <input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
@@ -171,99 +169,58 @@
 <span class="spacer"></span>
 <button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
 </div>
-<header class="site-header"><img class="site-logo site-logo--dark" src="logo-flat-dark.svg" alt="tts-bench" width="320" height="auto"><img class="site-logo site-logo--light" src="logo-flat-light.svg" alt="tts-bench" width="320" height="auto"></header>
-<h1>Published Runs</h1>
-<div class="meta">Open-source TTS models benchmarked side-by-side: <strong>speed</strong> (TTFA, RTF) and <strong>voice cloning</strong>. Each run has inline audio so you can listen to every model × prompt without downloading. <a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>
-<div class="meta">7 published run(s)</div>
+<div class="nav"><span class="lens-tabs"><span class="lens-arrow lens-arrow-disabled">← </span><a class="lens-tab active" href="speed.html">Speed</a><a class="lens-tab" href="samples.html">Samples</a><a class="lens-arrow" href="samples.html" title="Next lens: Samples">Samples →</a></span> · <a href="../index.html">all runs</a></div>
+<h1>TTS Bench — Speed — 2026-05-31_0155</h1>
+<div class="meta"><strong>Rig:</strong> <code>linux-3090</code> — AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic</div>
+<div class="meta"><strong>Label:</strong> default voice · fish_s2,metavoice,step_editx</div>
+<div class="reading-guide"><strong>TTFA</strong> = time to first audio (ms; lower is better). <strong>RTF</strong> = real-time factor (× realtime; higher is better; e.g. 10× means 10 sec of audio generated per 1 sec of compute). <strong>Cold</strong> = first run after process start; <strong>warm</strong> = subsequent runs.</div>
+<div class="tldr"><h2>Speed winners</h2>
+<p>Fastest predefined-voice: <span class="muted">no data</span></p>
+<p>Fastest cloning-capable: <span class="muted">no data</span></p>
+</div>
 <table><thead><tr>
-<th>Run</th>
-<th>Label</th>
-<th>Rig</th>
-<th>Models</th>
-<th>Devices</th>
-<th>Prompts</th>
-<th>Rows</th>
-<th>OK</th>
-<th>Report</th>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA cold</th>
+<th class="num">TTFA warm</th>
+<th class="num">RTF cold</th>
+<th class="num">RTF warm</th>
+<th class="num">Peak RAM</th>
+<th class="num">Peak VRAM</th>
+<th>Size</th>
 </tr></thead><tbody>
-<tr>
-<td><a href='windows-default/index.html'>windows-default</a></td>
-<td>default voice</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="27">27 models</td>
-<td>cpu, cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="607">607</td>
-<td class='num' data-sort="600">600/607</td>
-<td><a href="windows-default/speed.html">speed</a> · <a href="windows-default/samples.html">samples</a></td>
+<tr id="speed-step_editx-cuda">
+<td>step_editx</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="6299.225">6.30s</td>
+<td class="num" data-sort="5450.650000000001">5.45s</td>
+<td class="num" data-sort="1.1323517981045725">1.13×</td>
+<td class="num" data-sort="1.3371256030709142">1.34×</td>
+<td class="num" data-sort="2963.4">2.89 GB</td>
+<td class="num" data-sort="6249.1">6.10 GB</td>
+<td class="muted">—</td>
 </tr>
-<tr>
-<td><a href='windows-cloning/index.html'>windows-cloning</a></td>
-<td>cloning · chris_hemsworth_15s</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="19">19 models</td>
-<td>cpu, cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="423">423</td>
-<td class='num' data-sort="411">411/423</td>
-<td><a href="windows-cloning/speed.html">speed</a> · <a href="windows-cloning/samples.html">samples</a></td>
+<tr id="speed-metavoice-cuda">
+<td>metavoice</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="8193.45">8.19s</td>
+<td class="num" data-sort="7484.55">7.48s</td>
+<td class="num" data-sort="0.6617814241884077">0.66×</td>
+<td class="num" data-sort="0.7596152100712464">0.76×</td>
+<td class="num" data-sort="">—</td>
+<td class="num" data-sort="8173.4">7.98 GB</td>
+<td class="muted">—</td>
 </tr>
-<tr>
-<td><a href='mac-default/index.html'>mac-default</a></td>
-<td>default voice</td>
-<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
-<td data-sort="23">23 models</td>
-<td>cpu, mps</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="418">418</td>
-<td class='num' data-sort="387">387/418</td>
-<td><a href="mac-default/speed.html">speed</a> · <a href="mac-default/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='mac-cloning/index.html'>mac-cloning</a></td>
-<td>cloning · jo</td>
-<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
-<td data-sort="15">15 models</td>
-<td>cpu, mps</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="264">264</td>
-<td class='num' data-sort="236">236/264</td>
-<td><a href="mac-cloning/speed.html">speed</a> · <a href="mac-cloning/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='linux-default/index.html'>linux-default</a></td>
-<td>default voice</td>
-<td><code title="AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic">linux-3090</code></td>
-<td data-sort="26">26 models</td>
-<td>cpu, cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="606">606</td>
-<td class='num' data-sort="600">600/606</td>
-<td><a href="linux-default/speed.html">speed</a> · <a href="linux-default/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='linux-cloning/index.html'>linux-cloning</a></td>
-<td>cloning · chris_hemsworth_15s</td>
-<td><code title="AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic">linux-3090</code></td>
-<td data-sort="17">17 models</td>
-<td>cpu, cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="402">402</td>
-<td class='num' data-sort="396">396/402</td>
-<td><a href="linux-cloning/speed.html">speed</a> · <a href="linux-cloning/samples.html">samples</a></td>
-</tr>
-<tr>
-<td><a href='2026-05-31_0155/index.html'>2026-05-31_0155</a></td>
-<td>default voice · fish_s2,metavoice,step_editx</td>
-<td><code title="AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic">linux-3090</code></td>
-<td data-sort="3">fish_s2, metavoice, step_editx</td>
-<td>cuda</td>
-<td class='num' data-sort="4">4</td>
-<td class='num' data-sort="36">36</td>
-<td class='num' data-sort="36">36/36</td>
-<td><a href="2026-05-31_0155/speed.html">speed</a> · <a href="2026-05-31_0155/samples.html">samples</a></td>
+<tr id="speed-fish_s2-cuda">
+<td>fish_s2</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="39761.25">39.76s</td>
+<td class="num" data-sort="39685.4875">39.69s</td>
+<td class="num" data-sort="0.17508964710063946">0.18×</td>
+<td class="num" data-sort="0.17562807943900485">0.18×</td>
+<td class="num" data-sort="3912.6">3.82 GB</td>
+<td class="num" data-sort="20409.5">19.93 GB</td>
+<td class="muted">—</td>
 </tr>
 </tbody></table>
+<script>window.__defaultSort = {colIdx: 5, dir: -1};</script>
 <script>
 (function(){
   // ---------- theme toggle ----------

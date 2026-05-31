@@ -1,7 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<title>TTS Bench — Published Runs</title>
-<link rel="icon" type="image/svg+xml" href="logo-mark.svg"><link rel="icon" type="image/png" sizes="32x32" href="favicon.png"><link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
+<title>TTS Bench — Samples — 2026-05-31_0155</title>
 <style>
   :root {
     color-scheme: dark light;
@@ -162,7 +161,6 @@
   .reading-guide strong { color: var(--accent); }
   .reading-guide a { color: var(--accent); }
 </style>
-<style>.site-header{margin:1rem 0 1.25rem;}.site-logo{display:block;height:auto;max-width:min(320px,80vw);}.site-logo--light{display:none;}[data-theme="light"] .site-logo--dark{display:none;}[data-theme="light"] .site-logo--light{display:block;}</style>
 </head><body>
 <div class="controls">
 <input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
@@ -171,99 +169,139 @@
 <span class="spacer"></span>
 <button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
 </div>
-<header class="site-header"><img class="site-logo site-logo--dark" src="logo-flat-dark.svg" alt="tts-bench" width="320" height="auto"><img class="site-logo site-logo--light" src="logo-flat-light.svg" alt="tts-bench" width="320" height="auto"></header>
-<h1>Published Runs</h1>
-<div class="meta">Open-source TTS models benchmarked side-by-side: <strong>speed</strong> (TTFA, RTF) and <strong>voice cloning</strong>. Each run has inline audio so you can listen to every model × prompt without downloading. <a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>
-<div class="meta">7 published run(s)</div>
+<div class="nav"><span class="lens-tabs"><a class="lens-arrow" href="speed.html" title="Previous lens: Speed">← Speed</a><a class="lens-tab" href="speed.html">Speed</a><a class="lens-tab active" href="samples.html">Samples</a><span class="lens-arrow lens-arrow-disabled"> →</span></span> · <a href="../index.html">all runs</a></div>
+<h1>TTS Bench — Samples — 2026-05-31_0155</h1>
+<div class="meta"><strong>Rig:</strong> <code>linux-3090</code> — AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic</div>
+<div class="meta"><strong>Label:</strong> default voice · fish_s2,metavoice,step_editx</div>
+<div class="meta">4 prompt(s) · one section per prompt · all models ranked by warm TTFA (fastest first) within each</div>
+<div class="reading-guide">Each prompt section shows every model's audio output, ordered by <strong>warm TTFA</strong> (fastest first). Click any audio player to hear that model's rendering.</div>
+<nav class="prompt-jumper">Jump to: 
+<a href="#p1">P1</a> · <a href="#p2">P2</a> · <a href="#p3">P3</a> · <a href="#p4">P4</a>
+</nav>
+<div class="prompt" id="p1"><h2>Prompt 1</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"Open the browser and read my email."</span>
 <table><thead><tr>
-<th>Run</th>
-<th>Label</th>
-<th>Rig</th>
-<th>Models</th>
-<th>Devices</th>
-<th>Prompts</th>
-<th>Rows</th>
-<th>OK</th>
-<th>Report</th>
+<th class="num">Rank</th>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA warm</th>
+<th>Audio</th>
 </tr></thead><tbody>
-<tr>
-<td><a href='windows-default/index.html'>windows-default</a></td>
-<td>default voice</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="27">27 models</td>
-<td>cpu, cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="607">607</td>
-<td class='num' data-sort="600">600/607</td>
-<td><a href="windows-default/speed.html">speed</a> · <a href="windows-default/samples.html">samples</a></td>
+<tr id="sample-p1-metavoice-cuda">
+<td class="num" data-sort="1">1</td>
+<td>metavoice</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="2517.3">2.52s</td>
+<td><audio controls preload="none" src="metavoice_cuda_p1.wav"></audio></td>
 </tr>
-<tr>
-<td><a href='windows-cloning/index.html'>windows-cloning</a></td>
-<td>cloning · chris_hemsworth_15s</td>
-<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
-<td data-sort="19">19 models</td>
-<td>cpu, cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="423">423</td>
-<td class='num' data-sort="411">411/423</td>
-<td><a href="windows-cloning/speed.html">speed</a> · <a href="windows-cloning/samples.html">samples</a></td>
+<tr id="sample-p1-step_editx-cuda">
+<td class="num" data-sort="2">2</td>
+<td>step_editx</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="2918.2">2.92s</td>
+<td><audio controls preload="none" src="step_editx_cuda_p1.wav"></audio></td>
 </tr>
-<tr>
-<td><a href='mac-default/index.html'>mac-default</a></td>
-<td>default voice</td>
-<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
-<td data-sort="23">23 models</td>
-<td>cpu, mps</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="418">418</td>
-<td class='num' data-sort="387">387/418</td>
-<td><a href="mac-default/speed.html">speed</a> · <a href="mac-default/samples.html">samples</a></td>
+<tr id="sample-p1-fish_s2-cuda">
+<td class="num" data-sort="3">3</td>
+<td>fish_s2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="11360.25">11.36s</td>
+<td><audio controls preload="none" src="fish_s2_cuda_p1.wav"></audio></td>
 </tr>
-<tr>
-<td><a href='mac-cloning/index.html'>mac-cloning</a></td>
-<td>cloning · jo</td>
-<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
-<td data-sort="15">15 models</td>
-<td>cpu, mps</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="264">264</td>
-<td class='num' data-sort="236">236/264</td>
-<td><a href="mac-cloning/speed.html">speed</a> · <a href="mac-cloning/samples.html">samples</a></td>
+</tbody></table></div>
+<div class="prompt" id="p2"><h2>Prompt 2</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"I&#x27;ll start a new git branch, push the changes, and open a pull request when the tests pass."</span>
+<table><thead><tr>
+<th class="num">Rank</th>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA warm</th>
+<th>Audio</th>
+</tr></thead><tbody>
+<tr id="sample-p2-step_editx-cuda">
+<td class="num" data-sort="1">1</td>
+<td>step_editx</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="4230.55">4.23s</td>
+<td><audio controls preload="none" src="step_editx_cuda_p2.wav"></audio></td>
 </tr>
-<tr>
-<td><a href='linux-default/index.html'>linux-default</a></td>
-<td>default voice</td>
-<td><code title="AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic">linux-3090</code></td>
-<td data-sort="26">26 models</td>
-<td>cpu, cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="606">606</td>
-<td class='num' data-sort="600">600/606</td>
-<td><a href="linux-default/speed.html">speed</a> · <a href="linux-default/samples.html">samples</a></td>
+<tr id="sample-p2-metavoice-cuda">
+<td class="num" data-sort="2">2</td>
+<td>metavoice</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="5337.5">5.34s</td>
+<td><audio controls preload="none" src="metavoice_cuda_p2.wav"></audio></td>
 </tr>
-<tr>
-<td><a href='linux-cloning/index.html'>linux-cloning</a></td>
-<td>cloning · chris_hemsworth_15s</td>
-<td><code title="AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic">linux-3090</code></td>
-<td data-sort="17">17 models</td>
-<td>cpu, cuda</td>
-<td class='num' data-sort="5">5</td>
-<td class='num' data-sort="402">402</td>
-<td class='num' data-sort="396">396/402</td>
-<td><a href="linux-cloning/speed.html">speed</a> · <a href="linux-cloning/samples.html">samples</a></td>
+<tr id="sample-p2-fish_s2-cuda">
+<td class="num" data-sort="3">3</td>
+<td>fish_s2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="26665.300000000003">26.67s</td>
+<td><audio controls preload="none" src="fish_s2_cuda_p2.wav"></audio></td>
 </tr>
-<tr>
-<td><a href='2026-05-31_0155/index.html'>2026-05-31_0155</a></td>
-<td>default voice · fish_s2,metavoice,step_editx</td>
-<td><code title="AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic">linux-3090</code></td>
-<td data-sort="3">fish_s2, metavoice, step_editx</td>
-<td>cuda</td>
-<td class='num' data-sort="4">4</td>
-<td class='num' data-sort="36">36</td>
-<td class='num' data-sort="36">36/36</td>
-<td><a href="2026-05-31_0155/speed.html">speed</a> · <a href="2026-05-31_0155/samples.html">samples</a></td>
+</tbody></table></div>
+<div class="prompt" id="p3"><h2>Prompt 3</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"The Parakeet TDT zero point six billion parameter model achieves one point six nine percent word error rate on LibriSpeech test-clean, beating Whisper Large V3 at two point seven percent while running at over two thousand times realtime on a single GPU."</span>
+<table><thead><tr>
+<th class="num">Rank</th>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA warm</th>
+<th>Audio</th>
+</tr></thead><tbody>
+<tr id="sample-p3-step_editx-cuda">
+<td class="num" data-sort="1">1</td>
+<td>step_editx</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="9435.05">9.44s</td>
+<td><audio controls preload="none" src="step_editx_cuda_p3.wav"></audio></td>
 </tr>
-</tbody></table>
+<tr id="sample-p3-metavoice-cuda">
+<td class="num" data-sort="2">2</td>
+<td>metavoice</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="14555.2">14.56s</td>
+<td><audio controls preload="none" src="metavoice_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-fish_s2-cuda">
+<td class="num" data-sort="3">3</td>
+<td>fish_s2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="81843.8">81.84s</td>
+<td><audio controls preload="none" src="fish_s2_cuda_p3.wav"></audio></td>
+</tr>
+</tbody></table></div>
+<div class="prompt" id="p4"><h2>Prompt 4</h2>
+<span class="prompt-text"><span class="lang">[en]</span>"Run pytest tests slash test underscore voice dot py with verbose flag and capture flag set to no."</span>
+<table><thead><tr>
+<th class="num">Rank</th>
+<th>Model</th>
+<th>Device</th>
+<th class="num">TTFA warm</th>
+<th>Audio</th>
+</tr></thead><tbody>
+<tr id="sample-p4-step_editx-cuda">
+<td class="num" data-sort="1">1</td>
+<td>step_editx</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="5218.8">5.22s</td>
+<td><audio controls preload="none" src="step_editx_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-metavoice-cuda">
+<td class="num" data-sort="2">2</td>
+<td>metavoice</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="7528.2">7.53s</td>
+<td><audio controls preload="none" src="metavoice_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-fish_s2-cuda">
+<td class="num" data-sort="3">3</td>
+<td>fish_s2</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="38872.600000000006">38.87s</td>
+<td><audio controls preload="none" src="fish_s2_cuda_p4.wav"></audio></td>
+</tr>
+</tbody></table></div>
 <script>
 (function(){
   // ---------- theme toggle ----------
