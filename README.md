@@ -29,7 +29,7 @@ Every model × prompt × device combination is rendered with an inline `<audio>`
 
 ## Quick start
 
-Requires [`uv`](https://github.com/astral-sh/uv) and Python 3.11. ~10-15 min install; ~100 GB disk for the full set (~56 GB model weights + ~47 GB of per-model venvs).
+Requires [`uv`](https://github.com/astral-sh/uv) and Python 3.11. ~10-15 min install. Disk for the full set is large: **~39 GB of per-model venvs** in the repo, plus **~125 GB of model weights** downloaded to your Hugging Face cache (`~/.cache/huggingface`, **not** the repo) — **~165 GB all-in**. Individual models are far smaller, so installing a subset costs a fraction of that.
 
 ```powershell
 # Windows
@@ -74,7 +74,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | KittenTTS | <100M | ✓ | — | — | 24k | Apache 2.0 |
 | Magpie-TTS | 357M | ✓ | — | ✓ (9) | 22.05k | NVIDIA OML |
 | VibeVoice Realtime 0.5B | 0.5B | ✓ | — | — | 24k | MIT |
-| VibeVoice 1.5B | 1.5B | ✓ | — | — | 24k | MIT |
+| VibeVoice 1.5B | 1.5B | — | ✓ | — | 24k | MIT |
 | Supertonic | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
 | LuxTTS | ~123M | ✓ | — | — | 22.05k | MIT |
 | Soprano 80M | 80M | ✓ | — | — | 32k | Apache 2.0 |
@@ -109,15 +109,17 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-issues.md)**. Models considered but excluded: **[docs/considered.md](docs/considered.md)**.
 
+> **Predefined vs Cloning.** *Predefined* models have fixed/selectable speaker voices baked into the weights — they speak with no reference needed. *Cloning* (zero-shot) models have **no voice of their own**: they synthesize whatever voice you hand them as a reference clip at inference. Given no reference, a pure zero-shot model falls back to a bundled sample (this bench uses `chris_hemsworth_15s.wav`), so its "default voice" is just a clone of that clip. A few models do both (e.g. Voxtral has 20 presets *and* cloning).
+
 > Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX are Linux-only (CUDA). The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
 
 ---
 
 ## Voice cloning
 
-Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**28 of the 37 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
-Full 10-model cloning ranking + ref format docs: **[docs/cloning.md](docs/cloning.md)**.
+Reference-format docs + the subjective cloning ranking (10 models ranked by ear so far): **[docs/cloning.md](docs/cloning.md)**.
 
 ---
 
@@ -136,7 +138,7 @@ If you reproduce on different hardware, file an issue or PR with your results an
 ## Docs
 
 - [Full results tables](docs/results.md) — per-rig, per-prompt, per-model
-- [Cloning ranking](docs/cloning.md) — 10-model subjective ranking, reference format docs
+- [Cloning ranking](docs/cloning.md) — reference formats + subjective ranking (10 of 28 cloning models ranked so far)
 - [Architecture](docs/architecture.md) — bench design, runner protocol, adding a model
 - [Known issues](docs/known-issues.md) — per-model gotchas + per-license table
 - [Considered but skipped](docs/considered.md) — models evaluated and excluded
