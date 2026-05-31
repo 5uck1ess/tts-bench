@@ -132,7 +132,6 @@ def main() -> int:
 
     def _one(text, out_path, run_index, write_wav):
         try:
-            import numpy as np
             _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
             cond = make_cond_dict(text=text, speaker=speaker, language=LANG)
