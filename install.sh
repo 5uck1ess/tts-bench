@@ -207,6 +207,9 @@ if [ ! -x venvs/vibevoice/bin/python ]; then
     uv pip install --python venvs/vibevoice/bin/python \
         "git+https://github.com/vibevoice-community/VibeVoice" torch soundfile numpy \
         || die "uv pip install vibevoice (community fork)"
+    # bitsandbytes for the 7B Q8 weights (Linux Q8 path); harmless on Windows.
+    uv pip install --python venvs/vibevoice/bin/python "bitsandbytes>=0.48.1" \
+        || die "uv pip install bitsandbytes for vibevoice 7b Q8"
     green "vibevoice: ok (voice .pt presets auto-download on first use to ~/.cache/vibevoice-voices)"
 else
     echo "vibevoice: already installed"
@@ -492,6 +495,284 @@ if [ ! -x venvs/supertonic/bin/python ]; then
     green "supertonic: ok (~99M ONNX, 31 langs, MIT code + OpenRAIL-M weights, CPU-only)"
 else
     echo "supertonic: already installed"
+fi
+
+# =========================================================================
+# Leaderboard-parity models — LINUX-ONLY (RED on Windows). Added 2026-05-31.
+# These four are not in install.ps1; they install/run only on the Linux CUDA rig.
+# =========================================================================
+
+# --- Fish Audio S2-Pro (fishaudio/fish-speech, DualAR + DAC, 44.1k, CC-BY-NC-SA-4.0) ---
+echo; cyan "=== Fish Audio S2-Pro (Linux-only, cloning) ==="
+if [ ! -x venvs/fish_s2/bin/python ]; then
+    uv venv venvs/fish_s2 --python 3.12 || die "uv venv fish_s2"
+    if [ ! -d venvs/fish_s2/src ]; then
+        git clone --depth 1 https://github.com/fishaudio/fish-speech venvs/fish_s2/src \
+            || die "git clone fish-speech"
+    fi
+    # fish-speech hard-deps pyaudio (live-mic only, unused by batch TTS) which needs
+    # portaudio.h. No sudo on the 3090 box → linuxbrew provides it.
+    if command -v brew >/dev/null 2>&1; then brew list portaudio >/dev/null 2>&1 || brew install portaudio; fi
+    BREW_PREFIX="$(brew --prefix 2>/dev/null || echo /home/linuxbrew/.linuxbrew)"
+    # Real `-e .` (NOT --no-deps): lets uv honor fish's pyproject override-dependencies
+    # (protobuf>=3.20), which otherwise conflicts with descript-audio-codec's protobuf<3.20.
+    # torch==2.8.0 is pinned by fish; the default PyPI wheel is +cu128 and runs on Ampere
+    # (torch 2.8 is NOT published on cu121/cu124 — do NOT add a cu121 reinstall here).
+    CPATH="$BREW_PREFIX/include:$CPATH" LIBRARY_PATH="$BREW_PREFIX/lib:$LIBRARY_PATH" \
+    PKG_CONFIG_PATH="$BREW_PREFIX/lib/pkgconfig:$PKG_CONFIG_PATH" \
+        uv pip install --python venvs/fish_s2/bin/python -e venvs/fish_s2/src soundfile huggingface_hub \
+        || die "uv pip install fish-speech"
+    green "fish_s2: ok (s2-pro weights ~11GB auto-download from HF on first run; CUDA-only, bf16 ~20GB peak)"
+else
+    echo "fish_s2: already installed"
+fi
+
+# --- MetaVoice-1B v0.1 (metavoiceio/metavoice-src, Apache-2.0, 48k, cloning, ≥30s ref) ---
+echo; cyan "=== MetaVoice-1B v0.1 (Linux-only, cloning) ==="
+if [ ! -x venvs/metavoice/bin/python ]; then
+    uv venv venvs/metavoice --python 3.10 || die "uv venv metavoice"
+    if [ ! -d venvs/metavoice/src ]; then
+        git clone --depth 1 https://github.com/metavoiceio/metavoice-src venvs/metavoice/src \
+            || die "git clone metavoice"
+    fi
+    # DeepFilterNet (df) needs a Rust toolchain (cargo) at build time.
+    command -v cargo >/dev/null 2>&1 || die "metavoice needs a Rust toolchain (cargo) for deepfilternet"
+    # audiocraft → av==11.0.0 has NO usable wheel; its sdist needs FFmpeg≤6 dev headers.
+    # linuxbrew's default ffmpeg is 8.x (PyAV 11 won't compile against it) → install ffmpeg@6
+    # and build av against it first, so the later `-e .` finds av satisfied.
+    if command -v brew >/dev/null 2>&1; then brew list ffmpeg@6 >/dev/null 2>&1 || brew install ffmpeg@6; fi
+    FF6="$(brew --prefix ffmpeg@6 2>/dev/null || echo /home/linuxbrew/.linuxbrew/opt/ffmpeg@6)"
+    PKG_CONFIG_PATH="$FF6/lib/pkgconfig:$PKG_CONFIG_PATH" LD_LIBRARY_PATH="$FF6/lib:$LD_LIBRARY_PATH" \
+        uv pip install --python venvs/metavoice/bin/python "av==11.0.0" \
+        || die "build av==11.0.0 against ffmpeg@6"
+    uv pip install --python venvs/metavoice/bin/python -e venvs/metavoice/src soundfile huggingface_hub \
+        || die "uv pip install metavoice"
+    # torch MUST be 2.2.1 (code calls torch._inductor.config.fx_graph_cache, added in 2.2;
+    # the repo's requirements.txt pin of 2.1.0 is stale). Match xformers to 2.2.x.
+    uv pip install --python venvs/metavoice/bin/python --reinstall "torch==2.2.1" "torchaudio==2.2.1" \
+        --index-url https://download.pytorch.org/whl/cu121 || die "torch 2.2.1 cu121 for metavoice"
+    uv pip install --python venvs/metavoice/bin/python --reinstall "xformers==0.0.25" || die "xformers for metavoice"
+    # Re-pin numpy<2 AFTER the torch reinstall — torch's cu121 deps pull numpy 2.x, which
+    # breaks inference with "RuntimeError: Numpy is not available".
+    uv pip install --python venvs/metavoice/bin/python "numpy<2" || die "numpy<2 for metavoice"
+    green "metavoice: ok (1B weights ~3GB auto-download; CUDA-only ~8GB; needs ≥30s ref, e.g. reference/chris_hemsworth.wav)"
+else
+    echo "metavoice: already installed"
+fi
+
+# --- Step-Audio-EditX (stepfun-ai, cloning-only, Linux-only, py3.12, torch 2.9, Apache-2.0) ---
+echo; cyan "=== Step-Audio-EditX (Linux-only, cloning) ==="
+if [ ! -x venvs/step_editx/bin/python ]; then
+    # Repo requires python >=3.12,<3.14 and torch>=2.9.1. Heavy: vllm + deepspeed (compiled)
+    # + bitsandbytes + funasr + onnxruntime-gpu + whisper. The liboptimus flash-attn lib is
+    # optional (graceful try/except) so no extra system libs are needed.
+    uv venv venvs/step_editx --python 3.12 || die "uv venv step_editx"
+    if [ ! -d venvs/step_editx/src ]; then
+        git clone --depth 1 https://github.com/stepfun-ai/Step-Audio-EditX venvs/step_editx/src \
+            || die "git clone step-audio-editx"
+    fi
+    uv pip install --python venvs/step_editx/bin/python -e venvs/step_editx/src soundfile huggingface_hub \
+        || die "uv pip install step-audio-editx"
+    # Step pins torchcodec>=0.9.1, but uv grabs the latest (0.13) which is built
+    # for a newer torch and fails with "undefined symbol: torch_from_blob" on
+    # torch 2.9.1. Pin the torch-2.9-compatible 0.9.1. (Runtime also needs FFmpeg 8
+    # libav*.so.60 — the runner ctypes-preloads them from linuxbrew; `brew install
+    # ffmpeg` provides them on a fresh box.)
+    uv pip install --python venvs/step_editx/bin/python "torchcodec==0.9.1" \
+        || die "torchcodec==0.9.1 for step_editx (torch 2.9 compat)"
+    green "step_editx: ok (Step-Audio-EditX ~8GB + Step-Audio-Tokenizer ~1.4GB auto-download; CUDA-only via vLLM)"
+else
+    echo "step_editx: already installed"
+fi
+
+# --- Fish Speech 1.5 (fishaudio, zero-shot cloning, 44.1kHz) ---
+echo; cyan "=== Fish Speech 1.5 (fishaudio, zero-shot cloning, 44.1kHz) ==="
+if [ ! -x venvs/fish/bin/python ]; then
+    # Source clone of the v1.5.0 tag. The [stable] extras are intentionally
+    # SKIPPED — they pin torch<=2.4.1, incompatible with Blackwell (sm_120) which
+    # needs cu128 / torch 2.7+. Install fish-speech with no extras, hard-cap
+    # numpy<=1.26.4 (fish requirement), then reinstall torch cu128 LAST. On Mac/CPU
+    # the cu128 reinstall is harmless. The runner instantiates TTSInferenceEngine
+    # directly (NOT ModelManager — it has an unconditional funasr import to avoid).
+    uv venv venvs/fish --python 3.10 || die "uv venv fish"
+    if [ ! -d venvs/fish/src ]; then
+        git clone --branch v1.5.0 https://github.com/fishaudio/fish-speech venvs/fish/src \
+            || die "git clone fish-speech v1.5"
+    fi
+    uv pip install --python venvs/fish/bin/python -e venvs/fish/src \
+        || die "uv pip install fish-speech (no extras)"
+    uv pip install --python venvs/fish/bin/python "numpy<=1.26.4" \
+        || die "uv pip install numpy<=1.26.4 (fish hard cap)"
+    uv pip install --python venvs/fish/bin/python soundfile \
+        || die "uv pip install fish deps"
+    uv pip install --python venvs/fish/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 \
+        || die "torch cu128 for fish (LAST)"
+    uv run --python venvs/fish/bin/python -- hf download fishaudio/fish-speech-1.5 --local-dir venvs/fish/src/checkpoints/fish-speech-1.5 \
+        || die "download fish-speech-1.5 weights"
+    green "fish: ok"
+else
+    echo "fish: already installed"
+fi
+
+# --- Maya1 (maya-research, Apache 2.0, voice-description default voice, 24kHz, SNAC codec) ---
+echo; cyan "=== Maya1 (maya-research, Apache 2.0, voice-description default voice, 24kHz, SNAC codec) ==="
+if [ ! -x venvs/maya1/bin/python ]; then
+    # Default-voice model: no audio cloning. The voice is steered by a natural-
+    # language description string; the runner uses a fixed DEFAULT_VOICE_DESC.
+    # Llama-style causal LM emits flat SNAC codec tokens -> decoded by the
+    # hubertsiuzdak/snac_24khz SNAC model (auto-downloads on first run alongside
+    # the ~3B maya-research/maya1 weights).
+    #
+    # On Linux: transformers + snac, torch from the cu128 index (works on the
+    # CUDA rigs; CPU fallback is fine for a non-CUDA host). On Apple Silicon the
+    # transformers+SNAC stack is replaced by MLX — install `mlx-audio` instead of
+    # the torch line below and the runner's device=="mps" branch loads
+    # `mlx-community/maya1-4bit`. The Mac path is NOT tested here; uncomment the
+    # mlx-audio install and skip the cu128 reinstall on Darwin.
+    uv venv venvs/maya1 --python 3.11 || die "uv venv maya1"
+    uv pip install --python venvs/maya1/bin/python "transformers>=4.50" snac soundfile numpy accelerate \
+        || die "uv pip install maya1 deps"
+    if [ "$(uname)" = "Darwin" ]; then
+        # Apple-Silicon MLX path (untested): the runner loads mlx-community/maya1-4bit.
+        uv pip install --python venvs/maya1/bin/python mlx-audio \
+            || die "uv pip install mlx-audio for maya1 (Mac)"
+    else
+        # torch cu128 LAST (Blackwell sm_120). CPU-only hosts: harmless, falls back.
+        uv pip install --python venvs/maya1/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 \
+            || die "torch cu128 for maya1 (LAST)"
+    fi
+    green "maya1: ok"
+else
+    echo "maya1: already installed"
+fi
+
+# --- StyleTTS 2 (sidharthrajaram wrapper, MIT, LibriTTS, zero-shot cloning, 24kHz) ---
+echo; cyan "=== StyleTTS 2 (sidharthrajaram wrapper, MIT, LibriTTS, zero-shot cloning, 24kHz) ==="
+if [ ! -x venvs/styletts2/bin/python ]; then
+    # The `styletts2` PyPI wrapper (sidharthrajaram) uses gruut for phonemization
+    # (no espeak-ng needed) and auto-downloads LibriTTS weights from HF on the
+    # first StyleTTS2() call. Its dep `monotonic_align` is a Cython package: Linux
+    # builds with gcc (clean), Mac needs the CommandLineTools clang — run
+    # `xcode-select --install` first. On Mac also run the runner with
+    # PYTORCH_ENABLE_MPS_FALLBACK=1 (some ops lack MPS kernels).
+    uv venv venvs/styletts2 --python 3.11 || die "uv venv styletts2"
+    uv pip install --python venvs/styletts2/bin/python styletts2 soundfile numpy \
+        || die "uv pip install styletts2"
+    # torch LAST: on CUDA Linux reinstall cu128 wheels (Blackwell sm_120; harmless
+    # CPU fallback on non-CUDA hosts); on Mac the default torch (MPS/CPU) is fine.
+    if [ "$(uname)" = "Darwin" ]; then
+        :  # Mac: keep the default torch wheel
+    else
+        uv pip install --python venvs/styletts2/bin/python --reinstall torch torchaudio \
+            --index-url https://download.pytorch.org/whl/cu128 || die "torch cu128 for styletts2 (LAST)"
+    fi
+    green "styletts2: ok (LibriTTS weights auto-download from HF on first use)"
+else
+    echo "styletts2: already installed"
+fi
+
+# --- Zonos-v0.1 transformer (Zyphra, zero-shot cloning, 44.1kHz, espeakng-loader) ---
+echo; cyan "=== Zonos-v0.1 transformer (Zyphra, zero-shot cloning, 44.1kHz, espeakng-loader) ==="
+if [ ! -x venvs/zonos/bin/python ]; then
+    # Transformer backbone only — do NOT install the `.[compile]` extras
+    # (mamba-ssm/flash-attn are CUDA+Linux-only and unneeded for the transformer
+    # variant). Zonos uses phonemizer -> espeak-ng; espeakng-loader bundles the
+    # espeak-ng.so + data so no system package install is required (the runner sets
+    # PHONEMIZER_ESPEAK_LIBRARY/DATA from espeakng_loader before importing zonos).
+    uv venv venvs/zonos --python 3.11 || die "uv venv zonos"
+    git clone https://github.com/Zyphra/Zonos venvs/zonos/src || die "clone Zonos"
+    uv pip install --python venvs/zonos/bin/python -e venvs/zonos/src soundfile numpy espeakng-loader \
+        || die "uv pip install zonos (transformer, no [compile])"
+    # torch LAST: on CUDA Linux reinstall cu128 wheels (Blackwell sm_120). Mac is
+    # CPU-only (Zonos upstream disables MPS) — keep the default torch wheel there.
+    if [ "$(uname)" = "Darwin" ]; then
+        :  # Mac: keep the default torch wheel (CPU; upstream disables MPS)
+    else
+        uv pip install --python venvs/zonos/bin/python --reinstall torch torchaudio \
+            --index-url https://download.pytorch.org/whl/cu128 || die "torch cu128 for zonos (LAST)"
+    fi
+    green "zonos: ok (espeak-ng bundled via espeakng-loader, no system install)"
+else
+    echo "zonos: already installed"
+fi
+
+# --- OpenVoice v2 (myshell-ai, MeloTTS base + tone-color converter, zero-shot cloning, 22.05kHz) ---
+echo; cyan "=== OpenVoice v2 (myshell-ai, MeloTTS base + tone-color converter, zero-shot cloning, 22.05kHz) ==="
+if [ ! -x venvs/openvoice/bin/python ]; then
+    # OpenVoice v2 = MeloTTS (base TTS) + a ToneColorConverter (cloning). Python 3.11
+    # (NOT 3.12 — fugashi, pulled by MeloTTS's Japanese path, has no prebuilt wheel for
+    # 3.12 and the source build needs MeCab; on 3.11 wheels exist). NOTE: on Linux the
+    # fugashi build may need `apt install mecab libmecab-dev` if no wheel is available;
+    # that apt step is out of scope here.
+    #
+    # We deliberately do NOT `pip install -e` OpenVoice's setup.py: it pins
+    # faster-whisper==0.9.0 -> av==10.0.0 (fails to build on Windows) plus
+    # numpy==1.22 / librosa==0.9.1 / gradio that fight the MeloTTS+torch stack. The
+    # runner only needs ToneColorConverter (api.py), whose deps come from MeloTTS;
+    # it adds venvs/openvoice/src to sys.path, instantiates with the default watermark
+    # ON (wavmark IS required — enable_watermark=False is broken upstream, see wavmark
+    # note below), and calls extract_se([ref]) directly (no faster-whisper VAD). So:
+    # clone for source+checkpoints, skip the editable install.
+    #
+    # MeloTTS English uses g2p_en (CMUdict + NLTK), NOT espeak — no espeakng-loader
+    # needed. The runner pre-downloads the NLTK tables g2p_en fetches at runtime.
+    uv venv venvs/openvoice --python 3.11 || die "uv venv openvoice"
+    if [ ! -d venvs/openvoice/src ]; then
+        git clone --depth 1 https://github.com/myshell-ai/OpenVoice venvs/openvoice/src || die "clone OpenVoice"
+    fi
+    uv pip install --python venvs/openvoice/bin/python "git+https://github.com/myshell-ai/MeloTTS.git" \
+        || die "uv pip install MeloTTS"
+    # MeloTTS may pull both mecab-python3 and python-mecab-ko; they conflict at import.
+    uv pip uninstall --python venvs/openvoice/bin/python python-mecab-ko >/dev/null 2>&1 || true
+    # wavmark: the ToneColorConverter's audio watermarker (loaded in its __init__;
+    # enable_watermark defaults True and the False path is broken upstream — it
+    # forwards the kwarg to a base __init__ that rejects it). Watermark is inaudible.
+    uv pip install --python venvs/openvoice/bin/python soundfile numpy wavmark \
+        || die "uv pip install openvoice deps"
+    # unidic uses its OWN downloader (not pip) — fine inside a uv venv. ~1GB.
+    uv run --python venvs/openvoice/bin/python -- python -m unidic download \
+        || die "unidic download"
+    # torch LAST: on CUDA Linux reinstall cu128 wheels (Blackwell sm_120; harmless CPU
+    # fallback on non-CUDA hosts); on Mac the default torch (MPS/CPU) is fine.
+    if [ "$(uname)" = "Darwin" ]; then
+        :  # Mac: keep the default torch wheel
+    else
+        uv pip install --python venvs/openvoice/bin/python --reinstall torch torchaudio \
+            --index-url https://download.pytorch.org/whl/cu128 || die "torch cu128 for openvoice (LAST)"
+    fi
+    uv run --python venvs/openvoice/bin/python -- hf download myshell-ai/OpenVoiceV2 --local-dir venvs/openvoice/src/checkpoints_v2 \
+        || die "download OpenVoiceV2 ckpts"
+    green "openvoice: ok (zero-shot tone-color cloning, 22.05kHz; MeloTTS base + ToneColorConverter)"
+else
+    echo "openvoice: already installed"
+fi
+
+# --- Voxtral-4B-TTS (mistralai, CC-BY-NC-4.0, 24kHz, preset voices / cloning) ---
+echo; cyan "=== Voxtral-4B-TTS (mistralai, CC-BY-NC-4.0, 24kHz) ==="
+if [ ! -x venvs/voxtral/bin/python ]; then
+    # Mac is Voxtral's primary rig: the clean path is MLX. The runner loads the
+    # 4-bit community port mlx-community/Voxtral-4B-TTS-2603-mlx-4bit (~2 GB, fits
+    # 16 GB) and is PRESET-VOICE-ONLY there (the mlx-audio port has no wav-cloning
+    # path; a --reference cell fails cleanly). On a CUDA rig the runner's cuda
+    # branch uses vllm-omni instead (in-proc Omni engine) — install that stack on
+    # Linux. Windows is RED for Voxtral (no vLLM wheel).
+    uv venv venvs/voxtral --python 3.12 || die "uv venv voxtral"
+    if [ "$(uname)" = "Darwin" ]; then
+        # Apple-Silicon MLX path (primary, hardware-tested on M4).
+        # mistral-common[audio] is REQUIRED: the MLX port builds the TTS prompt
+        # via the Mistral tekken speech tokenizer (encode_speech_request).
+        uv pip install --python venvs/voxtral/bin/python mlx-audio "mistral-common[audio]" soundfile numpy \
+            || die "uv pip install voxtral MLX deps (Mac)"
+    else
+        # Linux/CUDA vllm-omni path. vllm-omni declares no vllm pin; pin vllm to
+        # vllm-omni's minor (0.20.x) to avoid the mismatch warning, and the deploy
+        # YAML's gpu_memory_utilization may need lowering on <96 GB cards.
+        uv pip install --python venvs/voxtral/bin/python "vllm>=0.20,<0.21" "vllm-omni>=0.20,<0.21" soundfile numpy \
+            || die "uv pip install voxtral vllm-omni deps (Linux)"
+    fi
+    green "voxtral: ok"
+else
+    echo "voxtral: already installed"
 fi
 
 # --- psutil in every venv (for bench memory tracking) ---

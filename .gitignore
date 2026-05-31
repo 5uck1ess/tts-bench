@@ -2,6 +2,8 @@
 .obsidian/
 venvs/
 results/
+outputs/
+.claude/
 _gh-pages/
 reference/*.wav
 reference/*.mp3

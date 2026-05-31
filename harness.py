@@ -38,20 +38,33 @@ MODELS = [
     ("qwentts",      "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base", False),
     ("qwentts_fast", "qwentts_fast", "runners/qwentts_fast_runner.py", True,  ["cuda"],         "base", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   False, ["cpu", "cuda"],        None,   True),
+    ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    False, ["cuda"],               None,   True),
+    ("metavoice",   "metavoice",  "runners/metavoice_runner.py",  False, ["cuda"],               None,   True),
+    ("step_editx",  "step_editx", "runners/step_editx_runner.py", False, ["cuda"],               None,   True),
     ("sesame",      "sesame",     "runners/sesame_runner.py",     False, ["cpu", "cuda"],        None,   "gated"),
     ("mars5",       "mars5",      "runners/mars5_runner.py",      False, ["cpu", "cuda"],        None,   True),
     ("dia",         "dia",        "runners/dia_runner.py",        False, ["cuda"],               None,   True),
+    ("fish_15",     "fish",       "runners/fish_runner.py",       True,  ["cpu", "cuda", "mps"], None,   True),
     # Predefined-voice-only (no cloning)
     ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     True,  ["cpu", "cuda", "mps"], None,   False),
     ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  False, ["cpu"],                None,   False),
     ("piper",       "piper",      "runners/piper_runner.py",      True,  ["cpu", "cuda"],        None,   False),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], "1.5b", False),
+    ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  False, ["cuda"],               "7b",   True),
     ("magpie",      "magpie",     "runners/magpie_runner.py",     True,  ["cpu", "cuda"],        None,   False),
     ("soprano",     "soprano",    "runners/soprano_runner.py",    False, ["cpu", "cuda", "mps"], None,   False),
     ("moss_tts_nano", "moss_tts_nano", "runners/moss_tts_nano_runner.py", True,  ["cpu", "cuda", "mps"], None, True),
     ("moss_tts",      "moss_tts",      "runners/moss_tts_runner.py",      True,  ["cuda"],               None, True),
     ("supertonic",  "supertonic", "runners/supertonic_runner.py", True,  ["cpu"],                None,   False),
+    ("maya1",       "maya1",      "runners/maya1_runner.py",      False, ["cpu", "cuda", "mps"], None,   False),
+    ("styletts2",   "styletts2",  "runners/styletts2_runner.py",  False, ["cpu", "cuda", "mps"], None,   True),
+    ("zonos",       "zonos",      "runners/zonos_runner.py",      True,  ["cpu", "cuda"],        None,   True),
+    ("openvoice",   "openvoice",  "runners/openvoice_runner.py",  True,  ["cpu", "cuda", "mps"], None,   True),
+    # Voxtral: mps/cpu -> MLX (preset-voice only on Apple Silicon); cuda -> vllm-omni.
+    # can_clone=True is for the cross-rig cuda path; the MLX runner fails a
+    # --reference cell cleanly rather than mislabeling default-voice audio.
+    ("voxtral",     "voxtral",    "runners/voxtral_runner.py",    True,  ["cpu", "cuda", "mps"], None,   True),
 ]
 
 
@@ -65,6 +78,7 @@ MODELS = [
 GPU_CLASS = {
     "f5tts", "indextts", "voxcpm", "qwentts", "sesame", "mars5",
     "chatterbox", "magpie",
+    "fish_s2", "metavoice", "step_editx",
 }
 
 
@@ -92,10 +106,21 @@ def detect_cuda(py: Path) -> bool:
 
 
 def detect_mps(py: Path) -> bool:
+    # Apple-Silicon GPU availability. Most venvs report it via torch's MPS
+    # backend; MLX-only venvs (e.g. voxtral, maya1's Mac path) have no torch, so
+    # fall back to MLX's own Metal probe. Either signal means the "mps" cell is
+    # runnable on this rig.
     return _probe(
         py,
-        "import torch; b = getattr(torch.backends, 'mps', None); "
-        "print(bool(b and b.is_available()))",
+        "ok = False\n"
+        "try:\n"
+        "    import torch; b = getattr(torch.backends, 'mps', None); ok = bool(b and b.is_available())\n"
+        "except Exception: pass\n"
+        "if not ok:\n"
+        "    try:\n"
+        "        import mlx.core as mx; ok = mx.metal.is_available()\n"
+        "    except Exception: pass\n"
+        "print(ok)",
     )
 
 
