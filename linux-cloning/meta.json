@@ -10,8 +10,8 @@
   "gpu": "NVIDIA GeForce RTX 3090",
   "gpu_vram_gb": 24,
   "captured_at": "2026-05-25T05:00:13Z",
-  "label": "cloning \u00b7 chris_hemsworth_15s",
-  "reference": "chris_hemsworth_15s.wav",
+  "label": "cloning \u00b7 chris_hemsworth voice (note: fish_s2 / metavoice / step_editx use the 67s clip \u2014 metavoice needs \u226530s ref \u2014 the other models use the 15s clip)",
+  "reference": null,
   "models_filter": null,
   "prompts_filter": null
 }

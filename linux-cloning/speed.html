@@ -172,10 +172,11 @@
 <div class="nav"><span class="lens-tabs"><span class="lens-arrow lens-arrow-disabled">← </span><a class="lens-tab active" href="speed.html">Speed</a><a class="lens-tab" href="samples.html">Samples</a><a class="lens-arrow" href="samples.html" title="Next lens: Samples">Samples →</a></span> · <a href="../index.html">all runs</a></div>
 <h1>TTS Bench — Speed — linux-cloning</h1>
 <div class="meta"><strong>Rig:</strong> <code>linux-3090</code> — AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic</div>
-<div class="meta"><strong>Label:</strong> cloning · chris_hemsworth_15s — ref <code>chris_hemsworth_15s.wav</code></div>
+<div class="meta"><strong>Label:</strong> cloning · chris_hemsworth voice (note: fish_s2 / metavoice / step_editx use the 67s clip — metavoice needs ≥30s ref — the other models use the 15s clip)</div>
 <div class="reading-guide"><strong>TTFA</strong> = time to first audio (ms; lower is better). <strong>RTF</strong> = real-time factor (× realtime; higher is better; e.g. 10× means 10 sec of audio generated per 1 sec of compute). <strong>Cold</strong> = first run after process start; <strong>warm</strong> = subsequent runs.</div>
 <div class="tldr"><h2>Speed winners</h2>
-<p>Fastest (this cloning run): <strong>OmniVoice</strong> (cuda) — 4.99× warm RTF, 1.49s warm TTFA</p>
+<p>Fastest predefined-voice: <strong>LuxTTS</strong> (cuda) — 34.86× warm RTF, 241ms warm TTFA</p>
+<p>Fastest cloning-capable: <strong>OmniVoice</strong> (cuda) — 4.99× warm RTF, 1.49s warm TTFA</p>
 </div>
 <table><thead><tr>
 <th>Model</th>
@@ -192,8 +193,8 @@
 <td>LuxTTS</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="436.3">436ms</td>
 <td class="num" data-sort="241.3125">241ms</td>
-<td class="num" data-sort="18.76066376948622">18.76×</td>
-<td class="num" data-sort="34.8586363240444">34.86×</td>
+<td class="num" data-sort="18.760663769486225">18.76×</td>
+<td class="num" data-sort="34.85863632404439">34.86×</td>
 <td class="num" data-sort="2406.8">2.35 GB</td>
 <td class="num" data-sort="1155.9">1.13 GB</td>
 <td class="muted">—</td>
@@ -201,7 +202,7 @@
 <tr id="speed-omnivoice-cuda">
 <td>OmniVoice</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="2012.0">2.01s</td>
-<td class="num" data-sort="1488.8000000000002">1.49s</td>
+<td class="num" data-sort="1488.8">1.49s</td>
 <td class="num" data-sort="3.7957580369211428">3.80×</td>
 <td class="num" data-sort="4.988767910503417">4.99×</td>
 <td class="num" data-sort="2104.3">2.05 GB</td>
@@ -212,7 +213,7 @@
 <td>Coqui XTTS-v2</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="1897.58">1.90s</td>
 <td class="num" data-sort="1525.93">1.53s</td>
-<td class="num" data-sort="3.6344872827025627">3.63×</td>
+<td class="num" data-sort="3.634487282702562">3.63×</td>
 <td class="num" data-sort="4.773005702929754">4.77×</td>
 <td class="num" data-sort="2310.3">2.26 GB</td>
 <td class="num" data-sort="2134.2">2.08 GB</td>
@@ -231,8 +232,8 @@
 <tr id="speed-pocket-cpu">
 <td>Pocket-TTS</td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="151.38">151ms</td>
-<td class="num" data-sort="150.92">151ms</td>
-<td class="num" data-sort="3.935645763299381">3.94×</td>
+<td class="num" data-sort="150.92000000000002">151ms</td>
+<td class="num" data-sort="3.93564576329938">3.94×</td>
 <td class="num" data-sort="3.860100145403134">3.86×</td>
 <td class="num" data-sort="1730.7">1.69 GB</td>
 <td class="num" data-sort="">—</td>
@@ -243,7 +244,7 @@
 <td class="num" data-sort="2488.4">2.49s</td>
 <td class="num" data-sort="1835.0249999999999">1.84s</td>
 <td class="num" data-sort="2.330265874781224">2.33×</td>
-<td class="num" data-sort="3.165539086995287">3.17×</td>
+<td class="num" data-sort="3.1655390869952864">3.17×</td>
 <td class="num" data-sort="2668.3">2.61 GB</td>
 <td class="num" data-sort="882.4">882 MB</td>
 <td class="muted">330M</td>
@@ -252,7 +253,7 @@
 <td>Qwen3-TTS 1.7B (CUDA-graph)</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="51603.3">51.60s</td>
 <td class="num" data-sort="19429.3">19.43s</td>
-<td class="num" data-sort="2.857196790875307">2.86×</td>
+<td class="num" data-sort="2.8571967908753075">2.86×</td>
 <td class="num" data-sort="3.0735907077970426">3.07×</td>
 <td class="num" data-sort="2380.9">2.33 GB</td>
 <td class="num" data-sort="5073.7">4.95 GB</td>
@@ -261,9 +262,9 @@
 <tr id="speed-neutts_nano-cuda">
 <td>NeuTTS Nano</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="952.4200000000001">952ms</td>
-<td class="num" data-sort="356.7299999999999">357ms</td>
+<td class="num" data-sort="356.73">357ms</td>
 <td class="num" data-sort="1.854311096987948">1.85×</td>
-<td class="num" data-sort="2.6383629402031215">2.64×</td>
+<td class="num" data-sort="2.638362940203121">2.64×</td>
 <td class="num" data-sort="3533.0">3.45 GB</td>
 <td class="num" data-sort="3332.3">3.25 GB</td>
 <td class="muted">748M</td>
@@ -273,15 +274,15 @@
 <td class="num" data-sort="2920.775">2.92s</td>
 <td class="num" data-sort="2843.7875">2.84s</td>
 <td class="num" data-sort="2.1419007100539886">2.14×</td>
-<td class="num" data-sort="2.200974533215161">2.20×</td>
+<td class="num" data-sort="2.2009745332151605">2.20×</td>
 <td class="num" data-sort="2680.4">2.62 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">—</td>
 </tr>
 <tr id="speed-chatterbox-cuda">
 <td>Chatterbox</td><td class="dev-cuda">cuda</td>
-<td class="num" data-sort="3904.2999999999997">3.90s</td>
-<td class="num" data-sort="3105.075">3.11s</td>
+<td class="num" data-sort="3904.3">3.90s</td>
+<td class="num" data-sort="3105.0750000000003">3.11s</td>
 <td class="num" data-sort="1.7082131309520598">1.71×</td>
 <td class="num" data-sort="2.1589671603753957">2.16×</td>
 <td class="num" data-sort="2249.9">2.20 GB</td>
@@ -291,8 +292,8 @@
 <tr id="speed-moss_tts_nano-cuda">
 <td>MOSS-TTS-Nano</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="4613.62">4.61s</td>
-<td class="num" data-sort="3220.06">3.22s</td>
-<td class="num" data-sort="1.537675954012269">1.54×</td>
+<td class="num" data-sort="3220.0600000000004">3.22s</td>
+<td class="num" data-sort="1.5376759540122689">1.54×</td>
 <td class="num" data-sort="2.1420173504139606">2.14×</td>
 <td class="num" data-sort="1958.0">1.91 GB</td>
 <td class="num" data-sort="870.5">870 MB</td>
@@ -302,7 +303,7 @@
 <td>VoxCPM2 2B</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="4240.34">4.24s</td>
 <td class="num" data-sort="3097.33">3.10s</td>
-<td class="num" data-sort="1.441611722651905">1.44×</td>
+<td class="num" data-sort="1.4416117226519047">1.44×</td>
 <td class="num" data-sort="2.051709466639861">2.05×</td>
 <td class="num" data-sort="3447.4">3.37 GB</td>
 <td class="num" data-sort="5961.3">5.82 GB</td>
@@ -310,7 +311,7 @@
 </tr>
 <tr id="speed-neutts_nano-cpu">
 <td>NeuTTS Nano</td><td class="dev-cpu">cpu</td>
-<td class="num" data-sort="1009.9800000000001">1.01s</td>
+<td class="num" data-sort="1009.9799999999999">1.01s</td>
 <td class="num" data-sort="419.36">419ms</td>
 <td class="num" data-sort="1.4694406947630494">1.47×</td>
 <td class="num" data-sort="1.683135373738335">1.68×</td>
@@ -331,7 +332,7 @@
 <tr id="speed-neutts_air-cpu">
 <td>NeuTTS Air</td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="1683.05">1.68s</td>
-<td class="num" data-sort="587.1374999999999">587ms</td>
+<td class="num" data-sort="587.1375">587ms</td>
 <td class="num" data-sort="1.074713820717624">1.07×</td>
 <td class="num" data-sort="1.3272671820812083">1.33×</td>
 <td class="num" data-sort="6122.7">5.98 GB</td>
@@ -340,7 +341,7 @@
 </tr>
 <tr id="speed-indextts-cpu">
 <td>IndexTTS-2</td><td class="dev-cpu">cpu</td>
-<td class="num" data-sort="6723.575000000001">6.72s</td>
+<td class="num" data-sort="6723.575">6.72s</td>
 <td class="num" data-sort="5859.05">5.86s</td>
 <td class="num" data-sort="0.9652251972957835">0.97×</td>
 <td class="num" data-sort="1.14575727197671">1.15×</td>
@@ -351,17 +352,17 @@
 <tr id="speed-moss_tts_nano-cpu">
 <td>MOSS-TTS-Nano</td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="6853.660000000001">6.85s</td>
-<td class="num" data-sort="6628.890000000001">6.63s</td>
+<td class="num" data-sort="6628.889999999999">6.63s</td>
 <td class="num" data-sort="1.001955095361069">1.00×</td>
-<td class="num" data-sort="1.1087161952586342">1.11×</td>
+<td class="num" data-sort="1.108716195258634">1.11×</td>
 <td class="num" data-sort="1345.0">1.31 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">100M</td>
 </tr>
 <tr id="speed-indextts-cuda">
 <td>IndexTTS-2</td><td class="dev-cuda">cuda</td>
-<td class="num" data-sort="7718.574999999999">7.72s</td>
-<td class="num" data-sort="6486.062499999999">6.49s</td>
+<td class="num" data-sort="7718.575">7.72s</td>
+<td class="num" data-sort="6486.0625">6.49s</td>
 <td class="num" data-sort="0.9006080790086326">0.90×</td>
 <td class="num" data-sort="1.0744040498636673">1.07×</td>
 <td class="num" data-sort="2868.0">2.80 GB</td>
@@ -370,13 +371,23 @@
 </tr>
 <tr id="speed-coqui-cpu">
 <td>Coqui XTTS-v2</td><td class="dev-cpu">cpu</td>
-<td class="num" data-sort="11080.26">11.08s</td>
-<td class="num" data-sort="10050.269999999999">10.05s</td>
+<td class="num" data-sort="11080.259999999998">11.08s</td>
+<td class="num" data-sort="10050.27">10.05s</td>
 <td class="num" data-sort="0.7743635000777905">0.77×</td>
 <td class="num" data-sort="0.7905023567995274">0.79×</td>
 <td class="num" data-sort="3162.3">3.09 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">750M</td>
+</tr>
+<tr id="speed-metavoice-cuda">
+<td>metavoice</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="8165.75">8.17s</td>
+<td class="num" data-sort="7483.125">7.48s</td>
+<td class="num" data-sort="0.6652057677829274">0.67×</td>
+<td class="num" data-sort="0.7602629356471376">0.76×</td>
+<td class="num" data-sort="">—</td>
+<td class="num" data-sort="8173.4">7.98 GB</td>
+<td class="muted">—</td>
 </tr>
 <tr id="speed-sesame-cuda">
 <td>Sesame CSM-1B</td><td class="dev-cuda">cuda</td>
@@ -392,8 +403,8 @@
 <td>Chatterbox Turbo</td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="10021.075">10.02s</td>
 <td class="num" data-sort="10355.3125">10.36s</td>
-<td class="num" data-sort="0.6287781936498897">0.63×</td>
-<td class="num" data-sort="0.6733327398395101">0.67×</td>
+<td class="num" data-sort="0.6287781936498898">0.63×</td>
+<td class="num" data-sort="0.67333273983951">0.67×</td>
 <td class="num" data-sort="4176.7">4.08 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">744M</td>
@@ -402,7 +413,7 @@
 <td>Dia 1.6B</td><td class="dev-cuda">cuda</td>
 <td class="num" data-sort="12829.375">12.83s</td>
 <td class="num" data-sort="9936.7">9.94s</td>
-<td class="num" data-sort="0.41774811339614404">0.42×</td>
+<td class="num" data-sort="0.417748113396144">0.42×</td>
 <td class="num" data-sort="0.5443140491031596">0.54×</td>
 <td class="num" data-sort="2156.8">2.11 GB</td>
 <td class="num" data-sort="4772.4">4.66 GB</td>
@@ -418,12 +429,22 @@
 <td class="num" data-sort="">—</td>
 <td class="muted">123M</td>
 </tr>
+<tr id="speed-step_editx-cuda">
+<td>step_editx</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="14857.425">14.86s</td>
+<td class="num" data-sort="13221.625">13.22s</td>
+<td class="num" data-sort="0.4951132038259607">0.50×</td>
+<td class="num" data-sort="0.5054279412491308">0.51×</td>
+<td class="num" data-sort="3125.3">3.05 GB</td>
+<td class="num" data-sort="9547.8">9.32 GB</td>
+<td class="muted">—</td>
+</tr>
 <tr id="speed-chatterbox-cpu">
 <td>Chatterbox</td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="21310.925">21.31s</td>
-<td class="num" data-sort="20763.874999999996">20.76s</td>
+<td class="num" data-sort="20763.875">20.76s</td>
 <td class="num" data-sort="0.3209837476308559">0.32×</td>
-<td class="num" data-sort="0.33470122248815115">0.33×</td>
+<td class="num" data-sort="0.3347012224881511">0.33×</td>
 <td class="num" data-sort="4610.7">4.50 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">1.2B</td>
@@ -432,18 +453,28 @@
 <td>VoxCPM2 2B</td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="34022.840000000004">34.02s</td>
 <td class="num" data-sort="33006.32">33.01s</td>
-<td class="num" data-sort="0.1745077204670856">0.17×</td>
+<td class="num" data-sort="0.17450772046708563">0.17×</td>
 <td class="num" data-sort="0.1842504362393031">0.18×</td>
 <td class="num" data-sort="6697.1">6.54 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">2B</td>
+</tr>
+<tr id="speed-fish_s2-cuda">
+<td>fish_s2</td><td class="dev-cuda">cuda</td>
+<td class="num" data-sort="41198.2">41.20s</td>
+<td class="num" data-sort="41218.575000000004">41.22s</td>
+<td class="num" data-sort="0.1693278852611649">0.17×</td>
+<td class="num" data-sort="0.16959917744986394">0.17×</td>
+<td class="num" data-sort="3907.3">3.82 GB</td>
+<td class="num" data-sort="20409.7">19.93 GB</td>
+<td class="muted">—</td>
 </tr>
 <tr id="speed-omnivoice-cpu">
 <td>OmniVoice</td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="49476.979999999996">49.48s</td>
 <td class="num" data-sort="47441.729999999996">47.44s</td>
 <td class="num" data-sort="0.1479375999007339">0.15×</td>
-<td class="num" data-sort="0.1578685437114068">0.16×</td>
+<td class="num" data-sort="0.15786854371140682">0.16×</td>
 <td class="num" data-sort="4222.6">4.12 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">~1B</td>
@@ -462,7 +493,7 @@
 <td>F5-TTS</td><td class="dev-cpu">cpu</td>
 <td class="num" data-sort="75557.45">75.56s</td>
 <td class="num" data-sort="76089.9875">76.09s</td>
-<td class="num" data-sort="0.07807954689900033">0.08×</td>
+<td class="num" data-sort="0.07807954689900032">0.08×</td>
 <td class="num" data-sort="0.07786982064139039">0.08×</td>
 <td class="num" data-sort="2693.7">2.63 GB</td>
 <td class="num" data-sort="">—</td>
@@ -470,10 +501,10 @@
 </tr>
 <tr id="speed-mars5-cuda">
 <td>Mars5-TTS</td><td class="dev-cuda">cuda</td>
-<td class="num" data-sort="87239.45000000001">87.24s</td>
+<td class="num" data-sort="87239.45">87.24s</td>
 <td class="num" data-sort="87804.1375">87.80s</td>
 <td class="num" data-sort="0.05094873410045712">0.05×</td>
-<td class="num" data-sort="0.05290320570798185">0.05×</td>
+<td class="num" data-sort="0.05290320570798184">0.05×</td>
 <td class="num" data-sort="2658.8">2.60 GB</td>
 <td class="num" data-sort="7414.7">7.24 GB</td>
 <td class="muted">1.2B</td>
@@ -483,7 +514,7 @@
 <td class="num" data-sort="93191.875">93.19s</td>
 <td class="num" data-sort="85833.125">85.83s</td>
 <td class="num" data-sort="0.06446189393508027">0.06×</td>
-<td class="num" data-sort="0.04846433336586929">0.05×</td>
+<td class="num" data-sort="0.0484643333658693">0.05×</td>
 <td class="num" data-sort="2655.3">2.59 GB</td>
 <td class="num" data-sort="">—</td>
 <td class="muted">1.2B</td>
