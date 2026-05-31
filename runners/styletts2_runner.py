@@ -43,7 +43,11 @@ import _meminfo
 import _naq
 
 
-DIFFUSION_STEPS = 5  # fixed for reproducibility
+# Inference tunables (StyleTTS2 wrapper defaults; fixed for reproducibility).
+DIFFUSION_STEPS = 5      # more steps = higher quality, slower
+STYLE_ALPHA = 0.3        # timbre vs. reference blend
+STYLE_BETA = 0.7         # prosody vs. reference blend
+EMBEDDING_SCALE = 1.0    # classifier-free guidance scale
 
 
 def main() -> int:
@@ -107,7 +111,7 @@ def main() -> int:
                 target_voice_path=ref_wav,
                 output_sample_rate=samplerate,
                 diffusion_steps=DIFFUSION_STEPS,
-                alpha=0.3, beta=0.7, embedding_scale=1.0,
+                alpha=STYLE_ALPHA, beta=STYLE_BETA, embedding_scale=EMBEDDING_SCALE,
             )
             t_end = time.perf_counter()
 

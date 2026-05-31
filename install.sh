@@ -570,8 +570,14 @@ if [ ! -x venvs/styletts2/bin/python ]; then
     uv venv venvs/styletts2 --python 3.11 || die "uv venv styletts2"
     uv pip install --python venvs/styletts2/bin/python styletts2 soundfile numpy \
         || die "uv pip install styletts2"
-    # On CUDA Linux, reinstall cu128 wheels for Blackwell; on Mac the default torch is fine.
-    # uv pip install --python venvs/styletts2/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+    # torch LAST: on CUDA Linux reinstall cu128 wheels (Blackwell sm_120; harmless
+    # CPU fallback on non-CUDA hosts); on Mac the default torch (MPS/CPU) is fine.
+    if [ "$(uname)" = "Darwin" ]; then
+        :  # Mac: keep the default torch wheel
+    else
+        uv pip install --python venvs/styletts2/bin/python --reinstall torch torchaudio \
+            --index-url https://download.pytorch.org/whl/cu128 || die "torch cu128 for styletts2 (LAST)"
+    fi
     green "styletts2: ok (LibriTTS weights auto-download from HF on first use)"
 else
     echo "styletts2: already installed"
