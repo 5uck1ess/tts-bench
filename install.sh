@@ -583,6 +583,31 @@ else
     echo "styletts2: already installed"
 fi
 
+# --- Zonos-v0.1 transformer (Zyphra, zero-shot cloning, 44.1kHz, espeakng-loader) ---
+echo; cyan "=== Zonos-v0.1 transformer (Zyphra, zero-shot cloning, 44.1kHz, espeakng-loader) ==="
+if [ ! -x venvs/zonos/bin/python ]; then
+    # Transformer backbone only — do NOT install the `.[compile]` extras
+    # (mamba-ssm/flash-attn are CUDA+Linux-only and unneeded for the transformer
+    # variant). Zonos uses phonemizer -> espeak-ng; espeakng-loader bundles the
+    # espeak-ng.so + data so no system package install is required (the runner sets
+    # PHONEMIZER_ESPEAK_LIBRARY/DATA from espeakng_loader before importing zonos).
+    uv venv venvs/zonos --python 3.11 || die "uv venv zonos"
+    git clone https://github.com/Zyphra/Zonos venvs/zonos/src || die "clone Zonos"
+    uv pip install --python venvs/zonos/bin/python -e venvs/zonos/src soundfile numpy espeakng-loader \
+        || die "uv pip install zonos (transformer, no [compile])"
+    # torch LAST: on CUDA Linux reinstall cu128 wheels (Blackwell sm_120). Mac is
+    # CPU-only (Zonos upstream disables MPS) — keep the default torch wheel there.
+    if [ "$(uname)" = "Darwin" ]; then
+        :  # Mac: keep the default torch wheel (CPU; upstream disables MPS)
+    else
+        uv pip install --python venvs/zonos/bin/python --reinstall torch torchaudio \
+            --index-url https://download.pytorch.org/whl/cu128 || die "torch cu128 for zonos (LAST)"
+    fi
+    green "zonos: ok (espeak-ng bundled via espeakng-loader, no system install)"
+else
+    echo "zonos: already installed"
+fi
+
 # --- psutil in every venv (for bench memory tracking) ---
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.
