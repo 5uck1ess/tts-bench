@@ -102,9 +102,13 @@ def main() -> int:
         from tts import StepAudioTTS
 
         tok = StepAudioTokenizer(TOKENIZER_REPO)
+        # gpu_memory_utilization is vLLM's reservation; the CosyVoice vocoder +
+        # FunASR + onnxruntime run in THIS process, outside that budget. 0.6
+        # starves them on long references (OOMs the vocoder on a 67 s ref), so
+        # keep vLLM at 0.5 to leave ~12 GB headroom for the vocoder on a 24 GB card.
         model = StepAudioTTS(
             EDITX_REPO, tok,
-            gpu_memory_utilization=0.6, max_model_len=8192, max_num_seqs=1,
+            gpu_memory_utilization=0.5, max_model_len=8192, max_num_seqs=1,
             dtype="bfloat16",
         )
     except Exception as e:
