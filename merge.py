@@ -49,6 +49,7 @@ def main() -> int:
     p.add_argument("--from", dest="src", required=True, help="Scratch results dir to take rows/wavs from.")
     p.add_argument("--models", required=True, help="Comma-separated model names to merge in.")
     p.add_argument("--force", action="store_true", help="Append even if a named model already exists in the canonical (skips the duplicate guard).")
+    p.add_argument("--replace", action="store_true", help="Replace the named models in --into: drop their existing rows + wavs first, then add the ones from --from. Use when re-benching a model already in the canonical (e.g. a corrected reference).")
     p.add_argument("--no-report", action="store_true", help="Skip report regeneration (just CSV + wavs).")
     args = p.parse_args()
 
@@ -73,9 +74,9 @@ def main() -> int:
 
     existing_models = {r["model"] for r in into_rows}
     clash = sorted(set(models) & existing_models)
-    if clash and not args.force:
+    if clash and not args.force and not args.replace:
         print(f"ERROR: these models already exist in {into.name}: {', '.join(clash)}", file=sys.stderr)
-        print("  Re-run with --force to append anyway (will duplicate rows).", file=sys.stderr)
+        print("  Re-run with --replace to overwrite them, or --force to append anyway (duplicates rows).", file=sys.stderr)
         return 2
 
     add_rows = [r for r in src_rows if r["model"] in set(models)]
@@ -88,26 +89,45 @@ def main() -> int:
     if missing:
         print(f"WARNING: no rows in --from for: {', '.join(missing)}")
 
-    # Append rows.
+    # Write rows. --replace drops the named models' existing rows first and
+    # rewrites the whole CSV; otherwise we just append.
     before = len(into_rows)
-    with into_csv.open("a", newline="", encoding="utf-8") as f:
-        writer = csv.DictWriter(f, fieldnames=into_fields)
-        for r in add_rows:
-            writer.writerow(r)
+    removed_rows = 0
+    if args.replace:
+        kept = [r for r in into_rows if r["model"] not in set(models)]
+        removed_rows = before - len(kept)
+        with into_csv.open("w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=into_fields)
+            writer.writeheader()
+            for r in (kept + add_rows):
+                writer.writerow(r)
+    else:
+        with into_csv.open("a", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=into_fields)
+            for r in add_rows:
+                writer.writerow(r)
 
     # Copy wavs for the merged models. Filenames are <model>_<device>_p<N>.wav;
     # match precisely so e.g. "vibevoice_7b" never grabs a "vibevoice" wav.
-    copied = 0
+    # Under --replace, delete the model's old wavs in --into first.
+    copied = removed_wavs = 0
     for model in found_models:
         pat = re.compile(rf"^{re.escape(model)}_(cpu|cuda|mps)_p\d+\.wav$")
+        if args.replace:
+            for wav in into.glob(f"{model}_*.wav"):
+                if pat.match(wav.name):
+                    wav.unlink()
+                    removed_wavs += 1
         for wav in src.glob(f"{model}_*.wav"):
             if pat.match(wav.name):
                 shutil.copy2(wav, into / wav.name)
                 copied += 1
 
-    print(f"Merged {len(add_rows)} rows ({', '.join(found_models)}) into {into.name}/results.csv")
-    print(f"  rows: {before} -> {before + len(add_rows)}")
-    print(f"  wavs copied: {copied}")
+    new_total = (before - removed_rows) + len(add_rows)
+    print(f"{'Replaced' if args.replace else 'Merged'} {len(add_rows)} rows "
+          f"({', '.join(found_models)}) into {into.name}/results.csv")
+    print(f"  rows: {before} -> {new_total}" + (f" (dropped {removed_rows} old)" if args.replace else ""))
+    print(f"  wavs copied: {copied}" + (f" (removed {removed_wavs} old)" if args.replace else ""))
 
     if not args.no_report:
         try:
