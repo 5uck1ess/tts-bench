@@ -461,6 +461,20 @@ if (-not (Test-Path "venvs\maya1\Scripts\python.exe")) {
     Write-Host "maya1: ok" -ForegroundColor Green
 } else { Write-Host "maya1: already installed" -ForegroundColor Gray }
 
+Step "StyleTTS 2 (sidharthrajaram wrapper, MIT, LibriTTS, zero-shot cloning, 24kHz)"
+if (-not (Test-Path "venvs\styletts2\Scripts\python.exe")) {
+    # The `styletts2` PyPI wrapper (sidharthrajaram) uses gruut for phonemization
+    # (no espeak-ng needed) and auto-downloads LibriTTS weights from HF on the
+    # first StyleTTS2() call. Its dep `monotonic_align` is a Cython package that
+    # compiles via setuptools' automatic MSVC discovery — VS Build Tools' VC++
+    # compiler must be installed (confirmed on this box).
+    Invoke-Checked "uv venv styletts2" { uv venv venvs\styletts2 --python 3.11 }
+    Invoke-Checked "uv pip install styletts2" { uv pip install --python venvs\styletts2\Scripts\python.exe styletts2 soundfile numpy }
+    # torch cu128 LAST (Blackwell sm_120); styletts2 pulls a non-cu128 torch otherwise.
+    Invoke-Checked "torch cu128 for styletts2 (LAST)" { uv pip install --python venvs\styletts2\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "styletts2: ok" -ForegroundColor Green
+} else { Write-Host "styletts2: already installed" -ForegroundColor Gray }
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.

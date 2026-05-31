@@ -558,6 +558,25 @@ else
     echo "maya1: already installed"
 fi
 
+# --- StyleTTS 2 (sidharthrajaram wrapper, MIT, LibriTTS, zero-shot cloning, 24kHz) ---
+echo; cyan "=== StyleTTS 2 (sidharthrajaram wrapper, MIT, LibriTTS, zero-shot cloning, 24kHz) ==="
+if [ ! -x venvs/styletts2/bin/python ]; then
+    # The `styletts2` PyPI wrapper (sidharthrajaram) uses gruut for phonemization
+    # (no espeak-ng needed) and auto-downloads LibriTTS weights from HF on the
+    # first StyleTTS2() call. Its dep `monotonic_align` is a Cython package: Linux
+    # builds with gcc (clean), Mac needs the CommandLineTools clang — run
+    # `xcode-select --install` first. On Mac also run the runner with
+    # PYTORCH_ENABLE_MPS_FALLBACK=1 (some ops lack MPS kernels).
+    uv venv venvs/styletts2 --python 3.11 || die "uv venv styletts2"
+    uv pip install --python venvs/styletts2/bin/python styletts2 soundfile numpy \
+        || die "uv pip install styletts2"
+    # On CUDA Linux, reinstall cu128 wheels for Blackwell; on Mac the default torch is fine.
+    # uv pip install --python venvs/styletts2/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+    green "styletts2: ok (LibriTTS weights auto-download from HF on first use)"
+else
+    echo "styletts2: already installed"
+fi
+
 # --- psutil in every venv (for bench memory tracking) ---
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.

@@ -55,6 +55,7 @@ MODELS = [
     ("moss_tts",      "moss_tts",      "runners/moss_tts_runner.py",      True,  ["cuda"],               None, True),
     ("supertonic",  "supertonic", "runners/supertonic_runner.py", True,  ["cpu"],                None,   False),
     ("maya1",       "maya1",      "runners/maya1_runner.py",      False, ["cpu", "cuda", "mps"], None,   False),
+    ("styletts2",   "styletts2",  "runners/styletts2_runner.py",  False, ["cpu", "cuda", "mps"], None,   True),
 ]
 
 
