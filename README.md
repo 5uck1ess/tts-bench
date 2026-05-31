@@ -9,7 +9,7 @@
 Bench for local TTS models. Two lenses, on whatever hardware you put it on:
 
 - **Speed** — cold + warm **TTFA** (time to first audio), **RTF** (real-time factor; higher = faster than realtime), memory, on CPU / CUDA / Apple Silicon
-- **Samples** — every model × prompt × rig with inline audio players, so you can pick a model by listening
+- **Listen** — every model on every prompt, default voice + voice cloning, with inline audio players, so you can pick a model by ear
 
 An objective quality score (NAQ) was prototyped and is currently paused for redesign — the v2 features didn't track subjective ranking closely enough to publish. The bench still computes it into the CSV; the HTML report omits it until a refit lands.
 
@@ -17,13 +17,12 @@ An objective quality score (NAQ) was prototyped and is currently paused for rede
 
 ## ▶ Demos
 
-**[5uck1ess.github.io/tts-bench](https://5uck1ess.github.io/tts-bench/)** — public side-by-side audio.
+**[5uck1ess.github.io/tts-bench](https://5uck1ess.github.io/tts-bench/)** — listen to every model, no install. Two lenses:
 
-Every model × prompt × device combination is rendered with an inline `<audio>` player so you can hear the actual output without cloning the repo or running anything locally. Useful for:
+- **Listen** — one consolidated gallery with an inline `<audio>` player for every model on every prompt, in **default voice** and **voice cloning** (each clone sits next to the reference it's imitating). Browse **by prompt** (compare all models on one sentence) or **by model** (audition one model across prompts); only one clip plays at a time. Audio is rig-independent, so each sample is sourced once from the highest-fidelity rig and tagged with where it came from. Quality, prosody, and artifacts are obvious in 5 seconds — benchmark tables can't show that.
+- **Speed** — per-rig leaderboards (Ryzen 9 9950X3D + RTX 5090, Apple M4, Ryzen + RTX 3090) with cold/warm TTFA, RTF, and memory, sortable. Pick the box you actually own.
 
-- *Picking a model.* Listen to the same prompt across 18 TTS models on the same hardware. Quality, prosody, and artifacts are obvious in 5 seconds; benchmark tables can't show that.
-- *Comparing rigs.* Each report is tagged with the rig (Ryzen 9 9950X3D, Apple M4, etc.) and labeled (default voice vs cloning) so you can see how the same model sounds on the box you actually own.
-- *Comparing devices for one model.* CPU vs CUDA vs MPS rows for the same model, side by side, with their audio.
+Full per-rig reports (every model × prompt × device, plus by-prompt samples) are linked from the **Archive**.
 
 ---
 
@@ -54,7 +53,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 - CUDA (RTX 5090): **Kokoro** — 69ms warm TTFA, 101× RTF
 - CPU + MPS (Apple M4, 16 GB): **Piper** — 202ms warm TTFA, 33× RTF
 
-**Best sounding:** *No objective ranking right now — the NAQ score is paused pending redesign. Open any [Demos report](https://5uck1ess.github.io/tts-bench/) and listen via the Samples lens.*
+**Best sounding:** *No objective ranking right now — the NAQ score is paused pending redesign. Open the [Demos site](https://5uck1ess.github.io/tts-bench/) and use the Listen lens.*
 
 **Best cloning (subjective rank):**
 - 1. **OmniVoice** — accent preserved, top of listening test
