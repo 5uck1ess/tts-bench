@@ -41,6 +41,7 @@ MODELS = [
     ("sesame",      "sesame",     "runners/sesame_runner.py",     False, ["cpu", "cuda"],        None,   "gated"),
     ("mars5",       "mars5",      "runners/mars5_runner.py",      False, ["cpu", "cuda"],        None,   True),
     ("dia",         "dia",        "runners/dia_runner.py",        False, ["cuda"],               None,   True),
+    ("fish_15",     "fish",       "runners/fish_runner.py",       True,  ["cpu", "cuda", "mps"], None,   True),
     # Predefined-voice-only (no cloning)
     ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     True,  ["cpu", "cuda", "mps"], None,   False),
     ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  False, ["cpu"],                None,   False),

@@ -427,6 +427,24 @@ if (-not (Test-Path "venvs\supertonic\Scripts\python.exe")) {
     Write-Host "supertonic: already installed" -ForegroundColor Gray
 }
 
+Step "Fish Speech 1.5 (fishaudio, zero-shot cloning, 44.1kHz)"
+if (-not (Test-Path "venvs\fish\Scripts\python.exe")) {
+    # Source clone of the v1.5.0 tag. [stable] extras are intentionally SKIPPED:
+    # they pin torch<=2.4.1 which is incompatible with the RTX 5090 (Blackwell
+    # sm_120), which needs cu128 / torch 2.7+. We install fish-speech with no
+    # extras, hard-cap numpy<=1.26.4 (fish requirement), then reinstall torch cu128
+    # LAST. The runner instantiates TTSInferenceEngine directly (NOT ModelManager,
+    # which has an unconditional funasr import we want to avoid).
+    Invoke-Checked "uv venv fish" { uv venv venvs\fish --python 3.10 }
+    Invoke-Checked "clone fish-speech v1.5" { git clone --branch v1.5.0 https://github.com/fishaudio/fish-speech venvs\fish\src }
+    Invoke-Checked "uv pip install fish-speech (no extras)" { uv pip install --python venvs\fish\Scripts\python.exe -e venvs\fish\src }
+    Invoke-Checked "numpy<=1.26.4 (fish hard cap)" { uv pip install --python venvs\fish\Scripts\python.exe "numpy<=1.26.4" }
+    Invoke-Checked "fish deps" { uv pip install --python venvs\fish\Scripts\python.exe soundfile }
+    Invoke-Checked "torch cu128 for fish (LAST)" { uv pip install --python venvs\fish\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Invoke-Checked "download fish-speech-1.5 weights" { uv run --python venvs\fish\Scripts\python.exe -- hf download fishaudio/fish-speech-1.5 --local-dir venvs\fish\src\checkpoints\fish-speech-1.5 }
+    Write-Host "fish: ok" -ForegroundColor Green
+} else { Write-Host "fish: already installed" -ForegroundColor Gray }
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.
