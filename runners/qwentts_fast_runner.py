@@ -22,6 +22,7 @@ API (faster-qwen3-tts==0.2.6):
         language="English",
         ref_audio=ref_wav_path,
         ref_text=ref_text,
+        non_streaming_mode=True,   # see _one(): avoids the runaway-decode bug
     )
 
 Note: CUDA graphs are captured on the first generate_voice_clone() call (warmup),
@@ -144,6 +145,12 @@ def main() -> int:
                 language=language,
                 ref_audio=str(ref_wav),
                 ref_text=ref_text,
+                # non_streaming_mode=True prefills the full target text before
+                # decode. The default (False, step-by-step text feeding) never
+                # emits EOS for some longer prompts under the CUDA-graph decode,
+                # so generation runs away to max_new_tokens (~147s of garbled
+                # audio). The prefill path terminates correctly AND is faster.
+                non_streaming_mode=True,
             )
             t_end = time.perf_counter()
             gen_s = t_end - t0

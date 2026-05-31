@@ -61,10 +61,10 @@ NO_PRESET_VOICE = {
 # Curated per-(model, voice-mode) QA findings, surfaced as a ⚠ badge + tooltip on
 # the model's row in the Listen gallery and recorded in docs/known-issues.md.
 KNOWN_ISSUES = {
-    ("qwentts_fast", "cloning"):
-        "Runaway generation — the CUDA-graph path emits ~147s of garbled/looping audio when cloning.",
-    ("fish_s2", "cloning"):
-        "Wrong reference — the Linux cloning run fell back to a bundled default voice (jo/juliette), not the chris_hemsworth target every other model used. Needs a re-run with --reference reference/chris_hemsworth_15s.wav.",
+    # (model, voice-mode): "reason" — surfaced as a ⚠ badge in the Listen gallery.
+    # Empty now: qwentts_fast/cloning (runaway) is fixed via non_streaming_mode=True
+    # and re-benched; fish_s2/cloning (wrong reference) was re-benched with Chris on
+    # Linux. Add new entries here as QA surfaces them.
 }
 
 
