@@ -463,6 +463,16 @@ MODEL_DISPLAY_NAMES = {
     "moss_tts":      "MOSS-TTS",
     "supertonic":    "Supertonic",
     "luxtts":        "LuxTTS",
+    "maya1":         "Maya1",
+    "voxtral":       "Voxtral 4B TTS",
+    "fish_15":       "Fish Speech 1.5",
+    "fish_s2":       "Fish Speech S2-Pro",
+    "zonos":         "Zonos v0.1",
+    "openvoice":     "OpenVoice v2",
+    "styletts2":     "StyleTTS 2",
+    "vibevoice_7b":  "VibeVoice 7B",
+    "metavoice":     "MetaVoice-1B",
+    "step_editx":    "Step-Audio-EditX",
 }
 
 
@@ -481,7 +491,7 @@ MODEL_SIZE = {
     "f5tts":         "330M",
     "coqui":         "750M",
     "vibevoice":     "0.5B",
-    "vibevoice_15b": "3B",
+    "vibevoice_15b": "1.5B",
     "omnivoice":     "~1B",
     "zipvoice":      "123M",
     "voxcpm":        "2B",
@@ -499,6 +509,16 @@ MODEL_SIZE = {
     "moss_tts_nano": "100M",
     "moss_tts":      "8B",
     "supertonic":    "99M",
+    "maya1":         "3B",
+    "voxtral":       "4B",
+    "fish_15":       "~500M",
+    "fish_s2":       "4B",
+    "zonos":         "1.6B",
+    "openvoice":     "~100M",
+    "styletts2":     "~148M",
+    "vibevoice_7b":  "7B",
+    "metavoice":     "1.2B",
+    "step_editx":    "3B",
 }
 
 # Whether a model supports zero-shot voice cloning at runtime.
@@ -510,7 +530,7 @@ MODEL_KIND = {
     "kittentts":     "predefined",
     "magpie":        "predefined",
     "vibevoice":     "predefined",
-    "vibevoice_15b": "predefined",
+    "vibevoice_15b": "cloning",   # no preset voice — clones from a reference wav
     "soprano":       "predefined",
     "supertonic":    "predefined",
     "luxtts":        "predefined",
@@ -532,6 +552,16 @@ MODEL_KIND = {
     "neutts_nano":   "cloning",
     "moss_tts_nano": "cloning",
     "moss_tts":      "cloning",
+    "maya1":         "predefined",   # voice-description preset, no wav cloning
+    "voxtral":       "cloning",      # cuda/vLLM path clones; MLX path preset-only
+    "fish_15":       "cloning",
+    "fish_s2":       "cloning",
+    "zonos":         "cloning",
+    "openvoice":     "cloning",
+    "styletts2":     "cloning",
+    "vibevoice_7b":  "cloning",
+    "metavoice":     "cloning",
+    "step_editx":    "cloning",
 }
 
 
@@ -897,56 +927,20 @@ def _lens_nav(active):
     return "".join(parts)
 
 
-def _render_speed(ctx):
-    """Render speed.html — aggregated per (model, device), no audio."""
-    meta = ctx["meta"]
-    has_ref = bool((meta or {}).get("reference"))
-    out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
-           f'<title>TTS Bench — Speed — {escape(ctx["run_name"])}</title>',
-           STYLE,
-           '</head><body>',
-           CONTROLS,
-           _lens_nav("speed"),
-           f'<h1>TTS Bench — Speed — {escape(ctx["run_name"])}</h1>']
-    if meta:
-        out.append(f'<div class="meta"><strong>Rig:</strong> '
-                   f'<code>{escape(meta.get("rig") or "?")}</code> — '
-                   f'{escape(_rig_summary(meta))}</div>')
-        if meta.get("label"):
-            ref = meta.get("reference")
-            ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
-            out.append(f'<div class="meta"><strong>Label:</strong> '
-                       f'{escape(meta["label"])}{ref_html}</div>')
+def _speed_table_html(ctx):
+    """Return (table_html, rtf_warm_col_idx) for one run's speed view.
 
-    out.append(_READING_GUIDE["speed"])
-
-    # TLDR
-    out.append('<div class="tldr"><h2>Speed winners</h2>')
-    tldr = ctx["tldr_speed"]
-    def _fmt_tldr(entry, label):
-        if not entry:
-            return f'<p>{label}: <span class="muted">no data</span></p>'
-        model, dev, rtf, ttfa = entry
-        return (f'<p>{label}: <strong>{escape(_display_name(model))}</strong> ({escape(dev)}) — '
-                f'{_fmt_rtf(rtf)} warm RTF, {_fmt_ttfa(ttfa)} warm TTFA</p>')
-    if has_ref:
-        # Cloning-only run; collapse to single line
-        best = tldr["cloning"] or tldr["predefined"]
-        out.append(_fmt_tldr(best, "Fastest (this cloning run)"))
-    else:
-        out.append(_fmt_tldr(tldr["predefined"], "Fastest predefined-voice"))
-        out.append(_fmt_tldr(tldr["cloning"],    "Fastest cloning-capable"))
-    out.append('</div>')
-
-    # Table
+    Just the <table> (aggregated per model/device, no audio) — shared by the
+    per-rig speed.html and the cross-rig speed hub on the published landing.
+    The caller decides where to place it and whether to set window.__defaultSort
+    (rtf_warm_col_idx is returned so the caller can default-sort by warm RTF)."""
     base_cols = ("Model", "Device", "TTFA cold", "TTFA warm",
                  "RTF cold", "RTF warm", "Peak RAM", "Peak VRAM", "Size")
     cols = base_cols + (("NAQ",) if SHOW_NAQ_PUBLIC else ())
     num_cols = {"TTFA cold", "TTFA warm", "RTF cold", "RTF warm",
                 "Peak RAM", "Peak VRAM", "NAQ"}
     rtf_warm_idx = cols.index("RTF warm")
-    out.append('<table><thead><tr>')
+    out = ['<table><thead><tr>']
     for c in cols:
         cls = ' class="num"' if c in num_cols else ''
         out.append(f'<th{cls}>{c}</th>')
@@ -999,6 +993,54 @@ def _render_speed(ctx):
             )
         out.append('</tr>')
     out.append('</tbody></table>')
+    return "".join(out), rtf_warm_idx
+
+
+def _render_speed(ctx):
+    """Render speed.html — aggregated per (model, device), no audio."""
+    meta = ctx["meta"]
+    has_ref = bool((meta or {}).get("reference"))
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           f'<title>TTS Bench — Speed — {escape(ctx["run_name"])}</title>',
+           STYLE,
+           '</head><body>',
+           CONTROLS,
+           _lens_nav("speed"),
+           f'<h1>TTS Bench — Speed — {escape(ctx["run_name"])}</h1>']
+    if meta:
+        out.append(f'<div class="meta"><strong>Rig:</strong> '
+                   f'<code>{escape(meta.get("rig") or "?")}</code> — '
+                   f'{escape(_rig_summary(meta))}</div>')
+        if meta.get("label"):
+            ref = meta.get("reference")
+            ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
+            out.append(f'<div class="meta"><strong>Label:</strong> '
+                       f'{escape(meta["label"])}{ref_html}</div>')
+
+    out.append(_READING_GUIDE["speed"])
+
+    # TLDR
+    out.append('<div class="tldr"><h2>Speed winners</h2>')
+    tldr = ctx["tldr_speed"]
+    def _fmt_tldr(entry, label):
+        if not entry:
+            return f'<p>{label}: <span class="muted">no data</span></p>'
+        model, dev, rtf, ttfa = entry
+        return (f'<p>{label}: <strong>{escape(_display_name(model))}</strong> ({escape(dev)}) — '
+                f'{_fmt_rtf(rtf)} warm RTF, {_fmt_ttfa(ttfa)} warm TTFA</p>')
+    if has_ref:
+        # Cloning-only run; collapse to single line
+        best = tldr["cloning"] or tldr["predefined"]
+        out.append(_fmt_tldr(best, "Fastest (this cloning run)"))
+    else:
+        out.append(_fmt_tldr(tldr["predefined"], "Fastest predefined-voice"))
+        out.append(_fmt_tldr(tldr["cloning"],    "Fastest cloning-capable"))
+    out.append('</div>')
+
+    # Table (shared builder — same markup the cross-rig speed hub uses)
+    table_html, rtf_warm_idx = _speed_table_html(ctx)
+    out.append(table_html)
 
     # Default sort: RTF warm desc
     out.append(f'<script>window.__defaultSort = {{colIdx: {rtf_warm_idx}, dir: -1}};</script>')
