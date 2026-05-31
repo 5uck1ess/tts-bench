@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<title>TTS Bench — linux-cloning</title>
+<title>tts-bench — Archive</title>
+<link rel="icon" type="image/svg+xml" href="logo-mark.svg"><link rel="icon" type="image/png" sizes="32x32" href="favicon.png"><link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
 <style>
   :root {
     color-scheme: dark light;
@@ -161,6 +162,7 @@
   .reading-guide strong { color: var(--accent); }
   .reading-guide a { color: var(--accent); }
 </style>
+<style>.site-header{margin:1rem 0 1.25rem;}.site-logo-link{display:inline-block;text-decoration:none;}.site-logo-link:hover{text-decoration:none;}.site-logo{display:block;height:auto;max-width:min(320px,80vw);}.site-logo--light{display:none;}[data-theme="light"] .site-logo--dark{display:none;}[data-theme="light"] .site-logo--light{display:block;}</style>
 </head><body>
 <div class="controls">
 <input id="filter" type="search" placeholder="filter rows (model, device, value)…" autocomplete="off">
@@ -169,16 +171,89 @@
 <span class="spacer"></span>
 <button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>
 </div>
-<div class="nav"><a href="../index.html">← all runs</a></div>
-<h1>TTS Bench — linux-cloning</h1>
-<div class="meta"><strong>Rig:</strong> <code>linux-3090</code> — AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic</div>
-<div class="meta"><strong>Label:</strong> cloning · chris_hemsworth voice (note: metavoice uses the 67s clip — it needs ≥30s ref — all other models use the 15s clip)</div>
-<div class="meta">20 model(s) · 2 device(s) · 5 prompt(s) · 3 run(s) per cell</div>
-<div class="lens-grid">
-<div class="lens-card"><a href="speed.html"><h3>▶ Speed</h3><div class="desc">TTFA, RTF, memory · 20 models · sortable</div></a></div>
-<div class="lens-card"><a href="samples.html"><h3>▶ Samples</h3><div class="desc">By-prompt gallery · A/B every model</div></a></div>
-</div>
-<div class="meta"><a href="results.csv">results.csv</a> · <a href="meta.json">meta.json</a></div>
+<header class="site-header"><a href="index.html" class="site-logo-link" title="Home"><img class="site-logo site-logo--dark" src="logo-flat-dark.svg" alt="tts-bench" width="320" height="auto"><img class="site-logo site-logo--light" src="logo-flat-light.svg" alt="tts-bench" width="320" height="auto"></a></header>
+<div class="nav"><a href="index.html">← home</a></div>
+<h1>Archive — per-rig reports</h1>
+<div class="meta">The full per-rig run reports behind the consolidated <a href="listen.html">Listen</a> / <a href="speed.html">Speed</a> pages. Each row is one rig × voice-mode, with its own speed table and by-prompt samples gallery.</div>
+<div class="meta">6 run(s)</div>
+<table><thead><tr>
+<th>Run</th>
+<th>Label</th>
+<th>Rig</th>
+<th>Models</th>
+<th>Devices</th>
+<th>Prompts</th>
+<th>Rows</th>
+<th>OK</th>
+<th>Report</th>
+</tr></thead><tbody>
+<tr>
+<td><a href='windows-default/index.html'>windows-default</a></td>
+<td>default voice</td>
+<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
+<td data-sort="33">33 models</td>
+<td>cpu, cuda</td>
+<td class='num' data-sort="5">5</td>
+<td class='num' data-sort="753">753</td>
+<td class='num' data-sort="744">744/753</td>
+<td><a href="windows-default/speed.html">speed</a> · <a href="windows-default/samples.html">samples</a></td>
+</tr>
+<tr>
+<td><a href='windows-cloning/index.html'>windows-cloning</a></td>
+<td>cloning · chris_hemsworth_15s</td>
+<td><code title="AMD Ryzen 9 9950X3D 16-Core Processor (16C) · NVIDIA GeForce RTX 5090 32GB · 126 GB RAM · Windows 11">windows-5090</code></td>
+<td data-sort="24">24 models</td>
+<td>cpu, cuda</td>
+<td class='num' data-sort="5">5</td>
+<td class='num' data-sort="549">549</td>
+<td class='num' data-sort="537">537/549</td>
+<td><a href="windows-cloning/speed.html">speed</a> · <a href="windows-cloning/samples.html">samples</a></td>
+</tr>
+<tr>
+<td><a href='mac-default/index.html'>mac-default</a></td>
+<td>default voice</td>
+<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
+<td data-sort="24">24 models</td>
+<td>cpu, mps</td>
+<td class='num' data-sort="5">5</td>
+<td class='num' data-sort="433">433</td>
+<td class='num' data-sort="402">402/433</td>
+<td><a href="mac-default/speed.html">speed</a> · <a href="mac-default/samples.html">samples</a></td>
+</tr>
+<tr>
+<td><a href='mac-cloning/index.html'>mac-cloning</a></td>
+<td>cloning · jo</td>
+<td><code title="Apple M4 (10C) · Apple M4 GPU (MPS) · 16 GB RAM · Darwin 25.5.0">mac-m4</code></td>
+<td data-sort="15">15 models</td>
+<td>cpu, mps</td>
+<td class='num' data-sort="5">5</td>
+<td class='num' data-sort="264">264</td>
+<td class='num' data-sort="236">236/264</td>
+<td><a href="mac-cloning/speed.html">speed</a> · <a href="mac-cloning/samples.html">samples</a></td>
+</tr>
+<tr>
+<td><a href='linux-default/index.html'>linux-default</a></td>
+<td>default voice</td>
+<td><code title="AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic">linux-3090</code></td>
+<td data-sort="29">29 models</td>
+<td>cpu, cuda</td>
+<td class='num' data-sort="5">5</td>
+<td class='num' data-sort="642">642</td>
+<td class='num' data-sort="636">636/642</td>
+<td><a href="linux-default/speed.html">speed</a> · <a href="linux-default/samples.html">samples</a></td>
+</tr>
+<tr>
+<td><a href='linux-cloning/index.html'>linux-cloning</a></td>
+<td>cloning · chris_hemsworth voice (note: metavoice uses the 67s clip — it needs ≥30s ref — all other models use the 15s clip)</td>
+<td><code title="AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic">linux-3090</code></td>
+<td data-sort="20">20 models</td>
+<td>cpu, cuda</td>
+<td class='num' data-sort="5">5</td>
+<td class='num' data-sort="438">438</td>
+<td class='num' data-sort="432">432/438</td>
+<td><a href="linux-cloning/speed.html">speed</a> · <a href="linux-cloning/samples.html">samples</a></td>
+</tr>
+</tbody></table>
 <script>
 (function(){
   // ---------- theme toggle ----------

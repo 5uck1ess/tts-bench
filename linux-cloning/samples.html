@@ -172,7 +172,7 @@
 <div class="nav"><span class="lens-tabs"><a class="lens-arrow" href="speed.html" title="Previous lens: Speed">← Speed</a><a class="lens-tab" href="speed.html">Speed</a><a class="lens-tab active" href="samples.html">Samples</a><span class="lens-arrow lens-arrow-disabled"> →</span></span> · <a href="../index.html">all runs</a></div>
 <h1>TTS Bench — Samples — linux-cloning</h1>
 <div class="meta"><strong>Rig:</strong> <code>linux-3090</code> — AMD Ryzen 9 5900XT 16-Core Processor · NVIDIA GeForce RTX 3090 24GB · 63 GB RAM · Linux 6.8.0-117-generic</div>
-<div class="meta"><strong>Label:</strong> cloning · chris_hemsworth voice (note: fish_s2 / metavoice / step_editx use the 67s clip — metavoice needs ≥30s ref — the other models use the 15s clip)</div>
+<div class="meta"><strong>Label:</strong> cloning · chris_hemsworth voice (note: metavoice uses the 67s clip — it needs ≥30s ref — all other models use the 15s clip)</div>
 <div class="meta">5 prompt(s) · one section per prompt · all models ranked by warm TTFA (fastest first) within each</div>
 <div class="reading-guide">Each prompt section shows every model's audio output, ordered by <strong>warm TTFA</strong> (fastest first). Click any audio player to hear that model's rendering.</div>
 <nav class="prompt-jumper">Jump to: 
@@ -301,7 +301,7 @@
 </tr>
 <tr id="sample-p1-metavoice-cuda">
 <td class="num" data-sort="17">17</td>
-<td>metavoice</td>
+<td>MetaVoice-1B</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="2505.1">2.51s</td>
 <td><audio controls preload="none" src="metavoice_cuda_p1.wav"></audio></td>
@@ -320,60 +320,60 @@
 <td class="num pill" data-sort="3088.7">3.09s</td>
 <td><audio controls preload="none" src="indextts_cuda_p1.wav"></audio></td>
 </tr>
-<tr id="sample-p1-coqui-cpu">
+<tr id="sample-p1-step_editx-cuda">
 <td class="num" data-sort="20">20</td>
+<td>Step-Audio-EditX</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="3099.35">3.10s</td>
+<td><audio controls preload="none" src="step_editx_cuda_p1.wav"></audio></td>
+</tr>
+<tr id="sample-p1-coqui-cpu">
+<td class="num" data-sort="21">21</td>
 <td>Coqui XTTS-v2</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="3149.05">3.15s</td>
 <td><audio controls preload="none" src="coqui_cpu_p1.wav"></audio></td>
 </tr>
 <tr id="sample-p1-sesame-cuda">
-<td class="num" data-sort="21">21</td>
+<td class="num" data-sort="22">22</td>
 <td>Sesame CSM-1B</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="3335.6">3.34s</td>
 <td><audio controls preload="none" src="sesame_cuda_p1.wav"></audio></td>
 </tr>
 <tr id="sample-p1-moss_tts_nano-cpu">
-<td class="num" data-sort="22">22</td>
+<td class="num" data-sort="23">23</td>
 <td>MOSS-TTS-Nano</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="3519.3999999999996">3.52s</td>
 <td><audio controls preload="none" src="moss_tts_nano_cpu_p1.wav"></audio></td>
 </tr>
 <tr id="sample-p1-chatterbox_turbo-cpu">
-<td class="num" data-sort="23">23</td>
+<td class="num" data-sort="24">24</td>
 <td>Chatterbox Turbo</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="3910.35">3.91s</td>
 <td><audio controls preload="none" src="chatterbox_turbo_cpu_p1.wav"></audio></td>
 </tr>
 <tr id="sample-p1-zipvoice-cpu">
-<td class="num" data-sort="24">24</td>
+<td class="num" data-sort="25">25</td>
 <td>ZipVoice 123M</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="6968.9">6.97s</td>
 <td><audio controls preload="none" src="zipvoice_cpu_p1.wav"></audio></td>
 </tr>
 <tr id="sample-p1-chatterbox-cpu">
-<td class="num" data-sort="25">25</td>
+<td class="num" data-sort="26">26</td>
 <td>Chatterbox</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="8006.7">8.01s</td>
 <td><audio controls preload="none" src="chatterbox_cpu_p1.wav"></audio></td>
 </tr>
-<tr id="sample-p1-step_editx-cuda">
-<td class="num" data-sort="26">26</td>
-<td>step_editx</td>
-<td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="10269.95">10.27s</td>
-<td><audio controls preload="none" src="step_editx_cuda_p1.wav"></audio></td>
-</tr>
 <tr id="sample-p1-fish_s2-cuda">
 <td class="num" data-sort="27">27</td>
-<td>fish_s2</td>
+<td>Fish Speech S2-Pro</td>
 <td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="11932.8">11.93s</td>
+<td class="num pill" data-sort="10519.3">10.52s</td>
 <td><audio controls preload="none" src="fish_s2_cuda_p1.wav"></audio></td>
 </tr>
 <tr id="sample-p1-voxcpm-cpu">
@@ -540,54 +540,54 @@
 <td class="num pill" data-sort="4616.75">4.62s</td>
 <td><audio controls preload="none" src="indextts_cuda_p2.wav"></audio></td>
 </tr>
-<tr id="sample-p2-metavoice-cuda">
+<tr id="sample-p2-step_editx-cuda">
 <td class="num" data-sort="17">17</td>
-<td>metavoice</td>
+<td>Step-Audio-EditX</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="4620.15">4.62s</td>
+<td><audio controls preload="none" src="step_editx_cuda_p2.wav"></audio></td>
+</tr>
+<tr id="sample-p2-metavoice-cuda">
+<td class="num" data-sort="18">18</td>
+<td>MetaVoice-1B</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="5336.799999999999">5.34s</td>
 <td><audio controls preload="none" src="metavoice_cuda_p2.wav"></audio></td>
 </tr>
 <tr id="sample-p2-moss_tts_nano-cpu">
-<td class="num" data-sort="18">18</td>
+<td class="num" data-sort="19">19</td>
 <td>MOSS-TTS-Nano</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="5400.6">5.40s</td>
 <td><audio controls preload="none" src="moss_tts_nano_cpu_p2.wav"></audio></td>
 </tr>
 <tr id="sample-p2-sesame-cuda">
-<td class="num" data-sort="19">19</td>
+<td class="num" data-sort="20">20</td>
 <td>Sesame CSM-1B</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="6491.200000000001">6.49s</td>
 <td><audio controls preload="none" src="sesame_cuda_p2.wav"></audio></td>
 </tr>
 <tr id="sample-p2-coqui-cpu">
-<td class="num" data-sort="20">20</td>
+<td class="num" data-sort="21">21</td>
 <td>Coqui XTTS-v2</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="6812.4">6.81s</td>
 <td><audio controls preload="none" src="coqui_cpu_p2.wav"></audio></td>
 </tr>
 <tr id="sample-p2-chatterbox_turbo-cpu">
-<td class="num" data-sort="21">21</td>
+<td class="num" data-sort="22">22</td>
 <td>Chatterbox Turbo</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="7396.75">7.40s</td>
 <td><audio controls preload="none" src="chatterbox_turbo_cpu_p2.wav"></audio></td>
 </tr>
 <tr id="sample-p2-dia-cuda">
-<td class="num" data-sort="22">22</td>
+<td class="num" data-sort="23">23</td>
 <td>Dia 1.6B</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="7856.95">7.86s</td>
 <td><audio controls preload="none" src="dia_cuda_p2.wav"></audio></td>
-</tr>
-<tr id="sample-p2-step_editx-cuda">
-<td class="num" data-sort="23">23</td>
-<td>step_editx</td>
-<td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="11936.2">11.94s</td>
-<td><audio controls preload="none" src="step_editx_cuda_p2.wav"></audio></td>
 </tr>
 <tr id="sample-p2-zipvoice-cpu">
 <td class="num" data-sort="24">24</td>
@@ -612,9 +612,9 @@
 </tr>
 <tr id="sample-p2-fish_s2-cuda">
 <td class="num" data-sort="27">27</td>
-<td>fish_s2</td>
+<td>Fish Speech S2-Pro</td>
 <td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="28527.05">28.53s</td>
+<td class="num pill" data-sort="27155.949999999997">27.16s</td>
 <td><audio controls preload="none" src="fish_s2_cuda_p2.wav"></audio></td>
 </tr>
 <tr id="sample-p2-sesame-cpu">
@@ -774,47 +774,47 @@
 <td class="num pill" data-sort="7417.85">7.42s</td>
 <td><audio controls preload="none" src="voxcpm_cuda_p3.wav"></audio></td>
 </tr>
-<tr id="sample-p3-indextts-cpu">
+<tr id="sample-p3-step_editx-cuda">
 <td class="num" data-sort="16">16</td>
+<td>Step-Audio-EditX</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="9986.55">9.99s</td>
+<td><audio controls preload="none" src="step_editx_cuda_p3.wav"></audio></td>
+</tr>
+<tr id="sample-p3-indextts-cpu">
+<td class="num" data-sort="17">17</td>
 <td>IndexTTS-2</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="11388.3">11.39s</td>
 <td><audio controls preload="none" src="indextts_cpu_p3.wav"></audio></td>
 </tr>
 <tr id="sample-p3-indextts-cuda">
-<td class="num" data-sort="17">17</td>
+<td class="num" data-sort="18">18</td>
 <td>IndexTTS-2</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="12238.25">12.24s</td>
 <td><audio controls preload="none" src="indextts_cuda_p3.wav"></audio></td>
 </tr>
 <tr id="sample-p3-sesame-cuda">
-<td class="num" data-sort="18">18</td>
+<td class="num" data-sort="19">19</td>
 <td>Sesame CSM-1B</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="13518.3">13.52s</td>
 <td><audio controls preload="none" src="sesame_cuda_p3.wav"></audio></td>
 </tr>
 <tr id="sample-p3-moss_tts_nano-cpu">
-<td class="num" data-sort="19">19</td>
+<td class="num" data-sort="20">20</td>
 <td>MOSS-TTS-Nano</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="14538.25">14.54s</td>
 <td><audio controls preload="none" src="moss_tts_nano_cpu_p3.wav"></audio></td>
 </tr>
 <tr id="sample-p3-metavoice-cuda">
-<td class="num" data-sort="20">20</td>
-<td>metavoice</td>
+<td class="num" data-sort="21">21</td>
+<td>MetaVoice-1B</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="14557.349999999999">14.56s</td>
 <td><audio controls preload="none" src="metavoice_cuda_p3.wav"></audio></td>
-</tr>
-<tr id="sample-p3-step_editx-cuda">
-<td class="num" data-sort="21">21</td>
-<td>step_editx</td>
-<td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="17965.95">17.97s</td>
-<td><audio controls preload="none" src="step_editx_cuda_p3.wav"></audio></td>
 </tr>
 <tr id="sample-p3-chatterbox_turbo-cpu">
 <td class="num" data-sort="22">22</td>
@@ -867,9 +867,9 @@
 </tr>
 <tr id="sample-p3-fish_s2-cuda">
 <td class="num" data-sort="29">29</td>
-<td>fish_s2</td>
+<td>Fish Speech S2-Pro</td>
 <td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="87728.05">87.73s</td>
+<td class="num pill" data-sort="81012.35">81.01s</td>
 <td><audio controls preload="none" src="fish_s2_cuda_p3.wav"></audio></td>
 </tr>
 <tr id="sample-p3-mars5-cuda">
@@ -1008,61 +1008,61 @@
 <td class="num pill" data-sort="5004.45">5.00s</td>
 <td><audio controls preload="none" src="indextts_cpu_p4.wav"></audio></td>
 </tr>
-<tr id="sample-p4-moss_tts_nano-cpu">
+<tr id="sample-p4-step_editx-cuda">
 <td class="num" data-sort="16">16</td>
+<td>Step-Audio-EditX</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="5577.0">5.58s</td>
+<td><audio controls preload="none" src="step_editx_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-moss_tts_nano-cpu">
+<td class="num" data-sort="17">17</td>
 <td>MOSS-TTS-Nano</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="5892.75">5.89s</td>
 <td><audio controls preload="none" src="moss_tts_nano_cpu_p4.wav"></audio></td>
 </tr>
 <tr id="sample-p4-indextts-cuda">
-<td class="num" data-sort="17">17</td>
+<td class="num" data-sort="18">18</td>
 <td>IndexTTS-2</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="6000.55">6.00s</td>
 <td><audio controls preload="none" src="indextts_cuda_p4.wav"></audio></td>
 </tr>
 <tr id="sample-p4-metavoice-cuda">
-<td class="num" data-sort="18">18</td>
-<td>metavoice</td>
+<td class="num" data-sort="19">19</td>
+<td>MetaVoice-1B</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="7533.25">7.53s</td>
 <td><audio controls preload="none" src="metavoice_cuda_p4.wav"></audio></td>
 </tr>
 <tr id="sample-p4-chatterbox_turbo-cpu">
-<td class="num" data-sort="19">19</td>
+<td class="num" data-sort="20">20</td>
 <td>Chatterbox Turbo</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="8852.4">8.85s</td>
 <td><audio controls preload="none" src="chatterbox_turbo_cpu_p4.wav"></audio></td>
 </tr>
 <tr id="sample-p4-dia-cuda">
-<td class="num" data-sort="20">20</td>
+<td class="num" data-sort="21">21</td>
 <td>Dia 1.6B</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="8861.900000000001">8.86s</td>
 <td><audio controls preload="none" src="dia_cuda_p4.wav"></audio></td>
 </tr>
 <tr id="sample-p4-coqui-cpu">
-<td class="num" data-sort="21">21</td>
+<td class="num" data-sort="22">22</td>
 <td>Coqui XTTS-v2</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="8874.15">8.87s</td>
 <td><audio controls preload="none" src="coqui_cpu_p4.wav"></audio></td>
 </tr>
 <tr id="sample-p4-sesame-cuda">
-<td class="num" data-sort="22">22</td>
+<td class="num" data-sort="23">23</td>
 <td>Sesame CSM-1B</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="9564.7">9.56s</td>
 <td><audio controls preload="none" src="sesame_cuda_p4.wav"></audio></td>
-</tr>
-<tr id="sample-p4-step_editx-cuda">
-<td class="num" data-sort="23">23</td>
-<td>step_editx</td>
-<td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="12714.4">12.71s</td>
-<td><audio controls preload="none" src="step_editx_cuda_p4.wav"></audio></td>
 </tr>
 <tr id="sample-p4-zipvoice-cpu">
 <td class="num" data-sort="24">24</td>
@@ -1078,33 +1078,33 @@
 <td class="num pill" data-sort="18601.9">18.60s</td>
 <td><audio controls preload="none" src="chatterbox_cpu_p4.wav"></audio></td>
 </tr>
-<tr id="sample-p4-fish_s2-cuda">
-<td class="num" data-sort="26">26</td>
-<td>fish_s2</td>
-<td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="36686.4">36.69s</td>
-<td><audio controls preload="none" src="fish_s2_cuda_p4.wav"></audio></td>
-</tr>
 <tr id="sample-p4-voxcpm-cpu">
-<td class="num" data-sort="27">27</td>
+<td class="num" data-sort="26">26</td>
 <td>VoxCPM2 2B</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="37911.1">37.91s</td>
 <td><audio controls preload="none" src="voxcpm_cpu_p4.wav"></audio></td>
 </tr>
 <tr id="sample-p4-omnivoice-cpu">
-<td class="num" data-sort="28">28</td>
+<td class="num" data-sort="27">27</td>
 <td>OmniVoice</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="45422.9">45.42s</td>
 <td><audio controls preload="none" src="omnivoice_cpu_p4.wav"></audio></td>
 </tr>
 <tr id="sample-p4-qwentts_fast-cuda">
-<td class="num" data-sort="29">29</td>
+<td class="num" data-sort="28">28</td>
 <td>Qwen3-TTS 1.7B (CUDA-graph)</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="45620.5">45.62s</td>
 <td><audio controls preload="none" src="qwentts_fast_cuda_p4.wav"></audio></td>
+</tr>
+<tr id="sample-p4-fish_s2-cuda">
+<td class="num" data-sort="29">29</td>
+<td>Fish Speech S2-Pro</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="57624.15">57.62s</td>
+<td><audio controls preload="none" src="fish_s2_cuda_p4.wav"></audio></td>
 </tr>
 <tr id="sample-p4-sesame-cpu">
 <td class="num" data-sort="30">30</td>
