@@ -164,6 +164,8 @@ if (-not (Test-Path "venvs\vibevoice\Scripts\python.exe")) {
         uv pip install --python venvs\vibevoice\Scripts\python.exe `
             "git+https://github.com/vibevoice-community/VibeVoice" torch soundfile numpy
     }
+    # bitsandbytes for the 7B Q8 weights (Linux Q8 path); harmless on Windows.
+    Invoke-Checked "bitsandbytes for vibevoice 7b Q8" { uv pip install --python venvs\vibevoice\Scripts\python.exe "bitsandbytes>=0.48.1" }
     Write-Host "vibevoice: ok (voice .pt presets auto-download on first use to ~/.cache/vibevoice-voices)" -ForegroundColor Green
 } else {
     Write-Host "vibevoice: already installed" -ForegroundColor Gray

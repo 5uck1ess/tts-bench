@@ -207,6 +207,9 @@ if [ ! -x venvs/vibevoice/bin/python ]; then
     uv pip install --python venvs/vibevoice/bin/python \
         "git+https://github.com/vibevoice-community/VibeVoice" torch soundfile numpy \
         || die "uv pip install vibevoice (community fork)"
+    # bitsandbytes for the 7B Q8 weights (Linux Q8 path); harmless on Windows.
+    uv pip install --python venvs/vibevoice/bin/python "bitsandbytes>=0.48.1" \
+        || die "uv pip install bitsandbytes for vibevoice 7b Q8"
     green "vibevoice: ok (voice .pt presets auto-download on first use to ~/.cache/vibevoice-voices)"
 else
     echo "vibevoice: already installed"
