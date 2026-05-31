@@ -103,13 +103,15 @@ def main() -> int:
 
         tok = StepAudioTokenizer(TOKENIZER_REPO)
         # gpu_memory_utilization is vLLM's reservation; the CosyVoice vocoder +
-        # FunASR + onnxruntime run in THIS process, outside that budget. 0.6
-        # starves them on long references (OOMs the vocoder on a 67 s ref), so
-        # keep vLLM at 0.5 to leave ~12 GB headroom for the vocoder on a 24 GB card.
+        # FunASR + onnxruntime run in THIS process, outside that budget, and their
+        # peak grows with reference length AND across back-to-back runs. On a 24 GB
+        # card with a long (67 s) ref + 3 runs/cell, 0.5 still OOMs on the longest
+        # prompt — so cap vLLM at 0.4 and enforce_eager (frees CUDA-graph capture)
+        # to leave maximum headroom for the vocoder.
         model = StepAudioTTS(
             EDITX_REPO, tok,
-            gpu_memory_utilization=0.5, max_model_len=8192, max_num_seqs=1,
-            dtype="bfloat16",
+            gpu_memory_utilization=0.4, max_model_len=8192, max_num_seqs=1,
+            enforce_eager=True, dtype="bfloat16",
         )
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
