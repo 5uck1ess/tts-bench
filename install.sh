@@ -526,6 +526,38 @@ else
     echo "fish: already installed"
 fi
 
+# --- Maya1 (maya-research, Apache 2.0, voice-description default voice, 24kHz, SNAC codec) ---
+echo; cyan "=== Maya1 (maya-research, Apache 2.0, voice-description default voice, 24kHz, SNAC codec) ==="
+if [ ! -x venvs/maya1/bin/python ]; then
+    # Default-voice model: no audio cloning. The voice is steered by a natural-
+    # language description string; the runner uses a fixed DEFAULT_VOICE_DESC.
+    # Llama-style causal LM emits flat SNAC codec tokens -> decoded by the
+    # hubertsiuzdak/snac_24khz SNAC model (auto-downloads on first run alongside
+    # the ~3B maya-research/maya1 weights).
+    #
+    # On Linux: transformers + snac, torch from the cu128 index (works on the
+    # CUDA rigs; CPU fallback is fine for a non-CUDA host). On Apple Silicon the
+    # transformers+SNAC stack is replaced by MLX — install `mlx-audio` instead of
+    # the torch line below and the runner's device=="mps" branch loads
+    # `mlx-community/maya1-4bit`. The Mac path is NOT tested here; uncomment the
+    # mlx-audio install and skip the cu128 reinstall on Darwin.
+    uv venv venvs/maya1 --python 3.11 || die "uv venv maya1"
+    uv pip install --python venvs/maya1/bin/python "transformers>=4.50" snac soundfile numpy accelerate \
+        || die "uv pip install maya1 deps"
+    if [ "$(uname)" = "Darwin" ]; then
+        # Apple-Silicon MLX path (untested): the runner loads mlx-community/maya1-4bit.
+        uv pip install --python venvs/maya1/bin/python mlx-audio \
+            || die "uv pip install mlx-audio for maya1 (Mac)"
+    else
+        # torch cu128 LAST (Blackwell sm_120). CPU-only hosts: harmless, falls back.
+        uv pip install --python venvs/maya1/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 \
+            || die "torch cu128 for maya1 (LAST)"
+    fi
+    green "maya1: ok"
+else
+    echo "maya1: already installed"
+fi
+
 # --- psutil in every venv (for bench memory tracking) ---
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.

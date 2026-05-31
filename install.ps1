@@ -447,6 +447,20 @@ if (-not (Test-Path "venvs\fish\Scripts\python.exe")) {
     Write-Host "fish: ok" -ForegroundColor Green
 } else { Write-Host "fish: already installed" -ForegroundColor Gray }
 
+Step "Maya1 (maya-research, Apache 2.0, voice-description default voice, 24kHz, SNAC codec)"
+if (-not (Test-Path "venvs\maya1\Scripts\python.exe")) {
+    # Default-voice model: no audio cloning. The voice is steered by a natural-
+    # language description string; the runner uses a fixed DEFAULT_VOICE_DESC.
+    # Llama-style causal LM emits flat SNAC codec tokens -> decoded by the
+    # hubertsiuzdak/snac_24khz SNAC model (auto-downloads on first run alongside
+    # the ~3B maya-research/maya1 weights). Windows/Linux use transformers+SNAC;
+    # the Mac path uses MLX instead (see install.sh).
+    Invoke-Checked "uv venv maya1" { uv venv venvs\maya1 --python 3.11 }
+    Invoke-Checked "uv pip install maya1 deps" { uv pip install --python venvs\maya1\Scripts\python.exe "transformers>=4.50" snac soundfile numpy accelerate }
+    Invoke-Checked "torch cu128 for maya1 (LAST)" { uv pip install --python venvs\maya1\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "maya1: ok" -ForegroundColor Green
+} else { Write-Host "maya1: already installed" -ForegroundColor Gray }
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.
