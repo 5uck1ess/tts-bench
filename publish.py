@@ -34,13 +34,64 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from report import (
-    STYLE, CONTROLS, SCRIPT, SHOW_NAQ_PUBLIC,
+    STYLE, CONTROLS, SCRIPT, SHOW_NAQ_PUBLIC, PROMPT_INFO, MODEL_SIZE, MODEL_KIND,
     _ds, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
+    _build_context, _speed_table_html, _display_name,
 )
+
+# Models that synthesize more than English (from the README capability table) —
+# used only for the at-a-glance "multilingual" badge in the Listen by-model view.
+MODEL_MULTILINGUAL = {
+    "piper", "kokoro", "magpie", "supertonic", "f5tts", "indextts", "omnivoice",
+    "zipvoice", "voxcpm", "coqui", "qwentts", "qwentts_fast", "moss_tts_nano",
+    "moss_tts", "voxtral", "fish_15", "zonos", "openvoice",
+}
+
+# Cloning models with NO preset/built-in voice: their no-`--reference` "default"
+# run falls back to cloning the bundled reference clip, so the default sample is
+# just a (different, non-deterministic take of a) Chris clone — not a real default
+# voice. The Listen gallery shows these only under Cloning, never in the
+# Default-voice section. (styletts2 → bundled LibriVox speaker, and VibeVoice 0.5B
+# → the en-Emma_woman preset, DO have genuine defaults, so they're not here.)
+NO_PRESET_VOICE = {
+    "moss_tts", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
+    "openvoice", "zipvoice", "zonos", "vibevoice_15b", "vibevoice_7b",
+}
+
+# Curated per-(model, voice-mode) QA findings, surfaced as a ⚠ badge + tooltip on
+# the model's row in the Listen gallery and recorded in docs/known-issues.md.
+KNOWN_ISSUES = {
+    ("qwentts_fast", "cloning"):
+        "Runaway generation — the CUDA-graph path emits ~147s of garbled/looping audio when cloning.",
+    ("fish_s2", "cloning"):
+        "Wrong reference — the Linux cloning run fell back to a bundled default voice (jo/juliette), not the chris_hemsworth target every other model used. Needs a re-run with --reference reference/chris_hemsworth_15s.wav.",
+}
+
+
+def _issue_badge(model, mode):
+    """⚠ badge for a known (model, voice-mode) issue, or '' if none."""
+    note = KNOWN_ISSUES.get((model, mode))
+    return f' <span class="badge warn" title="{escape(note)}">⚠ issue</span>' if note else ""
 
 REPO = Path(__file__).parent
 WORKTREE = REPO / "_gh-pages"
 BRANCH = "gh-pages"
+
+# ---- Cross-rig consolidation for the Listen/Speed landing -------------------
+# Canonical dir name = "<rig>-<mode>". LISTEN publishes ONE clip per
+# (model, voice-mode): audio is rig-independent (same weights → same output),
+# so we source a single sample from the highest-fidelity GREEN rig and tag it.
+# Cloning sources skip Mac — the Mac cloning run used a different reference voice
+# (jo.wav, not chris_hemsworth_15s), so its clips aren't comparable here.
+LISTEN_DEFAULT_DIRS = ("windows-default", "linux-default", "mac-default")
+LISTEN_CLONING_DIRS = ("windows-cloning", "linux-cloning")
+LISTEN_DEVICE_PRIORITY = ("cuda", "mps", "cpu")  # prefer the GPU (fp16) path
+SPEED_RIGS = (  # (rig slug, default dir, cloning dir)
+    ("windows-5090", "windows-default", "windows-cloning"),
+    ("linux-3090",   "linux-default",   "linux-cloning"),
+    ("mac-m4",       "mac-default",     "mac-cloning"),
+)
+RIG_SHORT = {"windows-5090": "win", "linux-3090": "linux", "mac-m4": "mac"}
 
 
 def _git(*args, cwd=REPO, check=True, capture=True):
@@ -133,16 +184,20 @@ def _copy_branding_assets():
 
 LOGO_HEADER = (
     '<header class="site-header">'
+    '<a href="index.html" class="site-logo-link" title="Home">'
     '<img class="site-logo site-logo--dark" src="logo-flat-dark.svg" '
     'alt="tts-bench" width="320" height="auto">'
     '<img class="site-logo site-logo--light" src="logo-flat-light.svg" '
     'alt="tts-bench" width="320" height="auto">'
+    '</a>'
     '</header>'
 )
 
 LOGO_STYLE = (
     '<style>'
     '.site-header{margin:1rem 0 1.25rem;}'
+    '.site-logo-link{display:inline-block;text-decoration:none;}'
+    '.site-logo-link:hover{text-decoration:none;}'
     '.site-logo{display:block;height:auto;max-width:min(320px,80vw);}'
     '.site-logo--light{display:none;}'
     '[data-theme="light"] .site-logo--dark{display:none;}'
@@ -157,9 +212,499 @@ FAVICON_LINK = (
 )
 
 
-def build_pages_index():
-    """Build _gh-pages/index.html listing all published runs."""
+def _canonical_dir(name):
+    """Return WORKTREE/name if it's a published run dir (has results.csv), else None."""
+    d = WORKTREE / name
+    return d if (d.is_dir() and (d / "results.csv").exists()) else None
+
+
+def _ok_models(name):
+    """Set of models with >=1 successful row in a canonical dir (empty if absent)."""
+    d = _canonical_dir(name)
+    if not d:
+        return set()
+    try:
+        return {r["model"] for r in _read_csv(d / "results.csv") if r["ok"]}
+    except Exception:
+        return set()
+
+
+def _all_prompt_ids(dirs):
+    """Sorted union of prompt ids across the given canonical dirs."""
+    ids = set()
+    for name in dirs:
+        d = _canonical_dir(name)
+        if not d:
+            continue
+        try:
+            ids |= {r["prompt_id"] for r in _read_csv(d / "results.csv")}
+        except Exception:
+            pass
+    return _sort_prompt_ids(ids)
+
+
+def _pick_clip(dirs, model, pid):
+    """Highest-priority existing wav for (model, prompt) across dirs (in order).
+    Within a dir, prefer the GPU path. Returns (relpath_from_root, rig_short, dev) or None."""
+    for name in dirs:
+        d = _canonical_dir(name)
+        if not d:
+            continue
+        rig = (_read_meta(d) or {}).get("rig")
+        for dev in LISTEN_DEVICE_PRIORITY:
+            wav = d / f"{model}_{dev}_p{pid}.wav"
+            if wav.exists():
+                return (f"{name}/{wav.name}", RIG_SHORT.get(rig, rig or "?"), dev)
+    return None
+
+
+_LISTEN_GUIDE = (
+    '<div class="reading-guide">One clip per model per voice mode. Audio is '
+    '<strong>rig-independent</strong> (same weights → same output), so each sample is sourced '
+    'once from the highest-fidelity available rig — Windows RTX 5090 where possible, else Linux, '
+    'else Mac. The small tag on each row shows the source rig·device. '
+    '<strong>Default voice</strong> = the model\'s own preset/built-in speaker; '
+    '<strong>Cloning</strong> = the model imitating one reference voice '
+    '(<code>chris_hemsworth_15s</code>). Switch <strong>By prompt</strong> (compare every '
+    'model on one sentence) and <strong>By model</strong> (audition one model across prompts) '
+    'below; only one clip plays at a time. Speed per rig is on the '
+    '<a href="speed.html">Speed</a> page.</div>'
+)
+
+# Shared nesting style for the Default/Cloning sub-sections on both Listen and
+# Speed: a slight left-indent + rule makes each a clear child of its parent
+# (prompt on Listen, rig on Speed); cloning gets the accent rule + a reference
+# player so each clone can be A/B'd against the target voice.
+_SUBSECTION_STYLE = (
+    '<style>'
+    '.subsection{border-left:2px solid var(--border);padding:.1rem 0 .1rem 1.1rem;'
+    'margin:.5rem 0 1.3rem .3rem;}'
+    '.subsection.cloning{border-left-color:var(--accent);}'
+    '.sub-head,.listen-group{margin:.3rem 0 .6rem;font-size:1.02em;color:var(--text);'
+    'font-weight:600;}'
+    '.ref-row{margin:.2rem 0 .9rem;font-size:.9em;color:var(--muted);'
+    'display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}'
+    '.ref-row audio{width:260px;height:30px;vertical-align:middle;}'
+    '.ref-row .ref-label{color:var(--accent);font-weight:600;}'
+    '</style>'
+)
+
+
+_LISTEN_VIEW_STYLE = (
+    '<style>'
+    # collapsible prompt / model panels
+    'details.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;'
+    'margin-bottom:1rem;padding:0 1.2rem;}'
+    'details.panel>summary{cursor:pointer;padding:.85rem 0;font-weight:600;font-size:1.05em;'
+    'color:var(--text);list-style:none;}'
+    'details.panel>summary::-webkit-details-marker{display:none;}'
+    'details.panel>summary::before{content:"\\25B8";color:var(--accent);margin-right:.55rem;'
+    'display:inline-block;transition:transform .12s;}'
+    'details.panel[open]>summary::before{transform:rotate(90deg);}'
+    'details.panel>summary .summ-text{color:var(--prompt-text);font-style:italic;font-weight:400;}'
+    # view toggle (By prompt / By model)
+    '.view-toggle{display:inline-flex;gap:.3rem;margin:.2rem 0 1rem;}'
+    '.view-toggle button{background:var(--input-bg);color:var(--text);'
+    'border:1px solid var(--input-border);border-radius:6px;padding:6px 14px;'
+    'font:inherit;cursor:pointer;}'
+    '.view-toggle button.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}'
+    # at-a-glance metadata badges
+    '.badge{display:inline-block;font-size:.72em;padding:1px 7px;border-radius:10px;'
+    'border:1px solid var(--border);color:var(--muted);margin-left:.45rem;vertical-align:middle;}'
+    '.badge.clone{color:var(--accent);border-color:var(--accent);}'
+    '.badge.multi{color:var(--prompt-text);border-color:var(--prompt-text);}'
+    '.badge.warn{color:var(--fail);border-color:var(--fail);}'
+    '.summary-meta{color:var(--muted);font-weight:400;font-size:.85em;}'
+    '</style>'
+)
+
+
+def _top_controls(active):
+    """Sticky control bar for the top-level Listen/Speed pages: a persistent lens
+    switcher + the filter/reset/theme controls SCRIPT (from report.py) wires to by id."""
+    tabs = "".join(
+        f'<a class="lens-tab{" active" if s == active else ""}" href="{s}.html">{l}</a>'
+        for s, l in (("listen", "Listen"), ("speed", "Speed"))
+    )
+    return ('<div class="controls">'
+            f'<span class="lens-tabs">{tabs}</span>'
+            '<input id="filter" type="search" placeholder="filter by model name…" autocomplete="off">'
+            '<button type="button" id="reset-sort">reset sort</button>'
+            '<span class="spacer"></span>'
+            '<button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button>'
+            '</div>')
+
+
+# Listen-page behaviour layered on top of the shared SCRIPT: single-play audio,
+# the view toggle, filter-opens-collapsed-sections, and hash-jump expansion.
+_LISTEN_SCRIPT = '''<script>
+(function(){
+  // Audio-comparison UX: only one clip plays at a time. 'play' doesn't bubble → capture.
+  document.addEventListener('play', function(e){
+    document.querySelectorAll('audio').forEach(function(a){ if(a !== e.target) a.pause(); });
+  }, true);
+
+  // View toggle: By prompt / By model.
+  var byPrompt = document.getElementById('view-by-prompt');
+  var byModel  = document.getElementById('view-by-model');
+  document.querySelectorAll('.view-toggle button').forEach(function(b){
+    b.addEventListener('click', function(){
+      var v = b.dataset.view;
+      document.querySelectorAll('.view-toggle button').forEach(function(x){ x.classList.toggle('active', x === b); });
+      if(byPrompt) byPrompt.style.display = (v === 'by-prompt') ? '' : 'none';
+      if(byModel)  byModel.style.display  = (v === 'by-model')  ? '' : 'none';
+    });
+  });
+
+  // Filtering: open collapsed panels so matches inside are visible, and hide
+  // whole model cards in the by-model view whose name doesn't match.
+  var f = document.getElementById('filter');
+  if(f) f.addEventListener('input', function(){
+    var q = this.value.trim().toLowerCase();
+    if(q){ document.querySelectorAll('#view-by-prompt details.panel').forEach(function(d){ d.open = true; }); }
+    document.querySelectorAll('#view-by-model details.panel').forEach(function(d){
+      var name = d.querySelector('summary').textContent.toLowerCase();
+      var hit = !q || name.indexOf(q) !== -1;
+      d.style.display = hit ? '' : 'none';
+      if(hit && q) d.open = true;
+    });
+  });
+
+  // Prompt-jumper anchors expand their target prompt.
+  function openHash(){
+    var h = location.hash.slice(1);
+    if(!h) return;
+    var d = document.getElementById(h);
+    if(d && d.tagName === 'DETAILS') d.open = true;
+  }
+  window.addEventListener('hashchange', openHash);
+  openHash();
+})();
+</script>'''
+
+
+def build_listen():
+    """Build listen.html — one consolidated gallery: every model on every prompt,
+    default voice + cloning, one clip per model sourced from the best rig."""
+    prompts = _all_prompt_ids(LISTEN_DEFAULT_DIRS) or _all_prompt_ids(LISTEN_CLONING_DIRS)
+    raw_default = set().union(*(_ok_models(n) for n in LISTEN_DEFAULT_DIRS)) if LISTEN_DEFAULT_DIRS else set()
+    raw_cloning = set().union(*(_ok_models(n) for n in LISTEN_CLONING_DIRS)) if LISTEN_CLONING_DIRS else set()
+    # No-preset models clone the reference even in their "default" run, so their
+    # default sample is a Chris clone, not a real default voice — show them only
+    # under Cloning. Drop them from Default; fold them into the cloning set.
+    default_models = raw_default - NO_PRESET_VOICE
+    cloning_models = raw_cloning | (NO_PRESET_VOICE & (raw_default | raw_cloning))
+
+    # The target voice every cloning model imitates. publish() stages the source
+    # clip into each cloning run dir as _reference.wav; embed it at the top of the
+    # Cloning group so each clone can be A/B'd against what it was trying to match.
+    cloning_ref = None
+    for n in LISTEN_CLONING_DIRS:
+        cd = _canonical_dir(n)
+        if cd and (cd / "_reference.wav").exists():
+            cloning_ref = f"{n}/_reference.wav"
+            break
+
+    def _by_name(models):
+        return sorted(models, key=lambda m: _display_name(m).lower())
+
+    # Pick each clip once, then render it into both the by-prompt and by-model views.
+    def _clips_for(dirs, models):
+        picked = {}  # model -> {pid: (src, rig_short, dev)}
+        for m in models:
+            mp = {pid: c for pid in prompts if (c := _pick_clip(dirs, m, pid))}
+            if mp:
+                picked[m] = mp
+        return picked
+
+    def _cloning_clips(models):
+        """Cloning clips, from the cloning dirs. A no-preset model benched only in
+        default mode (e.g. vibevoice_15b) cloned the reference there, so fall back
+        to its default-dir clip so it still appears under Cloning."""
+        picked = {}
+        for m in models:
+            mp = {pid: c for pid in prompts if (c := _pick_clip(LISTEN_CLONING_DIRS, m, pid))}
+            if not mp and m in NO_PRESET_VOICE:
+                mp = {pid: c for pid in prompts if (c := _pick_clip(LISTEN_DEFAULT_DIRS, m, pid))}
+            if mp:
+                picked[m] = mp
+        return picked
+
+    default_clips = _clips_for(LISTEN_DEFAULT_DIRS, default_models)
+    cloning_clips = _cloning_clips(cloning_models)
+
+    def _audio(src):
+        return f'<audio controls preload="none" src="{escape(src)}"></audio>'
+
+    def _src_cell(rig_short, dev):
+        return f'<td class="pill dev-{escape(dev)}">{escape(rig_short)}·{escape(dev)}</td>'
+
+    def _badges(m):
+        bs = []
+        kind = MODEL_KIND.get(m)
+        if kind == "cloning":
+            bs.append('<span class="badge clone">clones</span>')
+        elif kind == "predefined":
+            bs.append('<span class="badge">preset</span>')
+        if m in MODEL_MULTILINGUAL:
+            bs.append('<span class="badge multi">multilingual</span>')
+        return "".join(bs)
+
+    # ---- VIEW 1: by prompt (compare every model on one sentence) ----
+    def _prompt_section(title, clips_by_model, pid, mode, accent=False, ref_src=None):
+        rows = [(m, clips_by_model[m][pid]) for m in _by_name(clips_by_model)
+                if pid in clips_by_model[m]]
+        if not rows:
+            return ""
+        b = [f'<div class="subsection{" cloning" if accent else ""}">',
+             f'<div class="listen-group">{escape(title)} '
+             f'<span class="muted">({len(rows)})</span></div>']
+        if ref_src:
+            b.append('<div class="ref-row"><span class="ref-label">▶ Reference voice — '
+                     f'the target each clone imitates:</span>{_audio(ref_src)}</div>')
+        b.append('<table><thead><tr><th>Model</th><th>Size</th>'
+                 '<th>Source</th><th>Audio</th></tr></thead><tbody>')
+        for (m, (src, rig_short, dev)) in rows:
+            b.append('<tr>'
+                     f'<td>{escape(_display_name(m))}{_issue_badge(m, mode)}</td>'
+                     f'<td class="muted">{escape(MODEL_SIZE.get(m, "—"))}</td>'
+                     f'{_src_cell(rig_short, dev)}'
+                     f'<td>{_audio(src)}</td></tr>')
+        b.append('</tbody></table></div>')
+        return "".join(b)
+
+    bp = ['<div id="view-by-prompt">']
+    if len(prompts) > 3:
+        bp.append('<nav class="prompt-jumper">Jump to: '
+                  + " · ".join(f'<a href="#p{escape(pid)}">P{escape(pid)}</a>' for pid in prompts)
+                  + '</nav>')
+    for i, pid in enumerate(prompts):
+        summ = f'Prompt {escape(pid)}'
+        ptext = PROMPT_INFO.get(pid)
+        if ptext:
+            lang, text = ptext
+            summ += f' <span class="summ-text">[{escape(lang)}] "{escape(text)}"</span>'
+        bp.append(f'<details class="panel" id="p{escape(pid)}"{" open" if i == 0 else ""}>'
+                  f'<summary>{summ}</summary>')
+        bp.append(_prompt_section("Default voice", default_clips, pid, "default"))
+        bp.append(_prompt_section("Cloning — chris_hemsworth", cloning_clips, pid, "cloning",
+                                  accent=True, ref_src=cloning_ref))
+        bp.append('</details>')
+    bp.append('</div>')
+
+    # ---- VIEW 2: by model (audition one model across prompts) ----
+    def _model_section(title, pid_clips, model, mode, accent=False, ref_src=None):
+        if not pid_clips:
+            return ""
+        b = [f'<div class="subsection{" cloning" if accent else ""}">',
+             f'<div class="listen-group">{escape(title)}{_issue_badge(model, mode)}</div>']
+        if ref_src:
+            b.append(f'<div class="ref-row"><span class="ref-label">▶ Reference voice:</span>'
+                     f'{_audio(ref_src)}</div>')
+        b.append('<table><thead><tr><th>Prompt</th><th>Source</th>'
+                 '<th>Audio</th></tr></thead><tbody>')
+        for pid in prompts:
+            if pid not in pid_clips:
+                continue
+            src, rig_short, dev = pid_clips[pid]
+            # Hidden model name so the shared text filter matches by-model rows.
+            b.append(f'<tr><td>P{escape(pid)}<span hidden> {escape(model)} '
+                     f'{escape(_display_name(model))}</span></td>'
+                     f'{_src_cell(rig_short, dev)}<td>{_audio(src)}</td></tr>')
+        b.append('</tbody></table></div>')
+        return "".join(b)
+
+    bm = ['<div id="view-by-model" style="display:none">']
+    for m in _by_name(set(default_clips) | set(cloning_clips)):
+        bm.append(f'<details class="panel" id="m-{escape(m)}"><summary>{escape(_display_name(m))} '
+                  f'<span class="summary-meta">{escape(MODEL_SIZE.get(m, "—"))}</span> '
+                  f'{_badges(m)}{_issue_badge(m, "default")}{_issue_badge(m, "cloning")}</summary>')
+        bm.append(_model_section("Default voice", default_clips.get(m, {}), m, "default"))
+        bm.append(_model_section("Cloning — chris_hemsworth", cloning_clips.get(m, {}), m, "cloning",
+                                 accent=True, ref_src=cloning_ref))
+        bm.append('</details>')
+    bm.append('</div>')
+
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           '<meta name="viewport" content="width=device-width, initial-scale=1">',
+           '<title>tts-bench — Listen</title>',
+           FAVICON_LINK, STYLE, LOGO_STYLE, _SUBSECTION_STYLE, _LISTEN_VIEW_STYLE,
+           '</head><body>', _top_controls("listen"), LOGO_HEADER,
+           '<h1>Listen</h1>', _LISTEN_GUIDE,
+           '<div class="view-toggle">'
+           '<button type="button" data-view="by-prompt" class="active">By prompt</button>'
+           '<button type="button" data-view="by-model">By model</button></div>',
+           "".join(bp), "".join(bm),
+           SCRIPT, _LISTEN_SCRIPT, '</body></html>']
+    (WORKTREE / "listen.html").write_text("\n".join(out), encoding="utf-8")
+
+
+_SPEED_GUIDE = (
+    '<div class="reading-guide"><strong>TTFA</strong> = time to first audio (lower is better). '
+    '<strong>RTF</strong> = real-time factor (× realtime; higher is better). '
+    '<strong>Cold</strong> = first run after load; <strong>warm</strong> = subsequent runs. '
+    'Pick a rig below — each shows its default-voice and cloning runs. Tables default to '
+    '<strong>warm RTF, fastest first</strong>; click any column header to re-sort. '
+    'Audio is on the <a href="listen.html">Listen</a> page.</div>'
+)
+
+_SPEED_HUB_STYLE = (
+    '<style>'
+    '.rig-select{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;'
+    'margin:1.4rem 0 1.6rem;}'
+    '.rig-select .rig-select-label{color:var(--muted);font-size:.9em;}'
+    '#rig-tabs{display:inline-flex;gap:.5rem;flex-wrap:wrap;}'
+    '#rig-tabs .lens-tab{padding:7px 18px;}'
+    '.rig-panel>.meta{margin:.2rem 0 1.4rem;padding:.7rem .95rem;background:var(--panel);'
+    'border:1px solid var(--border);border-radius:8px;line-height:1.55;}'
+    '.rig-panel .subsection{margin-top:.7rem;}'
+    '.rig-panel .sub-head{margin:.2rem 0 .7rem;}'
+    '</style>'
+)
+
+_RIG_TAB_SCRIPT = '''<script>
+(function(){
+  var tabs = document.querySelectorAll('#rig-tabs .lens-tab');
+  var panels = document.querySelectorAll('.rig-panel');
+  function show(rig){
+    panels.forEach(function(p){ p.style.display = (p.dataset.rig === rig) ? '' : 'none'; });
+    tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.rig === rig); });
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(e){ e.preventDefault(); show(t.dataset.rig); });
+  });
+})();
+</script>'''
+
+
+def build_speed_hub():
+    """Build speed.html — per-rig speed leaderboard with rig tabs. Each rig panel
+    shows its default-voice + cloning tables (shared builder with per-rig speed.html)."""
+    rig_slugs, panels, rtf_idx = [], [], 5
+    for (rig, dname, cname) in SPEED_RIGS:
+        ddir, cdir = _canonical_dir(dname), _canonical_dir(cname)
+        if not ddir and not cdir:
+            continue
+        hidden = "" if not rig_slugs else ' style="display:none"'
+        block = [f'<section class="rig-panel" data-rig="{escape(rig)}"{hidden}>']
+        block.append(f'<div class="meta"><strong>Rig:</strong> <code>{escape(rig)}</code> — '
+                     f'{escape(_rig_summary(_read_meta(ddir or cdir)))}</div>')
+        for (label, d) in (("Default voice", ddir), ("Cloning", cdir)):
+            if not d:
+                continue
+            try:
+                rows = _read_csv(d / "results.csv")
+            except Exception:
+                continue
+            if not rows:
+                continue
+            ctx = _build_context(rows, d, _read_meta(d))
+            table_html, rtf_idx = _speed_table_html(ctx)
+            accent = " cloning" if label == "Cloning" else ""
+            block.append(f'<div class="subsection{accent}">')
+            block.append(f'<h3 class="sub-head">{escape(label)} '
+                         f'<span class="muted">· {len(ctx["models_seen"])} models · '
+                         f'<a href="{escape(d.name)}/index.html">full report ↗</a></span></h3>')
+            block.append(table_html)
+            block.append('</div>')
+        block.append('</section>')
+        rig_slugs.append(rig)
+        panels.append("".join(block))
+
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           '<title>tts-bench — Speed</title>',
+           FAVICON_LINK, STYLE, LOGO_STYLE, _SUBSECTION_STYLE, _SPEED_HUB_STYLE,
+           '</head><body>', _top_controls("speed"), LOGO_HEADER,
+           '<h1>Speed</h1>',
+           _SPEED_GUIDE,
+           '<div class="rig-select"><span class="rig-select-label">Rig:</span>'
+           '<div class="lens-tabs" id="rig-tabs">']
+    for rig in rig_slugs:
+        cls = "lens-tab active" if rig == rig_slugs[0] else "lens-tab"
+        out.append(f'<a class="{cls}" data-rig="{escape(rig)}" href="#">{escape(rig)}</a>')
+    out.append('</div></div>')
+    out.extend(panels)
+    out.append(f'<script>window.__defaultSort = {{colIdx: {rtf_idx}, dir: -1}};</script>')
+    out.append(SCRIPT)
+    out.append(_RIG_TAB_SCRIPT)
+    out.append('</body></html>')
+    (WORKTREE / "speed.html").write_text("\n".join(out), encoding="utf-8")
+
+
+_HOME_STYLE = (
+    '<style>'
+    '.home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;margin:1.8rem 0;}'
+    '@media(max-width:680px){.home-grid{grid-template-columns:1fr;}}'
+    '.home-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;'
+    'transition:border-color .15s,transform .15s;}'
+    '.home-card:hover{border-color:var(--accent);transform:translateY(-2px);}'
+    '.home-card a{display:block;text-decoration:none;color:var(--text);padding:1.8rem 1.6rem;}'
+    '.home-card h2{color:var(--accent);font-size:1.5em;margin:0 0 .5rem;}'
+    '.home-card p{color:var(--muted);margin:0;font-size:.95em;line-height:1.5;}'
+    '.home-foot{color:var(--muted);font-size:.9em;margin-top:1.6rem;'
+    'border-top:1px solid var(--border);padding-top:1rem;}'
+    '.home-foot a{color:var(--accent);}'
+    '.home-controls{display:flex;justify-content:flex-end;padding:.6rem 0;}'
+    '.home-controls button{background:var(--input-bg);color:var(--text);'
+    'border:1px solid var(--input-border);border-radius:6px;padding:6px 12px;'
+    'font:inherit;cursor:pointer;}'
+    '</style>'
+)
+
+_THEME_ONLY_SCRIPT = '''<script>
+(function(){
+  var b = document.getElementById('theme-toggle');
+  function apply(n){ document.documentElement.setAttribute('data-theme', n);
+    b.textContent = n === 'light' ? '☀ light' : '☾ dark';
+    try { localStorage.setItem('tts-bench-theme', n); } catch (e) {} }
+  var s = null; try { s = localStorage.getItem('tts-bench-theme'); } catch (e) {}
+  apply(s === 'light' ? 'light' : 'dark');
+  b.addEventListener('click', function(){
+    var c = document.documentElement.getAttribute('data-theme') || 'dark';
+    apply(c === 'dark' ? 'light' : 'dark'); });
+})();
+</script>'''
+
+
+def build_landing():
+    """Build index.html — the two-card landing (Listen / Speed) + archive/GitHub footer."""
     _copy_branding_assets()
+    all_dirs = [n for (_r, dn, cn) in SPEED_RIGS for n in (dn, cn)]
+    n_models = len(set().union(*(_ok_models(n) for n in all_dirs))) if all_dirs else 0
+    n_rigs = sum(1 for (_r, dn, cn) in SPEED_RIGS if _canonical_dir(dn) or _canonical_dir(cn))
+
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           '<meta name="viewport" content="width=device-width, initial-scale=1">',
+           '<title>tts-bench — local TTS benchmark</title>',
+           FAVICON_LINK, STYLE, LOGO_STYLE, _HOME_STYLE,
+           '</head><body>',
+           '<div class="home-controls"><button type="button" id="theme-toggle">☾ dark</button></div>',
+           LOGO_HEADER,
+           '<div class="meta">Open-source TTS models benchmarked side-by-side. '
+           'Two lenses — pick one:</div>',
+           '<div class="home-grid">',
+           '<div class="home-card"><a href="listen.html"><h2>▶ Listen</h2>'
+           '<p>Hear every model on the same prompts — default voice and voice cloning, '
+           'side by side. One clip per model, sourced from the highest-fidelity rig. '
+           'Quality and prosody are obvious in seconds.</p></a></div>',
+           '<div class="home-card"><a href="speed.html"><h2>▶ Speed</h2>'
+           '<p>Time-to-first-audio, real-time factor, and memory for every model — '
+           'per rig (windows-5090 · linux-3090 · mac-m4), cold and warm. Sortable.</p></a></div>',
+           '</div>',
+           f'<div class="home-foot">{n_models} models · {n_rigs} rigs · '
+           '<a href="archive.html">Archive — full per-rig reports</a> · '
+           '<a href="https://github.com/5uck1ess/tts-bench">GitHub →</a></div>',
+           _THEME_ONLY_SCRIPT,
+           '</body></html>']
+    (WORKTREE / "index.html").write_text("\n".join(out), encoding="utf-8")
+
+
+def build_archive_index():
+    """Build archive.html — the full per-rig report table (deep speed/samples pages
+    for each canonical run). Linked from the landing footer; preserves every run."""
     runs = []
     for d in sorted(WORKTREE.iterdir(), reverse=True):
         if not d.is_dir() or d.name.startswith("."):
@@ -189,26 +734,20 @@ def build_pages_index():
 
     out = ['<!doctype html>',
            '<html lang="en"><head><meta charset="utf-8">',
-           '<title>TTS Bench — Published Runs</title>',
+           '<title>tts-bench — Archive</title>',
            FAVICON_LINK,
            STYLE,
            LOGO_STYLE,
            '</head><body>',
            CONTROLS,
            LOGO_HEADER,
-           '<h1>Published Runs</h1>',
-           ('<div class="meta">Open-source TTS models benchmarked side-by-side. Three axes: '
-            '<strong>speed</strong> (TTFA, RTF), <strong>quality</strong> (NAQ), '
-            '<strong>voice cloning</strong>. Each run has inline audio so you can listen '
-            'to every model × prompt without downloading. '
-            '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>'
-            if SHOW_NAQ_PUBLIC else
-            '<div class="meta">Open-source TTS models benchmarked side-by-side: '
-            '<strong>speed</strong> (TTFA, RTF) and <strong>voice cloning</strong>. '
-            'Each run has inline audio so you can listen to every model × prompt '
-            'without downloading. '
-            '<a href="https://github.com/5uck1ess/tts-bench">Repo on GitHub →</a></div>'),
-           f'<div class="meta">{len(runs)} published run(s)</div>',
+           '<div class="nav"><a href="index.html">← home</a></div>',
+           '<h1>Archive — per-rig reports</h1>',
+           '<div class="meta">The full per-rig run reports behind the consolidated '
+           '<a href="listen.html">Listen</a> / <a href="speed.html">Speed</a> pages. '
+           'Each row is one rig × voice-mode, with its own speed table and by-prompt '
+           'samples gallery.</div>',
+           f'<div class="meta">{len(runs)} run(s)</div>',
            '<table><thead><tr>']
     for col in ("Run", "Label", "Rig", "Models", "Devices", "Prompts", "Rows", "OK", "Report"):
         out.append(f'<th>{col}</th>')
@@ -249,7 +788,16 @@ def build_pages_index():
     out.append(SCRIPT)
     out.append('</body></html>')
 
-    (WORKTREE / "index.html").write_text("\n".join(out), encoding="utf-8")
+    (WORKTREE / "archive.html").write_text("\n".join(out), encoding="utf-8")
+
+
+def build_top_level():
+    """Regenerate every top-level landing page from the canonical dirs in the worktree."""
+    _copy_branding_assets()
+    build_listen()
+    build_speed_hub()
+    build_archive_index()
+    build_landing()  # last: counts depend on the dirs, not the other pages
 
 
 def _pages_url():
@@ -372,8 +920,8 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
           f"({total_bytes / 1024 / 1024:.1f} MB)")
 
     (WORKTREE / ".nojekyll").touch()
-    build_pages_index()
-    print(f"Rebuilt index.html — {_count_published()} run(s) total")
+    build_top_level()
+    print(f"Rebuilt landing (index/listen/speed/archive) — {_count_published()} run(s) total")
 
     _git("add", "-A", cwd=WORKTREE)
     if not _git("diff", "--cached", "--name-only", cwd=WORKTREE):
@@ -434,8 +982,8 @@ def rebuild_all(no_push: bool = False) -> None:
         for wav in d.glob("*.wav"):
             shutil.copy2(wav, dest)
     (WORKTREE / ".nojekyll").touch()
-    build_pages_index()
-    print(f"Rebuilt {len(dirs)} run(s); index updated.")
+    build_top_level()
+    print(f"Rebuilt {len(dirs)} run(s); landing updated.")
 
     _git("add", "-A", cwd=WORKTREE)
     if not _git("diff", "--cached", "--name-only", cwd=WORKTREE):
@@ -463,7 +1011,18 @@ def main() -> int:
                    help="List runs already published to gh-pages and exit.")
     p.add_argument("--rebuild-all", action="store_true",
                    help="Regenerate every results/<dated>/ and republish to gh-pages.")
+    p.add_argument("--rebuild-pages", action="store_true",
+                   help="Regenerate only the top-level landing pages (index/listen/speed/"
+                        "archive) from the canonical dirs already in the worktree. "
+                        "No new run copied, no commit, no push — for local preview.")
     args = p.parse_args()
+
+    if args.rebuild_pages:
+        ensure_worktree()
+        build_top_level()
+        print(f"Rebuilt landing pages in {WORKTREE.relative_to(REPO)}: "
+              f"index.html · listen.html · speed.html · archive.html (not committed).")
+        return 0
 
     if args.rebuild_all:
         rebuild_all(no_push=args.no_push)
