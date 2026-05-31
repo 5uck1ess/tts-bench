@@ -182,7 +182,6 @@ def main() -> int:
         converter = ToneColorConverter(str(ckpt_dir / "converter" / "config.json"),
                                        device=device)
         converter.load_ckpt(str(ckpt_dir / "converter" / "checkpoint.pth"))
-        samplerate = int(converter.hps.data.sampling_rate)  # OpenVoice v2 native 22050
 
         base_se_path = ckpt_dir / "base_speakers" / "ses" / base_se_file
         if not base_se_path.exists():
@@ -216,6 +215,8 @@ def main() -> int:
             t_end = time.perf_counter()
 
             data, sr = sf.read(out_path, dtype="float32")
+            if len(data) == 0:
+                raise RuntimeError("convert produced empty audio")
             audio_s = float(len(data) / sr)
             if not write_wav:
                 try:

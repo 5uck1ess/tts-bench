@@ -621,9 +621,10 @@ if [ ! -x venvs/openvoice/bin/python ]; then
     # faster-whisper==0.9.0 -> av==10.0.0 (fails to build on Windows) plus
     # numpy==1.22 / librosa==0.9.1 / gradio that fight the MeloTTS+torch stack. The
     # runner only needs ToneColorConverter (api.py), whose deps come from MeloTTS;
-    # it adds venvs/openvoice/src to sys.path, instantiates with enable_watermark=False
-    # (so wavmark is never imported), and calls extract_se([ref]) directly (no
-    # faster-whisper VAD). So: clone for source+checkpoints, skip the editable install.
+    # it adds venvs/openvoice/src to sys.path, instantiates with the default watermark
+    # ON (wavmark IS required — enable_watermark=False is broken upstream, see wavmark
+    # note below), and calls extract_se([ref]) directly (no faster-whisper VAD). So:
+    # clone for source+checkpoints, skip the editable install.
     #
     # MeloTTS English uses g2p_en (CMUdict + NLTK), NOT espeak — no espeakng-loader
     # needed. The runner pre-downloads the NLTK tables g2p_en fetches at runtime.

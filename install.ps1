@@ -502,9 +502,10 @@ if (-not (Test-Path "venvs\openvoice\Scripts\python.exe")) {
     # numpy==1.22 / librosa==0.9.1 / gradio that fight the MeloTTS+torch stack. The
     # runner only needs ToneColorConverter (api.py), whose runtime deps come from
     # the MeloTTS install; it adds venvs\openvoice\src to sys.path and instantiates
-    # the converter with enable_watermark=False so wavmark is never imported, and
-    # calls extract_se([ref]) directly (no faster-whisper VAD). So: clone the repo
-    # for its source + checkpoints, but skip the editable install.
+    # the converter with the default watermark ON (wavmark IS required — the
+    # enable_watermark=False path is broken upstream, see the wavmark note below),
+    # and calls extract_se([ref]) directly (no faster-whisper VAD). So: clone the
+    # repo for its source + checkpoints, but skip the editable install.
     #
     # MeloTTS English uses g2p_en (CMUdict + NLTK), NOT espeak — no espeakng-loader
     # needed. The runner pre-downloads the NLTK tagger/tokenizer tables g2p_en
