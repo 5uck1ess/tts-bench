@@ -1,10 +1,12 @@
-"""VibeVoice runner — handles two variants under the same venv.
+"""VibeVoice runner — handles three variants under the same venv.
 
 Variant dispatch:
     --variant absent OR --variant 0.5b_streaming
         → VibeVoice-Realtime-0.5B (streaming classes, pre-cached .pt voice prompts)
     --variant 1.5b
         → VibeVoice-1.5B (non-streaming classes, raw wav voice samples)
+    --variant 7b (or large)
+        → VibeVoice-7B (non-streaming; bf16 on Windows/CUDA, Q8 on Linux)
 
 === 0.5B Streaming path ===
 API (vibevoice-community/VibeVoice fork, 2025-12-04+ streaming variant):
@@ -62,6 +64,7 @@ import argparse
 import copy
 import json
 import os
+import platform
 import sys
 import time
 import urllib.request
@@ -175,6 +178,42 @@ def _load_15b(args):
     return processor, model, voice_wav, device, 24000
 
 
+def _load_7b(args):
+    """Load 7B (Large) non-streaming model + voice wav path. bf16 on Windows/CUDA;
+    Q8 (~12GB) on Linux. Returns (processor, model, voice_wav_path, device, samplerate)."""
+    import torch
+    from vibevoice.modular.modeling_vibevoice_inference import (
+        VibeVoiceForConditionalGenerationInference,
+    )
+    from vibevoice.processor.vibevoice_processor import VibeVoiceProcessor
+
+    device = args.device if args.device in ("cpu", "cuda", "mps") else "cpu"
+    # Linux (3090) -> Q8 ~12GB; Windows (5090) -> bf16 fits 32GB
+    use_q8 = platform.system() == "Linux" or os.environ.get("VIBEVOICE_7B_Q8") == "1"
+    model_id = "FabioSarracino/VibeVoice-Large-Q8" if use_q8 else "vibevoice/VibeVoice-7B"
+    load_dtype = torch.float32 if device in ("cpu", "mps") else torch.bfloat16
+
+    processor = VibeVoiceProcessor.from_pretrained(model_id)
+    # low_cpu_mem_usage streams shards straight to the target device instead of
+    # materializing the full ~18GB bf16 model (+ a transient copy) in CPU RAM —
+    # avoids the Windows "paging file too small" (os error 1455) commit-charge spike.
+    model = VibeVoiceForConditionalGenerationInference.from_pretrained(
+        model_id, torch_dtype=load_dtype, device_map=device,
+        attn_implementation="sdpa", low_cpu_mem_usage=True,
+    )
+    model.eval()
+    model.set_ddpm_inference_steps(num_steps=args.ddpm_steps)
+
+    voice_wav = args.reference or DEFAULT_VOICE_15B
+    if not Path(voice_wav).exists():
+        raise FileNotFoundError(
+            f"Voice reference wav not found: {voice_wav}. "
+            "Provide --reference <path> or ensure reference/chris_hemsworth_15s.wav exists."
+        )
+
+    return processor, model, voice_wav, device, 24000
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--text", default=None)
@@ -184,7 +223,7 @@ def main() -> int:
                    help="0.5B: voice preset NAME (e.g. 'en-Emma_woman'); "
                         "1.5B: path to a reference wav for voice style.")
     p.add_argument("--variant", default=None,
-                   help="'0.5b_streaming' (default) or '1.5b'")
+                   help="'0.5b_streaming' (default), '1.5b', or '7b'")
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--language", default="en")
     p.add_argument("--stdin", action="store_true")
@@ -222,9 +261,11 @@ def main() -> int:
             processor, model, voice, device, samplerate = _load_05b(args)
         elif variant == "1.5b":
             processor, model, voice, device, samplerate = _load_15b(args)
+        elif variant in ("7b", "large"):
+            processor, model, voice, device, samplerate = _load_7b(args)
         else:
             print(json.dumps({"ok": False, "run_index": 0,
-                              "error": f"Unknown variant {variant!r}. Use '0.5b_streaming' or '1.5b'."}))
+                              "error": f"Unknown variant {variant!r}. Use '0.5b_streaming', '1.5b', or '7b'."}))
             return 1
 
     except Exception as e:

@@ -164,6 +164,8 @@ if (-not (Test-Path "venvs\vibevoice\Scripts\python.exe")) {
         uv pip install --python venvs\vibevoice\Scripts\python.exe `
             "git+https://github.com/vibevoice-community/VibeVoice" torch soundfile numpy
     }
+    # bitsandbytes for the 7B Q8 weights (Linux Q8 path); harmless on Windows.
+    Invoke-Checked "bitsandbytes for vibevoice 7b Q8" { uv pip install --python venvs\vibevoice\Scripts\python.exe "bitsandbytes>=0.48.1" }
     Write-Host "vibevoice: ok (voice .pt presets auto-download on first use to ~/.cache/vibevoice-voices)" -ForegroundColor Green
 } else {
     Write-Host "vibevoice: already installed" -ForegroundColor Gray
@@ -426,6 +428,106 @@ if (-not (Test-Path "venvs\supertonic\Scripts\python.exe")) {
 } else {
     Write-Host "supertonic: already installed" -ForegroundColor Gray
 }
+
+Step "Fish Speech 1.5 (fishaudio, zero-shot cloning, 44.1kHz)"
+if (-not (Test-Path "venvs\fish\Scripts\python.exe")) {
+    # Source clone of the v1.5.0 tag. [stable] extras are intentionally SKIPPED:
+    # they pin torch<=2.4.1 which is incompatible with the RTX 5090 (Blackwell
+    # sm_120), which needs cu128 / torch 2.7+. We install fish-speech with no
+    # extras, hard-cap numpy<=1.26.4 (fish requirement), then reinstall torch cu128
+    # LAST. The runner instantiates TTSInferenceEngine directly (NOT ModelManager,
+    # which has an unconditional funasr import we want to avoid).
+    Invoke-Checked "uv venv fish" { uv venv venvs\fish --python 3.10 }
+    Invoke-Checked "clone fish-speech v1.5" { git clone --branch v1.5.0 https://github.com/fishaudio/fish-speech venvs\fish\src }
+    Invoke-Checked "uv pip install fish-speech (no extras)" { uv pip install --python venvs\fish\Scripts\python.exe -e venvs\fish\src }
+    Invoke-Checked "numpy<=1.26.4 (fish hard cap)" { uv pip install --python venvs\fish\Scripts\python.exe "numpy<=1.26.4" }
+    Invoke-Checked "fish deps" { uv pip install --python venvs\fish\Scripts\python.exe soundfile }
+    Invoke-Checked "torch cu128 for fish (LAST)" { uv pip install --python venvs\fish\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Invoke-Checked "download fish-speech-1.5 weights" { uv run --python venvs\fish\Scripts\python.exe -- hf download fishaudio/fish-speech-1.5 --local-dir venvs\fish\src\checkpoints\fish-speech-1.5 }
+    Write-Host "fish: ok" -ForegroundColor Green
+} else { Write-Host "fish: already installed" -ForegroundColor Gray }
+
+Step "Maya1 (maya-research, Apache 2.0, voice-description default voice, 24kHz, SNAC codec)"
+if (-not (Test-Path "venvs\maya1\Scripts\python.exe")) {
+    # Default-voice model: no audio cloning. The voice is steered by a natural-
+    # language description string; the runner uses a fixed DEFAULT_VOICE_DESC.
+    # Llama-style causal LM emits flat SNAC codec tokens -> decoded by the
+    # hubertsiuzdak/snac_24khz SNAC model (auto-downloads on first run alongside
+    # the ~3B maya-research/maya1 weights). Windows/Linux use transformers+SNAC;
+    # the Mac path uses MLX instead (see install.sh).
+    Invoke-Checked "uv venv maya1" { uv venv venvs\maya1 --python 3.11 }
+    Invoke-Checked "uv pip install maya1 deps" { uv pip install --python venvs\maya1\Scripts\python.exe "transformers>=4.50" snac soundfile numpy accelerate }
+    Invoke-Checked "torch cu128 for maya1 (LAST)" { uv pip install --python venvs\maya1\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "maya1: ok" -ForegroundColor Green
+} else { Write-Host "maya1: already installed" -ForegroundColor Gray }
+
+Step "StyleTTS 2 (sidharthrajaram wrapper, MIT, LibriTTS, zero-shot cloning, 24kHz)"
+if (-not (Test-Path "venvs\styletts2\Scripts\python.exe")) {
+    # The `styletts2` PyPI wrapper (sidharthrajaram) uses gruut for phonemization
+    # (no espeak-ng needed) and auto-downloads LibriTTS weights from HF on the
+    # first StyleTTS2() call. Its dep `monotonic_align` is a Cython package that
+    # compiles via setuptools' automatic MSVC discovery — VS Build Tools' VC++
+    # compiler must be installed (confirmed on this box).
+    Invoke-Checked "uv venv styletts2" { uv venv venvs\styletts2 --python 3.11 }
+    Invoke-Checked "uv pip install styletts2" { uv pip install --python venvs\styletts2\Scripts\python.exe styletts2 soundfile numpy }
+    # torch cu128 LAST (Blackwell sm_120); styletts2 pulls a non-cu128 torch otherwise.
+    Invoke-Checked "torch cu128 for styletts2 (LAST)" { uv pip install --python venvs\styletts2\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "styletts2: ok" -ForegroundColor Green
+} else { Write-Host "styletts2: already installed" -ForegroundColor Gray }
+
+Step "Zonos-v0.1 transformer (Zyphra, zero-shot cloning, 44.1kHz, espeakng-loader)"
+if (-not (Test-Path "venvs\zonos\Scripts\python.exe")) {
+    # Transformer backbone only — do NOT install the `.[compile]` extras
+    # (mamba-ssm/flash-attn are CUDA+Linux-only and unneeded for the transformer
+    # variant). Zonos uses phonemizer -> espeak-ng; espeakng-loader bundles the
+    # espeak-ng.dll + data so no system .msi install is required (the runner sets
+    # PHONEMIZER_ESPEAK_LIBRARY/DATA from espeakng_loader before importing zonos).
+    Invoke-Checked "uv venv zonos" { uv venv venvs\zonos --python 3.11 }
+    Invoke-Checked "clone Zonos" { git clone https://github.com/Zyphra/Zonos venvs\zonos\src }
+    Invoke-Checked "uv pip install zonos (transformer, no [compile])" { uv pip install --python venvs\zonos\Scripts\python.exe -e venvs\zonos\src soundfile numpy espeakng-loader }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120); zonos pulls a non-cu128 torch otherwise. LAST.
+    Invoke-Checked "torch cu128 for zonos (LAST)" { uv pip install --python venvs\zonos\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "zonos: ok (espeak-ng bundled via espeakng-loader, no system install)" -ForegroundColor Green
+} else { Write-Host "zonos: already installed" -ForegroundColor Gray }
+
+Step "OpenVoice v2 (myshell-ai, MeloTTS base + tone-color converter, zero-shot cloning, 22.05kHz)"
+if (-not (Test-Path "venvs\openvoice\Scripts\python.exe")) {
+    # OpenVoice v2 = MeloTTS (base TTS) + a ToneColorConverter (cloning). 3 in-process
+    # steps wrapped as one runner call. Python 3.11 (NOT 3.12 - fugashi, pulled by
+    # MeloTTS's Japanese path, has no prebuilt wheel for 3.12 and the source build needs
+    # MeCab; on 3.11 fugashi+mecab-python3 install cleanly from wheels).
+    #
+    # We deliberately do NOT `pip install -e` OpenVoice's setup.py: it pins
+    # faster-whisper==0.9.0 -> av==10.0.0 (fails to Cython-build on Windows) plus
+    # numpy==1.22 / librosa==0.9.1 / gradio that fight the MeloTTS+torch stack. The
+    # runner only needs ToneColorConverter (api.py), whose runtime deps come from
+    # the MeloTTS install; it adds venvs\openvoice\src to sys.path and instantiates
+    # the converter with the default watermark ON (wavmark IS required — the
+    # enable_watermark=False path is broken upstream, see the wavmark note below),
+    # and calls extract_se([ref]) directly (no faster-whisper VAD). So: clone the
+    # repo for its source + checkpoints, but skip the editable install.
+    #
+    # MeloTTS English uses g2p_en (CMUdict + NLTK), NOT espeak — no espeakng-loader
+    # needed. The runner pre-downloads the NLTK tagger/tokenizer tables g2p_en
+    # fetches at runtime.
+    Invoke-Checked "uv venv openvoice" { uv venv venvs\openvoice --python 3.11 }
+    Invoke-Checked "clone OpenVoice (source + checkpoints only; not pip-installed)" { git clone --depth 1 https://github.com/myshell-ai/OpenVoice venvs\openvoice\src }
+    Invoke-Checked "uv pip install MeloTTS (provides the runner's torch/numpy/soundfile/librosa)" { uv pip install --python venvs\openvoice\Scripts\python.exe "git+https://github.com/myshell-ai/MeloTTS.git" }
+    # MeloTTS may pull both mecab-python3 and python-mecab-ko; they conflict at import.
+    # Uninstall python-mecab-ko if it landed (harmless if absent).
+    & uv pip uninstall --python venvs\openvoice\Scripts\python.exe python-mecab-ko 2>&1 | Out-Null
+    # wavmark: the ToneColorConverter's audio watermarker (loaded in its __init__;
+    # enable_watermark defaults True and the False path is broken upstream — it
+    # forwards the kwarg to a base __init__ that rejects it). Watermark is inaudible.
+    Invoke-Checked "openvoice deps" { uv pip install --python venvs\openvoice\Scripts\python.exe soundfile numpy wavmark }
+    # unidic uses its OWN downloader (not pip) — fine inside a uv venv. ~1GB.
+    Invoke-Checked "unidic dict (~1GB)" { uv run --python venvs\openvoice\Scripts\python.exe -- python -m unidic download }
+    # torch cu128 LAST (Blackwell sm_120); MeloTTS pulls a non-cu128 torch otherwise.
+    Invoke-Checked "torch cu128 for openvoice (LAST)" { uv pip install --python venvs\openvoice\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    # OpenVoiceV2 checkpoints (converter + base-speaker SEs) into src\checkpoints_v2.
+    Invoke-Checked "download OpenVoiceV2 ckpts" { uv run --python venvs\openvoice\Scripts\python.exe -- hf download myshell-ai/OpenVoiceV2 --local-dir venvs\openvoice\src\checkpoints_v2 }
+    Write-Host "openvoice: ok (zero-shot tone-color cloning, 22.05kHz; MeloTTS base + ToneColorConverter)" -ForegroundColor Green
+} else { Write-Host "openvoice: already installed" -ForegroundColor Gray }
 
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
