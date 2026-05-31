@@ -85,6 +85,16 @@ def main() -> int:
                           "error": "either --stdin or both --text and --out are required"}))
         return 1
 
+    # On a CUDA-equipped host, Zonos' generate path allocates a tensor on the
+    # visible GPU even when we asked for device="cpu", colliding with the cpu
+    # model ("mat1 is on cuda:0, ... other tensors on cpu"). Hide CUDA for the
+    # cpu cell so the process behaves like a cpu-only box (how it runs on Mac).
+    # Use "-1" (an invalid index), NOT "" — an empty string is treated as unset
+    # and leaves all GPUs visible. Must run before torch is imported in the try
+    # block below (_meminfo imports torch lazily, so torch is not yet loaded).
+    if (args.device if args.device in ("cpu", "cuda") else "cpu") == "cpu":
+        os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+
     try:
         # Point phonemizer at the bundled espeak-ng (no system install) BEFORE
         # importing zonos/phonemizer. The bundled DLL has a hardcoded CI build
