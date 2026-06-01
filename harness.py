@@ -79,6 +79,9 @@ GPU_CLASS = {
     "f5tts", "indextts", "voxcpm", "qwentts", "sesame", "mars5",
     "chatterbox", "magpie",
     "fish_s2", "metavoice", "step_editx",
+    # vibevoice_15b: ~0.03-0.07x RTF on M4 CPU (long-form times out at 600s) and
+    # OOMs at load on mps (10.94 GiB > 16 GB). Runs on CUDA rigs; skip on non-CUDA.
+    "vibevoice_15b",
 }
 
 
