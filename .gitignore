@@ -10,6 +10,7 @@ reference/*.mp3
 reference/*.m4a
 reference/*.flac
 reference/*.ogg
+reference/*.zip
 reference/*.txt
 !reference/.gitkeep
 install.log
@@ -22,6 +23,10 @@ smoke_*.py
 smoke_*.wav
 test_*.wav
 docs/superpowers/
+
+# NAQ private R&D — ground-truth votes + algorithm refinement (potential paper).
+# Tool + data stay local; do not commit.
+naq_lab/
 
 # Windows: bash treats `nul` as a regular filename, so `cmd 2>nul`
 # from a bash shell on Windows leaves a literal file behind.
