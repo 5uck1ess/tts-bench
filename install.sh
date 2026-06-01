@@ -208,7 +208,10 @@ if [ ! -x venvs/vibevoice/bin/python ]; then
         "git+https://github.com/vibevoice-community/VibeVoice" torch soundfile numpy \
         || die "uv pip install vibevoice (community fork)"
     # bitsandbytes for the 7B Q8 weights (Linux Q8 path); harmless on Windows.
-    uv pip install --python venvs/vibevoice/bin/python "bitsandbytes>=0.48.1" \
+    # Must be a recent build (>=0.49.2): older 0.48.x breaks its CUDA detection
+    # ("requires the latest version of bitsandbytes") once librosa/scipy land in
+    # this venv via the global NAQ-deps step below. -U pins it forward.
+    uv pip install --python venvs/vibevoice/bin/python -U "bitsandbytes>=0.49.2" \
         || die "uv pip install bitsandbytes for vibevoice 7b Q8"
     green "vibevoice: ok (voice .pt presets auto-download on first use to ~/.cache/vibevoice-voices)"
 else
@@ -467,8 +470,13 @@ if [ ! -x venvs/moss_tts/bin/python ]; then
     fi
     # `.[torch-runtime]` pulls torch==2.9.1+cu128, torchaudio==2.9.1+cu128,
     # torchcodec, transformers==5.0.0 from the pytorch cu128 index.
+    # moss-tts[torch-runtime] pins tqdm==4.67.1, which only exists on PyPI — but
+    # uv's default first-index-wins strategy resolves tqdm against the cu128 index
+    # (where torch lives) and refuses to fall back. unsafe-best-match lets uv pick
+    # tqdm 4.67.1 from PyPI. Both indexes are trusted here, so it's safe.
     uv pip install --python venvs/moss_tts/bin/python \
         --extra-index-url https://download.pytorch.org/whl/cu128 \
+        --index-strategy unsafe-best-match \
         -e "venvs/moss_tts/src[torch-runtime]" \
         || die "uv pip install moss-tts torch-runtime"
     uv pip install --python venvs/moss_tts/bin/python soundfile \

@@ -42,6 +42,13 @@ makes CPU loading hopeless, and MPS doesn't have a kernel set wide enough for
 the Qwen3 backbone + RVQ decoder at usable speed.
 """
 
+import os
+# MOSS-TTS 8B peaks at ~22.8 GiB VRAM. On a 24 GiB card (e.g. RTX 3090) the
+# default CUDA allocator fragments ~0.7 GiB past the limit and OOMs; expandable
+# segments reclaims it so the model fits. Must be set before torch initialises
+# CUDA. setdefault() lets an explicit outer env override still win.
+os.environ.setdefault("PYTORCH_CUDA_ALLOC_CONF", "expandable_segments:True")
+
 import argparse
 import json
 import sys
