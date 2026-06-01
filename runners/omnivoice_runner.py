@@ -21,6 +21,7 @@ Cloning flavor: wav + transcript (matches NeuTTS Air / F5-TTS).
 
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -57,6 +58,17 @@ def main() -> int:
     p.add_argument("--language", default="en")
     p.add_argument("--stdin", action="store_true")
     args = p.parse_args()
+
+    if args.device == "mps":
+        # MPS's default high-watermark ceiling spuriously aborts with "MPS backend
+        # out of memory" on the long-form prompt even though real usage is ~1 GB
+        # (it over-counts unified-memory "other allocations"). Disabling the
+        # watermark lets the allocation proceed and the cell passes. Must be set
+        # before torch is imported. NOTE: cloning on mps genuinely exceeds 16 GB
+        # and still gets OS-killed — use cpu for omnivoice cloning on a 16 GB Mac.
+        os.environ.setdefault("PYTORCH_MPS_HIGH_WATERMARK_RATIO", "0.0")
+        os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+
     if not args.stdin and (args.text is None or args.out is None):
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": "either --stdin or both --text and --out are required"}))
