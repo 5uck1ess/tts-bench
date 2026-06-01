@@ -91,7 +91,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | Qwen3-TTS 1.7B (CUDA-graph) | 1.7B | — | ✓ | ✓ | 24k | MIT |
 | Mars5-TTS | 1.2B | — | ✓ | — | 24k | AGPL-3.0 |
 | NeuTTS Air | 748M | — | ✓ | — | 24k | Apache 2.0 |
-| NeuTTS Nano | 748M | — | ✓ | — | 24k | Apache 2.0 |
+| NeuTTS Nano | 229M | — | ✓ | — | 24k | Apache 2.0 |
 | Dia 1.6B | 1.6B | — | ✓ | — | 44.1k | Apache 2.0 |
 | MOSS-TTS-Nano | 100M | — | ✓ | ✓ (zh+en) | **48k** | Apache 2.0 |
 | MOSS-TTS | 8B (Qwen3) | — | ✓ | ✓ (20) | 24k | Apache 2.0 |

@@ -484,7 +484,7 @@ def _display_name(model):
 MODEL_SIZE = {
     "pocket":        "100M",
     "neutts_air":    "748M",
-    "neutts_nano":   "748M",
+    "neutts_nano":   "229M",
     "luxtts":        "—",
     "chatterbox":       "1.2B",
     "chatterbox_turbo": "744M",
