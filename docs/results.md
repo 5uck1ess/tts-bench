@@ -33,7 +33,7 @@ Same five prompts run on both rigs above. Numbers shown are from short prompts; 
 | [IndexTTS-2](https://github.com/index-tts/index-tts) (Bilibili Index) | ~1.5B / Apache 2.0 | pending | pending | pending | wav (no transcript) | zero-shot cloning + optional emotion-reference conditioning; source-clone install (no pip wheel); ~5 GB weights auto-download from HF on first use |
 | [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) (Sesame AI) | 1B / Apache 2.0 | pending | pending | pending | wav + transcript (as prior-turn context) | conversational speech model; in-context cloning via apply_chat_template; native transformers >= 4.52.1; **HF manual-approval gated** — request access on the model page before first run |
 | [MARS5-TTS](https://github.com/Camb-ai/MARS5-TTS) (CAMB.AI) | ~1.2B (750M AR + 450M NAR) / **AGPL-3.0** | pending | pending | pending | wav (shallow clone) or wav + transcript (deep clone, higher quality) | English-only; loaded via `torch.hub.load`; reference audio must be 1-12 seconds; **AGPL-3.0 means non-commercial unless you license from CAMB.AI** |
-| [LuxTTS](https://github.com/ysharma3501/LuxTTS) (k2-fsa-based) | — | — | — | — | wav | install blocked on Windows (see [known-issues.md](known-issues.md)) |
+| [LuxTTS](https://github.com/ysharma3501/LuxTTS) (k2-fsa-based) | — | — | — | — | wav | install blocked on Windows **and Apple Silicon** — no arm64/Windows `piper-phonemize` wheel (see [known-issues.md](known-issues.md)) |
 
 **Reading the tables:** TTFA = milliseconds until the first audio sample. RTF = `audio_seconds / generation_seconds` (1.0× = realtime, higher = faster than realtime). Non-streaming models (KittenTTS, ChatterBox, F5-TTS) emit full audio in one call so TTFA = gen_s by definition.
 
@@ -54,10 +54,11 @@ Same harness, 5 prompts × 3 runs each. TTFA from the short prompt; RTF is the w
 | **[Soprano](https://github.com/ekwek1/soprano)** (80M) | cpu | 341ms | 324ms | 6.1× | EN only, 32 kHz |
 | **[Soprano](https://github.com/ekwek1/soprano)** (80M) | mps | 750ms | 427ms | 4.7× | |
 | **[Supertonic](https://github.com/supertone-inc/supertonic)** (~99M ONNX) | cpu | 1952ms | 681ms | 4.2× | 31 langs; pure-ONNX, no torch dep |
+| **[StyleTTS 2](https://github.com/sidharthrajaram/StyleTTS2)** | cpu | 2444ms | 2208ms | 3.82× | bundled LibriTTS default voice (also clones); wrapper hard-codes the device → cpu-only on Mac |
 | [VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice) | mps | 3288ms | 2642ms | 1.1× | only diffusion-class predefined model to reach realtime on MPS |
 | [VibeVoice-Realtime-0.5B](https://github.com/vibevoice-community/VibeVoice) | cpu | 6478ms | 6977ms | 0.3× | CPU diffusion isn't viable |
 | [Magpie-TTS Multi 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) (NVIDIA NeMo) | cpu | 5690ms | 6268ms | 0.5× | **gpu-class** — 9 langs; HF-gated. NeMo CPU is heavy |
-| [VibeVoice-1.5B](https://github.com/vibevoice-community/VibeVoice) | cpu / mps | — | — | — | cpu needs a local 15 s ref wav (not shipped); mps OOMs at ~10.9 GiB on 16 GB (see [known-issues.md](known-issues.md)) |
+| [VibeVoice-1.5B](https://github.com/vibevoice-community/VibeVoice) | cpu | 75160ms | 70841ms | 0.06× | **gpu-class** — runs with a 15 s ref but ~0.05× RTF and long-form times out (600 s); mps OOMs at ~10.9 GiB on 16 GB (see [known-issues.md](known-issues.md)) |
 
 #### Zero-shot voice cloning models
 
@@ -66,18 +67,21 @@ Reference: `reference/jo.wav` + transcript. Viable on Mac (≥ ~0.8× warm RTF):
 | Model | Device | TTFA cold | TTFA warm | RTF warm | Cloning ref | Notes |
 |---|---|---|---|---|---|---|
 | **[Pocket-TTS](https://github.com/kyutai-labs/pocket-tts)** | cpu | **33ms** | **29ms** | **8.8×** | wav or voice name | fastest cloning-capable option; BYO-voice path is HF accept-terms gated |
+| **[OpenVoice v2](https://github.com/myshell-ai/OpenVoice)** (~100M) | mps | 2074ms | 1012ms | **5.91×** | wav | MeloTTS base + tone-color converter; fastest of the newly-added cloning models on MPS |
+| [OpenVoice v2](https://github.com/myshell-ai/OpenVoice) (~100M) | cpu | 10573ms | 2399ms | 2.49× | wav | |
 | [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | cpu | 684ms | 281ms | 2.8× | wav + transcript | multilingual via separate `.gguf` per language |
 | [NeuTTS Nano](https://github.com/neuphonic/neutts) (GGUF Q4) | mps | 1579ms | 490ms | 2.2× | wav + transcript | MPS gives no win — GGUF runs CPU-side via llama-cpp |
 | [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | cpu | 1337ms | 354ms | 2.1× | wav + transcript | ~2.4× faster TTFA than the Windows CPU numbers (M4 single-thread) |
 | [Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS) | mps | 3739ms | 1377ms | 2.0× | wav (no transcript) | multilingual cloning baseline; CPML 1.0 non-commercial |
+| [MOSS-TTS-Nano](https://github.com/OpenMOSS/MOSS-TTS-Nano) (~100M) | cpu | 3709ms | 3661ms | 1.93× | wav | 48 kHz; mps is slower (0.40×, gpu-class — small model, MPS overhead dominates) |
 | [NeuTTS Air](https://github.com/neuphonic/neutts) (GGUF Q4) | mps | 2182ms | 545ms | 1.9× | wav + transcript | same — MPS doesn't help GGUF |
 | [Coqui XTTS-v2](https://github.com/idiap/coqui-ai-TTS) | cpu | 2369ms | 2108ms | 1.4× | wav (no transcript) | |
 | [ChatterBox Turbo](https://github.com/resemble-ai/chatterbox) (~744M AR) | mps | 3902ms | 2033ms | 1.1× | wav (no transcript) | the Turbo variant clears realtime on MPS; base ChatterBox does not |
 | [ChatterBox Turbo](https://github.com/resemble-ai/chatterbox) (~744M AR) | cpu | 3158ms | 2627ms | 0.8× | wav (no transcript) | |
 
-**gpu-class on Mac (sub-realtime; auto-skipped by default, shown for reference):** ChatterBox base (mps 0.5× / cpu 0.3×), Sesame CSM-1B (0.2×), Qwen3-TTS Base (0.2×), IndexTTS-2 (0.1×), OmniVoice (cpu 0.1–0.2×; mps OOMs under cloning), F5-TTS (≤0.1×), ZipVoice (cpu ~0.1×; mps OOMs on 16 GB; crashes on the longest prompt). **Timed out (>600 s/cell):** MARS5, VoxCPM. **Install-blocked:** LuxTTS (no arm64 `piper-phonemize` wheel). See [known-issues.md](known-issues.md).
+**gpu-class on Mac (sub-realtime; auto-skipped by default, shown for reference):** ChatterBox base (mps 0.5× / cpu 0.3×), Sesame CSM-1B (0.2×), Qwen3-TTS Base (0.2×), IndexTTS-2 (0.1×), OmniVoice (default cpu 0.57× / mps 0.79× — mps long-form OOM now fixed; cloning cpu 0.18×, mps still OOMs), F5-TTS (≤0.1×), Fish Speech 1.5 (cpu 0.34× / mps 0.31×), Zonos v0.1 (cpu 0.15×, no Mac GPU path), MOSS-TTS-Nano/mps (0.40×; its cpu is viable), VibeVoice-1.5B (cpu 0.06×, long-form times out; mps OOMs), ZipVoice (cpu cloning works ~0.1×, 10/11 prompts; mps OOMs on 16 GB). **Timed out (>600 s/cell):** MARS5, VoxCPM. **Install-blocked (not possible on Apple Silicon):** LuxTTS (no arm64 `piper-phonemize` wheel — same gap as Windows). See [known-issues.md](known-issues.md).
 
-**Top-line takeaway on Mac:** Piper wins predefined again (33.5× RTF, 62 ms warm TTFA — drop-in for an always-on agent), with Kokoro close behind on MPS (13.8×). Among cloning models, **Pocket-TTS is the clear winner on M4** — 29 ms warm TTFA, 8.8× RTF, single-thread-dominated so M4 actually beats the Ryzen 9. NeuTTS (2–3× RTF), Coqui (1.4–2.0×), and ChatterBox **Turbo** (the new ~744M variant, 0.8–1.1×) round out the viable cloning set. Everything heavier — base ChatterBox, OmniVoice, VoxCPM, Qwen3-TTS, IndexTTS-2, Sesame, F5-TTS, MARS5 — lands sub-realtime or OOMs on 16 GB and is tagged gpu-class: useful "works at all on a Mac" data points, not deploy candidates.
+**Top-line takeaway on Mac:** Piper wins predefined again (33.5× RTF, 62 ms warm TTFA — drop-in for an always-on agent), with Kokoro close behind on MPS (13.8×); StyleTTS 2 also lands well (3.82× cpu, bundled default voice). Among cloning models, **Pocket-TTS is the clear winner on M4** — 29 ms warm TTFA, 8.8× RTF, single-thread-dominated so M4 actually beats the Ryzen 9 — and **OpenVoice v2 is the standout new addition** (5.91× on MPS, 2.49× cpu). NeuTTS (2–3× RTF), Coqui (1.4–2.0×), MOSS-TTS-Nano (cpu 1.9×), and ChatterBox **Turbo** (the new ~744M variant, 0.8–1.1×) round out the viable cloning set. Everything heavier — base ChatterBox, OmniVoice, VoxCPM, Qwen3-TTS, IndexTTS-2, Sesame, F5-TTS, Fish Speech 1.5, Zonos, VibeVoice-1.5B, MARS5 — lands sub-realtime or OOMs on 16 GB and is tagged gpu-class: useful "works at all on a Mac" data points, not deploy candidates.
 
 ### Windows desktop — RTX 5090 CUDA
 
