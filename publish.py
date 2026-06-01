@@ -560,6 +560,11 @@ _SPEED_HUB_STYLE = (
     'border:1px solid var(--border);border-radius:8px;line-height:1.55;}'
     '.rig-panel .subsection{margin-top:.7rem;}'
     '.rig-panel .sub-head{margin:.2rem 0 .7rem;}'
+    '.mode-select{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;'
+    'margin:1.4rem 0 .5rem;}'
+    '#mode-tabs{display:inline-flex;gap:.5rem;flex-wrap:wrap;}'
+    '#mode-tabs .lens-tab{padding:7px 18px;}'
+    '.mode-empty{color:var(--muted);}'
     '</style>'
 )
 
@@ -577,11 +582,32 @@ _RIG_TAB_SCRIPT = '''<script>
 })();
 </script>'''
 
+# Default/Cloning toggle. Composes with the rig toggle: a subsection is on screen
+# only when its rig-panel is the active rig AND its data-mode is the active mode.
+# This script governs data-mode visibility across every panel at once, so the
+# already-correct subsection is showing the moment a rig becomes visible.
+_MODE_TAB_SCRIPT = '''<script>
+(function(){
+  var tabs = document.querySelectorAll('#mode-tabs .lens-tab');
+  var subs = document.querySelectorAll('.subsection[data-mode]');
+  function show(mode){
+    subs.forEach(function(s){ s.style.display = (s.dataset.mode === mode) ? '' : 'none'; });
+    tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.mode === mode); });
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(e){ e.preventDefault(); show(t.dataset.mode); });
+  });
+})();
+</script>'''
+
 
 def build_speed_hub():
-    """Build speed.html — per-rig speed leaderboard with rig tabs. Each rig panel
-    shows its default-voice + cloning tables (shared builder with per-rig speed.html)."""
+    """Build speed.html — speed leaderboard with a Default/Cloning mode toggle and
+    rig tabs. Mode is the primary axis: pick Cloning and the top row of the
+    (RTF-sorted) table is the fastest cloning model on that rig. Each rig panel
+    holds both mode subsections; the mode toggle shows one at a time across rigs."""
     rig_slugs, panels, rtf_idx = [], [], 5
+    has_cloning = False  # only render the mode toggle if some rig actually has cloning data
     for (rig, dname, cname) in SPEED_RIGS:
         ddir, cdir = _canonical_dir(dname), _canonical_dir(cname)
         if not ddir and not cdir:
@@ -590,21 +616,32 @@ def build_speed_hub():
         block = [f'<section class="rig-panel" data-rig="{escape(rig)}"{hidden}>']
         block.append(f'<div class="meta"><strong>Rig:</strong> <code>{escape(rig)}</code> — '
                      f'{escape(_rig_summary(_read_meta(ddir or cdir)))}</div>')
-        for (label, d) in (("Default voice", ddir), ("Cloning", cdir)):
-            if not d:
-                continue
-            try:
-                rows = _read_csv(d / "results.csv")
-            except Exception:
-                continue
+        # One subsection per mode, tagged data-mode so the mode toggle can show
+        # exactly one at a time. Default visible; cloning hidden until toggled.
+        for (mkey, label, d) in (("default", "Default voice", ddir),
+                                 ("cloning", "Cloning", cdir)):
+            accent = " cloning" if mkey == "cloning" else ""
+            vis = "" if mkey == "default" else ' style="display:none"'
+            rows = None
+            if d:
+                try:
+                    rows = _read_csv(d / "results.csv")
+                except Exception:
+                    rows = None
             if not rows:
+                # Keep the slot so switching modes never lands on a blank page.
+                block.append(f'<div class="subsection mode-empty{accent}" data-mode="{mkey}"{vis}>'
+                             f'<h3 class="sub-head">{escape(label)} '
+                             f'<span class="muted">· no runs on this rig</span></h3></div>')
                 continue
+            if mkey == "cloning":
+                has_cloning = True
             ctx = _build_context(rows, d, _read_meta(d))
             table_html, rtf_idx = _speed_table_html(ctx)
-            accent = " cloning" if label == "Cloning" else ""
-            block.append(f'<div class="subsection{accent}">')
+            block.append(f'<div class="subsection{accent}" data-mode="{mkey}"{vis}>')
             block.append(f'<h3 class="sub-head">{escape(label)} '
                          f'<span class="muted">· {len(ctx["models_seen"])} models · '
+                         f'sorted fastest first · '
                          f'<a href="{escape(d.name)}/index.html">full report ↗</a></span></h3>')
             block.append(table_html)
             block.append('</div>')
@@ -618,9 +655,15 @@ def build_speed_hub():
            FAVICON_LINK, STYLE, LOGO_STYLE, _SUBSECTION_STYLE, _SPEED_HUB_STYLE,
            '</head><body>', _top_controls("speed"), LOGO_HEADER,
            '<h1>Speed</h1>',
-           _SPEED_GUIDE,
-           '<div class="rig-select"><span class="rig-select-label">Rig:</span>'
-           '<div class="lens-tabs" id="rig-tabs">']
+           _SPEED_GUIDE]
+    if has_cloning:
+        out.append('<div class="mode-select"><span class="rig-select-label">Voice:</span>'
+                   '<div class="lens-tabs" id="mode-tabs">'
+                   '<a class="lens-tab active" data-mode="default" href="#">Default voice</a>'
+                   '<a class="lens-tab" data-mode="cloning" href="#">Cloning</a>'
+                   '</div></div>')
+    out.append('<div class="rig-select"><span class="rig-select-label">Rig:</span>'
+               '<div class="lens-tabs" id="rig-tabs">')
     for rig in rig_slugs:
         cls = "lens-tab active" if rig == rig_slugs[0] else "lens-tab"
         out.append(f'<a class="{cls}" data-rig="{escape(rig)}" href="#">{escape(rig)}</a>')
@@ -629,6 +672,8 @@ def build_speed_hub():
     out.append(f'<script>window.__defaultSort = {{colIdx: {rtf_idx}, dir: -1}};</script>')
     out.append(SCRIPT)
     out.append(_RIG_TAB_SCRIPT)
+    if has_cloning:
+        out.append(_MODE_TAB_SCRIPT)
     out.append('</body></html>')
     (WORKTREE / "speed.html").write_text("\n".join(out), encoding="utf-8")
 
