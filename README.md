@@ -51,7 +51,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 **Fastest:**
 - CPU (Ryzen 9 9950X3D, Windows): **Piper** — 39ms warm TTFA, 47× RTF
 - CUDA (RTX 5090): **Kokoro** — 69ms warm TTFA, 101× RTF
-- CPU + MPS (Apple M4, 16 GB): **Piper** — 202ms warm TTFA, 33× RTF
+- CPU + MPS (Apple M4, 16 GB): **Piper** — 62ms warm TTFA, 33× RTF
 
 **Best sounding:** *No objective ranking right now — the NAQ score is paused pending redesign. Open the [Demos site](https://5uck1ess.github.io/tts-bench/) and use the Listen lens.*
 
