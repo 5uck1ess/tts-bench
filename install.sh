@@ -591,13 +591,24 @@ if [ ! -x venvs/fish/bin/python ]; then
     # Source clone of the v1.5.0 tag. The [stable] extras are intentionally
     # SKIPPED — they pin torch<=2.4.1, incompatible with Blackwell (sm_120) which
     # needs cu128 / torch 2.7+. Install fish-speech with no extras, hard-cap
-    # numpy<=1.26.4 (fish requirement), then reinstall torch cu128 LAST. On Mac/CPU
-    # the cu128 reinstall is harmless. The runner instantiates TTSInferenceEngine
-    # directly (NOT ModelManager — it has an unconditional funasr import to avoid).
+    # numpy<=1.26.4 (fish requirement), then reinstall torch cu128 LAST on CUDA
+    # rigs. The runner instantiates TTSInferenceEngine directly (NOT ModelManager
+    # — it has an unconditional funasr import to avoid).
     uv venv venvs/fish --python 3.10 || die "uv venv fish"
     if [ ! -d venvs/fish/src ]; then
         git clone --branch v1.5.0 https://github.com/fishaudio/fish-speech venvs/fish/src \
             || die "git clone fish-speech v1.5"
+    fi
+    # fish-speech pulls pyaudio, which compiles against portaudio. macOS has no
+    # system portaudio — install it via Homebrew and put its headers/libs on the
+    # compiler path, or the editable install fails with "'portaudio.h' file not found".
+    if [ "$(uname)" = "Darwin" ]; then
+        if command -v brew >/dev/null 2>&1 && brew list portaudio >/dev/null 2>&1; then
+            export CPATH="$(brew --prefix portaudio)/include:${CPATH:-}"
+            export LIBRARY_PATH="$(brew --prefix portaudio)/lib:${LIBRARY_PATH:-}"
+        else
+            yellow "fish: portaudio not found — run 'brew install portaudio' first (pyaudio build needs it)"
+        fi
     fi
     uv pip install --python venvs/fish/bin/python -e venvs/fish/src \
         || die "uv pip install fish-speech (no extras)"
@@ -605,8 +616,15 @@ if [ ! -x venvs/fish/bin/python ]; then
         || die "uv pip install numpy<=1.26.4 (fish hard cap)"
     uv pip install --python venvs/fish/bin/python soundfile \
         || die "uv pip install fish deps"
-    uv pip install --python venvs/fish/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 \
-        || die "torch cu128 for fish (LAST)"
+    # torch LAST: on CUDA Linux reinstall cu128 wheels (Blackwell sm_120). The cu128
+    # index ships NO macOS-arm64 wheel (resolve fails "unsatisfiable"), so on Mac keep
+    # the default torch the editable install already pulled.
+    if [ "$(uname)" = "Darwin" ]; then
+        :  # Mac: keep the default torch wheel (CPU/MPS)
+    else
+        uv pip install --python venvs/fish/bin/python --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 \
+            || die "torch cu128 for fish (LAST)"
+    fi
     uv run --python venvs/fish/bin/python -- hf download fishaudio/fish-speech-1.5 --local-dir venvs/fish/src/checkpoints/fish-speech-1.5 \
         || die "download fish-speech-1.5 weights"
     green "fish: ok"
