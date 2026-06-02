@@ -474,6 +474,7 @@ MODEL_DISPLAY_NAMES = {
     "vibevoice_7b":  "VibeVoice 7B",
     "metavoice":     "MetaVoice-1B",
     "step_editx":    "Step-Audio-EditX",
+    "echo":          "Echo-TTS",
 }
 
 
@@ -521,6 +522,7 @@ MODEL_SIZE = {
     "vibevoice_7b":  "7B",
     "metavoice":     "1.2B",
     "step_editx":    "3B",
+    "echo":          "2.8B",   # DiT generative model (safetensors count); +695M S1-DAC codec not counted (matches fish_15 convention)
 }
 
 # Whether a model supports zero-shot voice cloning at runtime.
@@ -565,6 +567,7 @@ MODEL_KIND = {
     "vibevoice_7b":  "cloning",
     "metavoice":     "cloning",
     "step_editx":    "cloning",
+    "echo":          "cloning",   # no preset voice — zero-shot clones from a reference wav
 }
 
 

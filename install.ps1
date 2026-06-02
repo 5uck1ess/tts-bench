@@ -529,6 +529,25 @@ if (-not (Test-Path "venvs\openvoice\Scripts\python.exe")) {
     Write-Host "openvoice: ok (zero-shot tone-color cloning, 22.05kHz; MeloTTS base + ToneColorConverter)" -ForegroundColor Green
 } else { Write-Host "openvoice: already installed" -ForegroundColor Gray }
 
+Step "Echo-TTS (Jordan Darefsky, DiT + Fish S1-DAC, 44.1k, cloning, CUDA-only)"
+if (-not (Test-Path "venvs\echo\Scripts\python.exe")) {
+    # Source-clone install: inference.py/model.py/autoencoder.py are imported from
+    # the cloned tree (no pip package). We DROP upstream's torchaudio + torchcodec —
+    # the runner stubs both in sys.modules and reimplements load_audio via
+    # soundfile + librosa; gradio (UI-only) is skipped too. librosa/scipy land via
+    # the shared NAQ-deps step below.
+    Invoke-Checked "uv venv echo" { uv venv venvs\echo --python 3.12 }
+    if (-not (Test-Path "venvs\echo\src")) {
+        Invoke-Checked "git clone echo-tts" { git clone --depth 1 https://github.com/jordandare/echo-tts venvs\echo\src }
+    }
+    Invoke-Checked "uv pip install echo-tts deps" { uv pip install --python venvs\echo\Scripts\python.exe huggingface-hub numpy safetensors einops soundfile }
+    # torch cu128 LAST (Blackwell sm_120). Unlike Linux, PyPI's Windows torch is
+    # CPU-only, so a normal resolution lands torch+cpu and the harness sees no CUDA.
+    # Force the cu128 index as the sole source for torch.
+    Invoke-Checked "torch cu128 for echo (LAST)" { uv pip install --python venvs\echo\Scripts\python.exe --reinstall-package torch "torch>=2.9.1" --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "echo: ok (echo-tts-base + fish-s1-dac-min weights auto-download from HF on first run; CUDA-only, bf16 DiT ~12GB)" -ForegroundColor Green
+} else { Write-Host "echo: already installed" -ForegroundColor Gray }
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.
