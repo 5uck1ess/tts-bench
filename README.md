@@ -68,44 +68,46 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 | Model | Params | Predefined | Cloning | Multilingual | SR | License |
 |---|---|---|---|---|---|---|
-| Piper | ~15M | ✓ | — | ✓ | 22.05k | MIT |
-| Kokoro | 82M | ✓ | — | ✓ | 24k | Apache 2.0 |
+| **Predefined voices** | | | | | | |
 | KittenTTS | <100M | ✓ | — | — | 24k | Apache 2.0 |
-| Magpie-TTS | 357M | ✓ | — | ✓ (9) | 22.05k | NVIDIA OML |
-| VibeVoice Realtime 0.5B | 0.5B | ✓ | — | — | 24k | MIT |
-| VibeVoice 1.5B | 1.5B | — | ✓ | — | 24k | MIT |
-| Supertonic | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
+| Kokoro | 82M | ✓ | — | ✓ | 24k | Apache 2.0 |
 | LuxTTS | 123M | ✓ | — | — | 22.05k | MIT |
+| Magpie-TTS | 357M | ✓ | — | ✓ (9) | 22.05k | NVIDIA OML |
+| Maya1 | 3B | ✓ (voice desc) | — | — | 24k | Apache 2.0 |
+| Piper | ~15M | ✓ | — | ✓ | 22.05k | MIT |
 | Soprano 80M | 80M | ✓ | — | — | 32k | Apache 2.0 |
-| Pocket-TTS | 100M | — | ✓ | — | 24k | Apache 2.0 |
+| Supertonic | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
+| VibeVoice Realtime 0.5B | 0.5B | ✓ | — | — | 24k | MIT |
+| Voxtral 4B TTS | 4B | ✓ (20) | ✓ | ✓ | 24k | CC-BY-NC 4.0 |
+| **Zero-shot cloning** | | | | | | |
 | ChatterBox | 1.2B | — | ✓ | — | 24k | MIT |
 | ChatterBox Turbo | 744M | — | ✓ | — | 24k | MIT |
-| F5-TTS | 330M | — | ✓ | ✓ | 24k | CC-BY-NC |
-| IndexTTS-2 | 1.5B | — | ✓ | ✓ | 24k | Apache 2.0 |
-| OmniVoice | ~1B | — | ✓ | ✓ (600+) | 24k | Apache 2.0 |
-| ZipVoice | 123M | — | ✓ | ✓ (zh+en) | 24k | Apache 2.0 |
-| VoxCPM2 | 2B | — | ✓ | ✓ (30) | **48k** | Apache 2.0 |
-| Sesame CSM-1B | 1B | — | ✓ | — | 24k | Apache 2.0 |
 | Coqui XTTS-v2 | 750M | — | ✓ | ✓ (17) | 24k | CPML (non-commercial) |
-| Qwen3-TTS Base | 1.7B | — | ✓ | ✓ | 24k | Apache 2.0 |
-| Qwen3-TTS 1.7B (CUDA-graph) | 1.7B | — | ✓ | ✓ | 24k | MIT |
-| Mars5-TTS | 1.2B | — | ✓ | — | 24k | AGPL-3.0 |
-| NeuTTS Air | 748M | — | ✓ | — | 24k | Apache 2.0 |
-| NeuTTS Nano | 229M | — | ✓ | — | 24k | Apache 2.0 |
 | Dia 1.6B | 1.6B | — | ✓ | — | 44.1k | Apache 2.0 |
-| MOSS-TTS-Nano | 100M | — | ✓ | ✓ (zh+en) | **48k** | Apache 2.0 |
-| MOSS-TTS | 8B (Qwen3) | — | ✓ | ✓ (20) | 24k | Apache 2.0 |
-| Maya1 | 3B | ✓ (voice desc) | — | — | 24k | Apache 2.0 |
-| Voxtral 4B TTS | 4B | ✓ (20) | ✓ | ✓ | 24k | CC-BY-NC 4.0 |
+| Echo-TTS | ~2.8B | — | ✓ | — | **44.1k** | CC-BY-NC-SA 4.0 |
+| F5-TTS | 330M | — | ✓ | ✓ | 24k | CC-BY-NC |
 | Fish Speech 1.5 | ~500M | — | ✓ | ✓ | **44.1k** | CC-BY-NC-SA 4.0 |
 | Fish Speech S2-Pro | 4B | — | ✓ | — | **44.1k** | Research (non-commercial) |
-| Echo-TTS | ~2.8B | — | ✓ | — | **44.1k** | CC-BY-NC-SA 4.0 |
-| Zonos v0.1 | 1.6B | — | ✓ | ✓ | **44.1k** | Apache 2.0 |
-| OpenVoice v2 | ~100M | — | ✓ | ✓ | 22.05k | MIT |
-| StyleTTS 2 | ~148M | — | ✓ | — | 24k | MIT |
-| VibeVoice 7B | 7B | — | ✓ | — | 24k | MIT |
+| IndexTTS-2 | 1.5B | — | ✓ | ✓ | 24k | Apache 2.0 |
+| Mars5-TTS | 1.2B | — | ✓ | — | 24k | AGPL-3.0 |
 | MetaVoice-1B | 1.2B | — | ✓ | — | **48k** | Apache 2.0 |
+| MOSS-TTS | 8B (Qwen3) | — | ✓ | ✓ (20) | 24k | Apache 2.0 |
+| MOSS-TTS-Nano | 100M | — | ✓ | ✓ (zh+en) | **48k** | Apache 2.0 |
+| NeuTTS Air | 748M | — | ✓ | — | 24k | Apache 2.0 |
+| NeuTTS Nano | 229M | — | ✓ | — | 24k | Apache 2.0 |
+| OmniVoice | ~1B | — | ✓ | ✓ (600+) | 24k | Apache 2.0 |
+| OpenVoice v2 | ~100M | — | ✓ | ✓ | 22.05k | MIT |
+| Pocket-TTS | 100M | — | ✓ | — | 24k | Apache 2.0 |
+| Qwen3-TTS Base | 1.7B | — | ✓ | ✓ | 24k | Apache 2.0 |
+| Qwen3-TTS 1.7B (CUDA-graph) | 1.7B | — | ✓ | ✓ | 24k | MIT |
+| Sesame CSM-1B | 1B | — | ✓ | — | 24k | Apache 2.0 |
 | Step-Audio-EditX | 3B | — | ✓ | — | 24k | Apache 2.0 |
+| StyleTTS 2 | ~148M | — | ✓ | — | 24k | MIT |
+| VibeVoice 1.5B | 1.5B | — | ✓ | — | 24k | MIT |
+| VibeVoice 7B | 7B | — | ✓ | — | 24k | MIT |
+| VoxCPM2 | 2B | — | ✓ | ✓ (30) | **48k** | Apache 2.0 |
+| ZipVoice | 123M | — | ✓ | ✓ (zh+en) | 24k | Apache 2.0 |
+| Zonos v0.1 | 1.6B | — | ✓ | ✓ | **44.1k** | Apache 2.0 |
 
 Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-issues.md)**. Models considered but excluded: **[docs/considered.md](docs/considered.md)**.
 
