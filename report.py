@@ -467,6 +467,7 @@ MODEL_DISPLAY_NAMES = {
     "voxtral":       "Voxtral 4B TTS",
     "fish_15":       "Fish Speech 1.5",
     "fish_s2":       "Fish Speech S2-Pro",
+    "echo":          "Echo-TTS",
     "zonos":         "Zonos v0.1",
     "openvoice":     "OpenVoice v2",
     "styletts2":     "StyleTTS 2",
@@ -513,6 +514,7 @@ MODEL_SIZE = {
     "voxtral":       "4B",
     "fish_15":       "~500M",
     "fish_s2":       "4B",
+    "echo":          "~2.8B",
     "zonos":         "1.6B",
     "openvoice":     "~100M",
     "styletts2":     "~148M",
@@ -556,6 +558,7 @@ MODEL_KIND = {
     "voxtral":       "cloning",      # cuda/vLLM path clones; MLX path preset-only
     "fish_15":       "cloning",
     "fish_s2":       "cloning",
+    "echo":          "cloning",
     "zonos":         "cloning",
     "openvoice":     "cloning",
     "styletts2":     "cloning",

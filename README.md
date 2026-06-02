@@ -64,7 +64,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (37)
+## Models tracked (38)
 
 | Model | Params | Predefined | Cloning | Multilingual | SR | License |
 |---|---|---|---|---|---|---|
@@ -99,6 +99,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | Voxtral 4B TTS | 4B | ✓ (20) | ✓ | ✓ | 24k | CC-BY-NC 4.0 |
 | Fish Speech 1.5 | ~500M | — | ✓ | ✓ | **44.1k** | CC-BY-NC-SA 4.0 |
 | Fish Speech S2-Pro | 4B | — | ✓ | — | **44.1k** | Research (non-commercial) |
+| Echo-TTS | ~2.8B | — | ✓ | — | **44.1k** | CC-BY-NC-SA 4.0 |
 | Zonos v0.1 | 1.6B | — | ✓ | ✓ | **44.1k** | Apache 2.0 |
 | OpenVoice v2 | ~100M | — | ✓ | ✓ | 22.05k | MIT |
 | StyleTTS 2 | ~148M | — | ✓ | — | 24k | MIT |
@@ -110,7 +111,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 > **Predefined vs Cloning.** *Predefined* models have fixed/selectable speaker voices baked into the weights — they speak with no reference needed. *Cloning* (zero-shot) models have **no voice of their own**: they synthesize whatever voice you hand them as a reference clip at inference. Given no reference, a pure zero-shot model falls back to a bundled sample (this bench uses `chris_hemsworth_15s.wav`), so its "default voice" is just a clone of that clip. A few models do both (e.g. Voxtral has 20 presets *and* cloning).
 
-> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX are Linux-only (CUDA). The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
+> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Echo-TTS are Linux-only (CUDA). The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
 
 ---
 
