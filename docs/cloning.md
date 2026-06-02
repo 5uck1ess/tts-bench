@@ -37,7 +37,7 @@ Numbers tell you which model is fast; ears tell you which one is *good*. After a
 9. **NeuTTS Air / Nano** — **doesn't work for cloning** in this test (output unrelated to reference voice, plus the long-form truncation issue from the compare pass). Keep for default-voice usage.
 10. **MARS5-TTS** — **doesn't work** — output didn't match the reference, plus 0.1× warm RTF makes it unusable regardless. Bottom of the list.
 
-Pocket-TTS isn't ranked here — it's CPU-only and its gated cloning path produced unusable artifacts in the earlier compare pass.
+Pocket-TTS wasn't in this May listening pass (its gated, CPU-only cloning was too artifacted in the even-earlier `compare.py` run). It has since been benched for cloning across all rigs — wavs for all 5 prompts — and is included in the voting study, landing mid-pack rather than unusable.
 
 These are first-pass impressions on a single reference; replication with another reference (e.g. a clean female voice) recommended before treating the ordering as definitive — especially the middle of the pack.
 
