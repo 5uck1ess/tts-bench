@@ -65,6 +65,10 @@ MODELS = [
     # can_clone=True is for the cross-rig cuda path; the MLX runner fails a
     # --reference cell cleanly rather than mislabeling default-voice audio.
     ("voxtral",     "voxtral",    "runners/voxtral_runner.py",    True,  ["cpu", "cuda", "mps"], None,   True),
+    # Echo-TTS (Jordan Darefsky): DiT flow-matching + Fish S1-DAC autoencoder, 44.1kHz,
+    # zero-shot cloning. CUDA-only (40-step diffusion over a 2B-class DiT; torchcodec
+    # decode path). English. Weights+outputs CC-BY-NC-SA-4.0 (same NC class as fish_*).
+    ("echo",        "echo",       "runners/echo_runner.py",       False, ["cuda"],               None,   True),
 ]
 
 

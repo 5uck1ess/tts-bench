@@ -56,6 +56,7 @@ MODEL_MULTILINGUAL = {
 NO_PRESET_VOICE = {
     "moss_tts", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
     "openvoice", "zipvoice", "zonos", "vibevoice_15b", "vibevoice_7b",
+    "echo",
 }
 
 # Curated per-(model, voice-mode) QA findings, surfaced as a ⚠ badge + tooltip on

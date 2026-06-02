@@ -490,6 +490,35 @@ else
     echo "moss_tts: already installed"
 fi
 
+# --- Echo-TTS (Jordan Darefsky, CC-BY-NC-SA-4.0, DiT flow-matching, 44.1k, zero-shot cloning) ---
+echo; cyan "=== Echo-TTS (Jordan Darefsky, DiT + Fish S1-DAC, 44.1k, cloning, CUDA-only) ==="
+if [ ! -x venvs/echo/bin/python ]; then
+    # Source-clone install: inference.py/model.py/autoencoder.py/samplers.py are imported
+    # from the tree (no pip package). requirements.txt pins torch>=2.9.1 + torchcodec>=0.8.1.
+    uv venv venvs/echo --python 3.12 || die "uv venv echo"
+    if [ ! -d venvs/echo/src ]; then
+        git clone --depth 1 https://github.com/jordandare/echo-tts venvs/echo/src \
+            || die "git clone echo-tts"
+    fi
+    # The model + autoencoder are pure torch (SDPA built-in, no flash_attn). We
+    # deliberately DROP upstream's torchaudio + torchcodec deps: torchcodec routes
+    # audio decode through FFmpeg shared libs and only supports FFmpeg 4-7, but this
+    # box has FFmpeg 8 (linuxbrew); and the torch>=2.9 resolution lands on a torch
+    # whose matching torchaudio wheel is ABI-broken. Neither is needed — inference.py
+    # imports them at module level (the runner stubs both in sys.modules) and the only
+    # real use (load_audio's torchcodec decode) is reimplemented in the runner via
+    # soundfile + librosa. gradio (UI-only) is skipped too. librosa/scipy land via the
+    # shared NAQ-deps step below.
+    uv pip install --python venvs/echo/bin/python \
+        --extra-index-url https://download.pytorch.org/whl/cu128 \
+        --index-strategy unsafe-best-match \
+        torch huggingface-hub numpy safetensors einops soundfile \
+        || die "uv pip install echo-tts deps"
+    green "echo: ok (echo-tts-base + fish-s1-dac-min weights auto-download from HF on first run; CUDA-only, bf16 DiT ~12GB)"
+else
+    echo "echo: already installed"
+fi
+
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
 if [ ! -x venvs/supertonic/bin/python ]; then
