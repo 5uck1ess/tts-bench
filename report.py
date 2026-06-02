@@ -487,7 +487,7 @@ MODEL_SIZE = {
     "pocket":        "100M",
     "neutts_air":    "748M",
     "neutts_nano":   "229M",
-    "luxtts":        "—",
+    "luxtts":        "123M",
     "chatterbox":       "1.2B",
     "chatterbox_turbo": "744M",
     "f5tts":         "330M",

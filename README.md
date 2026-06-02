@@ -75,7 +75,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | VibeVoice Realtime 0.5B | 0.5B | ✓ | — | — | 24k | MIT |
 | VibeVoice 1.5B | 1.5B | — | ✓ | — | 24k | MIT |
 | Supertonic | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
-| LuxTTS | ~123M | ✓ | — | — | 22.05k | MIT |
+| LuxTTS | 123M | ✓ | — | — | 22.05k | MIT |
 | Soprano 80M | 80M | ✓ | — | — | 32k | Apache 2.0 |
 | Pocket-TTS | 100M | — | ✓ | — | 24k | Apache 2.0 |
 | ChatterBox | 1.2B | — | ✓ | — | 24k | MIT |
