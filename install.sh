@@ -524,12 +524,14 @@ echo; cyan "=== MiraTTS (Yatharth Sharma, 0.5B LLM-TTS + FastBiCodec, 48k, cloni
 if [ ! -x venvs/miratts/bin/python ]; then
     # pip package (project name FastNeuTTS). Pulls lmdeploy (TurboMind) + the author's
     # git deps ncodec (FastBiCodec) + fastaudiosr (FlashSR 48k upsampler) + onnxruntime-gpu.
-    # omegaconf is needed by the codec but under-declared upstream — add it explicitly.
+    # omegaconf + torchaudio are needed by the codec/FlashSR upsampler but under-declared
+    # upstream (lmdeploy pulls torch but not torchaudio) — add them explicitly, else the
+    # runner dies at import with "No module named 'torchaudio'".
     # On Linux the PyPI torch lmdeploy pulls is already CUDA-enabled (no cu128 swap needed,
     # unlike Windows); the 3090 (Ampere) is within lmdeploy's documented GPU support.
     uv venv venvs/miratts --python 3.12 || die "uv venv miratts"
     uv pip install --python venvs/miratts/bin/python \
-        "git+https://github.com/ysharma3501/MiraTTS.git" soundfile omegaconf \
+        "git+https://github.com/ysharma3501/MiraTTS.git" soundfile omegaconf torchaudio \
         || die "uv pip install MiraTTS"
     green "miratts: ok (YatharthS/MiraTTS + FastBiCodec + FlashSR weights auto-download from HF on first run; CUDA-only, lmdeploy TurboMind)"
 else
