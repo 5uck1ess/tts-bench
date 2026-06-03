@@ -40,10 +40,6 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 1,coqui,mps,,True,0,True,3739.4,3.7394,2.827,0.76,1916.9,,24.406,True,
 1,coqui,mps,,True,1,False,1442.3,1.4423,2.87,1.99,1949.2,,0,True,
 1,coqui,mps,,True,2,False,1312.5,1.3125,2.689,2.05,1989.9,,0,True,
-1,omnivoice,cpu,,True,0,True,26707.4,26.7074,2.0,0.07,3326.9,,85.27,True,
-1,omnivoice,cpu,,True,1,False,23731.0,23.731,2.08,0.09,3603.4,,0,True,
-1,omnivoice,cpu,,True,2,False,23839.3,23.8393,1.97,0.08,3595.7,,0,True,
-1,omnivoice,mps,,True,0,True,,,,,,,19.523,False,"RuntimeError: MPS backend out of memory (MPS allocated: 3.38 GiB, other allocations: 16.73 GiB, max allowed: 20.13 GiB). Tried to allocate 10.43 MiB on shared pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATI"
 1,voxcpm,cpu,,True,0,True,,,,,,,603.24,False,timeout 600s
 1,qwentts,cpu,base,True,0,True,17275.9,17.2759,2.16,0.13,2585.6,,52.97,True,
 1,qwentts,cpu,base,True,1,False,7553.3,7.5533,1.68,0.22,9542.8,,0,True,
@@ -96,11 +92,6 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 2,coqui,mps,,True,0,True,4049.5,4.0495,5.654,1.4,539.0,,28.18,True,
 2,coqui,mps,,True,1,False,2621.3,2.6213,4.683,1.79,788.8,,0,True,
 2,coqui,mps,,True,2,False,2851.8,2.8518,5.43,1.9,861.3,,0,True,
-2,omnivoice,cpu,,True,0,True,50803.3,50.8033,4.6,0.09,2411.8,,114.99,True,
-2,omnivoice,cpu,,True,1,False,28743.0,28.743,4.58,0.16,3438.0,,0,True,
-2,omnivoice,cpu,,True,2,False,27846.5,27.8465,4.6,0.17,3439.0,,0,True,
-2,omnivoice,mps,,True,0,True,26020.6,26.0206,4.6,0.18,515.4,,50.444,True,
-2,omnivoice,mps,,True,1,False,,,,,,,0,False,"RuntimeError: MPS backend out of memory (MPS allocated: 3.52 GiB, other allocations: 16.60 GiB, max allowed: 20.13 GiB). Tried to allocate 8.16 MiB on shared pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATIO"
 2,voxcpm,cpu,,True,0,True,,,,,,,609.819,False,timeout 600s
 2,qwentts,cpu,base,True,0,True,21067.5,21.0675,4.64,0.22,3609.5,,74.588,True,
 2,qwentts,cpu,base,True,1,False,18026.9,18.0269,4.72,0.26,2504.7,,0,True,
@@ -153,10 +144,6 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 3,coqui,mps,,True,0,True,42826.5,42.8265,15.969,0.37,686.7,,107.148,True,
 3,coqui,mps,,True,1,False,27398.8,27.3988,17.366,0.63,1191.4,,0,True,
 3,coqui,mps,,True,2,False,13584.0,13.584,18.891,1.39,1415.1,,0,True,
-3,omnivoice,cpu,,True,0,True,44086.0,44.086,13.16,0.3,4252.8,,133.49,True,
-3,omnivoice,cpu,,True,1,False,41023.6,41.0236,13.16,0.32,4269.7,,0,True,
-3,omnivoice,cpu,,True,2,False,41186.8,41.1868,13.16,0.32,4270.4,,0,True,
-3,omnivoice,mps,,True,0,True,,,,,,,29.53,False,"RuntimeError: MPS backend out of memory (MPS allocated: 3.29 GiB, other allocations: 16.81 GiB, max allowed: 20.13 GiB). Tried to allocate 71.44 MiB on shared pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATI"
 3,voxcpm,cpu,,True,0,True,,,,,,,604.077,False,timeout 600s
 3,qwentts,cpu,base,True,0,True,46767.8,46.7678,14.4,0.31,3745.9,,142.567,True,
 3,qwentts,cpu,base,True,1,False,39329.1,39.3291,13.6,0.35,4034.9,,0,True,
@@ -209,10 +196,6 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 4,coqui,mps,,True,0,True,6196.3,6.1963,7.798,1.26,370.4,,43.606,True,
 4,coqui,mps,,True,1,False,7481.1,7.4811,8.257,1.1,709.9,,0,True,
 4,coqui,mps,,True,2,False,7163.8,7.1638,8.353,1.17,769.7,,0,True,
-4,omnivoice,cpu,,True,0,True,31861.5,31.8615,5.04,0.16,3588.1,,95.553,True,
-4,omnivoice,cpu,,True,1,False,28913.7,28.9137,5.04,0.17,3674.5,,0,True,
-4,omnivoice,cpu,,True,2,False,29262.6,29.2626,5.04,0.17,3675.6,,0,True,
-4,omnivoice,mps,,True,0,True,,,,,,,17.599,False,"RuntimeError: MPS backend out of memory (MPS allocated: 4.32 GiB, other allocations: 15.79 GiB, max allowed: 20.13 GiB). Tried to allocate 33.16 MiB on shared pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATI"
 4,voxcpm,cpu,,True,0,True,,,,,,,606.288,False,timeout 600s
 4,qwentts,cpu,base,True,0,True,27585.7,27.5857,6.96,0.25,2999.2,,94.0,True,
 4,qwentts,cpu,base,True,1,False,21910.6,21.9106,5.84,0.27,2666.5,,0,True,
@@ -239,10 +222,6 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 5,coqui,mps,,True,0,True,3496.6,3.4966,5.014,1.43,483.6,,25.81,True,
 5,coqui,mps,,True,1,False,2142.5,2.1425,3.99,1.86,740.6,,0,True,
 5,coqui,mps,,True,2,False,2012.3,2.0123,3.99,1.98,714.7,,0,True,
-5,omnivoice,cpu,,True,0,True,29653.5,29.6535,4.12,0.14,3525.6,,89.44,True,
-5,omnivoice,cpu,,True,1,False,27004.5,27.0045,4.12,0.15,3612.4,,0,True,
-5,omnivoice,cpu,,True,2,False,27315.3,27.3153,4.12,0.15,3617.8,,0,True,
-5,omnivoice,mps,,True,0,True,,,,,,,18.133,False,"RuntimeError: MPS backend out of memory (MPS allocated: 4.32 GiB, other allocations: 15.78 GiB, max allowed: 20.13 GiB). Tried to allocate 31.78 MiB on shared pool. Use PYTORCH_MPS_HIGH_WATERMARK_RATI"
 5,voxcpm,cpu,,True,0,True,,,,,,,609.799,False,timeout 600s
 5,qwentts,cpu,base,True,0,True,22014.7,22.0147,4.16,0.19,2734.3,,67.855,True,
 5,qwentts,cpu,base,True,1,False,16610.2,16.6102,4.24,0.26,2485.5,,0,True,
@@ -368,3 +347,13 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 5,openvoice,mps,,True,0,True,2074.4,2.0744,4.505,2.17,,,9.349,True,
 5,openvoice,mps,,True,1,False,840.9,0.8409,4.423,5.26,,,0,True,
 5,openvoice,mps,,True,2,False,825.0,0.825,4.54,5.5,,,0,True,
+1,omnivoice,cpu,,True,0,True,30612.5,30.6125,2.51,0.08,3389.5,,35.615,True,
+1,omnivoice,mps,,True,0,True,21511.2,21.5112,2.68,0.12,513.3,,27.677,True,
+2,omnivoice,cpu,,True,0,True,35396.2,35.3962,6.6,0.19,3687.8,,40.2,True,
+2,omnivoice,mps,,True,0,True,27329.0,27.329,6.54,0.24,1007.7,,32.987,True,
+3,omnivoice,cpu,,True,0,True,55375.4,55.3754,18.94,0.34,4635.0,,60.757,True,
+3,omnivoice,mps,,True,0,True,,,,,,,40.275,False,"no json in stdout. stderr: Loading weights: 100%|██████████| 527/527 [00:00<00:00, 30581.05it/s] /Users/anotherlostsoul/.local/share/uv/python/cpython-3.11.15-macos-aarch64-none/lib/python3.11/multipr"
+4,omnivoice,cpu,,True,0,True,37611.2,37.6112,7.17,0.19,3767.8,,44.776,True,
+4,omnivoice,mps,,True,0,True,28181.8,28.1818,7.24,0.26,746.2,,34.581,True,
+5,omnivoice,cpu,,True,0,True,38782.8,38.7828,4.61,0.12,3644.3,,43.943,True,
+5,omnivoice,mps,,True,0,True,27297.8,27.2978,5.92,0.22,808.5,,33.025,True,
