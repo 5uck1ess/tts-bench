@@ -30,7 +30,6 @@ import sys
 import time
 
 import _meminfo
-import _naq
 
 
 # Auto-accept Coqui Public Model License (non-commercial). Must be set before
@@ -100,7 +99,6 @@ def main() -> int:
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
                 **_meminfo.sample(args.device),
-                **(_naq.score(out_path) if write_wav else {"naq": None, "naq_artifact": None, "naq_naturalness": None}),
             }), flush=True)
             return True
         except Exception as e:

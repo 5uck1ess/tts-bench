@@ -68,7 +68,6 @@ def _ensure_ffmpeg_libs():
 _ensure_ffmpeg_libs()
 
 import _meminfo
-import _naq
 
 SAMPLE_RATE = 24000
 HF_REPO = "k2-fsa/ZipVoice"
@@ -268,11 +267,6 @@ def main() -> int:
                 "ttfa_ms": gen_s * 1000,
                 "gen_s": gen_s, "audio_s": audio_s,
                 **_meminfo.sample(args.device),
-                **(
-                    _naq.score(out_path)
-                    if write_wav
-                    else {"naq": None, "naq_artifact": None, "naq_naturalness": None}
-                ),
             }), flush=True)
             return True
         except Exception as e:

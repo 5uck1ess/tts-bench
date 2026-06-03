@@ -39,7 +39,6 @@ import time
 from pathlib import Path
 
 import _meminfo
-import _naq
 
 
 def _read_ref_transcript(ref_wav: str) -> str | None:
@@ -173,8 +172,6 @@ def main() -> int:
                 "gen_s": gen_s,
                 "audio_s": audio_s,
                 **_meminfo.sample(args.device),
-                **(_naq.score(out_path) if write_wav else
-                   {"naq": None, "naq_artifact": None, "naq_naturalness": None}),
             }), flush=True)
             return True
 

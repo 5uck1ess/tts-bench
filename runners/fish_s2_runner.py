@@ -26,7 +26,6 @@ import time
 from pathlib import Path
 
 import _meminfo
-import _naq
 
 # KV-cache length cap. The model's native max_seq_len is 32768, which makes
 # setup_caches allocate a ~6 GB KV cache (total peak ~21.4 GB on a 3090). Bench
@@ -131,7 +130,6 @@ def main() -> int:
                 "ttfa_ms": (t_end - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
                 **_meminfo.sample(args.device),
-                **(_naq.score(out_path) if write_wav else {"naq": None, "naq_artifact": None, "naq_naturalness": None}),
             }), flush=True)
             return True
         except Exception as e:

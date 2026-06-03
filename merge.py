@@ -33,8 +33,7 @@ from harness import REPO
 # Must match bench.py's writer fieldnames exactly.
 FIELDNAMES = ["prompt_id", "model", "device", "variant", "can_clone",
               "run_index", "is_cold", "ttfa_ms", "gen_s", "audio_s", "rtf",
-              "peak_mem_mb", "peak_vram_mb", "naq", "naq_artifact",
-              "naq_naturalness", "wall_s", "ok", "error"]
+              "peak_mem_mb", "peak_vram_mb", "wall_s", "ok", "error"]
 
 
 def _read_csv(path: Path):

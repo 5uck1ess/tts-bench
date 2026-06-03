@@ -17,7 +17,6 @@ import time
 from pathlib import Path
 
 import _meminfo
-import _naq
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -83,7 +82,6 @@ def main() -> int:
                 "gen_s": t_end - t0,
                 "audio_s": audio_s,
                 **_meminfo.sample(args.device),
-                **(_naq.score(args.out) if i == 0 else {"naq": None, "naq_artifact": None, "naq_naturalness": None}),
             }), flush=True)
         except Exception as e:
             print(json.dumps({
