@@ -66,9 +66,10 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ## Models tracked (38)
 
+#### Predefined voices
+
 | Model | Params | Predefined | Cloning | Multilingual | SR | License |
 |---|---|---|---|---|---|---|
-| **Predefined voices** | | | | | | |
 | KittenTTS | <100M | ✓ | — | — | 24k | Apache 2.0 |
 | Kokoro | 82M | ✓ | — | ✓ | 24k | Apache 2.0 |
 | LuxTTS | 123M | ✓ | — | — | 22.05k | MIT |
@@ -79,7 +80,11 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | Supertonic | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
 | VibeVoice Realtime 0.5B | 0.5B | ✓ | — | — | 24k | MIT |
 | Voxtral 4B TTS | 4B | ✓ (20) | ✓ | ✓ | 24k | CC-BY-NC 4.0 |
-| **Zero-shot cloning** | | | | | | |
+
+#### Zero-shot cloning
+
+| Model | Params | Predefined | Cloning | Multilingual | SR | License |
+|---|---|---|---|---|---|---|
 | ChatterBox | 1.2B | — | ✓ | — | 24k | MIT |
 | ChatterBox Turbo | 744M | — | ✓ | — | 24k | MIT |
 | Coqui XTTS-v2 | 750M | — | ✓ | ✓ (17) | 24k | CPML (non-commercial) |
