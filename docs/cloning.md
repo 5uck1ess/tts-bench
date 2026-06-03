@@ -22,23 +22,48 @@ python speak.py chatterbox --reference reference/myvoice.wav
 
 ## Cloning quality ranking
 
-> **Update (June 2026):** the list below is a *first-pass subjective* impression from a single May-2026 listening pass (10 models, one reference). It's being superseded by a **blind pairwise voting study** (human-preference Elo over all 30 cloning-capable models). Early standings agree at the top — **Echo-TTS** and **OmniVoice** lead — but treat the ordering below as preliminary until the vote-based ranking is published.
+Ranked by a **blind pairwise voting study** — human-preference 2AFC over the cloning-capable models, fit to Bradley-Terry strengths. Each listener hears two anonymized clones of the same reference (`chris_hemsworth_15s.wav`, 5 prompts) and picks the better one; `tie` and `bad` (both-unusable) votes are recorded too. **325 votes** as of June 2026. W-L-T = wins / losses / ties.
 
-Numbers tell you which model is fast; ears tell you which one is *good*. After a full listening pass on the RTX 5090 cloning bench ([`2026-05-24_0154`](https://5uck1ess.github.io/tts-bench/2026-05-24_0154/report.html), `chris_hemsworth_15s.wav` reference, 5 prompts × every cloning-capable model), ranked best → worst by accent preservation and naturalness:
+| # | Model | W-L-T | Games |
+|---|---|---|---|
+| 1 | **OmniVoice** | 20-1-2 | 23 |
+| 2 | **Echo-TTS** | 18-1-4 | 23 |
+| 3 | **IndexTTS-2** | 14-2-3 | 19 |
+| 4 | MOSS-TTS | 14-3-2 | 19 |
+| 5 | F5-TTS | 19-5-2 | 26 |
+| 6 | Qwen3-TTS 1.7B (CUDA-graph) | 10-4-1 | 15 |
+| 7 | Pocket-TTS | 12-7-4 | 23 |
+| 8 | Fish Speech S2-Pro | 11-4-7 | 22 |
+| 9 | VoxCPM2 | 9-6-1 | 16 |
+| 10 | Zonos v0.1 | 11-8-0 | 19 |
+| 11 | VibeVoice 1.5B | 9-7-1 | 17 |
+| 12 | ChatterBox Turbo | 11-4-4 | 19 |
+| 13 | ChatterBox | 10-6-5 | 21 |
+| 14 | MOSS-TTS-Nano | 12-9-2 | 23 |
+| 15 | Sesame CSM-1B | 8-8-2 | 18 |
+| 16 | VibeVoice 7B | 3-5-2 | 10 † |
+| 17 | Fish Speech 1.5 | 7-7-0 | 14 |
+| 18 | Dia 1.6B | 4-11-0 | 15 |
+| 19 | Qwen3-TTS Base | 3-4-0 | 7 † |
+| 20 | Step-Audio-EditX | 3-12-1 | 16 |
+| 21 | NeuTTS Nano | 3-12-1 | 16 |
+| 22 | ZipVoice | 2-12-0 | 14 |
+| 23 | StyleTTS 2 | 2-14-0 | 16 |
+| 24 | MetaVoice-1B | 1-7-0 | 8 † |
+| 25 | LuxTTS | 1-14-0 | 15 |
+| 26 | Coqui XTTS-v2 | 0-10-0 | 10 † |
+| 27 | Mars5-TTS | 0-17-0 | 17 |
+| 28 | NeuTTS Air | 0-8-0 | 8 † |
+| 29 | OpenVoice v2 | 0-9-0 | 9 † |
 
-1. **OmniVoice — #1.** Keeps Chris Hemsworth's Australian accent better than any other model, prosody natural. Some artifacts in the audio but the cloned voice itself is the closest match to the reference.
-2. **ChatterBox** — strong second. Keeps the accent well, clean output. Trade-off vs OmniVoice is mostly RTF (2× warm vs 9.2×).
-3. **IndexTTS-2** — also good, accent preserved. Slower than the top two (1.1× warm RTF) but the quality holds.
-4. **F5-TTS** — decent on timbre, **prosody is the weak point** — phrasing feels off / unnatural pauses. Best cloning RTF after OmniVoice though (5.3×).
-5. **VoxCPM2** — sounds okay as a general TTS but **cloning isn't its strong suit**; the cloned voice drifts from the reference. Use it for default-voice multilingual instead.
-6. **Sesame CSM-1B** — accent comes through but the voice doesn't come out as **deep as the reference**, and it inserts **fake pauses** mid-sentence (likely an artifact of being trained on conversational turn chunks).
-7. **Coqui XTTS-v2** — multilingual baseline. Cloning behind ChatterBox/IndexTTS/F5.
-8. **Qwen3-TTS (`qwentts_fast`)** — mid. Competent TTS but **cloning fidelity is weak**; timbre wanders from the reference. (The base `qwentts` no longer exposes a cloning path — predefined-only now; the runaway/600s-timeout that plagued the old base cloning attempt was fixed in `qwentts_fast` via `non_streaming_mode`.)
-9. **NeuTTS Air / Nano** — **doesn't work for cloning** in this test (output unrelated to reference voice, plus the long-form truncation issue from the compare pass). Keep for default-voice usage.
-10. **MARS5-TTS** — **doesn't work** — output didn't match the reference, plus 0.1× warm RTF makes it unusable regardless. Bottom of the list.
+† fewer than ~12 games — that row's position is still noisy. Voxtral isn't ranked here: its cloning path is Linux-only (vLLM) and so isn't in this Windows cloning set, which is 29 of the 30 cloning-capable models.
 
-Pocket-TTS wasn't in this May listening pass (its gated, CPU-only cloning was too artifacted in the even-earlier `compare.py` run). It has since been benched for cloning across all rigs — wavs for all 5 prompts — and is included in the voting study, landing mid-pack rather than unusable.
+**What the votes say:**
 
-These are first-pass impressions on a single reference; replication with another reference (e.g. a clean female voice) recommended before treating the ordering as definitive — especially the middle of the pack.
+- **The top is robust.** OmniVoice and Echo-TTS each lost exactly one game out of 23 — effectively tied for first, and clear of the field. IndexTTS-2, MOSS-TTS, and F5-TTS form a solid second tier.
+- **The May ear-test was wrong about the middle.** A first-pass single-reference listen had ranked ChatterBox #2; the blind votes drop it to 13th (10-6-5). It's fine, not special. Trust the votes over that early impression.
+- **F5-TTS** rides on timbre but its **prosody is the weak point** — phrasing/pauses feel off — which is why it sits behind the leaders despite a strong 19-5 record.
+- **VoxCPM2 and Sesame CSM-1B** clone passably but drift from the reference — VoxCPM's timbre wanders, Sesame inserts **fake pauses** mid-sentence (a conversational-chunk training artifact). Mid-pack.
+- **The zero-win tail doesn't clone.** Coqui XTTS-v2, Mars5-TTS, NeuTTS Air, and OpenVoice v2 went winless — their output doesn't match the reference voice in this study. Mars5 is unusable regardless (0.1× warm RTF). NeuTTS Air/Nano also hit long-form truncation. Keep the NeuTTS/Coqui models for **default-voice** use, not cloning.
 
-> A data-driven ranking from the blind pairwise voting study (human-preference Elo) will replace these subjective impressions once enough votes are in across raters.
+These standings are on a **single reference** (`chris_hemsworth_15s.wav`). Replication with another reference (e.g. a clean female voice) is recommended before treating the mid-pack as definitive — the top and bottom tiers are robust, the middle is where another reference could reshuffle.

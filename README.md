@@ -55,10 +55,10 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 **Best sounding:** *No objective ranking right now — the NAQ score is paused pending redesign. Open the [Demos site](https://5uck1ess.github.io/tts-bench/) and use the Listen lens.*
 
-**Best cloning (subjective rank):**
-- 1. **OmniVoice** — accent preserved, top of listening test
-- 2. **ChatterBox** — strong second, clean output
-- 3. **IndexTTS-2** — also good, accent preserved
+**Best cloning (blind A/B votes):**
+- 1. **OmniVoice** — top of the blind vote (20-1-2), accent preserved
+- 2. **Echo-TTS** — near-tied #1 (18-1-4), clean 44.1 kHz
+- 3. **IndexTTS-2** — third (14-2-3), accent held
 
 [→ full per-rig results](docs/results.md) · [→ full cloning ranking](docs/cloning.md)
 
@@ -128,7 +128,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 **30 of the 40 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
-Reference-format docs + the subjective cloning ranking (10 models ranked by ear so far): **[docs/cloning.md](docs/cloning.md)**.
+Reference-format docs + the blind-vote cloning ranking (29 of 30 cloning models, human-preference A/B): **[docs/cloning.md](docs/cloning.md)**.
 
 ---
 
@@ -147,7 +147,7 @@ If you reproduce on different hardware, file an issue or PR with your results an
 ## Docs
 
 - [Full results tables](docs/results.md) — per-rig, per-prompt, per-model
-- [Cloning ranking](docs/cloning.md) — reference formats + subjective ranking (10 of 30 cloning models ranked so far)
+- [Cloning ranking](docs/cloning.md) — reference formats + blind-vote ranking (29 of 30 cloning models, human-preference A/B)
 - [Architecture](docs/architecture.md) — bench design, runner protocol, adding a model
 - [Known issues](docs/known-issues.md) — per-model gotchas + per-license table
 - [Considered but skipped](docs/considered.md) — models evaluated and excluded
