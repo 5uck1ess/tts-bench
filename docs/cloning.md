@@ -22,48 +22,48 @@ python speak.py chatterbox --reference reference/myvoice.wav
 
 ## Cloning quality ranking
 
-Ranked by a **blind pairwise voting study** — human-preference 2AFC over the cloning-capable models, fit to Bradley-Terry strengths. Each listener hears two anonymized clones of the same reference (`chris_hemsworth_15s.wav`, 5 prompts) and picks the better one; `tie` and `bad` (both-unusable) votes are recorded too. **325 votes** as of June 2026. W-L-T = wins / losses / ties.
+Ranked by a **blind pairwise voting study** — human-preference 2AFC over the cloning-capable models, fit to Bradley-Terry strengths. Each listener hears two anonymized clones of the same reference (`chris_hemsworth_15s.wav`, 5 prompts) and picks the better one; `tie` and `bad` (both-unusable) votes are recorded too. **397 votes** as of June 2026. W-L-T = wins / losses / ties.
 
 | # | Model | W-L-T | Games |
 |---|---|---|---|
-| 1 | **OmniVoice** | 20-1-2 | 23 |
-| 2 | **Echo-TTS** | 18-1-4 | 23 |
-| 3 | **IndexTTS-2** | 14-2-3 | 19 |
-| 4 | MOSS-TTS | 14-3-2 | 19 |
-| 5 | F5-TTS | 19-5-2 | 26 |
-| 6 | Qwen3-TTS 1.7B (CUDA-graph) | 10-4-1 | 15 |
-| 7 | Pocket-TTS | 12-7-4 | 23 |
-| 8 | Fish Speech S2-Pro | 11-4-7 | 22 |
-| 9 | VoxCPM2 | 9-6-1 | 16 |
-| 10 | Zonos v0.1 | 11-8-0 | 19 |
-| 11 | VibeVoice 1.5B | 9-7-1 | 17 |
-| 12 | ChatterBox Turbo | 11-4-4 | 19 |
-| 13 | ChatterBox | 10-6-5 | 21 |
-| 14 | MOSS-TTS-Nano | 12-9-2 | 23 |
-| 15 | Sesame CSM-1B | 8-8-2 | 18 |
-| 16 | VibeVoice 7B | 3-5-2 | 10 † |
-| 17 | Fish Speech 1.5 | 7-7-0 | 14 |
-| 18 | Dia 1.6B | 4-11-0 | 15 |
-| 19 | Qwen3-TTS Base | 3-4-0 | 7 † |
-| 20 | Step-Audio-EditX | 3-12-1 | 16 |
-| 21 | NeuTTS Nano | 3-12-1 | 16 |
-| 22 | ZipVoice | 2-12-0 | 14 |
-| 23 | StyleTTS 2 | 2-14-0 | 16 |
-| 24 | MetaVoice-1B | 1-7-0 | 8 † |
-| 25 | LuxTTS | 1-14-0 | 15 |
-| 26 | Coqui XTTS-v2 | 0-10-0 | 10 † |
-| 27 | Mars5-TTS | 0-17-0 | 17 |
-| 28 | NeuTTS Air | 0-8-0 | 8 † |
-| 29 | OpenVoice v2 | 0-9-0 | 9 † |
+| 1 | **OmniVoice** | 24-1-3 | 28 |
+| 2 | **Echo-TTS** | 21-1-6 | 28 |
+| 3 | **IndexTTS-2** | 16-2-5 | 23 |
+| 4 | F5-TTS | 19-5-2 | 26 |
+| 5 | MOSS-TTS | 18-4-2 | 24 |
+| 6 | Qwen3-TTS 1.7B (CUDA-graph) | 13-4-1 | 18 |
+| 7 | Fish Speech S2-Pro | 14-4-7 | 25 |
+| 8 | Pocket-TTS | 13-9-4 | 26 |
+| 9 | Zonos v0.1 | 12-8-1 | 21 |
+| 10 | VibeVoice 1.5B | 12-7-1 | 20 |
+| 11 | VoxCPM2 | 11-6-1 | 18 |
+| 12 | ChatterBox Turbo | 12-4-4 | 20 |
+| 13 | MOSS-TTS-Nano | 14-9-2 | 25 |
+| 14 | ChatterBox | 12-9-5 | 26 |
+| 15 | VibeVoice 7B | 7-7-2 | 16 |
+| 16 | Sesame CSM-1B | 9-9-2 | 20 |
+| 17 | Dia 1.6B | 4-15-0 | 19 |
+| 18 | Fish Speech 1.5 | 7-13-0 | 20 |
+| 19 | Step-Audio-EditX | 3-13-1 | 17 |
+| 20 | NeuTTS Nano | 3-13-1 | 17 |
+| 21 | ZipVoice | 3-14-0 | 17 |
+| 22 | StyleTTS 2 | 2-15-0 | 17 |
+| 23 | MetaVoice-1B | 1-10-0 | 11 † |
+| 24 | LuxTTS | 1-16-0 | 17 |
+| 25 | Coqui XTTS-v2 | 0-12-0 | 12 † |
+| 26 | Mars5-TTS | 0-19-0 | 19 |
+| 27 | NeuTTS Air | 0-12-0 | 12 † |
+| 28 | OpenVoice v2 | 0-10-0 | 10 † |
 
-† fewer than ~12 games — that row's position is still noisy. Voxtral isn't ranked here: its cloning path is Linux-only (vLLM) and so isn't in this Windows cloning set, which is 29 of the 30 cloning-capable models.
+† fewer than ~12 games — that row's position is still noisy. This ranks **28 of the 30 cloning-capable models**: base Qwen3-TTS isn't here (its cloning is disabled in-harness — the autoregressive sampler blows the 600s timeout on long prompts; the CUDA-graph variant `qwentts_fast` is the benched cloning path), and Voxtral's cloning is Linux-only (vLLM), so neither is in this Windows cloning set.
 
 **What the votes say:**
 
-- **The top is robust.** OmniVoice and Echo-TTS each lost exactly one game out of 23 — effectively tied for first, and clear of the field. IndexTTS-2, MOSS-TTS, and F5-TTS form a solid second tier.
-- **The May ear-test was wrong about the middle.** A first-pass single-reference listen had ranked ChatterBox #2; the blind votes drop it to 13th (10-6-5). It's fine, not special. Trust the votes over that early impression.
+- **The top is robust.** OmniVoice and Echo-TTS each lost exactly one game out of 28 — effectively tied for first, and clear of the field. IndexTTS-2, F5-TTS, and MOSS-TTS form a solid second tier (F5-TTS now edges MOSS-TTS for 4th).
+- **The May ear-test was wrong about the middle.** A first-pass single-reference listen had ranked ChatterBox #2; the blind votes drop it to 14th (12-9-5). It's fine, not special. Trust the votes over that early impression.
 - **F5-TTS** rides on timbre but its **prosody is the weak point** — phrasing/pauses feel off — which is why it sits behind the leaders despite a strong 19-5 record.
 - **VoxCPM2 and Sesame CSM-1B** clone passably but drift from the reference — VoxCPM's timbre wanders, Sesame inserts **fake pauses** mid-sentence (a conversational-chunk training artifact). Mid-pack.
+- **Dia 1.6B and Fish Speech 1.5 fell below water** (negative BT, 4-15 and 7-13). Both render clean audio but the cloned timbre drifts off the target — Dia in particular wanders toward a generic voice rather than holding the reference.
 - **The zero-win tail doesn't clone.** Coqui XTTS-v2, Mars5-TTS, NeuTTS Air, and OpenVoice v2 went winless — their output doesn't match the reference voice in this study. Mars5 is unusable regardless (0.1× warm RTF). NeuTTS Air/Nano also hit long-form truncation. Keep the NeuTTS/Coqui models for **default-voice** use, not cloning.
 
 These standings are on a **single reference** (`chris_hemsworth_15s.wav`). Replication with another reference (e.g. a clean female voice) is recommended before treating the mid-pack as definitive — the top and bottom tiers are robust, the middle is where another reference could reshuffle.
