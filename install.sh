@@ -519,6 +519,37 @@ else
     echo "echo: already installed"
 fi
 
+# --- MiraTTS (Yatharth Sharma, MIT, 0.5B LLM-TTS + FastBiCodec, 48k, zero-shot cloning) ---
+echo; cyan "=== MiraTTS (Yatharth Sharma, 0.5B LLM-TTS + FastBiCodec, 48k, cloning, CUDA-only) ==="
+if [ ! -x venvs/miratts/bin/python ]; then
+    # pip package (project name FastNeuTTS). Pulls lmdeploy (TurboMind) + the author's
+    # git deps ncodec (FastBiCodec) + fastaudiosr (FlashSR 48k upsampler) + onnxruntime-gpu.
+    # omegaconf is needed by the codec but under-declared upstream — add it explicitly.
+    # On Linux the PyPI torch lmdeploy pulls is already CUDA-enabled (no cu128 swap needed,
+    # unlike Windows); the 3090 (Ampere) is within lmdeploy's documented GPU support.
+    uv venv venvs/miratts --python 3.12 || die "uv venv miratts"
+    uv pip install --python venvs/miratts/bin/python \
+        "git+https://github.com/ysharma3501/MiraTTS.git" soundfile omegaconf \
+        || die "uv pip install MiraTTS"
+    green "miratts: ok (YatharthS/MiraTTS + FastBiCodec + FlashSR weights auto-download from HF on first run; CUDA-only, lmdeploy TurboMind)"
+else
+    echo "miratts: already installed"
+fi
+
+# --- OuteTTS 1.0 1B (edwko/OuteAI, CC-BY-NC-SA-4.0 + Llama-3.2, DAC, cloning + presets) ---
+echo; cyan "=== OuteTTS 1.0 1B (edwko/OuteAI, Llama-3.2-1B, DAC, 44.1k, cloning + presets) ==="
+if [ ! -x venvs/outetts/bin/python ]; then
+    # HF/transformers backend (no llama.cpp compile) -> needs accelerate. The runner
+    # monkeypatches torchaudio.load/save -> soundfile to dodge torchcodec; torchvision
+    # must match torch or transformers' lazy Llama import dies on torchvision::nms.
+    uv venv venvs/outetts --python 3.12 || die "uv venv outetts"
+    uv pip install --python venvs/outetts/bin/python outetts soundfile accelerate \
+        || die "uv pip install outetts"
+    green "outetts: ok (Llama-OuteTTS-1.0-1B + DAC weights auto-download from HF on first run; HF backend, both preset voices and wav cloning)"
+else
+    echo "outetts: already installed"
+fi
+
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
 if [ ! -x venvs/supertonic/bin/python ]; then

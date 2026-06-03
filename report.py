@@ -475,6 +475,9 @@ MODEL_DISPLAY_NAMES = {
     "metavoice":     "MetaVoice-1B",
     "step_editx":    "Step-Audio-EditX",
     "echo":          "Echo-TTS",
+    "miratts":       "MiraTTS",
+    "outetts":       "OuteTTS 1.0 1B",
+    "higgs":         "Higgs Audio v2 3B",
 }
 
 
@@ -523,6 +526,9 @@ MODEL_SIZE = {
     "metavoice":     "1.2B",
     "step_editx":    "3B",
     "echo":          "2.8B",   # DiT generative model (safetensors count); +695M S1-DAC codec not counted (matches fish_15 convention)
+    "miratts":       "0.5B",   # HF card "Model size 0.5B params" (BF16); FastBiCodec + FlashSR not counted
+    "outetts":       "1B",     # Llama-3.2-1B backbone
+    "higgs":         "3.6B",   # generation LLM; +2.2B audio adapter (DualFFN) not counted (echo/fish convention)
 }
 
 # Whether a model supports zero-shot voice cloning at runtime.
@@ -568,6 +574,9 @@ MODEL_KIND = {
     "metavoice":     "cloning",
     "step_editx":    "cloning",
     "echo":          "cloning",   # no preset voice — zero-shot clones from a reference wav
+    "miratts":       "cloning",   # no preset voice — zero-shot clones from a reference wav
+    "outetts":       "cloning",   # clones from a reference wav; ALSO has preset voices (default lens)
+    "higgs":         "cloning",   # in-context cloning from a reference wav + transcript
 }
 
 

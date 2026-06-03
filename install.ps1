@@ -548,6 +548,37 @@ if (-not (Test-Path "venvs\echo\Scripts\python.exe")) {
     Write-Host "echo: ok (echo-tts-base + fish-s1-dac-min weights auto-download from HF on first run; CUDA-only, bf16 DiT ~12GB)" -ForegroundColor Green
 } else { Write-Host "echo: already installed" -ForegroundColor Gray }
 
+Step "MiraTTS (Yatharth Sharma, MIT, 0.5B LLM-TTS + FastBiCodec, 48k, cloning, CUDA-only)"
+if (-not (Test-Path "venvs\miratts\Scripts\python.exe")) {
+    # pip package (project name FastNeuTTS). Pulls lmdeploy (TurboMind engine) + the
+    # author's git deps ncodec (FastBiCodec) + fastaudiosr (FlashSR 48k upsampler) +
+    # onnxruntime-gpu. soundfile for wav write. omegaconf is needed by the codec but
+    # under-declared upstream, so add it explicitly.
+    Invoke-Checked "uv venv miratts" { uv venv venvs\miratts --python 3.12 }
+    Invoke-Checked "uv pip install MiraTTS" { uv pip install --python venvs\miratts\Scripts\python.exe "git+https://github.com/ysharma3501/MiraTTS.git" soundfile omegaconf }
+    # torch cu128 LAST (Blackwell sm_120). lmdeploy pins torch 2.10.0, and PyPI's Windows
+    # torch is CPU-only — so pin the SAME 2.10.0 from the cu128 index (keeps the TurboMind
+    # ABI match) for torch + torchvision + torchaudio. Verified: lmdeploy 0.13 TurboMind
+    # runs sm120 kernels on the RTX 5090, so the 40-series GPU-support ceiling in lmdeploy's
+    # docs is stale. The Linux-3090 (Ampere) needs no cu128 swap (PyPI Linux torch is CUDA).
+    Invoke-Checked "torch cu128 for miratts (LAST)" { uv pip install --python venvs\miratts\Scripts\python.exe --reinstall-package torch --reinstall-package torchvision torch==2.10.0 torchvision==0.25.0 torchaudio==2.10.0 --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "miratts: ok (YatharthS/MiraTTS + FastBiCodec + FlashSR weights auto-download from HF on first run; CUDA-only, lmdeploy TurboMind, ~1GB torch-allocator VRAM but TurboMind allocates more outside it)" -ForegroundColor Green
+} else { Write-Host "miratts: already installed" -ForegroundColor Gray }
+
+Step "OuteTTS 1.0 1B (edwko/OuteAI, CC-BY-NC-SA-4.0 + Llama-3.2, DAC, cloning + presets)"
+if (-not (Test-Path "venvs\outetts\Scripts\python.exe")) {
+    # pip package. We drive the HF/transformers backend (no llama.cpp compile), so we
+    # also need accelerate. The runner monkeypatches torchaudio.load/save -> soundfile to
+    # dodge torchcodec (FFmpeg-8 box; same reason echo avoids it), so torchaudio just
+    # needs to import. torchvision MUST match torch or transformers' lazy Llama import
+    # dies on torchvision::nms — so reinstall the matched cu128 trio together.
+    Invoke-Checked "uv venv outetts" { uv venv venvs\outetts --python 3.12 }
+    Invoke-Checked "uv pip install outetts" { uv pip install --python venvs\outetts\Scripts\python.exe outetts soundfile accelerate }
+    # torch+torchvision+torchaudio cu128 LAST (Blackwell sm_120; PyPI Windows torch is CPU-only).
+    Invoke-Checked "torch trio cu128 for outetts (LAST)" { uv pip install --python venvs\outetts\Scripts\python.exe --reinstall-package torch --reinstall-package torchvision --reinstall-package torchaudio torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "outetts: ok (Llama-OuteTTS-1.0-1B + DAC weights auto-download from HF on first run; HF backend, 44.1k, both preset voices and wav cloning)" -ForegroundColor Green
+} else { Write-Host "outetts: already installed" -ForegroundColor Gray }
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.

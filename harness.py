@@ -69,6 +69,24 @@ MODELS = [
     # zero-shot cloning. CUDA-only (40-step diffusion over a 2B-class DiT; torchcodec
     # decode path). English. Weights+outputs CC-BY-NC-SA-4.0 (same NC class as fish_*).
     ("echo",        "echo",       "runners/echo_runner.py",       False, ["cuda"],               None,   True),
+    # MiraTTS (Yatharth Sharma, MIT): 0.5B LLM-TTS + FastBiCodec, 48kHz (FlashSR upsample),
+    # ~6GB VRAM, zero-shot cloning from a reference wav. CUDA-only: the model hard-imports
+    # lmdeploy and builds a TurboMind engine (no transformers fallback). lmdeploy's listed
+    # GPU support stops at Ada (sm89) — Linux-3090 (Ampere) is the clean rig; Win-5090
+    # (Blackwell sm120) is a stretch (prebuilt TurboMind wheel may lack sm120 kernels).
+    ("miratts",     "miratts",    "runners/miratts_runner.py",    False, ["cuda"],               None,   True),
+    # OuteTTS 1.0 (edwko/OuteAI, CC-BY-NC-SA-4.0 + Llama-3.2): ~1B Llama-3.2-1B LLM-TTS,
+    # DAC codec. Does BOTH preset voices (default lens) and wav cloning (cloning lens).
+    # HF/transformers backend (no llama.cpp compile); also has CPU/Metal backends, so
+    # cross-rig incl. Mac. Multilingual (12 high-data langs incl. English).
+    ("outetts",     "outetts",    "runners/outetts_runner.py",    True,  ["cpu", "cuda", "mps"], None,   True),
+    # Higgs Audio v2 (Boson AI, Apache-2.0) — NOT registered: the installable
+    # boson_multimodal (latest main) ships only the v1 HiggsAudioModel architecture, but
+    # the v2 checkpoint (bosonai/higgs-audio-v2-generation-3B-base) is a different, larger
+    # arch (DualFFN). Loading v2 weights into v1 code fails at the embedding layer
+    # ("Padding_idx must be within num_embeddings") even after patching the unregistered
+    # model_type + a `"x" in config` bug. runners/higgs_runner.py is kept as a ready
+    # runner for when Boson ships the v2 model class to the package; re-add this line then.
 ]
 
 
