@@ -64,7 +64,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (38)
+## Models tracked (40)
 
 #### Predefined voices
 
