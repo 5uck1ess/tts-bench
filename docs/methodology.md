@@ -8,7 +8,7 @@ Open TTS models advertise speed numbers from cherry-picked hardware, often confu
 - **Samples** — every model × prompt rendered with an inline audio player so you can pick by ear. Sourced from a single rig per model (see "Speed is per-rig; samples are single-source" below), not duplicated across rigs.
 - **Voice cloning** — same prompts, same reference voice, ranked subjectively. See [cloning.md](cloning.md).
 
-An objective quality score (NAQ) is computed into the CSV and paused from publication while the algorithm is redesigned — the current features didn't track subjective ranking closely enough to surface.
+An objective quality score (NAQ) was prototyped but is **not** part of the bench — it didn't track subjective ranking closely enough to publish, and is now redesigned separately (offline, over the saved wavs) rather than computed during a run. The bench measures speed only.
 
 ## Speed is per-rig; samples are single-source
 
@@ -43,4 +43,4 @@ Every install is `uv` + Python 3.11 + a per-model venv. From a clean machine to 
 
 ## What gets reported
 
-Every per-rig run produces a results directory with `results.csv`, `meta.json`, the generated wavs, and four HTML pages: a landing card (`index.html`), a speed view (`speed.html`), a quality view (`quality.html`), and a by-prompt audio gallery (`samples.html`). The gh-pages site mirrors these so you can compare without running anything locally.
+Every per-rig run produces a results directory with `results.csv`, `meta.json`, the generated wavs, and three HTML pages: a landing card (`index.html`), a speed view (`speed.html`), and a by-prompt audio gallery (`samples.html`). The gh-pages site mirrors these so you can compare without running anything locally.

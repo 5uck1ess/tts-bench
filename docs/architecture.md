@@ -52,9 +52,9 @@ Runners communicate via JSON lines so each model can live in its own conflicting
 
 1. Make a venv under `venvs/<name>/` (add to `install.ps1` and `install.sh`).
 2. Write `runners/<name>_runner.py` matching the existing runner protocol:
-   - Single-shot mode: `--text TEXT --out PATH --runs N` → one JSON line per run on stdout: `{"ok": true, "run_index": N, "ttfa_ms": ..., "gen_s": ..., "audio_s": ..., "peak_mem_mb": ..., "peak_vram_mb": ..., "naq": ..., "naq_harm": ..., "naq_buzz": ...}`
+   - Single-shot mode: `--text TEXT --out PATH --runs N` → one JSON line per run on stdout: `{"ok": true, "run_index": N, "ttfa_ms": ..., "gen_s": ..., "audio_s": ..., "peak_mem_mb": ..., "peak_vram_mb": ...}`
    - REPL mode: `--stdin` → on startup emit `{"ready": true}` after model load, then per stdin line: `{"text": "...", "out": "path.wav"}` → respond with one JSON line per generation
-   - Use the shared helpers: `import _meminfo` and `import _naq` near the top of the runner; call `_meminfo.reset_peak(args.device)` before generation and spread `**_meminfo.sample(args.device)` + `**_naq.score(out_path)` into the success JSON
+   - Use the shared helper: `import _meminfo` near the top of the runner; call `_meminfo.reset_peak(args.device)` before generation and spread `**_meminfo.sample(args.device)` into the success JSON
 3. Add a row to `MODELS` in `bench.py` and `speak.py`.
 4. Test: `python bench.py --models <name> --prompts 1 --runs 1`
 
@@ -77,7 +77,6 @@ tts-bench/
 ├── install.sh            # macOS / Linux installer
 ├── runners/
 │   ├── _meminfo.py       # shared CPU/CUDA memory sampling
-│   ├── _naq.py           # shared NAQ scoring (see docs/naq.md)
 │   └── <model>_runner.py # one per model
 ├── reference/            # voice cloning reference audio (.wav + .txt pairs)
 ├── venvs/                # one isolated venv per model (gitignored)

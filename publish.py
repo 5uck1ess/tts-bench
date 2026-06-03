@@ -34,7 +34,7 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from report import (
-    STYLE, CONTROLS, SCRIPT, SHOW_NAQ_PUBLIC, PROMPT_INFO, MODEL_SIZE, MODEL_KIND,
+    STYLE, CONTROLS, SCRIPT, PROMPT_INFO, MODEL_SIZE, MODEL_KIND,
     _ds, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
     _build_context, _speed_table_html, _display_name,
 )
@@ -822,8 +822,6 @@ def build_archive_index():
         out.append(f"<td class='num'{_ds(r['ok'])}>{r['ok']}/{r['rows']}</td>")
         if r.get("has_index"):
             parts = [f'<a href="{escape(r["name"])}/speed.html">speed</a>']
-            if SHOW_NAQ_PUBLIC:
-                parts.append(f'<a href="{escape(r["name"])}/quality.html">quality</a>')
             parts.append(f'<a href="{escape(r["name"])}/samples.html">samples</a>')
             out.append(f'<td>{" · ".join(parts)}</td>')
         else:
@@ -881,15 +879,11 @@ def list_published():
 
 
 def _publish_csv(src: Path, dest_dir: Path) -> None:
-    """Copy results.csv to the published dir, dropping NAQ columns unless
-    SHOW_NAQ_PUBLIC is set. The NAQ score and its sub-features are kept private
-    (possible paper), so the public CSV must never carry any 'naq*' column.
-    Every rig publishes through here, so the scrub lives at the copy boundary
-    rather than as a manual post-step that's easy to forget. The local
-    results.csv is left intact."""
-    if SHOW_NAQ_PUBLIC:
-        shutil.copy2(src, dest_dir / src.name)
-        return
+    """Copy results.csv to the published dir, always dropping any NAQ columns.
+    NAQ is private lab-only R&D (possible paper), so the public CSV must never
+    carry a 'naq*' column. New runs already have none, but older canonical CSVs
+    still do — so the scrub stays here at the copy boundary as a safety net.
+    The local results.csv is left intact."""
     with src.open(newline="", encoding="utf-8") as f:
         rows = list(csv.reader(f))
     if not rows:
@@ -941,7 +935,7 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
         shutil.rmtree(dest)
     dest.mkdir()
 
-    html_files = ("index.html", "speed.html", "quality.html", "samples.html",
+    html_files = ("index.html", "speed.html", "samples.html",
                   "report.html", "results.csv")
     for fname in html_files:
         src = run_dir / fname
@@ -1014,7 +1008,7 @@ def rebuild_all(no_push: bool = False) -> None:
         if dest.exists():
             shutil.rmtree(dest)
         dest.mkdir()
-        for fname in ("index.html", "speed.html", "quality.html", "samples.html",
+        for fname in ("index.html", "speed.html", "samples.html",
                       "report.html", "results.csv"):
             src = d / fname
             if src.exists():

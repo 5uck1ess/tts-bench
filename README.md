@@ -11,7 +11,7 @@ Bench for local TTS models. Two lenses, on whatever hardware you put it on:
 - **Speed** — cold + warm **TTFA** (time to first audio), **RTF** (real-time factor; higher = faster than realtime), memory, on CPU / CUDA / Apple Silicon
 - **Listen** — every model on every prompt, default voice + voice cloning, with inline audio players, so you can pick a model by ear
 
-An objective quality score (NAQ) was prototyped and is currently paused for redesign — the v2 features didn't track subjective ranking closely enough to publish. The bench still computes it into the CSV; the HTML report omits it until a refit lands.
+An objective quality score (NAQ) was prototyped but isn't part of the bench — the v2 features didn't track subjective ranking closely enough to publish, so it was pulled and is being redesigned separately. The bench measures speed; quality is by-ear via the Listen lens.
 
 ---
 

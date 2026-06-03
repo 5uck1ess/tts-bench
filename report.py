@@ -32,11 +32,10 @@ from pathlib import Path
 REPO = Path(__file__).parent
 RESULTS = REPO / "results"
 
-# NAQ is computed by the bench and stored in results.csv unconditionally, but
-# the rendered HTML hides it (no quality lens, no NAQ column on speed/samples,
-# no global-index quality link) while calibration is in progress. Flip back to
-# True once the score correlates with subjective ranking.
-SHOW_NAQ_PUBLIC = False
+# NAQ left the harness — it's now private lab-only R&D (see naq_lab/, gitignored).
+# The bench no longer computes it and results.csv carries no naq columns, so the
+# report has no quality lens / NAQ column. All NAQ scoring happens post-hoc in
+# naq_lab over the saved wavs.
 
 try:
     from bench import PROMPTS as _BENCH_PROMPTS
@@ -369,13 +368,6 @@ def _fmt_mb(x):
     return f"{x:.0f} MB"
 
 
-def _fmt_naq(x):
-    """Format NAQ score 0-100; em-dash if missing."""
-    if x is None:
-        return "—"
-    return f"{x:.0f}"
-
-
 def _humanize_error(err):
     """Turn a raw runner error into a reader-friendly reason so a failed cell
     doesn't read like a hardware fault. An OOM means the model is too big for
@@ -623,9 +615,7 @@ def _read_csv(csv_path):
     with csv_path.open(encoding="utf-8") as f:
         for r in csv.DictReader(f):
             for k in ("ttfa_ms", "gen_s", "audio_s", "rtf",
-                      "peak_mem_mb", "peak_vram_mb",
-                      "naq", "naq_artifact", "naq_naturalness",
-                      "wall_s"):
+                      "peak_mem_mb", "peak_vram_mb", "wall_s"):
                 v = r.get(k)
                 r[k] = float(v) if v not in (None, "") else None
             r["run_index"] = int(r.get("run_index") or 0)
@@ -646,14 +636,12 @@ def _build_context(rows, run_dir, meta):
       per_cell:    {(prompt_id, model, device) -> {"cold": row|None, "warms": [row], "fail": row|None}}
                    Note: only the FIRST failure row per cell is retained in "fail".
                    Subsequent failures for the same cell are dropped.
-      per_model:   {(model, device) -> aggregated dict with avg TTFA/RTF, peak mem/vram, avg NAQ,
+      per_model:   {(model, device) -> aggregated dict with avg TTFA/RTF, peak mem/vram,
                     n_ok, n_fail, n_total}
-      per_prompt:  {prompt_id -> [{model, device, naq, ttfa_warm, rtf_warm, wav, wav_exists,
-                    naq_artifact, naq_naturalness} ranked by NAQ desc, successful-cold rows only]}
+      per_prompt:  {prompt_id -> [{model, device, ttfa_warm, rtf_warm, wav, wav_exists}
+                    ranked by warm TTFA asc (fastest first), successful-cold rows only]}
       tldr_speed:  {"predefined": (model, device, rtf_warm, ttfa_warm) | None,
                     "cloning":    (model, device, rtf_warm, ttfa_warm) | None}
-      tldr_quality:{"predefined": [(model, device, naq) top 3],
-                    "cloning":    [(model, device, naq) top 3]}
       prompts_seen, models_seen, devices_seen, runs_per_cell, meta, run_name, run_dir
     """
     cells = defaultdict(lambda: {"cold": None, "warms": [], "fail": None})
@@ -686,7 +674,7 @@ def _build_context(rows, run_dir, meta):
         key = (model, dev)
         per_model.setdefault(key, {
             "ttfa_cold": [], "ttfa_warm": [], "rtf_cold": [], "rtf_warm": [],
-            "peak_mem": [], "peak_vram": [], "naq": [],
+            "peak_mem": [], "peak_vram": [],
             "ok_prompts": set(), "fail_prompts": set(), "all_prompts": set(),
         })
         bucket = per_model[key]
@@ -701,8 +689,6 @@ def _build_context(rows, run_dir, meta):
                 bucket["peak_mem"].append(c["cold"]["peak_mem_mb"])
             if c["cold"].get("peak_vram_mb") is not None:
                 bucket["peak_vram"].append(c["cold"]["peak_vram_mb"])
-            if c["cold"].get("naq") is not None:
-                bucket["naq"].append(c["cold"]["naq"])
             if c["warms"]:
                 bucket["ttfa_warm"].extend(w["ttfa_ms"] for w in c["warms"])
                 warm_rtfs = [v for v in (_rtf(w) for w in c["warms"]) if v is not None]
@@ -725,7 +711,6 @@ def _build_context(rows, run_dir, meta):
             "rtf_warm":  _avg(b["rtf_warm"]),
             "peak_mem":  _maxv(b["peak_mem"]),
             "peak_vram": _maxv(b["peak_vram"]),
-            "naq":       _avg(b["naq"]),
             "n_ok":      len(b["ok_prompts"]),
             "n_fail":    len(b["fail_prompts"]),
             "n_total":   len(b["all_prompts"]),
@@ -747,21 +732,14 @@ def _build_context(rows, run_dir, meta):
             items.append({
                 "model": model,
                 "device": dev,
-                "naq": cold.get("naq"),
                 "ttfa_warm": ttfa_warm,
                 "rtf_warm": rtf_warm,
                 "wav": f"{model}_{dev}_p{pid}.wav",
                 "wav_exists": (run_dir / f"{model}_{dev}_p{pid}.wav").exists(),
-                "naq_artifact": cold.get("naq_artifact"),
-                "naq_naturalness": cold.get("naq_naturalness"),
             })
-        # Sort: by NAQ desc when public; otherwise by warm TTFA asc (fastest first).
-        # Missing values sink to the bottom in either mode.
-        if SHOW_NAQ_PUBLIC:
-            items.sort(key=lambda it: (it["naq"] is None, -(it["naq"] or 0)))
-        else:
-            items.sort(key=lambda it: (it["ttfa_warm"] is None,
-                                       it["ttfa_warm"] or float("inf")))
+        # Sort by warm TTFA asc (fastest first); missing values sink to the bottom.
+        items.sort(key=lambda it: (it["ttfa_warm"] is None,
+                                   it["ttfa_warm"] or float("inf")))
         per_prompt[pid] = items
 
     def _pick_best_speed(kind):
@@ -775,17 +753,6 @@ def _build_context(rows, run_dir, meta):
                 best = (model, dev, a["rtf_warm"], a["ttfa_warm"])
         return best
 
-    def _pick_top_quality(kind, n=3):
-        scored = []
-        for (model, dev), a in agg.items():
-            if MODEL_KIND.get(model) != kind:
-                continue
-            if a["naq"] is None:
-                continue
-            scored.append((model, dev, a["naq"]))
-        scored.sort(key=lambda t: -t[2])
-        return scored[:n]
-
     return {
         "per_cell": cells,
         "per_model": agg,
@@ -793,10 +760,6 @@ def _build_context(rows, run_dir, meta):
         "tldr_speed": {
             "predefined": _pick_best_speed("predefined"),
             "cloning":    _pick_best_speed("cloning"),
-        },
-        "tldr_quality": {
-            "predefined": _pick_top_quality("predefined"),
-            "cloning":    _pick_top_quality("cloning"),
         },
         "prompts_seen": prompts_seen,
         "models_seen": models_seen,
@@ -844,13 +807,6 @@ def _render_lens_picker(ctx):
         f'<div class="desc">TTFA, RTF, memory · {n_models} models · sortable</div>'
         '</a></div>'
     )
-    if SHOW_NAQ_PUBLIC:
-        out.append(
-            '<div class="lens-card"><a href="quality.html">'
-            '<h3>▶ Quality</h3>'
-            f'<div class="desc">NAQ + sub-scores · audio embedded · {n_models} models</div>'
-            '</a></div>'
-        )
     out.append(
         '<div class="lens-card"><a href="samples.html">'
         '<h3>▶ Samples</h3>'
@@ -866,11 +822,7 @@ def _render_lens_picker(ctx):
     return "\n".join(out)
 
 
-_LENSES = (
-    (("speed", "Speed"), ("quality", "Quality"), ("samples", "Samples"))
-    if SHOW_NAQ_PUBLIC else
-    (("speed", "Speed"), ("samples", "Samples"))
-)
+_LENSES = (("speed", "Speed"), ("samples", "Samples"))
 
 _READING_GUIDE = {
     "speed": (
@@ -879,29 +831,14 @@ _READING_GUIDE = {
         '<strong>RTF</strong> = real-time factor (× realtime; higher is better; e.g. 10× means '
         '10 sec of audio generated per 1 sec of compute). '
         '<strong>Cold</strong> = first run after process start; <strong>warm</strong> = subsequent runs.'
-        + (' <strong>NAQ</strong> = quality score 0-100 (click NAQ pill to jump to quality lens).'
-           if SHOW_NAQ_PUBLIC else '')
-        + '</div>'
-    ),
-    "quality": (
-        '<div class="reading-guide">'
-        '<strong>NAQ</strong> (Naturalness-Artifact Quotient): 0-100 objective quality score; '
-        'higher = more natural. '
-        'Combines two factor groups: <strong>ARTIFACT</strong> (cues for absence of vocoder '
-        'artifacts) and <strong>NATURALNESS</strong> (cues for expressive prosody). '
-        'Hover any NAQ cell for the per-macro breakdown. '
-        '<a href="https://github.com/5uck1ess/tts-bench/blob/main/docs/naq.md">How to read →</a>'
         '</div>'
     ),
     "samples": (
         '<div class="reading-guide">'
-        + ('Each prompt section shows every model\'s audio output, ranked by '
-           '<strong>NAQ</strong> (0-100 quality score; higher = better). '
-           if SHOW_NAQ_PUBLIC else
-           'Each prompt section shows every model\'s audio output, ordered by '
-           '<strong>warm TTFA</strong> (fastest first). ')
-        + 'Click any audio player to hear that model\'s rendering.'
-        + '</div>'
+        'Each prompt section shows every model\'s audio output, ordered by '
+        '<strong>warm TTFA</strong> (fastest first). '
+        'Click any audio player to hear that model\'s rendering.'
+        '</div>'
     ),
 }
 
@@ -949,11 +886,10 @@ def _speed_table_html(ctx):
     per-rig speed.html and the cross-rig speed hub on the published landing.
     The caller decides where to place it and whether to set window.__defaultSort
     (rtf_warm_col_idx is returned so the caller can default-sort by warm RTF)."""
-    base_cols = ("Model", "Device", "TTFA cold", "TTFA warm",
-                 "RTF cold", "RTF warm", "Peak RAM", "Peak VRAM", "Size")
-    cols = base_cols + (("NAQ",) if SHOW_NAQ_PUBLIC else ())
+    cols = ("Model", "Device", "TTFA cold", "TTFA warm",
+            "RTF cold", "RTF warm", "Peak RAM", "Peak VRAM", "Size")
     num_cols = {"TTFA cold", "TTFA warm", "RTF cold", "RTF warm",
-                "Peak RAM", "Peak VRAM", "NAQ"}
+                "Peak RAM", "Peak VRAM"}
     rtf_warm_idx = cols.index("RTF warm")
     out = ['<table><thead><tr>']
     for c in cols:
@@ -999,13 +935,6 @@ def _speed_table_html(ctx):
         out.append(f'<td class="num"{_ds(a["peak_mem"])}>{_fmt_mb(a["peak_mem"])}</td>')
         out.append(f'<td class="num"{_ds(a["peak_vram"])}>{_fmt_mb(a["peak_vram"])}</td>')
         out.append(f'<td class="muted">{escape(size_str)}</td>')
-        if SHOW_NAQ_PUBLIC:
-            naq_val = a["naq"]
-            out.append(
-                f'<td class="num pill"{_ds(naq_val)}>'
-                f'<a href="quality.html" title="See NAQ details on quality view">{_fmt_naq(naq_val)}</a>'
-                '</td>'
-            )
         out.append('</tr>')
     out.append('</tbody></table>')
     return "".join(out), rtf_warm_idx
@@ -1064,121 +993,8 @@ def _render_speed(ctx):
     return "\n".join(out)
 
 
-def _render_quality(ctx):
-    """Render quality.html — per-prompt grouping, NAQ-first columns, audio embedded."""
-    meta = ctx["meta"]
-    has_ref = bool((meta or {}).get("reference"))
-    out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
-           f'<title>TTS Bench — Quality — {escape(ctx["run_name"])}</title>',
-           STYLE,
-           '</head><body>',
-           CONTROLS,
-           _lens_nav("quality"),
-           f'<h1>TTS Bench — Quality — {escape(ctx["run_name"])}</h1>']
-    if meta:
-        out.append(f'<div class="meta"><strong>Rig:</strong> '
-                   f'<code>{escape(meta.get("rig") or "?")}</code> — '
-                   f'{escape(_rig_summary(meta))}</div>')
-        if meta.get("label"):
-            ref = meta.get("reference")
-            ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
-            out.append(f'<div class="meta"><strong>Label:</strong> '
-                       f'{escape(meta["label"])}{ref_html}</div>')
-
-    out.append(_READING_GUIDE["quality"])
-
-    # TLDR
-    out.append('<div class="tldr"><h2>Quality winners (NAQ)</h2>')
-    def _fmt_top(entries, label):
-        if not entries:
-            return f'<p>{label}: <span class="muted">no data</span></p>'
-        parts = [f'<strong>{escape(_display_name(m))}</strong> ({_fmt_naq(n)})'
-                 for (m, _d, n) in entries]
-        return f'<p>{label}: {" · ".join(parts)}</p>'
-    if has_ref:
-        out.append(_fmt_top(ctx["tldr_quality"]["cloning"], "Top 3 (this cloning run)"))
-    else:
-        out.append(_fmt_top(ctx["tldr_quality"]["predefined"], "Top 3 predefined-voice"))
-        out.append(_fmt_top(ctx["tldr_quality"]["cloning"],    "Top 3 cloning-capable"))
-    out.append('</div>')
-
-    # Per-prompt tables
-    cols = ("Model", "Device", "NAQ", "Size",
-            "TTFA warm", "RTF warm", "Audio (cold)")
-    num_cols = {"NAQ", "TTFA warm", "RTF warm"}
-    naq_idx = cols.index("NAQ")
-    for pid in ctx["prompts_seen"]:
-        out.append(f'<div class="prompt"><h2>Prompt {escape(pid)}</h2>')
-        ptext = PROMPT_INFO.get(pid)
-        if ptext:
-            lang, text = ptext
-            out.append(f'<span class="prompt-text"><span class="lang">[{escape(lang)}]</span>'
-                       f'"{escape(text)}"</span>')
-        out.append('<table><thead><tr>')
-        for c in cols:
-            cls = ' class="num"' if c in num_cols else ''
-            out.append(f'<th{cls}>{c}</th>')
-        out.append('</tr></thead><tbody>')
-
-        cell_keys = sorted([k for k in ctx["per_cell"] if k[0] == pid],
-                           key=lambda k: (k[1], k[2]))
-        for (_, model, dev) in cell_keys:
-            c = ctx["per_cell"][(pid, model, dev)]
-            row_id = f"quality-{model}-{dev}-p{pid}".lower().replace("/", "-")
-            dev_class = f"dev-{dev}"
-            size_str = MODEL_SIZE.get(model, "—")
-            if not c["cold"]:
-                err = (c["fail"].get("error") if c["fail"] else "") or "no successful run"
-                out.append(
-                    f'<tr id="{escape(row_id)}">'
-                    f'<td>{escape(_display_name(model))}</td>'
-                    f'<td class="{dev_class}">{escape(dev)}</td>'
-                    f'<td colspan="{len(cols)-2}" class="fail">{escape(_humanize_error(err))}</td>'
-                    '</tr>'
-                )
-                continue
-            cold = c["cold"]
-            warm_ttfas = [w["ttfa_ms"] for w in c["warms"]]
-            ttfa_warm = (sum(warm_ttfas) / len(warm_ttfas)) if warm_ttfas else None
-            def _rtf(r):
-                a, g = r["audio_s"], r["gen_s"]
-                return (a / g) if (a and g) else None
-            warm_rtfs = [v for v in (_rtf(w) for w in c["warms"]) if v is not None]
-            rtf_warm = (sum(warm_rtfs) / len(warm_rtfs)) if warm_rtfs else None
-
-            wav_name = f"{model}_{dev}_p{pid}.wav"
-            audio_html = (f'<audio controls preload="none" src="{escape(wav_name)}"></audio>'
-                          if (ctx["run_dir"] / wav_name).exists()
-                          else '<span class="muted">missing</span>')
-
-            out.append(f'<tr id="{escape(row_id)}">')
-            out.append(f'<td>{escape(_display_name(model))}</td>'
-                       f'<td class="{dev_class}">{escape(dev)}</td>')
-            naq_val = cold.get("naq")
-            naq_art = cold.get("naq_artifact")
-            naq_nat = cold.get("naq_naturalness")
-            tooltip = (f"artifact: {naq_art}, naturalness: {naq_nat}"
-                       if (naq_art is not None and naq_nat is not None) else "")
-            out.append(
-                f'<td class="num"{_ds(naq_val)} title="{escape(tooltip)}">{_fmt_naq(naq_val)}</td>'
-            )
-            out.append(f'<td class="muted">{escape(size_str)}</td>')
-            out.append(f'<td class="num pill"{_ds(ttfa_warm)}>{_fmt_ttfa(ttfa_warm)}</td>')
-            out.append(f'<td class="num pill"{_ds(rtf_warm)}>{_fmt_rtf(rtf_warm)}</td>')
-            out.append(f'<td>{audio_html}</td>')
-            out.append('</tr>')
-        out.append('</tbody></table></div>')
-
-    # Default sort: NAQ desc (applies to all tables — sortAll sorts every table)
-    out.append(f'<script>window.__defaultSort = {{colIdx: {naq_idx}, dir: -1}};</script>')
-    out.append(SCRIPT)
-    out.append('</body></html>')
-    return "\n".join(out)
-
-
 def _render_samples(ctx):
-    """Render samples.html — by-prompt MOS-style gallery, successful rows only, ranked by NAQ."""
+    """Render samples.html — by-prompt gallery, successful rows only, ordered by warm TTFA."""
     meta = ctx["meta"]
     prompts = ctx["prompts_seen"]
     out = ['<!doctype html>',
@@ -1198,7 +1014,7 @@ def _render_samples(ctx):
             ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
             out.append(f'<div class="meta"><strong>Label:</strong> '
                        f'{escape(meta["label"])}{ref_html}</div>')
-    rank_basis = "NAQ" if SHOW_NAQ_PUBLIC else "warm TTFA (fastest first)"
+    rank_basis = "warm TTFA (fastest first)"
     out.append(f'<div class="meta">{len(prompts)} prompt(s) · '
                f'one section per prompt · all models ranked by {rank_basis} within each</div>')
 
@@ -1225,10 +1041,8 @@ def _render_samples(ctx):
         out.append(" · ".join(f'<a href="#p{escape(pid)}">P{escape(pid)}</a>' for pid in prompts))
         out.append('</nav>')
 
-    cols = (("Rank", "Model", "Device", "NAQ", "TTFA warm", "Audio")
-            if SHOW_NAQ_PUBLIC else
-            ("Rank", "Model", "Device", "TTFA warm", "Audio"))
-    num_cols = {"Rank", "NAQ", "TTFA warm"}
+    cols = ("Rank", "Model", "Device", "TTFA warm", "Audio")
+    num_cols = {"Rank", "TTFA warm"}
     for pid in prompts:
         items = ctx["per_prompt"].get(pid, [])
         out.append(f'<div class="prompt" id="p{escape(pid)}"><h2>Prompt {escape(pid)}</h2>')
@@ -1256,8 +1070,6 @@ def _render_samples(ctx):
             out.append(f'<td class="num" data-sort="{rank}">{rank}</td>')
             out.append(f'<td>{escape(_display_name(it["model"]))}</td>')
             out.append(f'<td class="{dev_class}">{escape(it["device"])}</td>')
-            if SHOW_NAQ_PUBLIC:
-                out.append(f'<td class="num"{_ds(it["naq"])}>{_fmt_naq(it["naq"])}</td>')
             out.append(f'<td class="num pill"{_ds(it["ttfa_warm"])}>{_fmt_ttfa(it["ttfa_warm"])}</td>')
             out.append(f'<td>{audio_html}</td>')
             out.append('</tr>')
@@ -1269,7 +1081,7 @@ def _render_samples(ctx):
 
 
 def build_report(run_dir: Path) -> Path:
-    """Emit index.html + speed.html + quality.html + samples.html from results.csv.
+    """Emit index.html + speed.html + samples.html from results.csv.
     Returns the path to index.html (the lens picker)."""
     csv_path = run_dir / "results.csv"
     if not csv_path.exists():
@@ -1283,11 +1095,8 @@ def build_report(run_dir: Path) -> Path:
 
     (run_dir / "index.html").write_text(_render_lens_picker(ctx), encoding="utf-8")
     (run_dir / "speed.html").write_text(_render_speed(ctx), encoding="utf-8")
-    if SHOW_NAQ_PUBLIC:
-        (run_dir / "quality.html").write_text(_render_quality(ctx), encoding="utf-8")
-    else:
-        # Hide a previously-written quality page if the calibration gate flipped off.
-        (run_dir / "quality.html").unlink(missing_ok=True)
+    # NAQ left the harness — drop any quality.html left over from an older run.
+    (run_dir / "quality.html").unlink(missing_ok=True)
     (run_dir / "samples.html").write_text(_render_samples(ctx), encoding="utf-8")
 
     # Legacy report.html — emit a small redirect stub so any external link still works.
@@ -1354,8 +1163,6 @@ def build_index() -> Path:
                   else f"{len(r['models'])} models")
         if r["has_index"]:
             parts = [f'<a href="{escape(r["name"])}/speed.html">speed</a>']
-            if SHOW_NAQ_PUBLIC:
-                parts.append(f'<a href="{escape(r["name"])}/quality.html">quality</a>')
             parts.append(f'<a href="{escape(r["name"])}/samples.html">samples</a>')
             link = " · ".join(parts)
         elif (RESULTS / r["name"] / "report.html").exists():
@@ -1426,8 +1233,7 @@ def main() -> int:
         raise SystemExit(f"Not found: {run_dir}")
 
     html = build_report(run_dir)
-    lens_files = "speed.html, quality.html, samples.html" if SHOW_NAQ_PUBLIC else "speed.html, samples.html"
-    print(f"wrote {html.relative_to(REPO)} (+ {lens_files})")
+    print(f"wrote {html.relative_to(REPO)} (+ speed.html, samples.html)")
     build_index()
     if args.open:
         webbrowser.open(html.as_uri())
