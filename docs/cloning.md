@@ -22,7 +22,7 @@ python speak.py chatterbox --reference reference/myvoice.wav
 
 ## Cloning quality ranking
 
-> **Update (June 2026):** the list below is a *first-pass subjective* impression from a single May-2026 listening pass (10 models, one reference). It's being superseded by a **blind pairwise voting study** (human-preference Elo over all 29 cloning-capable models). Early standings agree at the top — **Echo-TTS** and **OmniVoice** lead — but treat the ordering below as preliminary until the vote-based ranking is published.
+> **Update (June 2026):** the list below is a *first-pass subjective* impression from a single May-2026 listening pass (10 models, one reference). It's being superseded by a **blind pairwise voting study** (human-preference Elo over all 30 cloning-capable models). Early standings agree at the top — **Echo-TTS** and **OmniVoice** lead — but treat the ordering below as preliminary until the vote-based ranking is published.
 
 Numbers tell you which model is fast; ears tell you which one is *good*. After a full listening pass on the RTX 5090 cloning bench ([`2026-05-24_0154`](https://5uck1ess.github.io/tts-bench/2026-05-24_0154/report.html), `chris_hemsworth_15s.wav` reference, 5 prompts × every cloning-capable model), ranked best → worst by accent preservation and naturalness:
 

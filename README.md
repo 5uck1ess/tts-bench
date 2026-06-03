@@ -75,6 +75,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | LuxTTS | 123M | ✓ | — | — | 22.05k | MIT |
 | Magpie-TTS | 357M | ✓ | — | ✓ (9) | 22.05k | NVIDIA OML |
 | Maya1 | 3B | ✓ (voice desc) | — | — | 24k | Apache 2.0 |
+| OuteTTS 1.0 1B | ~1B | ✓ | ✓ | ✓ (12) | 44.1k | CC-BY-NC-SA 4.0 + Llama 3.2 |
 | Piper | ~15M | ✓ | — | ✓ | 22.05k | MIT |
 | Soprano 80M | 80M | ✓ | — | — | 32k | Apache 2.0 |
 | Supertonic | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
@@ -96,6 +97,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | IndexTTS-2 | 1.5B | — | ✓ | ✓ | 24k | Apache 2.0 |
 | Mars5-TTS | 1.2B | — | ✓ | — | 24k | AGPL-3.0 |
 | MetaVoice-1B | 1.2B | — | ✓ | — | **48k** | Apache 2.0 |
+| MiraTTS | 0.5B | — | ✓ | — | **48k** | MIT |
 | MOSS-TTS | 8B (Qwen3) | — | ✓ | ✓ (20) | 24k | Apache 2.0 |
 | MOSS-TTS-Nano | 100M | — | ✓ | ✓ (zh+en) | **48k** | Apache 2.0 |
 | NeuTTS Air | 748M | — | ✓ | — | 24k | Apache 2.0 |
@@ -145,7 +147,7 @@ If you reproduce on different hardware, file an issue or PR with your results an
 ## Docs
 
 - [Full results tables](docs/results.md) — per-rig, per-prompt, per-model
-- [Cloning ranking](docs/cloning.md) — reference formats + subjective ranking (10 of 28 cloning models ranked so far)
+- [Cloning ranking](docs/cloning.md) — reference formats + subjective ranking (10 of 30 cloning models ranked so far)
 - [Architecture](docs/architecture.md) — bench design, runner protocol, adding a model
 - [Known issues](docs/known-issues.md) — per-model gotchas + per-license table
 - [Considered but skipped](docs/considered.md) — models evaluated and excluded
