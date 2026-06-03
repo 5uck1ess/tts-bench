@@ -211,7 +211,8 @@ def main() -> int:
                         "Common slugs: windows-default, windows-cloning, mac-default, mac-cloning. "
                         "Overwrites the slug dir if it exists (prompts unless --force).")
     p.add_argument("--force", action="store_true",
-                   help="Skip the overwrite-confirm prompt when --canonical points at an existing dir.")
+                   help="With --canonical: skip the overwrite-confirm prompt AND allow combining "
+                        "it with --models/--prompts/--devices (writes a partial canonical).")
     p.add_argument("--all", action="store_true",
                    help="Include GPU-class models (see harness.GPU_CLASS) even on a non-CUDA rig. "
                         "By default they're skipped there — sub-realtime, not deploy candidates.")
@@ -243,6 +244,26 @@ def main() -> int:
         slug = args.canonical.strip().strip("/")
         if not slug or "/" in slug or "\\" in slug:
             print(f"Invalid --canonical slug: {args.canonical!r}", file=sys.stderr)
+            return 2
+        # A canonical dir is meant to be ONE complete, internally-consistent run
+        # (every model × prompt × device under identical conditions — that's what
+        # makes the cross-model speed leaderboard apples-to-apples). An existing
+        # canonical is rmtree'd first, so combining --canonical with a
+        # --models/--prompts/--devices filter would silently DESTROY every other
+        # model's clips and leave a partial dir. Refuse unless --force; for a
+        # surgical update to one model/cell, use merge.py (--replace) instead.
+        partial = [flag for flag, val in (("--models", args.models),
+                                          ("--prompts", args.prompts),
+                                          ("--devices", args.devices)) if val]
+        if partial and not args.force:
+            print(f"Refusing: --canonical {slug} with {', '.join(partial)} would write a "
+                  f"PARTIAL canonical.\n"
+                  f"An existing canonical is wiped first, so this loses every other "
+                  f"model/prompt/device in results/{slug}/.\n"
+                  f"  - Full run:           drop the filter(s).\n"
+                  f"  - Splice one model:   python merge.py --into results/{slug} "
+                  f"--from <scratch> --models <name> --replace\n"
+                  f"  - Really mean it:     re-run with --force.", file=sys.stderr)
             return 2
         out_dir = REPO / "results" / slug
         if out_dir.exists():
