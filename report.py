@@ -469,6 +469,8 @@ MODEL_DISPLAY_NAMES = {
     "echo":          "Echo-TTS",
     "miratts":       "MiraTTS",
     "outetts":       "OuteTTS 1.0 1B",
+    "parler":        "Parler-TTS Mini v1",
+    "melotts":       "MeloTTS",
     "higgs":         "Higgs Audio v2 3B",
 }
 
@@ -520,6 +522,8 @@ MODEL_SIZE = {
     "echo":          "2.8B",   # DiT generative model (safetensors count); +695M S1-DAC codec not counted (matches fish_15 convention)
     "miratts":       "0.5B",   # HF card "Model size 0.5B params" (BF16); FastBiCodec + FlashSR not counted
     "outetts":       "1B",     # Llama-3.2-1B backbone
+    "parler":        "878M",   # parler-tts-mini-v1 safetensors total; large variant = 2.33B
+    "melotts":       "~52M",   # MeloTTS-English checkpoint.pth (~208 MB fp32 / 4)
     "higgs":         "3.6B",   # generation LLM; +2.2B audio adapter (DualFFN) not counted (echo/fish convention)
 }
 
@@ -568,6 +572,8 @@ MODEL_KIND = {
     "echo":          "cloning",   # no preset voice — zero-shot clones from a reference wav
     "miratts":       "cloning",   # no preset voice — zero-shot clones from a reference wav
     "outetts":       "cloning",   # clones from a reference wav; ALSO has preset voices (default lens)
+    "parler":        "predefined",   # voice set by a text description, no wav cloning
+    "melotts":       "predefined",   # VITS preset speakers (EN-US), no wav cloning
     "higgs":         "cloning",   # in-context cloning from a reference wav + transcript
 }
 

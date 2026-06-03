@@ -552,6 +552,35 @@ else
     echo "outetts: already installed"
 fi
 
+# --- Parler-TTS Mini v1 (parler-tts, Apache-2.0, description-controlled, DAC 44.1k) ---
+echo; cyan "=== Parler-TTS Mini v1 (parler-tts, Apache-2.0, English, 44.1k, default-voice via description) ==="
+if [ ! -x venvs/parler/bin/python ]; then
+    # git package (no PyPI release tracks the current model code). Pulls transformers +
+    # descript-audio-codec + sentencepiece; accelerate for device_map. Linux PyPI torch
+    # is CUDA-enabled, so no cu128 reinstall needed here.
+    uv venv venvs/parler --python 3.11 || die "uv venv parler"
+    uv pip install --python venvs/parler/bin/python "git+https://github.com/huggingface/parler-tts.git" soundfile accelerate \
+        || die "uv pip install parler-tts"
+    green "parler: ok (parler-tts-mini-v1 weights auto-download from HF on first run; English, 44.1k)"
+else
+    echo "parler: already installed"
+fi
+
+# --- MeloTTS-English (myshell-ai, MIT, VITS predefined voice, 44.1k) ---
+echo; cyan "=== MeloTTS-English (myshell-ai, MIT, VITS predefined voice, EN-US, 44.1k) ==="
+if [ ! -x venvs/melotts/bin/python ]; then
+    # git package + `unidic download` (dictionary loaded at tokenizer import). melo imports
+    # all language modules at `from melo.api import TTS` (pyopenjtalk/mecab build cleanly on
+    # Linux, unlike Windows). Linux PyPI torch is CUDA-enabled — no cu128 reinstall.
+    uv venv venvs/melotts --python 3.11 || die "uv venv melotts"
+    uv pip install --python venvs/melotts/bin/python "git+https://github.com/myshell-ai/MeloTTS.git" soundfile \
+        || die "uv pip install melotts"
+    venvs/melotts/bin/python -m unidic download || die "unidic download"
+    green "melotts: ok (MeloTTS-English weights auto-download from HF on first run; EN-US speaker, 44.1k, predefined voice)"
+else
+    echo "melotts: already installed"
+fi
+
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
 if [ ! -x venvs/supertonic/bin/python ]; then

@@ -579,6 +579,32 @@ if (-not (Test-Path "venvs\outetts\Scripts\python.exe")) {
     Write-Host "outetts: ok (Llama-OuteTTS-1.0-1B + DAC weights auto-download from HF on first run; HF backend, 44.1k, both preset voices and wav cloning)" -ForegroundColor Green
 } else { Write-Host "outetts: already installed" -ForegroundColor Gray }
 
+Step "Parler-TTS Mini v1 (parler-tts, Apache-2.0, description-controlled, DAC 44.1k)"
+if (-not (Test-Path "venvs\parler\Scripts\python.exe")) {
+    # git package (no PyPI release tracks the current model code). Pulls transformers +
+    # descript-audio-codec + sentencepiece. accelerate for device_map. Then the cu128
+    # torch trio LAST (Blackwell sm_120; PyPI Windows torch is CPU-only) — include
+    # torchvision to keep transformers' lazy imports from tripping on a version skew.
+    Invoke-Checked "uv venv parler" { uv venv venvs\parler --python 3.11 }
+    Invoke-Checked "uv pip install parler-tts" { uv pip install --python venvs\parler\Scripts\python.exe "git+https://github.com/huggingface/parler-tts.git" soundfile accelerate }
+    Invoke-Checked "torch trio cu128 for parler (LAST)" { uv pip install --python venvs\parler\Scripts\python.exe --reinstall-package torch --reinstall-package torchvision --reinstall-package torchaudio torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "parler: ok (parler-tts-mini-v1 weights auto-download from HF on first run; English, 44.1k, default-voice via text description)" -ForegroundColor Green
+} else { Write-Host "parler: already installed" -ForegroundColor Gray }
+
+Step "MeloTTS-English (myshell-ai, MIT, VITS predefined voice, 44.1k)"
+if (-not (Test-Path "venvs\melotts\Scripts\python.exe")) {
+    # git package + `unidic download` (dictionary the tokenizer loads at import). melo
+    # imports ALL language modules at `from melo.api import TTS` (incl. pyopenjtalk/mecab),
+    # even for English-only use. Upstream punts Windows to Docker, but the native build
+    # DID succeed on Win-5090 / py3.11 (prebuilt wheels) — if it ever walls on another box,
+    # MeloTTS still has the Linux/Mac rigs and the Windows cell just shows a fail row.
+    Invoke-Checked "uv venv melotts" { uv venv venvs\melotts --python 3.11 }
+    Invoke-Checked "uv pip install melotts" { uv pip install --python venvs\melotts\Scripts\python.exe "git+https://github.com/myshell-ai/MeloTTS.git" soundfile }
+    Invoke-Checked "unidic download for melotts" { & venvs\melotts\Scripts\python.exe -m unidic download }
+    Invoke-Checked "torch trio cu128 for melotts (LAST)" { uv pip install --python venvs\melotts\Scripts\python.exe --reinstall-package torch --reinstall-package torchvision --reinstall-package torchaudio torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "melotts: ok (MeloTTS-English weights auto-download from HF on first run; EN-US speaker, 44.1k, predefined voice)" -ForegroundColor Green
+} else { Write-Host "melotts: already installed" -ForegroundColor Gray }
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.

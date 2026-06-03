@@ -80,6 +80,18 @@ MODELS = [
     # HF/transformers backend (no llama.cpp compile); also has CPU/Metal backends, so
     # cross-rig incl. Mac. Multilingual (12 high-data langs incl. English).
     ("outetts",     "outetts",    "runners/outetts_runner.py",    True,  ["cpu", "cuda", "mps"], None,   True),
+    # Parler-TTS (parler-tts/*, Apache-2.0): description-controlled TTS — the voice is
+    # set by a natural-language prompt (gender/pitch/pace/quality), NOT a wav, so it's a
+    # DEFAULT-VOICE model (can_clone=False; default lens only). T5 text encoder + decoder
+    # LM -> DAC 44.1 kHz. English mini-v1 (multilingual=False). cpu/cuda (mps via DAC
+    # untested). variant "large" = parler-tts-large-v1 (2.33B) — one-line add once the
+    # mini's speed/disk cost is known.
+    ("parler",      "parler",     "runners/parler_runner.py",     False, ["cpu", "cuda"],        None,   False),
+    # MeloTTS (myshell-ai/MeloTTS-English, MIT): VITS multi-speaker predefined-voice TTS,
+    # EN-US speaker, 44.1 kHz. The base speaker engine OpenVoice v2 wraps — here benched
+    # standalone as a fast CPU baseline. No cloning. (Upstream punts Windows to Docker;
+    # native install needs mecab/unidic — see install stanza.)
+    ("melotts",     "melotts",    "runners/melotts_runner.py",    False, ["cpu", "cuda", "mps"], None,   False),
     # Higgs Audio v2 (Boson AI, Apache-2.0) — NOT registered: the installable
     # boson_multimodal (latest main) ships only the v1 HiggsAudioModel architecture, but
     # the v2 checkpoint (bosonai/higgs-audio-v2-generation-3B-base) is a different, larger

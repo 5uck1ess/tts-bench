@@ -64,7 +64,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (40)
+## Models tracked (42)
 
 #### Predefined voices
 
@@ -75,7 +75,9 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | LuxTTS | 123M | ✓ | — | — | 22.05k | MIT |
 | Magpie-TTS | 357M | ✓ | — | ✓ (9) | 22.05k | NVIDIA OML |
 | Maya1 | 3B | ✓ (voice desc) | — | — | 24k | Apache 2.0 |
+| MeloTTS | ~52M | ✓ | — | — (en) | **44.1k** | MIT |
 | OuteTTS 1.0 1B | ~1B | ✓ | ✓ | ✓ (12) | 44.1k | CC-BY-NC-SA 4.0 + Llama 3.2 |
+| Parler-TTS Mini v1 | 878M | ✓ (voice desc) | — | — | **44.1k** | Apache 2.0 |
 | Piper | ~15M | ✓ | — | ✓ | 22.05k | MIT |
 | Soprano 80M | 80M | ✓ | — | — | 32k | Apache 2.0 |
 | Supertonic | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
@@ -126,7 +128,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**30 of the 40 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**30 of the 42 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (29 of 30 cloning models, human-preference A/B): **[docs/cloning.md](docs/cloning.md)**.
 
