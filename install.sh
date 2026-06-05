@@ -581,6 +581,42 @@ else
     echo "melotts: already installed"
 fi
 
+# --- Higgs Audio v3 TTS (Boson AI, Research/Non-Commercial, ~4B) — SERVER-BACKED, LINUX-ONLY ---
+#
+# Unlike every other model here, Higgs v3 is NOT a venv install: its only supported
+# inference path is a Docker container running an HTTP server (the v3 checkpoint ships no
+# modeling_*.py and the higgs_multimodal_qwen3 class isn't in stock transformers). This
+# stanza creates ONLY the thin HTTP-client venv (requests + soundfile + numpy, no torch).
+#
+# DOCKER SERVER PREREQUISITE (run manually, once, before benching higgs_v3) — Linux + CUDA:
+#   1. Accept the model terms on https://huggingface.co/bosonai/higgs-audio-v3-tts-4b and
+#      export HF_TOKEN=hf_xxxxxxxx  (the download is HF-gated).
+#   2. docker pull lmsysorg/sglang-omni:dev
+#   3. Bind-mount the repo at its SAME absolute path so cloning's reference audio_path
+#      resolves inside the container:
+#        docker run -it --gpus all --shm-size 32g --ipc host --network host --privileged \
+#          -v "$(pwd)":"$(pwd)" -w "$(pwd)" -e HF_TOKEN=$HF_TOKEN \
+#          lmsysorg/sglang-omni:dev /bin/zsh
+#   4. Inside the container:
+#        git clone https://github.com/sgl-project/sglang-omni.git && cd sglang-omni
+#        uv venv .venv -p 3.12 && source .venv/bin/activate && uv pip install -v -e .
+#        hf download bosonai/higgs-audio-v3-tts-4b
+#        sgl-omni serve --model-path bosonai/higgs-audio-v3-tts-4b --port 8000
+#   Smoke-test:  curl -X POST http://localhost:8000/v1/audio/speech \
+#                  -H "Content-Type: application/json" \
+#                  -d '{"input":"Open the browser and read my email."}' --output /tmp/h.wav
+# License: Research/Non-Commercial — benchmarking + publishing sample clips is explicitly
+# permitted. The model weights are NOT downloaded by this script (they live in the container).
+echo; cyan "=== Higgs Audio v3 TTS (Boson AI, server-backed client venv only — Linux-only) ==="
+if [ ! -x venvs/higgs_v3/bin/python ]; then
+    uv venv venvs/higgs_v3 --python 3.11 || die "uv venv higgs_v3"
+    uv pip install --python venvs/higgs_v3/bin/python requests soundfile numpy \
+        || die "uv pip install higgs_v3 client"
+    green "higgs_v3: ok (HTTP client only — start the sgl-omni Docker server before benching; see comment above)"
+else
+    echo "higgs_v3: already installed (client venv; remember to start the sgl-omni Docker server)"
+fi
+
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
 if [ ! -x venvs/supertonic/bin/python ]; then

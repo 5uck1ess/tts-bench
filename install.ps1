@@ -605,6 +605,12 @@ if (-not (Test-Path "venvs\melotts\Scripts\python.exe")) {
     Write-Host "melotts: ok (MeloTTS-English weights auto-download from HF on first run; EN-US speaker, 44.1k, predefined voice)" -ForegroundColor Green
 } else { Write-Host "melotts: already installed" -ForegroundColor Gray }
 
+# --- Higgs Audio v3 TTS — LINUX-ONLY, intentionally no Windows stanza ---
+# Higgs v3 is server-backed: its only inference path is a Docker container running
+# `sgl-omni serve` (an HTTP server), driven by a thin client venv. That path is set up on
+# the Linux rig only (see install.sh's higgs_v3 stanza + Docker prerequisite). There is no
+# Windows install here by design — leave higgs_v3 out of this script.
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.

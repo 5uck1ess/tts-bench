@@ -472,6 +472,7 @@ MODEL_DISPLAY_NAMES = {
     "parler":        "Parler-TTS Mini v1",
     "melotts":       "MeloTTS",
     "higgs":         "Higgs Audio v2 3B",
+    "higgs_v3":      "Higgs Audio v3 TTS",
 }
 
 
@@ -525,6 +526,7 @@ MODEL_SIZE = {
     "parler":        "878M",   # parler-tts-mini-v1 safetensors total; large variant = 2.33B
     "melotts":       "~52M",   # MeloTTS-English checkpoint.pth (~208 MB fp32 / 4)
     "higgs":         "3.6B",   # generation LLM; +2.2B audio adapter (DualFFN) not counted (echo/fish convention)
+    "higgs_v3":      "4B",     # Qwen3 ~4B backbone (HF card); Higgs audio tokenizer not counted
 }
 
 # Whether a model supports zero-shot voice cloning at runtime.
@@ -575,6 +577,7 @@ MODEL_KIND = {
     "parler":        "predefined",   # voice set by a text description, no wav cloning
     "melotts":       "predefined",   # VITS preset speakers (EN-US), no wav cloning
     "higgs":         "cloning",   # in-context cloning from a reference wav + transcript
+    "higgs_v3":      "cloning",   # zero-shot cloning; no-reference run = its own default voice
 }
 
 

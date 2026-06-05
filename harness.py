@@ -92,13 +92,21 @@ MODELS = [
     # standalone as a fast CPU baseline. No cloning. (Upstream punts Windows to Docker;
     # native install needs mecab/unidic — see install stanza.)
     ("melotts",     "melotts",    "runners/melotts_runner.py",    False, ["cpu", "cuda", "mps"], None,   False),
-    # Higgs Audio v2 (Boson AI, Apache-2.0) — NOT registered: the installable
+    # Higgs Audio v3 TTS (Boson AI, Research/Non-Commercial, ~4B) — SERVER-BACKED, Linux-only.
+    # First server-backed model in the bench: v3 ships no modeling_*.py / auto_map and the
+    # higgs_multimodal_qwen3 class isn't in stock transformers, so there's no single-process
+    # Python path — the only supported inference is a Docker container running `sgl-omni
+    # serve` (OpenAI-style HTTP /v1/audio/speech). higgs_v3_runner.py is a thin HTTP client
+    # (no torch/model in its venv); stand the server up manually first (see install.sh
+    # header + the runner docstring). 24 kHz, 100 langs, zero-shot in-context cloning.
+    ("higgs_v3",    "higgs_v3",   "runners/higgs_v3_runner.py",   True,  ["cuda"],  None,   True),
+    # Higgs Audio v2 (Boson AI, Apache-2.0) — still NOT registered: the installable
     # boson_multimodal (latest main) ships only the v1 HiggsAudioModel architecture, but
     # the v2 checkpoint (bosonai/higgs-audio-v2-generation-3B-base) is a different, larger
-    # arch (DualFFN). Loading v2 weights into v1 code fails at the embedding layer
-    # ("Padding_idx must be within num_embeddings") even after patching the unregistered
-    # model_type + a `"x" in config` bug. runners/higgs_runner.py is kept as a ready
-    # runner for when Boson ships the v2 model class to the package; re-add this line then.
+    # arch (DualFFN). Loading v2 weights into v1 code fails at the embedding layer even
+    # after patching the unregistered model_type. runners/higgs_runner.py is kept on disk
+    # for when Boson ships the v2 model class to the package; v3 supersedes it via the
+    # server path above. Re-add a v2 line here if/when that class lands.
 ]
 
 
@@ -113,6 +121,19 @@ GPU_CLASS = {
     "f5tts", "indextts", "voxcpm", "qwentts", "sesame", "mars5",
     "chatterbox", "magpie",
     "fish_s2", "metavoice", "step_editx",
+    # higgs_v3: server-backed CUDA model (the sgl-omni container runs on the GPU); the
+    # thin HTTP-client venv would report cuda unavailable, so tag it gpu-class so non-CUDA
+    # rigs skip it by default rather than trying to reach a server that isn't there.
+    "higgs_v3",
+}
+
+
+# Server-backed models: inference happens in an external HTTP server (Docker), not in the
+# runner process. Their client venv has NO torch, so detect_cuda() (which imports torch in
+# the venv) can't see the GPU — build_cells uses detect_cuda_smi() for these instead so the
+# cuda cell still builds on a CUDA rig. See harness comment on the MODELS entry + install.sh.
+SERVER_BACKED = {
+    "higgs_v3",
     # vibevoice_15b: ~0.03-0.07x RTF on M4 CPU (long-form times out at 600s) and
     # OOMs at load on mps (10.94 GiB > 16 GB). Runs on CUDA rigs; skip on non-CUDA.
     "vibevoice_15b",
@@ -140,6 +161,18 @@ def _probe(py: Path, code: str) -> bool:
 
 def detect_cuda(py: Path) -> bool:
     return _probe(py, "import torch; print(torch.cuda.is_available())")
+
+
+def detect_cuda_smi() -> bool:
+    """Torch-free CUDA probe via `nvidia-smi -L`. Used for SERVER_BACKED models whose thin
+    client venv has no torch — detect_cuda would always report False there, so the cuda
+    cell would never build even on a CUDA rig. nvidia-smi listing a GPU is enough signal
+    that the sgl-omni server can run on this machine."""
+    try:
+        out = subprocess.run(["nvidia-smi", "-L"], capture_output=True, text=True, timeout=10)
+        return out.returncode == 0 and "GPU 0" in out.stdout
+    except (subprocess.SubprocessError, OSError):
+        return False
 
 
 def detect_mps(py: Path) -> bool:
@@ -187,7 +220,11 @@ def build_cells(reference=None, requested_models=None, requested_devices=None,
             if verbose:
                 print(f"skip {model_name}: venv not installed ({py})")
             continue
-        cuda_ok = ("cuda" in model_devices) and detect_cuda(py)
+        if model_name in SERVER_BACKED:
+            # Torch-free venv: probe the GPU via nvidia-smi, not torch in the venv.
+            cuda_ok = ("cuda" in model_devices) and detect_cuda_smi()
+        else:
+            cuda_ok = ("cuda" in model_devices) and detect_cuda(py)
         mps_ok = ("mps" in model_devices) and detect_mps(py)
         if model_name in GPU_CLASS and not cuda_ok and not include_gpu_class:
             if verbose:
