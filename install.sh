@@ -617,6 +617,28 @@ else
     echo "higgs_v3: already installed (client venv; remember to start the sgl-omni Docker server)"
 fi
 
+# --- DramaBox (Resemble AI, LTX-2 Community/NC, LTX-2.3 3.3B audio DiT, 48k, dialogue + cloning, CUDA-only) ---
+echo; cyan "=== DramaBox (Resemble AI, LTX-2.3 audio DiT, 48k, dialogue + cloning, CUDA-only) ==="
+if [ ! -x venvs/dramabox/bin/python ]; then
+    # Source repo (no PyPI): the runner imports src.inference_server.TTSServer from the
+    # cloned tree (venvs/dramabox/src). Unlike Windows, Linux PyPI torch==2.8.0 is
+    # CUDA-enabled (Ampere/3090 fine) so there's NO cu128 swap — install requirements.txt
+    # as-is. bitsandbytes powers the 4-bit Gemma-3-12B text encoder. The optional RE-USE
+    # ref-denoise deps (mamba-ssm/causal-conv1d) are skipped (denoise_ref defaults off).
+    # Weights (~16 GB: DiT + audio-components + Gemma) auto-download from HF on first run;
+    # ~18 GB VRAM peak (audio-only mode frees LTX's video stack) -> fits the 3090.
+    uv venv venvs/dramabox --python 3.11 || die "uv venv dramabox"
+    if [ ! -d venvs/dramabox/src ]; then
+        git clone --depth 1 https://github.com/resemble-ai/DramaBox venvs/dramabox/src \
+            || die "git clone DramaBox"
+    fi
+    uv pip install --python venvs/dramabox/bin/python -r venvs/dramabox/src/requirements.txt \
+        || die "uv pip install dramabox"
+    green "dramabox: ok (LTX-2.3 audio DiT + audio-components + Gemma-3-12B-4bit auto-download from HF on first run; CUDA-only, 48k, ~18GB VRAM)"
+else
+    echo "dramabox: already installed"
+fi
+
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
 if [ ! -x venvs/supertonic/bin/python ]; then

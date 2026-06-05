@@ -473,6 +473,7 @@ MODEL_DISPLAY_NAMES = {
     "melotts":       "MeloTTS",
     "higgs":         "Higgs Audio v2 3B",
     "higgs_v3":      "Higgs Audio v3 TTS",
+    "dramabox":      "DramaBox",
 }
 
 
@@ -527,6 +528,7 @@ MODEL_SIZE = {
     "melotts":       "~52M",   # MeloTTS-English checkpoint.pth (~208 MB fp32 / 4)
     "higgs":         "3.6B",   # generation LLM; +2.2B audio adapter (DualFFN) not counted (echo/fish convention)
     "higgs_v3":      "4B",     # Qwen3 ~4B backbone (HF card); Higgs audio tokenizer not counted
+    "dramabox":      "3.3B",   # LTX-2.3 audio-only DiT (IC-LoRA merged); 12B 4-bit text encoder not counted
 }
 
 # Whether a model supports zero-shot voice cloning at runtime.
@@ -578,6 +580,7 @@ MODEL_KIND = {
     "melotts":       "predefined",   # VITS preset speakers (EN-US), no wav cloning
     "higgs":         "cloning",   # in-context cloning from a reference wav + transcript
     "higgs_v3":      "cloning",   # zero-shot cloning; no-reference run = its own default voice
+    "dramabox":      "cloning",   # 10s+ wav cloning; no-reference run = prompt-described voice
 }
 
 

@@ -611,6 +611,27 @@ if (-not (Test-Path "venvs\melotts\Scripts\python.exe")) {
 # the Linux rig only (see install.sh's higgs_v3 stanza + Docker prerequisite). There is no
 # Windows install here by design — leave higgs_v3 out of this script.
 
+Step "DramaBox (Resemble AI, LTX-2 Community/NC, LTX-2.3 3.3B audio DiT, 48k, dialogue + cloning, CUDA-only)"
+if (-not (Test-Path "venvs\dramabox\Scripts\python.exe")) {
+    # Source repo (no PyPI package): the runner imports `src.inference_server.TTSServer`
+    # from the cloned tree (venvs\dramabox\src). requirements pins torch==2.8.0; on Windows
+    # we satisfy that from the cu128 index FIRST (Blackwell sm_120; PyPI Windows torch is
+    # CPU-only), then install the rest with the torch lines stripped so it isn't pulled
+    # back to a CPU wheel. bitsandbytes (>=0.45) powers the 4-bit Gemma-3-12B text encoder
+    # and DOES ship a working Windows wheel (0.49.2 verified on the 5090). The optional
+    # RE-USE ref-denoise deps (mamba-ssm/causal-conv1d) are intentionally skipped — no
+    # Windows wheels; denoise_ref defaults off. Weights (~16 GB: DiT + audio-components +
+    # Gemma) auto-download from HF on first run.
+    Invoke-Checked "uv venv dramabox" { uv venv venvs\dramabox --python 3.11 }
+    if (-not (Test-Path "venvs\dramabox\src")) {
+        Invoke-Checked "git clone DramaBox" { git clone --depth 1 https://github.com/resemble-ai/DramaBox venvs\dramabox\src }
+    }
+    Invoke-Checked "torch 2.8.0 cu128 for dramabox (FIRST)" { uv pip install --python venvs\dramabox\Scripts\python.exe torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
+    Get-Content venvs\dramabox\src\requirements.txt | Where-Object { $_ -notmatch '^\s*torch==' -and $_ -notmatch '^\s*torchaudio==' } | Set-Content venvs\dramabox\src\requirements.notorch.txt -Encoding utf8
+    Invoke-Checked "uv pip install dramabox deps" { uv pip install --python venvs\dramabox\Scripts\python.exe -r venvs\dramabox\src\requirements.notorch.txt }
+    Write-Host "dramabox: ok (LTX-2.3 audio DiT + audio-components + Gemma-3-12B-4bit auto-download from HF on first run; CUDA-only, 48k, ~18GB VRAM)" -ForegroundColor Green
+} else { Write-Host "dramabox: already installed" -ForegroundColor Gray }
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.

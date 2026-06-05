@@ -107,6 +107,14 @@ MODELS = [
     # after patching the unregistered model_type. runners/higgs_runner.py is kept on disk
     # for when Boson ships the v2 model class to the package; v3 supersedes it via the
     # server path above. Re-add a v2 line here if/when that class lands.
+    # DramaBox (Resemble AI, LTX-2 Community License/NC) — expressive dialogue TTS, an
+    # IC-LoRA fine-tune of the LTX-2.3 3.3B audio-only DiT (flow-matching). Prompt-driven
+    # voice + emotion/laughs/sighs (runner wraps plain prompts in a neutral speaker
+    # description) AND optional 10s+ wav cloning -> can_clone=True, populates both lenses.
+    # 48 kHz out. Source-clone install (venvs/dramabox/src) + a bnb-4bit Gemma-3-12B text
+    # encoder; ~18 GB VRAM peak (audio-only mode frees LTX's video stack) -> fits 5090 +
+    # 3090. English (multilingual=False -> FR prompt skipped). CUDA-only.
+    ("dramabox",    "dramabox",   "runners/dramabox_runner.py",   False, ["cuda"],  None,   True),
 ]
 
 
@@ -125,6 +133,8 @@ GPU_CLASS = {
     # thin HTTP-client venv would report cuda unavailable, so tag it gpu-class so non-CUDA
     # rigs skip it by default rather than trying to reach a server that isn't there.
     "higgs_v3",
+    # dramabox: ~18 GB VRAM, 3.3B DiT + 12B 4-bit text encoder — CUDA-only (no CPU/MPS path).
+    "dramabox",
 }
 
 
