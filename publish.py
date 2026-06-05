@@ -59,24 +59,31 @@ NO_PRESET_VOICE = {
     "echo",
 }
 
-# Curated per-(model, voice-mode) QA findings, surfaced as a ⚠ badge + tooltip on
+# Curated per-(model, voice-mode) QA findings, surfaced as a small badge + tooltip on
 # the model's row in the Listen gallery and recorded in docs/known-issues.md.
+# Each value is (kind, label, note): kind "note" renders a neutral badge for a
+# by-design behavior heads-up; kind "warn" renders a red badge for an actual defect.
 KNOWN_ISSUES = {
-    # (model, voice-mode): "reason" — surfaced as a ⚠ badge in the Listen gallery.
     # qwentts_fast/cloning (runaway) is fixed via non_streaming_mode=True and re-benched;
     # fish_s2/cloning (wrong reference) was re-benched with Chris on Linux.
     ("higgs_v3", "default"): (
+        "note", "⟳ voice varies",
         "Default voice is sampled fresh per generation (no fixed preset) — each prompt's "
         "clip is a different speaker. Cloning stays consistent with the reference."
     ),
-    # Add new entries here as QA surfaces them.
+    # Add new entries here as QA surfaces them — use "warn" only for genuine defects.
 }
 
 
 def _issue_badge(model, mode):
-    """⚠ badge for a known (model, voice-mode) issue, or '' if none."""
-    note = KNOWN_ISSUES.get((model, mode))
-    return f' <span class="badge warn" title="{escape(note)}">⚠ issue</span>' if note else ""
+    """Badge for a known (model, voice-mode) note/issue, or '' if none. Neutral for a
+    by-design behavior note ('note'), red for an actual defect ('warn')."""
+    entry = KNOWN_ISSUES.get((model, mode))
+    if not entry:
+        return ""
+    kind, label, note = entry
+    klass = "badge warn" if kind == "warn" else "badge"
+    return f' <span class="{escape(klass)}" title="{escape(note)}">{escape(label)}</span>'
 
 REPO = Path(__file__).parent
 WORKTREE = REPO / "_gh-pages"
