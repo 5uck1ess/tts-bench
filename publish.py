@@ -63,9 +63,13 @@ NO_PRESET_VOICE = {
 # the model's row in the Listen gallery and recorded in docs/known-issues.md.
 KNOWN_ISSUES = {
     # (model, voice-mode): "reason" — surfaced as a ⚠ badge in the Listen gallery.
-    # Empty now: qwentts_fast/cloning (runaway) is fixed via non_streaming_mode=True
-    # and re-benched; fish_s2/cloning (wrong reference) was re-benched with Chris on
-    # Linux. Add new entries here as QA surfaces them.
+    # qwentts_fast/cloning (runaway) is fixed via non_streaming_mode=True and re-benched;
+    # fish_s2/cloning (wrong reference) was re-benched with Chris on Linux.
+    ("higgs_v3", "default"): (
+        "Default voice is sampled fresh per generation (no fixed preset) — each prompt's "
+        "clip is a different speaker. Cloning stays consistent with the reference."
+    ),
+    # Add new entries here as QA surfaces them.
 }
 
 
