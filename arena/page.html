@@ -93,6 +93,14 @@ summary{cursor:pointer;color:var(--muted)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @keyframes nbump{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
 #n.bump{display:inline-block;animation:nbump .35s ease;color:#3fbf72}
+/* arena vote-gate: buttons read as locked until both clips are played */
+.votes button.locked{opacity:.42;cursor:not-allowed;filter:grayscale(.5)}
+.votes button.locked:hover{border-color:var(--border2);background:var(--panel2)}
+.votes.shake{animation:shakex .32s}
+@keyframes shakex{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}60%{transform:translateX(6px)}}
+#gatehint{transition:color .15s}
+#gatehint.flash{color:var(--accent2);font-weight:700}
+#gatehint.ready{color:var(--reflbl);font-weight:600}
 </style></head><body>
 <div class="topbar">
   <h1><span id="title">Blind vote</span></h1>
@@ -119,10 +127,10 @@ summary{cursor:pointer;color:var(--muted)}
 </div>
 <div id="cf-turnstile" class="cf-turnstile" data-sitekey="" data-callback="onTurnstile"></div>
 <div class="votes">
-  <button id="vA" disabled>Left better <kbd>←</kbd></button>
-  <button class="tie" id="vT" disabled>Tie <kbd>↓</kbd></button>
-  <button class="bad" id="vX" disabled>Both bad <kbd>X</kbd></button>
-  <button id="vB" disabled>Right better <kbd>→</kbd></button>
+  <button id="vA" class="locked">Left better <kbd>←</kbd></button>
+  <button class="tie locked" id="vT">Tie <kbd>↓</kbd></button>
+  <button class="bad locked" id="vX">Both bad <kbd>X</kbd></button>
+  <button id="vB" class="locked">Right better <kbd>→</kbd></button>
 </div>
 <div class="bar">
   <span class="muted hint" id="gatehint">▶ Play both clips to enable voting</span>
@@ -158,11 +166,18 @@ function hasRef(){ return mode==='cloning' && HASREF[mode]; }
 function gateReady(){ return playedA && playedB && (!SITEKEY || !!turnstileToken); }
 function updateGate(){
   const ok=gateReady();
-  ['vA','vT','vX','vB'].forEach(id=>document.getElementById(id).disabled=!ok);
+  ['vA','vT','vX','vB'].forEach(id=>document.getElementById(id).classList.toggle('locked',!ok));
   const h=document.getElementById('gatehint');
+  h.classList.toggle('ready',ok);
   if(ok) h.textContent='✓ Ready — cast your vote';
-  else if(!playedA||!playedB) h.textContent='▶ Play both clips to enable voting';
+  else if(!playedA||!playedB) h.textContent='▶ Play BOTH clips fully to unlock voting';
   else h.textContent='Complete the check below to enable voting';
+}
+// Buttons stay clickable so a too-early click gives feedback instead of dead silence.
+function nudgeGate(){
+  const h=document.getElementById('gatehint');
+  h.classList.remove('flash'); void h.offsetWidth; h.classList.add('flash');
+  const v=document.querySelector('.votes'); v.classList.remove('shake'); void v.offsetWidth; v.classList.add('shake');
 }
 function markPlayed(au){ if(au===A)playedA=true; if(au===B)playedB=true; updateGate(); }
 // Count a clip as "played" once it reaches >=90% (or ends).
@@ -211,7 +226,9 @@ function bumpCount(){ const n=document.getElementById('n');
   n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
 
 async function vote(choice){
-  if(busy||!cur||!gateReady()) return; busy=true;
+  if(busy||!cur) return;
+  if(!gateReady()){ nudgeGate(); return; }   // too early -> flash hint + shake, don't silently no-op
+  busy=true;
   const dwell_ms=Date.now()-renderTs;
   await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({voter:arena_token, session_id, mode, choice,
