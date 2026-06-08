@@ -32,3 +32,9 @@ naq_lab/
 # from a bash shell on Windows leaves a literal file behind.
 nul
 NUL
+
+# scoring/: keep scores.csv (the public hand-off) committed, but never the large
+# manually-fetched SIM checkpoint or the cloned third-party SV code.
+scoring/checkpoints/*.pth
+scoring/checkpoints/*.pt
+scoring/thirdparty/
