@@ -639,6 +639,28 @@ else
     echo "dramabox: already installed"
 fi
 
+# --- dots.tts (rednote-hilab, Apache-2.0, 2B continuous AR TTS, 48k, cloning + default voice, CUDA-only) ---
+echo; cyan "=== dots.tts (rednote-hilab, 2B continuous AR TTS, 48k, cloning, CUDA-only) ==="
+if [ ! -x venvs/dots_tts/bin/python ]; then
+    # pip package `dots_tts`, installed editable from the cloned tree (venvs/dots_tts/src);
+    # the runner does `from dots_tts.runtime import DotsTtsRuntime`. Upstream pins torch==2.8.0
+    # via constraints/recommended.txt — Linux PyPI torch 2.8.0 is cu128 (Ampere/3090 fine) so
+    # there's NO torch swap here. soundfile/numpy arrive via those constraints. Weights
+    # (rednote-hilab/dots.tts-soar, the SCA flagship, ~2B bf16) snapshot-download from HF on
+    # first run. CUDA-only (bf16 backbone), 48 kHz. Multilingual (runs the FR prompt).
+    uv venv venvs/dots_tts --python 3.11 || die "uv venv dots_tts"
+    if [ ! -d venvs/dots_tts/src ]; then
+        git clone --depth 1 https://github.com/rednote-hilab/dots.tts venvs/dots_tts/src \
+            || die "git clone dots.tts"
+    fi
+    uv pip install --python venvs/dots_tts/bin/python -e venvs/dots_tts/src \
+        -c venvs/dots_tts/src/constraints/recommended.txt \
+        || die "uv pip install dots_tts"
+    green "dots_tts: ok (2B continuous AR TTS; dots.tts-soar weights auto-download from HF on first run; CUDA-only, 48k)"
+else
+    echo "dots_tts: already installed"
+fi
+
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
 if [ ! -x venvs/supertonic/bin/python ]; then

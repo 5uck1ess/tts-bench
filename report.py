@@ -474,6 +474,7 @@ MODEL_DISPLAY_NAMES = {
     "higgs":         "Higgs Audio v2 3B",
     "higgs_v3":      "Higgs Audio v3 TTS",
     "dramabox":      "DramaBox",
+    "dots_tts":      "dots.tts",
 }
 
 
@@ -529,6 +530,7 @@ MODEL_SIZE = {
     "higgs":         "3.6B",   # generation LLM; +2.2B audio adapter (DualFFN) not counted (echo/fish convention)
     "higgs_v3":      "4B",     # Qwen3 ~4B backbone (HF card); Higgs audio tokenizer not counted
     "dramabox":      "3.3B",   # LTX-2.3 audio-only DiT (IC-LoRA merged); 12B 4-bit text encoder not counted
+    "dots_tts":      "2B",     # semantic encoder + LLM + flow-matching acoustic head (soar/SCA checkpoint)
 }
 
 # Whether a model supports zero-shot voice cloning at runtime.
@@ -581,6 +583,7 @@ MODEL_KIND = {
     "higgs":         "cloning",   # in-context cloning from a reference wav + transcript
     "higgs_v3":      "cloning",   # zero-shot cloning; no-reference run = its own default voice
     "dramabox":      "cloning",   # 10s+ wav cloning; no-reference run = prompt-described voice
+    "dots_tts":      "cloning",   # zero-shot cloning (+ ref transcript); no-reference run = bundled chris clip
 }
 
 

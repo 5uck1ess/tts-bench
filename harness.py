@@ -115,6 +115,15 @@ MODELS = [
     # encoder; ~18 GB VRAM peak (audio-only mode frees LTX's video stack) -> fits 5090 +
     # 3090. English (multilingual=False -> FR prompt skipped). CUDA-only.
     ("dramabox",    "dramabox",   "runners/dramabox_runner.py",   False, ["cuda"],  None,   True),
+    # dots.tts (rednote-hilab, Apache-2.0, 2B) — fully-continuous AR TTS: semantic encoder
+    # + LLM + flow-matching acoustic head over a 48 kHz AudioVAE (no codec tokens). Zero-shot
+    # cloning from a reference wav (+ sibling .txt transcript for continuation cloning); pure
+    # cloning model, so a no-reference run clones the bundled chris clip (bench default-voice
+    # convention) -> can_clone=True populates both lenses.
+    # Multilingual (24 langs incl. en/fr -> runs the FR prompt). pip package `dots_tts`,
+    # source-clone editable install (venvs/dots_tts/src); weights snapshot-download from HF
+    # on first run. CUDA-only here (bf16 backbone, ~2B; Ampere/3090 ok). Best on Seed-TTS-Eval.
+    ("dots_tts",    "dots_tts",   "runners/dots_tts_runner.py",   True,  ["cuda"],  None,   True),
 ]
 
 
@@ -135,6 +144,8 @@ GPU_CLASS = {
     "higgs_v3",
     # dramabox: ~18 GB VRAM, 3.3B DiT + 12B 4-bit text encoder — CUDA-only (no CPU/MPS path).
     "dramabox",
+    # dots_tts: 2B bf16 AR + flow-matching head — CUDA-only here (no CPU/MPS path benched).
+    "dots_tts",
 }
 
 

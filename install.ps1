@@ -632,6 +632,25 @@ if (-not (Test-Path "venvs\dramabox\Scripts\python.exe")) {
     Write-Host "dramabox: ok (LTX-2.3 audio DiT + audio-components + Gemma-3-12B-4bit auto-download from HF on first run; CUDA-only, 48k, ~18GB VRAM)" -ForegroundColor Green
 } else { Write-Host "dramabox: already installed" -ForegroundColor Gray }
 
+Step "dots.tts (rednote-hilab, Apache-2.0, 2B continuous AR TTS, 48k, cloning + default voice, CUDA-only)"
+if (-not (Test-Path "venvs\dots_tts\Scripts\python.exe")) {
+    # pip package `dots_tts`, installed editable from the cloned tree (venvs\dots_tts\src);
+    # the runner does `from dots_tts.runtime import DotsTtsRuntime`. constraints/recommended.txt
+    # pins torch==2.8.0 — on Windows we satisfy that from the cu128 index FIRST (Blackwell
+    # sm_120; PyPI Windows torch is CPU-only), then apply the constraints with the torch lines
+    # stripped so the editable install isn't dragged back to a CPU wheel. soundfile/numpy come
+    # in via the constraints. Weights (rednote-hilab/dots.tts-soar, ~2B bf16) auto-download
+    # from HF on first run. CUDA-only, 48 kHz.
+    Invoke-Checked "uv venv dots_tts" { uv venv venvs\dots_tts --python 3.11 }
+    if (-not (Test-Path "venvs\dots_tts\src")) {
+        Invoke-Checked "git clone dots.tts" { git clone --depth 1 https://github.com/rednote-hilab/dots.tts venvs\dots_tts\src }
+    }
+    Invoke-Checked "torch 2.8.0 cu128 for dots_tts (FIRST)" { uv pip install --python venvs\dots_tts\Scripts\python.exe torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
+    Get-Content venvs\dots_tts\src\constraints\recommended.txt | Where-Object { $_ -notmatch '^\s*torch==' -and $_ -notmatch '^\s*torchaudio==' } | Set-Content venvs\dots_tts\src\constraints\recommended.notorch.txt -Encoding utf8
+    Invoke-Checked "uv pip install dots_tts" { uv pip install --python venvs\dots_tts\Scripts\python.exe -e venvs\dots_tts\src -c venvs\dots_tts\src\constraints\recommended.notorch.txt }
+    Write-Host "dots_tts: ok (2B continuous AR TTS; dots.tts-soar weights auto-download from HF on first run; CUDA-only, 48k)" -ForegroundColor Green
+} else { Write-Host "dots_tts: already installed" -ForegroundColor Gray }
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.
