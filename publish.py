@@ -44,7 +44,7 @@ from report import (
 MODEL_MULTILINGUAL = {
     "piper", "kokoro", "magpie", "supertonic", "f5tts", "indextts", "omnivoice",
     "zipvoice", "voxcpm", "coqui", "qwentts", "qwentts_fast", "moss_tts_nano",
-    "moss_tts", "voxtral", "fish_15", "zonos", "openvoice", "dots_tts",
+    "moss_tts", "moss_tts_v15", "voxtral", "fish_15", "zonos", "openvoice", "dots_tts",
 }
 
 # Cloning models with NO preset/built-in voice: their no-`--reference` "default"
