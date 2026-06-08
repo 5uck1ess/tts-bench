@@ -7,6 +7,7 @@ served by gh-pages via opaque /clip/<id> 302 redirects (blindness preserved).
 
 import asyncio
 import hashlib
+import hmac
 import threading
 import time
 
@@ -62,7 +63,8 @@ class ModeState:
         self.rebuild(conn)
 
     def rebuild(self, conn):
-        votes = dbmod.clean_votes(conn, self.mode)
+        with _db_lock:
+            votes = dbmod.clean_votes(conn, self.mode)
         elo, games = elomod.derive(self.inv.models, votes)
         pair_count = {}
         for left, right, choice in votes:
@@ -75,6 +77,7 @@ class ModeState:
 
 app = FastAPI()
 _conn = _open_db()
+_db_lock = threading.Lock()  # serializes all access to the shared sqlite _conn
 _STATES = {}
 for _m in ("default", "cloning"):
     _inv = load_inventory(_MANIFEST, _m, SETTINGS.langs)
@@ -84,6 +87,10 @@ _INITIAL = "default" if "default" in _STATES else next(iter(_STATES))
 
 
 def _ip_hash(request: Request) -> str:
+    # NOTE: X-Forwarded-For's leftmost entry is client-supplied and spoofable, so
+    # the per-IP token cap is a BEST-EFFORT SECONDARY signal only (the persistent
+    # `voter` token is the primary Sybil control). Behind a trusted proxy that
+    # rewrites XFF, harden this to the platform's trusted client-IP header.
     ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "?")
     ip = ip.split(",")[0].strip()
     return hashlib.sha256((ip + "|" + SETTINGS.hmac_secret).encode()).hexdigest()[:16]
@@ -175,19 +182,20 @@ async def api_vote(request: Request):
         return JSONResponse({"ok": False, "error": "bad choice"}, status_code=400)
 
     left_id, right_id = body.get("left_id", ""), body.get("right_id", "")
-    prompt_id = int(body.get("prompt_id", 0))
+    try:
+        prompt_id = int(body.get("prompt_id", 0))
+        dwell_ms = int(body.get("dwell_ms", 0))
+    except (TypeError, ValueError):
+        return JSONResponse({"ok": False, "error": "bad field"}, status_code=400)
     pair_nonce = body.get("pair_nonce", "")
-    token = (body.get("token_id") or body.get("voter") or "anon")  # anon localStorage token
-    # The page sends the rater's persistent token as `voter`; nonce travels as pair_nonce.
+    # Persistent anonymous rater token. The page sends it as `voter`; `token` is
+    # also accepted (test/back-compat). Unknown -> "anon" (a malformed client).
+    token = body.get("voter") or body.get("token") or "anon"
 
     now = time.time()
     fields = pair_fields(mode, left_id, right_id, prompt_id)
     nonce_ok = verify_nonce(SETTINGS.hmac_secret_bytes, pair_nonce, fields,
                             int(now), SETTINGS.nonce_max_age_s)
-
-    # Replay guard: a nonce already in the votes log is a replay -> reject outright.
-    if nonce_ok and dbmod.nonce_seen(_conn, pair_nonce):
-        return JSONResponse({"ok": False, "error": "replay"}, status_code=409)
     if not nonce_ok:
         return JSONResponse({"ok": False, "error": "bad nonce"}, status_code=400)
 
@@ -201,41 +209,42 @@ async def api_vote(request: Request):
     if left is None or right is None:
         return JSONResponse({"ok": False, "error": "unknown clip"}, status_code=400)
 
-    # Turnstile.
+    # Turnstile (network) BEFORE taking the DB lock — never await under the lock.
     async with httpx.AsyncClient() as hc:
         ts_ok = await turnstile.verify(SETTINGS.turnstile_secret,
                                        body.get("turnstile_token", ""),
                                        _ip_hash(request), hc)
 
     both_played = bool(body.get("both_played"))
-    dwell_ms = int(body.get("dwell_ms", 0))
     ip_hash = _ip_hash(request)
-
-    # Rate eligibility (decides Elo, not acceptance).
-    tok_state = dbmod.token_state(_conn, token)
-    last_ts = tok_state["last_vote_ts"] if tok_state else None
     day_ago, hour_ago = now - 86400, now - 3600
-    rate_ok = ratelimit.rate_eligible(
-        last_vote_ts=last_ts, now=now,
-        today_count=dbmod.daily_count(_conn, token, day_ago),
-        ip_tokens_last_hour=dbmod.ip_distinct_tokens(_conn, ip_hash, hour_ago))
 
-    token_flagged = dbmod.is_token_flagged(_conn, token)
-    clean = gates.passes_clean_gate(
-        both_played=both_played, dwell_ms=dwell_ms, turnstile_ok=ts_ok,
-        nonce_ok=nonce_ok, token_flagged=token_flagged) and rate_ok
-
-    row = {
-        "ts": now, "token": token, "session_id": body.get("session_id", ""),
-        "mode": mode, "prompt_id": prompt_id, "left_model": left, "right_model": right,
-        "left_clip": left_id, "right_clip": right_id, "choice": choice,
-        "dwell_ms": dwell_ms, "both_played": int(both_played),
-        "turnstile_ok": int(ts_ok), "pair_nonce": pair_nonce, "gold_pair_id": None,
-        "ua": request.headers.get("user-agent", "")[:300], "ip_hash": ip_hash,
-        "elo_clean": int(clean), "rate_ok": int(rate_ok),
-    }
-    dbmod.insert_vote(_conn, row)
-    dbmod.bump_token(_conn, token, now)
+    # All DB reads+writes for this vote are serialized so the replay check and the
+    # insert are atomic (one shared sqlite connection across the threadpool).
+    with _db_lock:
+        if dbmod.nonce_seen(_conn, pair_nonce):
+            return JSONResponse({"ok": False, "error": "replay"}, status_code=409)
+        tok_state = dbmod.token_state(_conn, token)
+        last_ts = tok_state["last_vote_ts"] if tok_state else None
+        rate_ok = ratelimit.rate_eligible(
+            last_vote_ts=last_ts, now=now,
+            today_count=dbmod.daily_count(_conn, token, day_ago),
+            ip_tokens_last_hour=dbmod.ip_distinct_tokens(_conn, ip_hash, hour_ago))
+        token_flagged = dbmod.is_token_flagged(_conn, token)
+        clean = gates.passes_clean_gate(
+            both_played=both_played, dwell_ms=dwell_ms, turnstile_ok=ts_ok,
+            nonce_ok=nonce_ok, token_flagged=token_flagged) and rate_ok
+        row = {
+            "ts": now, "token": token, "session_id": body.get("session_id", ""),
+            "mode": mode, "prompt_id": prompt_id, "left_model": left, "right_model": right,
+            "left_clip": left_id, "right_clip": right_id, "choice": choice,
+            "dwell_ms": dwell_ms, "both_played": int(both_played),
+            "turnstile_ok": int(ts_ok), "pair_nonce": pair_nonce, "gold_pair_id": None,
+            "ua": request.headers.get("user-agent", "")[:300], "ip_hash": ip_hash,
+            "elo_clean": int(clean), "rate_ok": int(rate_ok),
+        }
+        dbmod.insert_vote(_conn, row)
+        dbmod.bump_token(_conn, token, now)
 
     if clean and choice != "bad":
         with st.lock:
@@ -248,9 +257,10 @@ async def api_vote(request: Request):
 
 @app.post("/admin/flag_token")
 def admin_flag(body: dict, x_admin_token: str = Header(default="")):
-    if not SETTINGS.admin_token or x_admin_token != SETTINGS.admin_token:
+    if not SETTINGS.admin_token or not hmac.compare_digest(x_admin_token, SETTINGS.admin_token):
         return JSONResponse({"ok": False}, status_code=401)
-    dbmod.flag_token(_conn, body.get("token", ""))
+    with _db_lock:
+        dbmod.flag_token(_conn, body.get("token", ""))
     for st in _STATES.values():       # token sweep -> self-healing re-derive
         st.rebuild(_conn)
     return {"ok": True}

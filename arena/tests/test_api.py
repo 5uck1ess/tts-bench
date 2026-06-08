@@ -108,3 +108,36 @@ def test_reference_redirects_in_cloning(client):
     r = client.get("/reference?mode=cloning", follow_redirects=False)
     assert r.status_code == 302
     assert r.headers["location"].endswith("/windows-cloning/_reference.wav")
+
+
+def test_vote_voter_field_lands_in_token_column(client):
+    import arena.app as appmod
+    d = client.get("/api/next?mode=default").json()
+    body = {"voter": "real-voter", "mode": "default", "prompt_id": d["prompt_id"],
+            "left_id": d["left_id"], "right_id": d["right_id"], "choice": "left",
+            "dwell_ms": 3000, "both_played": True, "turnstile_token": "x",
+            "pair_nonce": d["pair_nonce"]}
+    assert client.post("/api/vote", json=body).json()["ok"] is True
+    cur = appmod._conn.execute("SELECT token FROM votes ORDER BY id DESC LIMIT 1")
+    assert cur.fetchone()["token"] == "real-voter"   # NOT collapsed to "anon"
+
+
+def test_distinct_voters_each_get_a_clean_vote(client):
+    # Two different voters voting back-to-back must BOTH score clean. If the token
+    # collapsed to a shared "anon", the second would be burst-rate-limited (not clean).
+    import time as _t
+    results = []
+    for i, v in enumerate(("alice", "bob")):
+        # The pair nonce is (pair_fields + 1 s-resolution timestamp). With a single
+        # default pair, two same-second /api/next calls would mint the *same* nonce
+        # and the 2nd vote would trip the replay guard (unrelated to the token fix),
+        # so space the calls past a 1 s boundary to get distinct nonces.
+        if i:
+            _t.sleep(1.1)
+        d = client.get("/api/next?mode=default").json()
+        body = {"voter": v, "mode": "default", "prompt_id": d["prompt_id"],
+                "left_id": d["left_id"], "right_id": d["right_id"], "choice": "left",
+                "dwell_ms": 3000, "both_played": True, "turnstile_token": "x",
+                "pair_nonce": d["pair_nonce"]}
+        results.append(client.post("/api/vote", json=body).json()["clean"])
+    assert results == [True, True]
