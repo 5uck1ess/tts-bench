@@ -972,6 +972,32 @@ else
     echo "voxtral: already installed"
 fi
 
+# --- scoring: objective metrics (UTMOS + WER + SIM) ----------------------------
+# Central scorer venv (one rig scores all published clips). Linux-primary: the
+# UniSpeech-SAT SV stack builds cleanly here.
+echo; cyan "=== scoring: objective metrics (UTMOS + WER + SIM) ==="
+if [ ! -x venvs/scoring/bin/python ]; then
+    uv venv venvs/scoring --python 3.11 || die "uv venv scoring"
+    uv pip install --python venvs/scoring/bin/python \
+        torch torchaudio librosa soundfile numpy \
+        transformers jiwer speechmos pytest \
+        || die "uv pip install scoring deps"
+    # Canonical seed-tts-eval SIM model code (wavlm_large SV).
+    if [ ! -d scoring/thirdparty/UniSpeech ]; then
+        git clone https://github.com/microsoft/UniSpeech scoring/thirdparty/UniSpeech \
+            || die "git clone UniSpeech"
+    fi
+    uv pip install --python venvs/scoring/bin/python s3prl fairseq \
+        || echo "WARN: s3prl/fairseq install failed — SIM unavailable until fixed (UTMOS+WER still work)"
+    green "scoring: ok"
+else
+    echo "scoring: already installed"
+fi
+if [ ! -f scoring/checkpoints/wavlm_large_finetune.pth ]; then
+    echo "NOTE: SIM checkpoint missing. Download wavlm_large_finetune.pth into"
+    echo "      scoring/checkpoints/ (see https://github.com/BytedanceSpeech/seed-tts-eval)."
+fi
+
 # --- psutil in every venv (for bench memory tracking) ---
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.

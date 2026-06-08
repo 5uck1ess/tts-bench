@@ -6,10 +6,11 @@
   </picture>
 </p>
 
-Bench for local text-to-speech (TTS) models. Two lenses, on whatever hardware you put it on:
+Bench for local text-to-speech (TTS) models. Three lenses, on whatever hardware you put it on:
 
 - **Speed** — cold + warm **TTFA** (time to first audio), **RTF** (real-time factor; higher = faster than realtime), memory, on CPU / CUDA / Apple Silicon
 - **Listen** — every model on every prompt, default voice + voice cloning, with inline audio players, so you can pick a model by ear
+- **Scores** — objective metrics per model: UTMOS (naturalness), WER (intelligibility), SIM (cloning fidelity), scored over the bench prompts via [seed-tts-eval](https://github.com/BytedanceSpeech/seed-tts-eval)-style ASR + speaker-verification. Sortable, with a Default/Cloning toggle.
 
 An objective quality score (NAQ) was prototyped but isn't part of the bench — the v2 features didn't track subjective ranking closely enough to publish, so it was pulled and is being redesigned separately. The bench measures speed; quality is by-ear via the Listen lens.
 
@@ -17,10 +18,11 @@ An objective quality score (NAQ) was prototyped but isn't part of the bench — 
 
 ## ▶ Demos
 
-**[5uck1ess.github.io/tts-bench](https://5uck1ess.github.io/tts-bench/)** — listen to every model, no install. Two lenses:
+**[5uck1ess.github.io/tts-bench](https://5uck1ess.github.io/tts-bench/)** — listen to every model, no install. Three lenses:
 
 - **Listen** — one consolidated gallery with an inline `<audio>` player for every model on every prompt, in **default voice** and **voice cloning** (each clone sits next to the reference it's imitating). Browse **by prompt** (compare all models on one sentence) or **by model** (audition one model across prompts); only one clip plays at a time. Audio is rig-independent, so each sample is sourced once from the highest-fidelity rig and tagged with where it came from. Quality, prosody, and artifacts are obvious in 5 seconds — benchmark tables can't show that.
 - **Speed** — per-rig leaderboards (Ryzen 9 9950X3D + RTX 5090, Apple M4, Ryzen + RTX 3090) with cold/warm TTFA, RTF, and memory, sortable. Pick the box you actually own.
+- **Scores** — objective metrics per model (UTMOS naturalness, WER intelligibility, SIM cloning fidelity), sortable, with a Default/Cloning toggle. Human votes remain the preference ground truth; these are objective backstops.
 
 Full per-rig reports (every model × prompt × device, plus by-prompt samples) are linked from the **Archive**.
 

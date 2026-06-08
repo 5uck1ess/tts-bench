@@ -94,6 +94,56 @@ REPO = Path(__file__).parent
 WORKTREE = REPO / "_gh-pages"
 BRANCH = "gh-pages"
 
+SCORES_CSV = REPO / "scoring" / "scores.csv"
+
+WER_FAIL_THRESHOLD = 0.5  # mean WER above this flags a model row as "broken"
+
+
+def _plain_rows(path):
+    """csv.DictReader rows without report._read_csv's numeric coercion."""
+    with Path(path).open(newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+def _read_scores_csv():
+    """Index scoring/scores.csv as {(dir, wav): {metric: float|None}}.
+    Empty dict if the file is absent (Scores page then renders empty)."""
+    look = {}
+    if not SCORES_CSV.exists():
+        return look
+    for row in _plain_rows(SCORES_CSV):
+        vals = {}
+        for k in ("utmos", "wer", "sim"):
+            v = row.get(k, "")
+            vals[k] = float(v) if v not in ("", None) else None
+        look[(row["dir"], row["wav"])] = vals
+    return look
+
+
+def _model_scores(model, prompt_ids, dirs, look):
+    """Mean of each metric over the canonical picked clip per prompt for one model.
+    Returns {'utmos','wer','sim': float|None, 'n': int}. Blanks are skipped per
+    metric; n = number of prompts that had a picked clip present in scores.csv."""
+    acc = {"utmos": [], "wer": [], "sim": []}
+    n = 0
+    for pid in prompt_ids:
+        picked = _pick_clip(dirs, model, pid)
+        if not picked:
+            continue
+        rel = picked[0]                       # "<dir>/<wav>"
+        dname, wav = rel.split("/", 1)
+        row = look.get((dname, wav))
+        if row is None:
+            continue
+        n += 1
+        for k in acc:
+            if row.get(k) is not None:
+                acc[k].append(row[k])
+    out = {k: (sum(v) / len(v) if v else None) for k, v in acc.items()}
+    out["n"] = n
+    return out
+
+
 # ---- Cross-rig consolidation for the Listen/Speed landing -------------------
 # Canonical dir name = "<rig>-<mode>". LISTEN publishes ONE clip per
 # (model, voice-mode): audio is rig-independent (same weights → same output),
@@ -341,7 +391,7 @@ def _top_controls(active):
     switcher + the filter/reset/theme controls SCRIPT (from report.py) wires to by id."""
     tabs = "".join(
         f'<a class="lens-tab{" active" if s == active else ""}" href="{s}.html">{l}</a>'
-        for s, l in (("listen", "Listen"), ("speed", "Speed"))
+        for s, l in (("listen", "Listen"), ("speed", "Speed"), ("scores", "Scores"))
     )
     return ('<div class="controls">'
             f'<span class="lens-tabs">{tabs}</span>'
@@ -695,6 +745,113 @@ def build_speed_hub():
     (WORKTREE / "speed.html").write_text("\n".join(out), encoding="utf-8")
 
 
+_SCORES_GUIDE = (
+    '<div class="reading-guide">Objective scores over the same 5 prompts. '
+    '<strong>UTMOS</strong> = predicted naturalness (higher better); '
+    '<strong>WER</strong> = ASR word-error rate vs the intended text — a '
+    '<em>failure-detector</em>, not a fine ranking (lower better); '
+    '<strong>SIM</strong> = speaker similarity to the cloned reference '
+    '(<code>chris_hemsworth_15s</code>, higher better). Switch '
+    '<strong>Default</strong> / <strong>Cloning</strong> below; click any header to '
+    're-sort. Each score is the mean over the exact clips shown on '
+    '<a href="listen.html">Listen</a>. Human votes are the preference ground truth; '
+    'these objective metrics are backstops.</div>'
+)
+
+
+def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_models=frozenset()):
+    """One sortable table. columns = list of (metric_key, header, higher_better).
+    Rows aggregated per model; WER>threshold rows get the 'flagged' class.
+    fallback_dirs/fallback_models: for NO_PRESET_VOICE models on the cloning board,
+    append default dirs so a model benched only in default mode still appears."""
+    head = '<th>Model</th><th>Size</th>' + "".join(
+        f'<th>{escape(h)} {"↑" if up else "↓"}</th>' for (_k, h, up) in columns)
+    body = []
+    aggs = []
+    for m in sorted(models, key=lambda x: _display_name(x).lower()):
+        eff_dirs = dirs
+        if fallback_dirs and m in fallback_models:
+            eff_dirs = tuple(dirs) + tuple(fallback_dirs)
+        agg = _model_scores(m, _all_prompt_ids(eff_dirs), eff_dirs, look)
+        if agg["n"] == 0:
+            continue
+        aggs.append((m, agg))
+    for (m, agg) in aggs:
+        flagged = agg.get("wer") is not None and agg["wer"] > WER_FAIL_THRESHOLD
+        cls = ' class="flagged"' if flagged else ""
+        cells = [f'<td>{escape(_display_name(m))}</td>',
+                 f'<td class="muted">{escape(MODEL_SIZE.get(m, "—"))}</td>']
+        for (k, _h, _up) in columns:
+            v = agg.get(k)
+            if v is None:
+                cells.append('<td class="num muted" data-sort="">—</td>')
+            else:
+                cells.append(f'<td class="num" data-sort="{v:.4f}">{v:.3f}</td>')
+        body.append(f'<tr{cls}>' + "".join(cells) + '</tr>')
+    if not body:
+        return '<p class="mode-empty muted">No scored models yet.</p>'
+    return (f'<table><thead><tr>{head}</tr></thead><tbody>'
+            + "".join(body) + '</tbody></table>')
+
+
+def build_scores():
+    """Build scores.html — objective metric leaderboard with a Default/Cloning
+    toggle. Default = UTMOS+WER; Cloning = SIM+UTMOS+WER. Reuses _pick_clip so each
+    score matches the clip shown on Listen."""
+    look = _read_scores_csv()
+    raw_default = set().union(*(_ok_models(n) for n in LISTEN_DEFAULT_DIRS)) if LISTEN_DEFAULT_DIRS else set()
+    raw_cloning = set().union(*(_ok_models(n) for n in LISTEN_CLONING_DIRS)) if LISTEN_CLONING_DIRS else set()
+    default_models = raw_default - NO_PRESET_VOICE
+    cloning_models = raw_cloning | (NO_PRESET_VOICE & (raw_default | raw_cloning))
+
+    default_cols = [("utmos", "UTMOS", True), ("wer", "WER", False)]
+    cloning_cols = [("sim", "SIM", True), ("utmos", "UTMOS", True), ("wer", "WER", False)]
+
+    default_tbl = _scores_table(default_models, LISTEN_DEFAULT_DIRS, look, default_cols)
+    # Cloning board: like build_listen, a NO_PRESET_VOICE model benched only in
+    # default mode cloned the reference there, so fall back to its default-dir clip
+    # (SIM will be blank for it since that clip was scored in default mode).
+    cloning_tbl = _scores_table(cloning_models, LISTEN_CLONING_DIRS, look, cloning_cols,
+                                fallback_dirs=LISTEN_DEFAULT_DIRS, fallback_models=NO_PRESET_VOICE)
+
+    flagged_style = (
+        '<style>tr.flagged>td{opacity:.55;}'
+        'tr.flagged>td:first-child::after{content:" \\26A0";color:var(--fail);}'
+        '.scores-foot{color:var(--muted);font-size:.85em;margin-top:1.4rem;'
+        'border-top:1px solid var(--border);padding-top:.8rem;line-height:1.5;}'
+        '.scores-foot a{color:var(--accent);}</style>')
+    foot = (
+        '<div class="scores-foot">Scored over the 5 bench prompts (thin — WER is a '
+        'failure-detector, not a fine ranking). Checkpoints: UTMOS '
+        '<code>utmos22_strong</code> (SpeechMOS), SIM canonical UniSpeech-SAT '
+        '<code>wavlm_large_finetune</code>, WER Whisper-large-v3. Method follows '
+        '<a href="https://github.com/BytedanceSpeech/seed-tts-eval">seed-tts-eval</a>. '
+        'Human votes are the preference ground truth; these are objective backstops.</div>')
+
+    out = ['<!doctype html>',
+           '<html lang="en"><head><meta charset="utf-8">',
+           '<meta name="viewport" content="width=device-width, initial-scale=1">',
+           '<title>tts-bench — Scores</title>',
+           FAVICON_LINK, STYLE, LOGO_STYLE, _SUBSECTION_STYLE, _SPEED_HUB_STYLE,
+           flagged_style,
+           '</head><body>', _top_controls("scores"), LOGO_HEADER,
+           '<h1>Scores</h1>', _SCORES_GUIDE,
+           '<div class="mode-select"><span class="rig-select-label">Voice:</span>'
+           '<div class="lens-tabs" id="mode-tabs">'
+           '<a class="lens-tab active" data-mode="default" href="#">Default voice</a>'
+           '<a class="lens-tab" data-mode="cloning" href="#">Cloning</a>'
+           '</div></div>',
+           f'<div class="subsection" data-mode="default"><h3 class="sub-head">Default voice '
+           f'<span class="muted">· naturalness + intelligibility</span></h3>{default_tbl}</div>',
+           f'<div class="subsection cloning" data-mode="cloning" style="display:none">'
+           f'<h3 class="sub-head">Cloning <span class="muted">· fidelity + naturalness + '
+           f'intelligibility</span></h3>{cloning_tbl}</div>',
+           foot,
+           '<script>window.__defaultSort = {colIdx: 2, dir: -1};</script>',
+           SCRIPT, _MODE_TAB_SCRIPT, '</body></html>']
+    (WORKTREE / "scores.html").write_text("\n".join(out), encoding="utf-8")
+
+
 _HOME_STYLE = (
     '<style>'
     '.home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;margin:1.8rem 0;}'
@@ -746,7 +903,7 @@ def build_landing():
            '<div class="home-controls"><button type="button" id="theme-toggle">☾ dark</button></div>',
            LOGO_HEADER,
            '<div class="meta">Open-source TTS models benchmarked side-by-side. '
-           'Two lenses — pick one:</div>',
+           'Three lenses — pick one:</div>',
            '<div class="home-grid">',
            '<div class="home-card"><a href="listen.html"><h2>▶ Listen</h2>'
            '<p>Hear every model on the same prompts — default voice and voice cloning, '
@@ -755,6 +912,10 @@ def build_landing():
            '<div class="home-card"><a href="speed.html"><h2>▶ Speed</h2>'
            '<p>Time-to-first-audio, real-time factor, and memory for every model — '
            'per rig (windows-5090 · linux-3090 · mac-m4), cold and warm. Sortable.</p></a></div>',
+           '<div class="home-card"><a href="scores.html"><h2>▶ Scores</h2>'
+           '<p>Objective metrics for every model — UTMOS naturalness, WER '
+           'intelligibility, and cloning-fidelity SIM. Sortable, default voice '
+           'and cloning. Human votes remain the ground truth; these are backstops.</p></a></div>',
            '</div>',
            f'<div class="home-foot">{n_models} models · {n_rigs} rigs · '
            '<a href="archive.html">Archive — full per-rig reports</a> · '
@@ -856,6 +1017,7 @@ def build_top_level():
     _copy_branding_assets()
     build_listen()
     build_speed_hub()
+    build_scores()
     build_archive_index()
     build_landing()  # last: counts depend on the dirs, not the other pages
 
