@@ -38,3 +38,7 @@ NUL
 scoring/checkpoints/*.pth
 scoring/checkpoints/*.pt
 scoring/thirdparty/
+
+# arena local datastore (prod uses Turso; local sqlite is throwaway)
+arena/arena.db
+arena/arena.db-journal

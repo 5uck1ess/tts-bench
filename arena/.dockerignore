@@ -1,0 +1,5 @@
+tests/
+arena.db
+arena.db-journal
+__pycache__/
+*.pyc
