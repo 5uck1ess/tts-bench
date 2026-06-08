@@ -635,6 +635,33 @@ if (-not (Test-Path "venvs\dramabox\Scripts\python.exe")) {
 # dots.tts is LINUX-ONLY — see install.sh. The Windows install never worked
 # (torch cu128 + the editable dots_tts build), so there's no install.ps1 stanza.
 
+# --- scoring: objective metrics (UTMOS + WER + SIM) ---------------------------
+# Central scorer venv. SIM's UniSpeech-SAT stack (s3prl/fairseq) may fail on
+# Windows MSVC; if so, score on Linux (scoring is central). UTMOS+WER work here.
+Step "scoring: objective metrics (UTMOS + WER + SIM)"
+if (-not (Test-Path "venvs\scoring\Scripts\python.exe")) {
+    Invoke-Checked "uv venv scoring" { uv venv venvs\scoring --python 3.11 }
+    Invoke-Checked "uv pip install scoring deps" {
+        uv pip install --python venvs\scoring\Scripts\python.exe `
+            torch torchaudio librosa soundfile numpy `
+            transformers jiwer speechmos pytest
+    }
+    if (-not (Test-Path "scoring\thirdparty\UniSpeech")) {
+        Invoke-Checked "git clone UniSpeech" { git clone https://github.com/microsoft/UniSpeech scoring\thirdparty\UniSpeech }
+    }
+    & uv pip install --python venvs\scoring\Scripts\python.exe s3prl fairseq
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "WARN: s3prl/fairseq failed on Windows — SIM is Linux-only; UTMOS+WER still work." -ForegroundColor Yellow
+    }
+    Write-Host "scoring: ok" -ForegroundColor Green
+} else {
+    Write-Host "scoring: already installed" -ForegroundColor Gray
+}
+if (-not (Test-Path "scoring\checkpoints\wavlm_large_finetune.pth")) {
+    Write-Host "NOTE: SIM checkpoint missing. Download wavlm_large_finetune.pth into" -ForegroundColor Yellow
+    Write-Host "      scoring\checkpoints\ (see https://github.com/BytedanceSpeech/seed-tts-eval)." -ForegroundColor Yellow
+}
+
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.
