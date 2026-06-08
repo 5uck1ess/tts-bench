@@ -125,15 +125,10 @@ def test_vote_voter_field_lands_in_token_column(client):
 def test_distinct_voters_each_get_a_clean_vote(client):
     # Two different voters voting back-to-back must BOTH score clean. If the token
     # collapsed to a shared "anon", the second would be burst-rate-limited (not clean).
-    import time as _t
+    # No sleep needed: the per-issuance nonce salt makes two same-second /api/next
+    # calls for the same pair mint DISTINCT nonces, so the 2nd vote is not a replay.
     results = []
-    for i, v in enumerate(("alice", "bob")):
-        # The pair nonce is (pair_fields + 1 s-resolution timestamp). With a single
-        # default pair, two same-second /api/next calls would mint the *same* nonce
-        # and the 2nd vote would trip the replay guard (unrelated to the token fix),
-        # so space the calls past a 1 s boundary to get distinct nonces.
-        if i:
-            _t.sleep(1.1)
+    for v in ("alice", "bob"):
         d = client.get("/api/next?mode=default").json()
         body = {"voter": v, "mode": "default", "prompt_id": d["prompt_id"],
                 "left_id": d["left_id"], "right_id": d["right_id"], "choice": "left",
