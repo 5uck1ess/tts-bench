@@ -57,8 +57,8 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 **Best sounding:** *No objective ranking right now — the NAQ score is paused pending redesign. Open the [Demos site](https://5uck1ess.github.io/tts-bench/) and use the Listen lens.*
 
-**Best cloning (blind A/B votes):**
-- 1. **OmniVoice** — top of the blind vote (24-1-3), accent preserved
+**Best cloning — blind A/B votes (these measure voice-match *preference*, not intelligibility):**
+- 1. **OmniVoice** — top on voice/accent match (24-1-3), **but it can garble or drop words**; a timbre-focused A/B vote doesn't penalize that, so read this as "best voice match," not "best overall clone." Audition it first — objective **WER** (the new Scores lens) is meant to catch exactly this gap.
 - 2. **Echo-TTS** — near-tied #1 (21-1-6), clean 44.1 kHz
 - 3. **IndexTTS-2** — third (16-2-5), accent held
 

@@ -24,6 +24,8 @@ python speak.py chatterbox --reference reference/myvoice.wav
 
 Ranked by a **blind pairwise voting study** — human-preference 2AFC over the cloning-capable models, fit to Bradley-Terry strengths. Each listener hears two anonymized clones of the same reference (`chris_hemsworth_15s.wav`, 5 prompts) and picks the better one; `tie` and `bad` (both-unusable) votes are recorded too. **397 votes** as of June 2026. W-L-T = wins / losses / ties.
 
+> **What this measures (and doesn't).** Listeners are picking the better **voice match** — timbre/accent fidelity and overall preference. It does **not** measure intelligibility: a clone can top this study while still garbling or dropping words, because a short timbre-focused A/B doesn't penalize that. Pair these standings with the objective **WER** column on the [Scores lens](https://5uck1ess.github.io/tts-bench/scores.html) — see the OmniVoice caveat below.
+
 | # | Model | W-L-T | Games |
 |---|---|---|---|
 | 1 | **OmniVoice** | 24-1-3 | 28 |
@@ -59,7 +61,7 @@ Ranked by a **blind pairwise voting study** — human-preference 2AFC over the c
 
 **What the votes say:**
 
-- **The top is robust.** OmniVoice and Echo-TTS each lost exactly one game out of 28 — effectively tied for first, and clear of the field. IndexTTS-2, F5-TTS, and MOSS-TTS form a solid second tier (F5-TTS now edges MOSS-TTS for 4th).
+- **The top is robust on voice match — with one caveat.** OmniVoice and Echo-TTS each lost exactly one game out of 28 — effectively tied for first on **voice match**, and clear of the field. **But OmniVoice's intelligibility is the weak spot:** it can drop or garble words, which this timbre-focused 2AFC doesn't penalize — so treat its #1 as "best voice match," not "best overall clone," and check objective **WER** (or just audition it) before relying on it. Echo-TTS doesn't have that problem. IndexTTS-2, F5-TTS, and MOSS-TTS form a solid second tier (F5-TTS now edges MOSS-TTS for 4th).
 - **The May ear-test was wrong about the middle.** A first-pass single-reference listen had ranked ChatterBox #2; the blind votes drop it to 14th (12-9-5). It's fine, not special. Trust the votes over that early impression.
 - **F5-TTS** rides on timbre but its **prosody is the weak point** — phrasing/pauses feel off — which is why it sits behind the leaders despite a strong 19-5 record.
 - **VoxCPM2 and Sesame CSM-1B** clone passably but drift from the reference — VoxCPM's timbre wanders, Sesame inserts **fake pauses** mid-sentence (a conversational-chunk training artifact). Mid-pack.
