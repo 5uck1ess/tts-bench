@@ -973,29 +973,62 @@ else
 fi
 
 # --- scoring: objective metrics (UTMOS + WER + SIM) ----------------------------
-# Central scorer venv (one rig scores all published clips). Linux-primary: the
-# UniSpeech-SAT SV stack builds cleanly here.
-echo; cyan "=== scoring: objective metrics (UTMOS + WER + SIM) ==="
+# Central scorer (one rig scores all published clips). TWO venvs, by necessity:
+#   venvs/scoring     (py3.11) — UTMOS + WER. Run: scoring.score_all
+#   venvs/scoring_sim (py3.10) — SIM only.    Run: scoring.sim_pass
+# SIM's canonical UniSpeech-SAT path needs fairseq 0.12.2, which only IMPORTS on
+# Python <=3.10 (py3.11 trips a dataclass mutable-default error) and whose C++
+# ext won't build against modern torch — so SIM is pinned to the 2022-era stack
+# (torch 2.0.1 / torchaudio 2.0.2 / numpy<2) in its own venv, leaving UTMOS/WER
+# untouched. See scoring/sim_pass.py.
+echo; cyan "=== scoring: objective metrics (UTMOS + WER) — py3.11 ==="
 if [ ! -x venvs/scoring/bin/python ]; then
     uv venv venvs/scoring --python 3.11 || die "uv venv scoring"
     uv pip install --python venvs/scoring/bin/python \
         torch torchaudio librosa soundfile numpy \
         transformers jiwer speechmos pytest \
         || die "uv pip install scoring deps"
-    # Canonical seed-tts-eval SIM model code (wavlm_large SV).
-    if [ ! -d scoring/thirdparty/UniSpeech ]; then
-        git clone https://github.com/microsoft/UniSpeech scoring/thirdparty/UniSpeech \
-            || die "git clone UniSpeech"
-    fi
-    uv pip install --python venvs/scoring/bin/python s3prl fairseq \
-        || echo "WARN: s3prl/fairseq install failed — SIM unavailable until fixed (UTMOS+WER still work)"
     green "scoring: ok"
 else
     echo "scoring: already installed"
 fi
+# Canonical seed-tts-eval SIM model code (wavlm_large SV) — shared by the SIM venv.
+if [ ! -d scoring/thirdparty/UniSpeech ]; then
+    git clone https://github.com/microsoft/UniSpeech scoring/thirdparty/UniSpeech \
+        || die "git clone UniSpeech"
+fi
+
+echo; cyan "=== scoring SIM: cloning fidelity (UniSpeech-SAT) — py3.10 ==="
+if [ ! -x venvs/scoring_sim/bin/python ]; then
+    uv venv venvs/scoring_sim --python 3.10 || die "uv venv scoring_sim"
+    # Pinned to the era where fairseq 0.12.2 + s3prl + the SV checkpoint agree.
+    uv pip install --python venvs/scoring_sim/bin/python \
+        "numpy<2" "torch==2.0.1" "torchaudio==2.0.2" librosa soundfile scipy \
+        "transformers==4.30.2" sentencepiece "huggingface-hub<0.20" \
+        "omegaconf<2.1" "hydra-core<1.1" "antlr4-python3-runtime==4.8" \
+        sacrebleu bitarray sacremoses regex cffi packaging tqdm cython \
+        setuptools wheel fire tabulate portalocker colorama gdown \
+        || die "uv pip install scoring_sim deps"
+    uv pip install --python venvs/scoring_sim/bin/python --no-deps s3prl \
+        || die "uv pip install s3prl"
+    # READTHEDOCS=1 skips fairseq's C++ ext build (breaks vs modern torch); the
+    # ext is not needed to load the wavlm checkpoint. --no-deps: deps are pinned above.
+    READTHEDOCS=1 uv pip install --python venvs/scoring_sim/bin/python \
+        --no-build-isolation --no-deps "fairseq==0.12.2" \
+        || die "uv pip install fairseq (SIM)"
+    green "scoring_sim: ok"
+else
+    echo "scoring_sim: already installed"
+fi
+# Canonical SIM checkpoint (WavLM-large SV, ~1.2 GB, not on HuggingFace). Fetched
+# from UniSpeech's README Google-Drive link via gdown.
 if [ ! -f scoring/checkpoints/wavlm_large_finetune.pth ]; then
-    echo "NOTE: SIM checkpoint missing. Download wavlm_large_finetune.pth into"
-    echo "      scoring/checkpoints/ (see https://github.com/BytedanceSpeech/seed-tts-eval)."
+    if [ -x venvs/scoring_sim/bin/python ]; then
+        echo "Fetching SIM checkpoint wavlm_large_finetune.pth (~1.2 GB)…"
+        venvs/scoring_sim/bin/python -m gdown 1-aE1NfzpRCLxA4GUxX9ITI3F9LlbtEGP \
+            -O scoring/checkpoints/wavlm_large_finetune.pth \
+            || echo "WARN: SIM checkpoint download failed — fetch it manually into scoring/checkpoints/ (UniSpeech README)."
+    fi
 fi
 
 # --- psutil in every venv (for bench memory tracking) ---

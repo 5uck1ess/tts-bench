@@ -50,9 +50,20 @@ class SimScorer:
                 raise FileNotFoundError(_FETCH_HELP)
             if _UNISPEECH not in sys.path:
                 sys.path.insert(0, _UNISPEECH)
-            # seed-tts-eval's verification.init_model builds the wavlm_large SV net.
-            from verification import init_model
-            model = init_model("wavlm_large", _CKPT)
+            # init_model pulls the wavlm_large upstream via torch.hub.load, which
+            # prompts to trust the repo on a TTY and raises EOFError when headless.
+            # We vet the pinned UniSpeech/s3prl assets ourselves, so auto-trust here.
+            import torch.hub as _hub
+            _orig_trust = getattr(_hub, "_check_repo_is_trusted", None)
+            if _orig_trust is not None:
+                _hub._check_repo_is_trusted = lambda *a, **k: None
+            try:
+                # seed-tts-eval's verification.init_model builds the wavlm_large SV net.
+                from verification import init_model
+                model = init_model("wavlm_large", _CKPT)
+            finally:
+                if _orig_trust is not None:
+                    _hub._check_repo_is_trusted = _orig_trust
             self._model = model.to(self.device).eval()
         return self._model
 
