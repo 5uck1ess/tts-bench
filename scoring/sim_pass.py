@@ -32,20 +32,44 @@ from scoring.scores_io import read_scores, write_scores
 from scoring.score_all import ref_for_dir, _fmt, _try, _GH, _SCORES_CSV
 
 
-def select_todo(clips, existing, ref_for_dir=ref_for_dir, rescore=False):
-    """Cloning clips with a row, a reference, and (unless --rescore) a blank sim."""
+def _sibling_cloning_dir(default_dir):
+    """windows-default → windows-cloning. None if not a *-default dir."""
+    if not default_dir.endswith("-default"):
+        return None
+    return default_dir[: -len("-default")] + "-cloning"
+
+
+def select_todo(clips, existing, ref_for_dir=ref_for_dir, no_preset=frozenset(),
+                rescore=False):
+    """Return [(clip, ref_path)] for clips needing SIM. Two reference-clone sources:
+
+      - cloning-mode clips → scored against their own dir's published _reference.wav.
+      - default-mode clips of a NO_PRESET_VOICE model that has NO cloning clip: their
+        no-`--reference` run clones the bundled Chris reference, so they ARE Chris
+        clones — score them against the sibling cloning dir's _reference.wav. This
+        mirrors publish.py's board fallback (those clips show under Cloning), so the
+        SIM column matches the clip the board actually displays. Models WITH a real
+        preset voice (e.g. vibevoice 0.5B → en-Emma) are excluded — scoring their
+        default clip against Chris would be a different-speaker (meaningless) number.
+    """
+    has_cloning = {c.model for c in clips if c.mode == "cloning"}
     todo = []
     for c in clips:
-        if c.mode != "cloning":
-            continue
         row = existing.get((c.dir, c.wav))
         if row is None:
             continue  # score_all owns row creation (utmos/wer); skip un-scored clips
         if row.get("sim", "").strip() and not rescore:
             continue
-        if ref_for_dir(c.dir) is None:
-            continue  # no reference published → SIM not applicable
-        todo.append(c)
+        if c.mode == "cloning":
+            ref = ref_for_dir(c.dir)
+        elif c.model in no_preset and c.model not in has_cloning:
+            sib = _sibling_cloning_dir(c.dir)
+            ref = ref_for_dir(sib) if sib else None
+        else:
+            continue  # default clip of a real-preset model → no SIM (cloning-only metric)
+        if ref is None:
+            continue  # no reference available → SIM not applicable
+        todo.append((c, ref))
     return todo
 
 
@@ -65,8 +89,13 @@ def main(argv=None):
         raise SystemExit(f"{_SCORES_CSV} is empty — run scoring.score_all "
                          f"(UTMOS/WER) in venvs/scoring first.")
 
+    # NO_PRESET_VOICE (models whose no-reference "default" run is a bundled Chris
+    # clone) is publish.py's — the single source of truth. Pulled here, not at module
+    # import, so scoring.sim_pass stays decoupled and unit-testable without publish.
+    from publish import NO_PRESET_VOICE
+
     clips = discover_clips(args.gh_root)
-    todo = select_todo(clips, existing, rescore=args.rescore)
+    todo = select_todo(clips, existing, no_preset=NO_PRESET_VOICE, rescore=args.rescore)
     cloning = sum(1 for c in clips if c.mode == "cloning")
     print(f"{cloning} cloning clips; scoring SIM for {len(todo)} "
           f"({'rescore' if args.rescore else 'missing only'}).", flush=True)
@@ -77,9 +106,8 @@ def main(argv=None):
     from scoring.sim import SimScorer
     sim = SimScorer()
 
-    for c in todo:
+    for c, ref in todo:
         wav = os.path.join(args.gh_root, c.dir, c.wav)
-        ref = ref_for_dir(c.dir)
         s = _try(lambda: sim.score(wav, ref), "sim", c.wav)
         existing[(c.dir, c.wav)]["sim"] = _fmt(s)
 
