@@ -907,6 +907,10 @@ def build_landing():
            '<div class="home-card"><a href="speed.html"><h2>▶ Speed</h2>'
            '<p>Time-to-first-audio, real-time factor, and memory for every model — '
            'per rig (windows-5090 · linux-3090 · mac-m4), cold and warm. Sortable.</p></a></div>',
+           '<div class="home-card"><a href="scores.html"><h2>▶ Scores</h2>'
+           '<p>Objective metrics for every model — UTMOS naturalness, WER '
+           'intelligibility, and cloning-fidelity SIM. Sortable, default voice '
+           'and cloning. Human votes remain the ground truth; these are backstops.</p></a></div>',
            '</div>',
            f'<div class="home-foot">{n_models} models · {n_rigs} rigs · '
            '<a href="archive.html">Archive — full per-rig reports</a> · '

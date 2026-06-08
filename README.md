@@ -10,6 +10,7 @@ Bench for local text-to-speech (TTS) models. Two lenses, on whatever hardware yo
 
 - **Speed** — cold + warm **TTFA** (time to first audio), **RTF** (real-time factor; higher = faster than realtime), memory, on CPU / CUDA / Apple Silicon
 - **Listen** — every model on every prompt, default voice + voice cloning, with inline audio players, so you can pick a model by ear
+- **Scores** — objective metrics per model: UTMOS (naturalness), WER (intelligibility), SIM (cloning fidelity), scored over the bench prompts via [seed-tts-eval](https://github.com/BytedanceSpeech/seed-tts-eval)-style ASR + speaker-verification. Sortable, with a Default/Cloning toggle.
 
 An objective quality score (NAQ) was prototyped but isn't part of the bench — the v2 features didn't track subjective ranking closely enough to publish, so it was pulled and is being redesigned separately. The bench measures speed; quality is by-ear via the Listen lens.
 
