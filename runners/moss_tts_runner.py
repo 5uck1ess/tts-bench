@@ -1,11 +1,22 @@
 """MOSS-TTS flagship runner (OpenMOSS, Apache 2.0, 8B Qwen3-backbone TTS).
 
-Zero-shot voice cloning, 20 languages, long-form synthesis. Uses a Qwen3-style
+Zero-shot voice cloning, multilingual synthesis, long-form. Uses a Qwen3-style
 LM backbone + the OpenMOSS Cat audio tokenizer. CUDA-targeted; CPU works but
 is impractically slow given the 8B parameter count.
 
-NOTE on size: the user spec originally said "1.6B" — the upstream README's
-Released Models table actually documents two architectures:
+VERSIONS: this runner serves BOTH checkpoints, selected by the harness `variant`
+field (see MODEL_IDS) — moss_tts → v1.0 (`OpenMOSS-Team/MOSS-TTS`), moss_tts_v15
+→ v1.5 (`OpenMOSS-Team/MOSS-TTS-v1.5`). v1.5 is continued training from 1.0 (same
+8B Delay architecture/API) and improves voice-cloning stability, long-ref /
+short-text cloning, and punctuation prosody, and extends language coverage to 31
+(from 20). It is NOT a strict superset: with the language field OMITTED, v1.5 can
+regress slightly on some languages; with it SPECIFIED it is stronger than 1.0
+almost everywhere — so for v1.5 ONLY this runner passes an explicit `language=`
+tag (see LANG_NAMES). v1.0 keeps its original behaviour (no language kwarg). Both
+are kept in the bench because 1.0 still wins on some material by ear.
+
+NOTE on size: the upstream README's Released Models table documents two
+architectures:
   - MossTTSDelay (MOSS-TTS proper): 8B params  ← what this runner loads
   - MossTTSLocal (MOSS-TTS-Local-Transformer): 1.7B (alt checkpoint)
 We default to the 8B Delay model as that's the flagship advertised on the repo
@@ -13,13 +24,14 @@ front page. The Local 1.7B variant would be a separate `--variant` follow-up.
 
 API (lifted from upstream's MOSS-TTS Basic Usage):
     from transformers import AutoModel, AutoProcessor
-    proc = AutoProcessor.from_pretrained("OpenMOSS-Team/MOSS-TTS", trust_remote_code=True)
+    proc = AutoProcessor.from_pretrained("OpenMOSS-Team/MOSS-TTS-v1.5", trust_remote_code=True)
     proc.audio_tokenizer = proc.audio_tokenizer.to(device)
     model = AutoModel.from_pretrained(
-        "OpenMOSS-Team/MOSS-TTS", trust_remote_code=True,
+        "OpenMOSS-Team/MOSS-TTS-v1.5", trust_remote_code=True,
         attn_implementation=attn, torch_dtype=dtype,
     ).to(device); model.eval()
-    conversations = [[proc.build_user_message(text=text, reference=[ref_wav])]]
+    # v1.5: pass language=<English name> for best multilingual quality.
+    conversations = [[proc.build_user_message(text=text, reference=[ref_wav], language="English")]]
     batch = proc(conversations, mode="generation")
     outputs = model.generate(
         input_ids=batch["input_ids"].to(device),
@@ -61,7 +73,25 @@ import _meminfo
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_REF = REPO_ROOT / "reference" / "chris_hemsworth_15s.wav"
 
-MODEL_ID = "OpenMOSS-Team/MOSS-TTS"
+# Two checkpoints share this runner + venv (v1.5 is continued training from 1.0,
+# same Delay architecture + processor classes). The harness `variant` field picks
+# which: moss_tts → v1.0 (default), moss_tts_v15 → v1.5. We keep BOTH in the bench
+# because 1.0 still wins on some material by ear.
+MODEL_IDS = {
+    None:   "OpenMOSS-Team/MOSS-TTS",        # v1.0 (default when no --variant)
+    "v1.0": "OpenMOSS-Team/MOSS-TTS",
+    "v1.5": "OpenMOSS-Team/MOSS-TTS-v1.5",
+}
+
+# Only v1.5 accepts/benefits from an explicit language tag (build_user_message
+# gained the `language=` kwarg in v1.5; passing it to 1.0 is unsupported). v1.5
+# wants the language's English name (e.g. "French"), not an ISO code — map the
+# bench's lang codes → MOSS names. Codes not listed fall through to auto-detect
+# (kwarg omitted); extend only with names verified against the v1.5 table.
+LANG_NAMES = {
+    "en": "English",
+    "fr": "French",
+}
 
 
 def _resolve_attn_implementation(device, dtype):
@@ -96,6 +126,12 @@ def main() -> int:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": "either --stdin or both --text and --out are required"}))
         return 1
+
+    # Resolve checkpoint from the harness variant (moss_tts→v1.0, moss_tts_v15→v1.5).
+    model_id = MODEL_IDS.get(args.variant, MODEL_IDS[None])
+    # Only v1.5 takes the explicit language tag (bench passes --language per prompt;
+    # unknown codes → None → auto-detect). v1.0 never gets the kwarg.
+    lang_name = LANG_NAMES.get((args.language or "").lower()) if args.variant == "v1.5" else None
 
     if args.reference:
         ref_wav = Path(args.reference)
@@ -137,7 +173,7 @@ def main() -> int:
         # snapshot_download (uses huggingface_hub's own repo-id parser) and load
         # the processor + model from the resulting local path.
         from huggingface_hub import snapshot_download
-        model_dir = snapshot_download(MODEL_ID)
+        model_dir = snapshot_download(model_id)
 
         processor = AutoProcessor.from_pretrained(model_dir, trust_remote_code=True)
         processor.audio_tokenizer = processor.audio_tokenizer.to(device)
@@ -163,9 +199,10 @@ def main() -> int:
             _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
 
-            conversations = [[
-                processor.build_user_message(text=text, reference=[str(ref_wav)])
-            ]]
+            msg_kwargs = {"text": text, "reference": [str(ref_wav)]}
+            if lang_name:
+                msg_kwargs["language"] = lang_name  # v1.5 multilingual tag
+            conversations = [[processor.build_user_message(**msg_kwargs)]]
             batch = processor(conversations, mode="generation")
             input_ids = batch["input_ids"].to(device)
             attention_mask = batch["attention_mask"].to(device)

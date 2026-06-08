@@ -54,7 +54,7 @@ MODEL_MULTILINGUAL = {
 # Default-voice section. (styletts2 → bundled LibriVox speaker, and VibeVoice 0.5B
 # → the en-Emma_woman preset, DO have genuine defaults, so they're not here.)
 NO_PRESET_VOICE = {
-    "moss_tts", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
+    "moss_tts", "moss_tts_v15", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
     "openvoice", "zipvoice", "zonos", "vibevoice_15b", "vibevoice_7b",
     "echo", "dots_tts",
 }

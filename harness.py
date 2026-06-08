@@ -55,7 +55,12 @@ MODELS = [
     ("magpie",      "magpie",     "runners/magpie_runner.py",     True,  ["cpu", "cuda"],        None,   False),
     ("soprano",     "soprano",    "runners/soprano_runner.py",    False, ["cpu", "cuda", "mps"], None,   False),
     ("moss_tts_nano", "moss_tts_nano", "runners/moss_tts_nano_runner.py", True,  ["cpu", "cuda", "mps"], None, True),
-    ("moss_tts",      "moss_tts",      "runners/moss_tts_runner.py",      True,  ["cuda"],               None, True),
+    # MOSS-TTS: both checkpoints kept (1.0 still wins on some material by ear).
+    # Same venv + runner; variant picks the HF checkpoint. v1.5 also gets a
+    # per-prompt language tag (see the runner). Both are pure-cloning (no preset
+    # voice) → both must be in publish.py / vote.py NO_PRESET_VOICE.
+    ("moss_tts",      "moss_tts",      "runners/moss_tts_runner.py",      True,  ["cuda"],               "v1.0", True),
+    ("moss_tts_v15",  "moss_tts",      "runners/moss_tts_runner.py",      True,  ["cuda"],               "v1.5", True),
     ("supertonic",  "supertonic", "runners/supertonic_runner.py", True,  ["cpu"],                None,   False),
     ("maya1",       "maya1",      "runners/maya1_runner.py",      False, ["cpu", "cuda", "mps"], None,   False),
     ("styletts2",   "styletts2",  "runners/styletts2_runner.py",  False, ["cpu", "cuda", "mps"], None,   True),

@@ -452,7 +452,8 @@ MODEL_DISPLAY_NAMES = {
     "kittentts":     "KittenTTS",
     "soprano":       "Soprano 80M",
     "moss_tts_nano": "MOSS-TTS-Nano",
-    "moss_tts":      "MOSS-TTS",
+    "moss_tts":      "MOSS-TTS v1.0",
+    "moss_tts_v15":  "MOSS-TTS v1.5",
     "supertonic":    "Supertonic",
     "luxtts":        "LuxTTS",
     "maya1":         "Maya1",
@@ -510,6 +511,7 @@ MODEL_SIZE = {
     "soprano":       "80M",
     "moss_tts_nano": "100M",
     "moss_tts":      "8B",
+    "moss_tts_v15":  "8B",
     "supertonic":    "99M",
     "maya1":         "3B",
     "voxtral":       "4B",
@@ -564,6 +566,7 @@ MODEL_KIND = {
     "neutts_nano":   "cloning",
     "moss_tts_nano": "cloning",
     "moss_tts":      "cloning",
+    "moss_tts_v15":  "cloning",
     "maya1":         "predefined",   # voice-description preset, no wav cloning
     "voxtral":       "cloning",      # cuda/vLLM path clones; MLX path preset-only
     "fish_15":       "cloning",
