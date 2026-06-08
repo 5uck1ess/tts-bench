@@ -2,15 +2,16 @@
 
 dots.tts pairs a semantic encoder + LLM + autoregressive flow-matching acoustic head
 over a 48 kHz AudioVAE (no discrete codec tokens). Zero-shot voice cloning from a
-reference wav (+ its transcript for higher-quality continuation cloning). It's a pure
-cloning model (no voice of its own), so per the bench convention a no-reference run
-clones the bundled chris_hemsworth_15s.wav for the "default voice" lens; a user
---reference overrides it -> can_clone=True, both lenses populated.
-Multilingual (24 langs incl. en/fr) so it runs the French prompt too.
+reference wav (+ its transcript for higher-quality continuation cloning). With NO
+reference it still synthesizes — in its own voice, but sampled fresh per prompt (a
+different speaker each generation, like Higgs v3), not a fixed preset. So the default
+lens is that varying own-voice (text-only), and --reference switches to cloning ->
+can_clone=True, both lenses populated. Multilingual (24 langs incl. en/fr -> FR prompt).
 
 Upstream is a pip PACKAGE (`dots_tts`), installed editable from the cloned tree
-(venvs/dots_tts/src). install.sh/.ps1 clone + `uv pip install -e`, so the import below
-resolves with no sys.path hacking.
+(venvs/dots_tts/src). install.sh clones + `uv pip install -e` (Linux-only — the
+WeTextProcessing/pynini dep won't build under Windows MSVC), so the import resolves
+with no sys.path hacking.
 
 API (upstream README quick start):
     from dots_tts.runtime import DotsTtsRuntime
@@ -37,7 +38,6 @@ import _meminfo
 
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DEFAULT_REF = REPO_ROOT / "reference" / "chris_hemsworth_15s.wav"
 
 # rednote-hilab/dots.tts-soar = the SCA flagship (highest quality). dots.tts-mf is the
 # MeanFlow-distilled fast variant (fewer steps); -base is the raw pretrain. Use soar.
@@ -89,15 +89,17 @@ def main() -> int:
                "error": "either --stdin or both --text and --out are required"})
         return 1
 
-    # dots.tts is a pure zero-shot cloning model (no voice of its own). Per the bench
-    # convention (README "Predefined vs Cloning"), a no-reference run falls back to the
-    # bundled chris_hemsworth_15s.wav, so the "default voice" is a clone of that clip and
-    # is reproducible across prompts. A user --reference overrides it.
-    ref_wav = Path(args.reference) if args.reference else DEFAULT_REF
-    if not ref_wav.exists():
+    # dots.tts CAN synthesize with no reference (its own voice), but that voice is
+    # sampled fresh per prompt — a different speaker each generation (like Higgs v3),
+    # not a fixed preset. So the default lens = text-only (genuine own voice, varies
+    # per prompt); a user --reference switches to zero-shot cloning of that clip
+    # (+ its sibling .txt transcript for higher-quality continuation cloning).
+    cloning = args.reference is not None
+    ref_wav = Path(args.reference) if cloning else None
+    if cloning and not ref_wav.exists():
         _emit({"ok": False, "run_index": 0, "error": f"reference wav not found: {ref_wav}"})
         return 1
-    ref_text = _read_ref_transcript(str(ref_wav))
+    ref_text = _read_ref_transcript(str(ref_wav)) if cloning else None
 
     try:
         import torch
@@ -122,10 +124,12 @@ def main() -> int:
         try:
             import soundfile as sf
 
-            gen_kwargs = {"text": text, "prompt_audio_path": str(ref_wav),
-                          "num_steps": NUM_STEPS, "guidance_scale": GUIDANCE_SCALE}
-            if ref_text:  # continuation cloning; without it, x-vector-only from the wav
-                gen_kwargs["prompt_text"] = ref_text
+            gen_kwargs = {"text": text, "num_steps": NUM_STEPS,
+                          "guidance_scale": GUIDANCE_SCALE}
+            if cloning:  # default lens omits prompt_audio -> model's own (per-prompt) voice
+                gen_kwargs["prompt_audio_path"] = str(ref_wav)
+                if ref_text:  # continuation cloning; without it, x-vector-only from the wav
+                    gen_kwargs["prompt_text"] = ref_text
 
             _meminfo.reset_peak(args.device)
             with contextlib.redirect_stdout(sys.stderr):

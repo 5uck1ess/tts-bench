@@ -56,7 +56,7 @@ MODEL_MULTILINGUAL = {
 NO_PRESET_VOICE = {
     "moss_tts", "moss_tts_v15", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
     "openvoice", "zipvoice", "zonos", "vibevoice_15b", "vibevoice_7b",
-    "echo", "dots_tts",
+    "echo",
 }
 
 # Curated per-(model, voice-mode) QA findings, surfaced as a small badge + tooltip on
@@ -67,6 +67,11 @@ KNOWN_ISSUES = {
     # qwentts_fast/cloning (runaway) is fixed via non_streaming_mode=True and re-benched;
     # fish_s2/cloning (wrong reference) was re-benched with Chris on Linux.
     ("higgs_v3", "default"): (
+        "note", "⟳ voice varies",
+        "Default voice is sampled fresh per generation (no fixed preset) — each prompt's "
+        "clip is a different speaker. Cloning stays consistent with the reference."
+    ),
+    ("dots_tts", "default"): (
         "note", "⟳ voice varies",
         "Default voice is sampled fresh per generation (no fixed preset) — each prompt's "
         "clip is a different speaker. Cloning stays consistent with the reference."
