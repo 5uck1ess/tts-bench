@@ -40,6 +40,10 @@ class TursoConnection:
         return _Cursor(rows)
 
     def executescript(self, script: str):
+        # INVARIANT: this naive ';' splitter requires that NO statement contains
+        # an inner ';' (e.g. inside a string literal, trigger body, or DEFAULT).
+        # db.SCHEMA satisfies this. A future migration that violates it must use a
+        # real SQL statement splitter here — see test_executescript_* in tests.
         for stmt in (s.strip() for s in script.split(";")):
             if stmt:
                 self._client.execute(stmt)

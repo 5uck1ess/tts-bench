@@ -2,7 +2,12 @@
 
 BURST_MIN_INTERVAL_S = 3.0
 DAILY_SOFT_CAP = 500
-IP_MAX_TOKENS_PER_HOUR = 2
+# Per-IP distinct-token cap feeding the live Elo. Deliberately generous: behind
+# NAT / CGNAT / a shared Discord link, many honest voters egress one IP, and a
+# too-low cap silently drops their votes from the board. IP is only a SECONDARY,
+# spoofable signal (the persistent `voter` token is the primary Sybil control),
+# so this catches blatant single-IP localStorage-clear farming, not households.
+IP_MAX_TOKENS_PER_HOUR = 8
 
 
 def within_burst(last_vote_ts: float | None, now: float) -> bool:
