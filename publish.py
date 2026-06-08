@@ -91,8 +91,6 @@ BRANCH = "gh-pages"
 
 SCORES_CSV = REPO / "scoring" / "scores.csv"
 
-# Metric directions for the Scores board: True = higher is better.
-SCORE_METRICS = (("utmos", True), ("wer", False), ("sim", True))
 WER_FAIL_THRESHOLD = 0.5  # mean WER above this flags a model row as "broken"
 
 
@@ -756,15 +754,20 @@ _SCORES_GUIDE = (
 )
 
 
-def _scores_table(models, dirs, look, columns):
+def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_models=frozenset()):
     """One sortable table. columns = list of (metric_key, header, higher_better).
-    Rows aggregated per model; WER>threshold rows get the 'flagged' class."""
+    Rows aggregated per model; WER>threshold rows get the 'flagged' class.
+    fallback_dirs/fallback_models: for NO_PRESET_VOICE models on the cloning board,
+    append default dirs so a model benched only in default mode still appears."""
     head = '<th>Model</th><th>Size</th>' + "".join(
         f'<th>{escape(h)} {"↑" if up else "↓"}</th>' for (_k, h, up) in columns)
     body = []
     aggs = []
     for m in sorted(models, key=lambda x: _display_name(x).lower()):
-        agg = _model_scores(m, _all_prompt_ids(dirs), dirs, look)
+        eff_dirs = dirs
+        if fallback_dirs and m in fallback_models:
+            eff_dirs = tuple(dirs) + tuple(fallback_dirs)
+        agg = _model_scores(m, _all_prompt_ids(eff_dirs), eff_dirs, look)
         if agg["n"] == 0:
             continue
         aggs.append((m, agg))
@@ -800,7 +803,11 @@ def build_scores():
     cloning_cols = [("sim", "SIM", True), ("utmos", "UTMOS", True), ("wer", "WER", False)]
 
     default_tbl = _scores_table(default_models, LISTEN_DEFAULT_DIRS, look, default_cols)
-    cloning_tbl = _scores_table(cloning_models, LISTEN_CLONING_DIRS, look, cloning_cols)
+    # Cloning board: like build_listen, a NO_PRESET_VOICE model benched only in
+    # default mode cloned the reference there, so fall back to its default-dir clip
+    # (SIM will be blank for it since that clip was scored in default mode).
+    cloning_tbl = _scores_table(cloning_models, LISTEN_CLONING_DIRS, look, cloning_cols,
+                                fallback_dirs=LISTEN_DEFAULT_DIRS, fallback_models=NO_PRESET_VOICE)
 
     flagged_style = (
         '<style>tr.flagged>td{opacity:.55;}'

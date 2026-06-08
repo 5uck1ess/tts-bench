@@ -44,19 +44,27 @@ def test_model_scores_blank_metric_skipped(monkeypatch):
 def test_build_scores_renders_both_lenses(tmp_path, monkeypatch):
     # Minimal worktree: one default dir + one cloning dir, each with a results.csv
     # and one model's clip; a scores.csv covering them.
+    # mars5 is a cloning-kind model NOT in NO_PRESET_VOICE, so it lands on the
+    # Default board when it has default-dir clips — and its high WER triggers the
+    # flagged row style.
     gh = tmp_path / "_gh-pages"
     (gh / "windows-default").mkdir(parents=True)
     (gh / "windows-cloning").mkdir(parents=True)
     for d, mode in (("windows-default", "default"), ("windows-cloning", "cloning")):
         (gh / d / "results.csv").write_text(
-            "model,device,prompt_id,ok\nkokoro,cuda,1,True\n", encoding="utf-8")
+            "model,device,prompt_id,ok\n"
+            "kokoro,cuda,1,True\n"
+            "mars5,cuda,1,True\n",
+            encoding="utf-8")
         (gh / d / "kokoro_cuda_p1.wav").write_bytes(b"x")
+        (gh / d / "mars5_cuda_p1.wav").write_bytes(b"x")
     (gh / "windows-cloning" / "_reference.wav").write_bytes(b"x")
     scores = tmp_path / "scores.csv"
     scores.write_text(
         "dir,wav,model,mode,prompt_id,utmos,wer,sim\n"
         "windows-default,kokoro_cuda_p1.wav,kokoro,default,1,4.10,0.00,\n"
-        "windows-cloning,kokoro_cuda_p1.wav,kokoro,cloning,1,4.00,0.00,0.88\n",
+        "windows-cloning,kokoro_cuda_p1.wav,kokoro,cloning,1,4.00,0.00,0.88\n"
+        "windows-default,mars5_cuda_p1.wav,mars5,default,1,3.50,0.97,\n",
         encoding="utf-8")
 
     monkeypatch.setattr(publish, "WORKTREE", gh)
@@ -69,3 +77,4 @@ def test_build_scores_renders_both_lenses(tmp_path, monkeypatch):
     assert "UTMOS" in html and "WER" in html and "SIM" in html
     assert 'data-sort="4.10' in html  # default utmos cell carries a numeric data-sort
     assert 'data-sort="0.88' in html  # cloning sim cell present
+    assert 'class="flagged"' in html  # the high-WER mars5 row is flagged
