@@ -32,6 +32,19 @@ def test_clean_votes_filters_bad_and_unclean(tmp_path):
     assert rows == [("a", "b", "left")]
 
 
+def test_clean_vote_count_includes_tie_and_bad_but_not_gatefailed(tmp_path):
+    c = _conn(tmp_path)
+    db.insert_vote(c, _row(pair_nonce="n1", choice="left", elo_clean=1))
+    db.insert_vote(c, _row(pair_nonce="n2", choice="bad", elo_clean=1))     # counts (good-faith)
+    db.insert_vote(c, _row(pair_nonce="n3", choice="tie", elo_clean=1))     # counts
+    db.insert_vote(c, _row(pair_nonce="n4", choice="left", elo_clean=0))    # gate-failed -> excluded
+    db.insert_vote(c, _row(pair_nonce="n5", choice="left", elo_clean=1, mode="cloning"))  # other mode
+    assert db.clean_vote_count(c, "default") == 3   # left + bad + tie, not the gate-failed one
+    assert db.clean_vote_count(c, "cloning") == 1
+    # the Elo board still excludes 'bad' from default (only left counts there)
+    assert db.clean_votes(c, "default") == [("a", "b", "left"), ("a", "b", "tie")]
+
+
 def test_flagged_token_excluded_from_clean(tmp_path):
     c = _conn(tmp_path)
     db.insert_vote(c, _row(pair_nonce="n1", token="bad", choice="left"))

@@ -121,7 +121,8 @@ def api_next(mode: str = _INITIAL):
     fields = pair_fields(st.mode, left_id, right_id, prompt)
     nonce = make_nonce(SETTINGS.hmac_secret_bytes, fields, ts)
     lang, text = st.inv.prompts.get(prompt, ("en", ""))
-    total = sum(s.games.get(m, 0) for s in [st] for m in s.games) // 2
+    with _db_lock:
+        total = dbmod.clean_vote_count(_conn, st.mode)  # all good-faith votes (incl tie/bad)
     return {
         "token": nonce,            # legacy field name kept for page parity
         "pair_nonce": nonce,
@@ -167,7 +168,9 @@ def api_ranking(mode: str = _INITIAL):
         rows = [{"model": m, "elo": round(st.elo[m]), "games": st.games[m]}
                 for m in st.inv.models]
     rows.sort(key=lambda r: -r["elo"])
-    return {"ranking": rows, "votes": sum(r["games"] for r in rows) // 2}
+    with _db_lock:
+        votes = dbmod.clean_vote_count(_conn, st.mode)  # all good-faith votes (incl tie/bad)
+    return {"ranking": rows, "votes": votes}
 
 
 @app.post("/api/vote")

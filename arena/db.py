@@ -92,6 +92,19 @@ def clean_votes(conn, mode: str) -> list:
     return [(r["left_model"], r["right_model"], r["choice"]) for r in cur.fetchall()]
 
 
+def clean_vote_count(conn, mode: str) -> int:
+    """Count gate-passing (clean) votes for ``mode``, INCLUDING tie/bad — i.e. all
+    good-faith votes collected. This is the public 'votes collected' tally shown on
+    the page; it differs from the Elo board, which still excludes 'bad' as a non-
+    preference. Flagged tokens are excluded (mirrors the board)."""
+    cur = conn.execute(
+        """SELECT COUNT(*) AS n FROM votes
+           WHERE mode = ? AND elo_clean = 1
+             AND token NOT IN (SELECT token FROM tokens WHERE flagged = 1)""",
+        (mode,))
+    return cur.fetchone()["n"]
+
+
 def bump_token(conn, token: str, ts: float) -> None:
     conn.execute(
         """INSERT INTO tokens (token, first_seen, last_vote_ts, vote_count)
