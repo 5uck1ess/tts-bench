@@ -39,3 +39,33 @@ def test_model_scores_blank_metric_skipped(monkeypatch):
     agg = publish._model_scores("m", ["1", "2"], ("d",), look)
     assert agg["utmos"] == 4.0   # only p1 had utmos
     assert agg["sim"] is None     # none had sim
+
+
+def test_build_scores_renders_both_lenses(tmp_path, monkeypatch):
+    # Minimal worktree: one default dir + one cloning dir, each with a results.csv
+    # and one model's clip; a scores.csv covering them.
+    gh = tmp_path / "_gh-pages"
+    (gh / "windows-default").mkdir(parents=True)
+    (gh / "windows-cloning").mkdir(parents=True)
+    for d, mode in (("windows-default", "default"), ("windows-cloning", "cloning")):
+        (gh / d / "results.csv").write_text(
+            "model,device,prompt_id,ok\nkokoro,cuda,1,True\n", encoding="utf-8")
+        (gh / d / "kokoro_cuda_p1.wav").write_bytes(b"x")
+    (gh / "windows-cloning" / "_reference.wav").write_bytes(b"x")
+    scores = tmp_path / "scores.csv"
+    scores.write_text(
+        "dir,wav,model,mode,prompt_id,utmos,wer,sim\n"
+        "windows-default,kokoro_cuda_p1.wav,kokoro,default,1,4.10,0.00,\n"
+        "windows-cloning,kokoro_cuda_p1.wav,kokoro,cloning,1,4.00,0.00,0.88\n",
+        encoding="utf-8")
+
+    monkeypatch.setattr(publish, "WORKTREE", gh)
+    monkeypatch.setattr(publish, "SCORES_CSV", scores)
+    publish.build_scores()
+
+    html = (gh / "scores.html").read_text(encoding="utf-8")
+    assert "scores.html" in html and ">Scores<" in html  # nav tab present
+    assert 'data-mode="default"' in html and 'data-mode="cloning"' in html
+    assert "UTMOS" in html and "WER" in html and "SIM" in html
+    assert 'data-sort="4.10' in html  # default utmos cell carries a numeric data-sort
+    assert 'data-sort="0.88' in html  # cloning sim cell present
