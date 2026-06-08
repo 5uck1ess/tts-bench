@@ -89,6 +89,58 @@ REPO = Path(__file__).parent
 WORKTREE = REPO / "_gh-pages"
 BRANCH = "gh-pages"
 
+SCORES_CSV = REPO / "scoring" / "scores.csv"
+
+# Metric directions for the Scores board: True = higher is better.
+SCORE_METRICS = (("utmos", True), ("wer", False), ("sim", True))
+WER_FAIL_THRESHOLD = 0.5  # mean WER above this flags a model row as "broken"
+
+
+def _plain_rows(path):
+    """csv.DictReader rows without report._read_csv's numeric coercion."""
+    with Path(path).open(newline="", encoding="utf-8") as f:
+        return list(csv.DictReader(f))
+
+
+def _read_scores_csv():
+    """Index scoring/scores.csv as {(dir, wav): {metric: float|None}}.
+    Empty dict if the file is absent (Scores page then renders empty)."""
+    look = {}
+    if not SCORES_CSV.exists():
+        return look
+    for row in _plain_rows(SCORES_CSV):
+        vals = {}
+        for k in ("utmos", "wer", "sim"):
+            v = row.get(k, "")
+            vals[k] = float(v) if v not in ("", None) else None
+        look[(row["dir"], row["wav"])] = vals
+    return look
+
+
+def _model_scores(model, prompt_ids, dirs, look):
+    """Mean of each metric over the canonical picked clip per prompt for one model.
+    Returns {'utmos','wer','sim': float|None, 'n': int}. Blanks are skipped per
+    metric; n = number of prompts that had a picked clip present in scores.csv."""
+    acc = {"utmos": [], "wer": [], "sim": []}
+    n = 0
+    for pid in prompt_ids:
+        picked = _pick_clip(dirs, model, pid)
+        if not picked:
+            continue
+        rel = picked[0]                       # "<dir>/<wav>"
+        dname, wav = rel.split("/", 1)
+        row = look.get((dname, wav))
+        if row is None:
+            continue
+        n += 1
+        for k in acc:
+            if row.get(k) is not None:
+                acc[k].append(row[k])
+    out = {k: (sum(v) / len(v) if v else None) for k, v in acc.items()}
+    out["n"] = n
+    return out
+
+
 # ---- Cross-rig consolidation for the Listen/Speed landing -------------------
 # Canonical dir name = "<rig>-<mode>". LISTEN publishes ONE clip per
 # (model, voice-mode): audio is rig-independent (same weights → same output),
