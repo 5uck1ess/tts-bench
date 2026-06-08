@@ -898,7 +898,7 @@ def build_landing():
            '<div class="home-controls"><button type="button" id="theme-toggle">☾ dark</button></div>',
            LOGO_HEADER,
            '<div class="meta">Open-source TTS models benchmarked side-by-side. '
-           'Two lenses — pick one:</div>',
+           'Three lenses — pick one:</div>',
            '<div class="home-grid">',
            '<div class="home-card"><a href="listen.html"><h2>▶ Listen</h2>'
            '<p>Hear every model on the same prompts — default voice and voice cloning, '
