@@ -1,4 +1,255 @@
-<!doctype html><html><head><meta charset="utf-8"><title>Blind vote</title></head>
-<body><h1>Blind vote</h1>
-<script>const MODES=__MODES__,HASREF=__HASREF__,INITIAL=__INITIAL_MODE__,COUNTS=__COUNTS__,SITEKEY=__SITEKEY__;</script>
-</body></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>TTS Arena — blind vote</title>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#0f1115; --panel:#171a21; --panel2:#1c2230; --panel2h:#222a3a;
+  --border:#262b36; --border2:#313846; --text:#e6e6e6; --muted:#8b93a1;
+  --accent:#9fb4ff; --accent2:#cdd7ff; --kbd:#262b36; --kbdb:#3a4150;
+  --refbg:#13241b; --refborder:#1f4031; --reflbl:#7fd0a3;
+  --bad:#e8918a; --badborder:#4a3030; --badhover:#2a1d1d;
+  --flagfg:#c9a18a; --flagborder:#3a2a2a; --flagon-bg:#3a1f1f; --flagon-bd:#aa5555; --flagon-fg:#ff55aa;
+  --warnfg:#d9bf8a; --warnborder:#4a4030; --warnhi:#caa45a; --warnon-bg:#3a3320; --warnon-fg:#ffcc66;
+}
+:root[data-theme="light"]{
+  color-scheme:light;
+  --bg:#f5f7fa; --panel:#ffffff; --panel2:#e8edf5; --panel2h:#dbe3f2;
+  --border:#cdd4e0; --border2:#aab3c4; --text:#13161c; --muted:#4a5260;
+  --accent:#2f49b8; --accent2:#1d3080; --kbd:#dfe4ee; --kbdb:#b5bdcc;
+  --refbg:#e2f1e8; --refborder:#a9d3bb; --reflbl:#176a41;
+  --bad:#b3261e; --badborder:#e0aca8; --badhover:#f7e3e1;
+  --flagfg:#8a4d28; --flagborder:#d8bda8; --flagon-bg:#fbe1e1; --flagon-bd:#b3261e; --flagon-fg:#8e1410;
+  --warnfg:#7a5d12; --warnborder:#d8c894; --warnhi:#a07d1e; --warnon-bg:#f7efcf; --warnon-fg:#6a4f08;
+}
+body{font:16px/1.5 system-ui,sans-serif;background:var(--bg);color:var(--text);
+  max-width:880px;margin:0 auto;padding:1.2rem 1rem 4rem}
+h1{font-size:1.25rem;margin:.2rem 0}
+.muted{color:var(--muted)}
+.prompt{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  padding:.8rem 1rem;margin:1rem 0}
+.prompt .lang{font-size:.75rem;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.directions{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  padding:.75rem 1rem;margin:1.1rem 0}
+.directions .dlabel{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);font-weight:700;margin-bottom:.3rem}
+.directions #framing{color:var(--text)}
+.refbox{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap;background:var(--refbg);
+  border:1px solid var(--refborder);border-radius:10px;padding:.7rem 1rem;margin:1rem 0}
+.refbox .lbl{color:var(--reflbl);font-weight:600;white-space:nowrap}
+.refbox audio{flex:1;min-width:220px}
+.refbox button{max-width:170px}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.2rem 0}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1.1rem;
+  text-align:center}
+.card h2{margin:.1rem 0 .8rem;font-size:1rem;color:var(--accent)}
+audio{width:100%}
+.playbtn{margin-top:.7rem;width:100%;padding:.7rem;border-radius:8px;border:1px solid var(--border2);
+  background:var(--panel2);color:var(--text);font:inherit;cursor:pointer}
+.playbtn:hover{border-color:var(--accent)}
+.votes{display:grid;grid-template-columns:repeat(4,1fr);gap:.7rem;margin:1rem 0}
+@media(max-width:620px){.votes{grid-template-columns:1fr 1fr}}
+.votes button{padding:1rem;border-radius:10px;border:1px solid var(--border2);background:var(--panel2);
+  color:var(--text);font:inherit;cursor:pointer;font-weight:600}
+.votes button:hover{border-color:var(--accent);background:var(--panel2h)}
+.votes .tie{color:var(--muted)}
+.votes .bad{color:var(--bad);border-color:var(--badborder)}
+.votes .bad:hover{border-color:var(--bad);background:var(--badhover)}
+.flags{display:flex;gap:.4rem;margin-top:.45rem}
+.flagbtn{flex:1;font-size:.74rem;background:transparent;border:1px solid var(--flagborder);
+  color:var(--flagfg);border-radius:7px;padding:.4rem .3rem;cursor:pointer}
+.flagbtn:hover{border-color:var(--flagon-bd);color:var(--bad)}
+.flagbtn.on{background:var(--flagon-bg);border-color:var(--flagon-bd);color:var(--flagon-fg);font-weight:600}
+.flagbtn.bad-out{border-color:var(--warnborder);color:var(--warnfg)}
+.flagbtn.bad-out:hover{border-color:var(--warnhi);color:var(--warnhi)}
+.flagbtn.bad-out.on{background:var(--warnon-bg);border-color:var(--warnhi);color:var(--warnon-fg);font-weight:600}
+.undobtn{background:var(--panel2);color:var(--text);border:1px solid var(--border2);border-radius:8px;
+  padding:.5rem .9rem;font:inherit;cursor:pointer;white-space:nowrap}
+.undobtn:hover{border-color:var(--accent);background:var(--panel2h)}
+.undobtn:disabled{opacity:.4;cursor:default}
+.bar{display:flex;justify-content:space-between;align-items:center;gap:1rem;
+  flex-wrap:wrap;margin-top:1.4rem}
+.bar .hint{font-size:.82rem}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:.8rem 1rem;flex-wrap:wrap}
+.topright{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;justify-content:flex-end}
+.topright #raterbadge{font-size:.85rem}
+.themebtn{background:var(--panel2);color:var(--text);border:1px solid var(--border2);
+  border-radius:8px;padding:.45rem .8rem;font:inherit;cursor:pointer;white-space:nowrap}
+.themebtn:hover{border-color:var(--accent)}
+.modesel{display:inline-flex;gap:.4rem;margin:.5rem 0 .2rem}
+.modesel button{padding:.45rem 1rem;border-radius:8px;border:1px solid var(--border2);
+  background:var(--panel2);color:var(--muted);font:inherit;cursor:pointer}
+.modesel button.on{background:var(--panel2h);border-color:var(--accent);color:var(--accent2);font-weight:600}
+kbd{background:var(--kbd);border:1px solid var(--kbdb);border-radius:4px;padding:1px 6px;font-size:.8em}
+#rankwrap{margin-top:1.6rem;border-top:1px solid var(--border);padding-top:.8rem}
+table{width:100%;border-collapse:collapse;font-size:.9em}
+td,th{text-align:left;padding:3px 8px;border-bottom:1px solid var(--border)}
+td.n{text-align:right;font-variant-numeric:tabular-nums}
+summary{cursor:pointer;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:1.3rem;transform:translateX(-50%) translateY(.6rem);
+  background:#2e9e5b;color:#fff;padding:.55rem 1.1rem;border-radius:999px;font-weight:700;
+  box-shadow:0 4px 16px rgba(0,0,0,.28);opacity:0;pointer-events:none;
+  transition:opacity .16s ease,transform .16s ease;z-index:50}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@keyframes nbump{0%{transform:scale(1)}40%{transform:scale(1.35)}100%{transform:scale(1)}}
+#n.bump{display:inline-block;animation:nbump .35s ease;color:#3fbf72}
+</style></head><body>
+<div class="topbar">
+  <h1><span id="title">Blind vote</span></h1>
+  <div class="topright">
+    <button class="themebtn" id="themebtn">☀ Light</button>
+  </div>
+</div>
+<div class="modesel" id="modesel"></div>
+<div class="directions">
+  <div class="dlabel">📋 Directions</div>
+  <div id="framing"></div>
+</div>
+<div class="refbox" id="refbox" style="display:none">
+  <span class="lbl">🎯 Target voice</span>
+  <audio id="aR" controls preload="auto"></audio>
+  <button class="playbtn" id="pR">▶ Reference <kbd>3</kbd></button>
+</div>
+<div class="prompt"><span class="lang" id="lang"></span> <span id="text"></span></div>
+<div class="pair">
+  <div class="card"><h2>Left</h2><audio id="aA" controls preload="auto"></audio>
+    <button class="playbtn" id="pA">▶ Play Left &nbsp;<kbd>1</kbd></button></div>
+  <div class="card"><h2>Right</h2><audio id="aB" controls preload="auto"></audio>
+    <button class="playbtn" id="pB">▶ Play Right &nbsp;<kbd>2</kbd></button></div>
+</div>
+<div id="cf-turnstile" class="cf-turnstile" data-sitekey="" data-callback="onTurnstile"></div>
+<div class="votes">
+  <button id="vA" disabled>Left better <kbd>←</kbd></button>
+  <button class="tie" id="vT" disabled>Tie <kbd>↓</kbd></button>
+  <button class="bad" id="vX" disabled>Both bad <kbd>X</kbd></button>
+  <button id="vB" disabled>Right better <kbd>→</kbd></button>
+</div>
+<div class="bar">
+  <span class="muted hint" id="gatehint">▶ Play both clips to enable voting</span>
+  <span class="muted">Votes: <b id="n">0</b></span></div>
+<div id="rankwrap"><details><summary>Show live leaderboard (reveals model names)</summary>
+  <table id="rank"><tbody></tbody></table></details></div>
+<div class="toast" id="toast"></div>
+<script>
+const MODES=__MODES__, HASREF=__HASREF__, INITIAL=__INITIAL_MODE__, COUNTS=__COUNTS__, SITEKEY=__SITEKEY__;
+const FRAMING={
+  cloning:"<b>Play the target voice</b> at the top, then <b>Left</b> and <b>Right</b>. Pick whichever sounds <b>more like the target</b> — same person and tone — and cleaner. Tie if you can't tell; Both bad if both are unusable. Order is random, names hidden.",
+  default:"<b>Play Left, then Right.</b> Pick whichever sounds <b>more natural and higher quality</b> — clearer, smoother, more human. Judge the voice itself, not which you'd personally prefer. Tie if equal. Order is random, names hidden."
+};
+const MODE_LABEL={cloning:"🎯 Cloning",default:"🗣 Default voice"};
+const LENS_TITLE={cloning:"Cloning fidelity vote",default:"Voice quality vote"};
+let cur=null, busy=false, renderTs=0, turnstileToken="";
+let playedA=false, playedB=false;
+let mode=(localStorage.getItem('arena_mode')||'').trim().toLowerCase();
+if(!MODES.includes(mode)) mode=MODES.includes(INITIAL)?INITIAL:MODES[0];
+
+// Persistent anonymous identity — one token per browser, no login/name.
+function uuid(){ return (crypto.randomUUID?crypto.randomUUID():
+  'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{
+    const r=Math.random()*16|0, v=c==='x'?r:(r&0x3|0x8); return v.toString(16);})); }
+let arena_token=localStorage.getItem('arena_token');
+if(!arena_token){ arena_token=uuid(); localStorage.setItem('arena_token',arena_token); }
+let session_id=uuid();
+
+const A=document.getElementById('aA'), B=document.getElementById('aB'), R=document.getElementById('aR');
+window.onTurnstile=function(t){ turnstileToken=t; updateGate(); };
+
+function hasRef(){ return mode==='cloning' && HASREF[mode]; }
+function gateReady(){ return playedA && playedB && (!SITEKEY || !!turnstileToken); }
+function updateGate(){
+  const ok=gateReady();
+  ['vA','vT','vX','vB'].forEach(id=>document.getElementById(id).disabled=!ok);
+  const h=document.getElementById('gatehint');
+  if(ok) h.textContent='✓ Ready — cast your vote';
+  else if(!playedA||!playedB) h.textContent='▶ Play both clips to enable voting';
+  else h.textContent='Complete the check below to enable voting';
+}
+function markPlayed(au){ if(au===A)playedA=true; if(au===B)playedB=true; updateGate(); }
+// Count a clip as "played" once it reaches >=90% (or ends).
+[A,B].forEach(au=>{
+  au.addEventListener('timeupdate',()=>{ if(au.duration && au.currentTime/au.duration>=0.9) markPlayed(au); });
+  au.addEventListener('ended',()=>markPlayed(au));
+});
+
+function applyModeUI(){
+  document.getElementById('title').textContent=LENS_TITLE[mode]||'Blind vote';
+  document.title=LENS_TITLE[mode]||'Blind vote';
+  document.getElementById('framing').innerHTML=FRAMING[mode]||'';
+  const sel=document.getElementById('modesel'); sel.innerHTML='';
+  MODES.forEach(m=>{ const b=document.createElement('button');
+    b.innerHTML=(MODE_LABEL[m]||m)+' <span class="muted" style="font-weight:400">· '+(COUNTS[m]||0)+' models</span>';
+    if(m===mode)b.classList.add('on'); b.onclick=()=>setMode(m); sel.appendChild(b); });
+  const rb=document.getElementById('refbox');
+  if(hasRef()){ rb.style.display='flex'; R.src='/reference?mode='+mode; R.load(); }
+  else { rb.style.display='none'; try{R.pause();}catch(e){} R.removeAttribute('src'); }
+}
+function setMode(m){ if(!MODES.includes(m)||m===mode) return;
+  mode=m; localStorage.setItem('arena_mode',mode); stopAll(); applyModeUI(); load(); refreshRank(); }
+
+document.getElementById('pR').onclick=()=>playRef();
+function stopAll(){ A.pause(); B.pause(); try{R.pause();}catch(e){} }
+function playRef(){ if(!hasRef())return; if(!R.paused){R.pause();return;} stopAll(); if(R.ended)R.currentTime=0; R.play(); }
+function playOne(x){ if(!x.paused){ x.pause(); return; } stopAll(); if(x.ended)x.currentTime=0; x.play(); }
+function syncIcon(au, btn){ const upd=()=>{ btn.innerHTML=btn.innerHTML.replace(/^[▶⏸] */, au.paused?'▶ ':'⏸ '); };
+  ['play','pause','ended'].forEach(ev=>au.addEventListener(ev,upd)); }
+function playSeq(){ stopAll(); A.currentTime=0; A.play(); A.onended=()=>{ A.onended=null; B.currentTime=0; B.play(); }; }
+
+function render(data){
+  cur=data; renderTs=Date.now(); playedA=false; playedB=false;
+  document.getElementById('lang').textContent=cur.lang;
+  document.getElementById('text').textContent=cur.text;
+  document.getElementById('n').textContent=cur.votes;
+  A.src=cur.left_url; B.src=cur.right_url; A.load(); B.load();
+  busy=false; updateGate();
+}
+async function load(){ const r=await fetch('/api/next?mode='+mode); render(await r.json()); }
+const PRAISE=['Nice','Got it','Logged','Thanks','Recorded','Keep going','Onward'];
+let toastTimer=null;
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1000); }
+function bumpCount(){ const n=document.getElementById('n');
+  n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
+
+async function vote(choice){
+  if(busy||!cur||!gateReady()) return; busy=true;
+  const dwell_ms=Date.now()-renderTs;
+  await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({voter:arena_token, session_id, mode, choice,
+      prompt_id:cur.prompt_id, left_id:cur.left_id, right_id:cur.right_id,
+      pair_nonce:cur.pair_nonce, dwell_ms, both_played:(playedA&&playedB),
+      turnstile_token:turnstileToken})});
+  if(window.turnstile){ try{turnstile.reset();}catch(e){} turnstileToken=""; }
+  stopAll(); await load(); refreshRank();
+  toast('✓ '+PRAISE[Math.floor(Math.random()*PRAISE.length)]+' · '+cur.votes); bumpCount();
+}
+async function refreshRank(){
+  const open=document.querySelector('#rankwrap details').open; if(!open) return;
+  const r=await fetch('/api/ranking?mode='+mode); const d=await r.json();
+  const tb=document.querySelector('#rank tbody');
+  tb.innerHTML='<tr><th>#</th><th>model</th><th class="n">elo</th><th class="n">games</th></tr>'+
+    d.ranking.map((x,i)=>`<tr><td>${i+1}</td><td>${x.model}</td><td class="n">${x.elo}</td><td class="n">${x.games}</td></tr>`).join('');
+}
+document.getElementById('pA').onclick=()=>playOne(A);
+document.getElementById('pB').onclick=()=>playOne(B);
+syncIcon(A,document.getElementById('pA')); syncIcon(B,document.getElementById('pB')); syncIcon(R,document.getElementById('pR'));
+function applyTheme(t){ document.documentElement.setAttribute('data-theme',t);
+  document.getElementById('themebtn').textContent=t==='light'?'🌙 Dark':'☀ Light'; }
+let theme=localStorage.getItem('arena_theme')||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark');
+applyTheme(theme);
+document.getElementById('themebtn').onclick=()=>{ theme=(theme==='light')?'dark':'light';
+  localStorage.setItem('arena_theme',theme); applyTheme(theme); };
+document.getElementById('vA').onclick=()=>vote('left');
+document.getElementById('vB').onclick=()=>vote('right');
+document.getElementById('vT').onclick=()=>vote('tie');
+document.getElementById('vX').onclick=()=>vote('bad');
+document.querySelector('#rankwrap details').addEventListener('toggle',refreshRank);
+document.addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft')vote('left'); else if(e.key==='ArrowRight')vote('right');
+  else if(e.key==='ArrowDown')vote('tie'); else if(e.key==='x'||e.key==='X')vote('bad');
+  else if(e.key==='1')playOne(A); else if(e.key==='2')playOne(B); else if(e.key==='3')playRef();
+  else if(e.key==='r'||e.key==='R'||e.key===' '){e.preventDefault();playSeq();}
+});
+// Inject the Turnstile sitekey (empty => widget renders nothing meaningful; gate passes in dev).
+document.getElementById('cf-turnstile').setAttribute('data-sitekey', SITEKEY||'');
+applyModeUI(); load();
+</script></body></html>
