@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tts-bench — Scores</title>
+<link rel="icon" type="image/svg+xml" href="logo-mark.svg"><link rel="icon" type="image/png" sizes="32x32" href="favicon.png"><link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #1a1a1a;
+    --panel: #242424;
+    --text: #e0e0e0;
+    --muted: #888;
+    --accent: #6cf;
+    --num: #cfc;
+    --fail: #f88;
+    --border: #333;
+    --row-hover: #2a2a2a;
+    --th-bg: #2c2c2c;
+    --th-hover: #353535;
+    --input-bg: #2a2a2a;
+    --input-border: #444;
+    --controls-border: #2a2a2a;
+    --dev-cpu: #ddd;
+    --dev-cuda: #9cf;
+    --dev-mps: #fc9;
+    --lang: #6cf;
+    --prompt-text: #9c9;
+    --code-bg: #2a2a2a;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --text: #1a1d22;
+    --muted: #6b7280;
+    --accent: #1a73e8;
+    --num: #137333;
+    --fail: #c5221f;
+    --border: #e2e6eb;
+    --row-hover: #f0f4f8;
+    --th-bg: #eef1f4;
+    --th-hover: #e2e6eb;
+    --input-bg: #ffffff;
+    --input-border: #cdd3da;
+    --controls-border: #e2e6eb;
+    --dev-cpu: #555;
+    --dev-cuda: #1a73e8;
+    --dev-mps: #c2410c;
+    --lang: #1a73e8;
+    --prompt-text: #2d6a4f;
+    --code-bg: #eef1f4;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+         background: var(--bg); color: var(--text);
+         margin: 0; padding: 1.5rem 2rem 3rem;
+         max-width: 1400px; margin-inline: auto;
+         transition: background 0.15s, color 0.15s; }
+  h1, h2 { color: var(--text); margin-top: 0; }
+  h1 { font-size: 1.5em; }
+  h2 { font-size: 1.05em; }
+  .meta { color: var(--muted); font-size: 0.88em; margin-bottom: 0.4rem; }
+  .prompt { background: var(--panel); padding: 1rem 1.2rem;
+            border-radius: 10px; margin-bottom: 1.4rem;
+            border: 1px solid var(--border); }
+  .prompt-text { color: var(--prompt-text); font-style: italic;
+                 display: block; margin: 0.2rem 0 0.8rem 0; }
+  .lang { color: var(--lang); font-style: normal; margin-right: 0.4rem;
+          font-weight: 500; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { padding: 7px 10px; text-align: left;
+           border-bottom: 1px solid var(--border); }
+  th { background: var(--th-bg); color: var(--text);
+       cursor: pointer; user-select: none; white-space: nowrap;
+       font-weight: 600; }
+  th:hover { background: var(--th-hover); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums;
+           color: var(--num); }
+  th.num { text-align: right; }
+  td.fail { color: var(--fail); font-style: italic; }
+  td.dev-cuda { color: var(--dev-cuda); }
+  td.dev-mps  { color: var(--dev-mps); }
+  td.dev-cpu  { color: var(--dev-cpu); }
+  .muted { color: var(--muted); }
+  audio { width: 220px; height: 30px; vertical-align: middle; }
+  tr:hover td { background: var(--row-hover); }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px;
+         font-size: 0.92em; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .nav { margin-bottom: 0.6rem; }
+  .controls { position: sticky; top: 0; background: var(--bg); z-index: 10;
+              padding: 0.7rem 0 0.7rem; margin-bottom: 1rem;
+              display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+              border-bottom: 1px solid var(--controls-border); }
+  .controls input { background: var(--input-bg); color: var(--text);
+                    border: 1px solid var(--input-border);
+                    border-radius: 6px; padding: 7px 11px; font: inherit;
+                    min-width: 320px; }
+  .controls input:focus { outline: none; border-color: var(--accent); }
+  .controls .hint { color: var(--muted); font-size: 0.85em; }
+  .controls button { background: var(--input-bg); color: var(--text);
+                     border: 1px solid var(--input-border);
+                     border-radius: 6px; padding: 6px 12px; font: inherit;
+                     cursor: pointer; transition: border-color 0.15s; }
+  .controls button:hover { border-color: var(--accent); }
+  .spacer { flex: 1; }
+
+  /* Lens picker grid */
+  .lens-grid { display: grid; grid-template-columns: repeat(3, 1fr);
+               gap: 1rem; margin: 1.5rem 0; }
+  @media (max-width: 760px) { .lens-grid { grid-template-columns: 1fr; } }
+  .lens-card { background: var(--panel); border: 1px solid var(--border);
+               border-radius: 10px; padding: 1.2rem 1.4rem;
+               transition: border-color 0.15s; }
+  .lens-card:hover { border-color: var(--accent); }
+  .lens-card a { display: block; text-decoration: none; color: var(--text); }
+  .lens-card h3 { margin: 0 0 0.4rem 0; font-size: 1.1em; color: var(--accent); }
+  .lens-card .desc { color: var(--muted); font-size: 0.9em; }
+
+  /* TLDR callout used by speed.html */
+  .tldr { background: var(--panel); border-left: 3px solid var(--accent);
+          padding: 0.8rem 1.1rem; margin: 1rem 0 1.4rem; border-radius: 4px; }
+  .tldr h2 { margin: 0 0 0.4rem 0; font-size: 1em; }
+  .tldr p { margin: 0.2rem 0; color: var(--text); }
+  .tldr strong { color: var(--accent); }
+
+  /* Secondary-axis "badge" pill cells */
+  td.pill { font-size: 0.82em; color: var(--muted); }
+  td.pill[data-sort] { font-variant-numeric: tabular-nums; }
+  td.pill a { color: inherit; }
+
+  /* Prompt jumper for samples.html */
+  .prompt-jumper { position: sticky; top: 3rem; background: var(--bg);
+                   padding: 0.4rem 0; margin-bottom: 0.8rem;
+                   border-bottom: 1px solid var(--border); font-size: 0.9em; }
+  .prompt-jumper a { margin-right: 0.6rem; }
+
+  /* Lens-to-lens nav tabs at top of each lens page */
+  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem;
+               align-items: center; }
+  .lens-tab { display: inline-block; padding: 4px 12px; border-radius: 6px;
+              border: 1px solid var(--border); color: var(--text);
+              text-decoration: none; font-size: 0.92em;
+              transition: border-color 0.15s, background 0.15s; }
+  .lens-tab:hover { border-color: var(--accent); text-decoration: none; }
+  .lens-tab.active { background: var(--accent); color: var(--bg);
+                     border-color: var(--accent); }
+  .lens-arrow { display: inline-block; padding: 4px 10px; border-radius: 6px;
+                border: 1px solid var(--border); color: var(--muted);
+                text-decoration: none; font-size: 0.92em;
+                transition: border-color 0.15s, color 0.15s; }
+  .lens-arrow:hover { border-color: var(--accent); color: var(--accent);
+                      text-decoration: none; }
+  .lens-arrow-disabled { opacity: 0.35; cursor: default;
+                         border-style: dashed; }
+  .lens-arrow-disabled:hover { border-color: var(--border); color: var(--muted); }
+
+  /* "Reading this report" explainer above tables */
+  .reading-guide { background: var(--panel); border-left: 3px solid var(--muted);
+                   padding: 0.55rem 0.9rem; margin: 0.7rem 0 1rem;
+                   border-radius: 4px; font-size: 0.88em; color: var(--text); }
+  .reading-guide strong { color: var(--accent); }
+  .reading-guide a { color: var(--accent); }
+</style>
+<style>.site-header{margin:1rem 0 1.25rem;}.site-logo-link{display:inline-block;text-decoration:none;}.site-logo-link:hover{text-decoration:none;}.site-logo{display:block;height:auto;max-width:min(320px,80vw);}.site-logo--light{display:none;}[data-theme="light"] .site-logo--dark{display:none;}[data-theme="light"] .site-logo--light{display:block;}</style>
+<style>.subsection{border-left:2px solid var(--border);padding:.1rem 0 .1rem 1.1rem;margin:.5rem 0 1.3rem .3rem;}.subsection.cloning{border-left-color:var(--accent);}.sub-head,.listen-group{margin:.3rem 0 .6rem;font-size:1.02em;color:var(--text);font-weight:600;}.ref-row{margin:.2rem 0 .9rem;font-size:.9em;color:var(--muted);display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}.ref-row audio{width:260px;height:30px;vertical-align:middle;}.ref-row .ref-label{color:var(--accent);font-weight:600;}</style>
+<style>.rig-select{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin:1.4rem 0 1.6rem;}.rig-select .rig-select-label{color:var(--muted);font-size:.9em;}#rig-tabs{display:inline-flex;gap:.5rem;flex-wrap:wrap;}#rig-tabs .lens-tab{padding:7px 18px;}.rig-panel>.meta{margin:.2rem 0 1.4rem;padding:.7rem .95rem;background:var(--panel);border:1px solid var(--border);border-radius:8px;line-height:1.55;}.rig-panel .subsection{margin-top:.7rem;}.rig-panel .sub-head{margin:.2rem 0 .7rem;}.mode-select{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;margin:1.4rem 0 .5rem;}#mode-tabs{display:inline-flex;gap:.5rem;flex-wrap:wrap;}#mode-tabs .lens-tab{padding:7px 18px;}.mode-empty{color:var(--muted);}</style>
+<style>tr.flagged>td{opacity:.55;}tr.flagged>td:first-child::after{content:" \26A0";color:var(--fail);}.scores-foot{color:var(--muted);font-size:.85em;margin-top:1.4rem;border-top:1px solid var(--border);padding-top:.8rem;line-height:1.5;}.scores-foot a{color:var(--accent);}</style>
+</head><body>
+<div class="controls"><span class="lens-tabs"><a class="lens-tab" href="listen.html">Listen</a><a class="lens-tab" href="speed.html">Speed</a><a class="lens-tab active" href="scores.html">Scores</a></span><input id="filter" type="search" placeholder="filter by model name…" autocomplete="off"><button type="button" id="reset-sort">reset sort</button><span class="spacer"></span><button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button></div>
+<header class="site-header"><a href="index.html" class="site-logo-link" title="Home"><img class="site-logo site-logo--dark" src="logo-flat-dark.svg" alt="tts-bench" width="320" height="auto"><img class="site-logo site-logo--light" src="logo-flat-light.svg" alt="tts-bench" width="320" height="auto"></a></header>
+<h1>Scores</h1>
+<div class="reading-guide">Objective scores over the same 5 prompts. <strong>UTMOS</strong> = predicted naturalness (higher better); <strong>WER</strong> = ASR word-error rate vs the intended text — a <em>failure-detector</em>, not a fine ranking (lower better); <strong>SIM</strong> = speaker similarity to the cloned reference (<code>chris_hemsworth_15s</code>, higher better). Switch <strong>Default</strong> / <strong>Cloning</strong> below; click any header to re-sort. Each score is the mean over the exact clips shown on <a href="listen.html">Listen</a>. Human votes are the preference ground truth; these objective metrics are backstops.</div>
+<div class="mode-select"><span class="rig-select-label">Voice:</span><div class="lens-tabs" id="mode-tabs"><a class="lens-tab active" data-mode="default" href="#">Default voice</a><a class="lens-tab" data-mode="cloning" href="#">Cloning</a></div></div>
+<div class="subsection" data-mode="default"><h3 class="sub-head">Default voice <span class="muted">· naturalness + intelligibility</span></h3><p class="mode-empty muted">No scored models yet.</p></div>
+<div class="subsection cloning" data-mode="cloning" style="display:none"><h3 class="sub-head">Cloning <span class="muted">· fidelity + naturalness + intelligibility</span></h3><p class="mode-empty muted">No scored models yet.</p></div>
+<div class="scores-foot">Scored over the 5 bench prompts (thin — WER is a failure-detector, not a fine ranking). Checkpoints: UTMOS <code>utmos22_strong</code> (SpeechMOS), SIM canonical UniSpeech-SAT <code>wavlm_large_finetune</code>, WER Whisper-large-v3. Method follows <a href="https://github.com/BytedanceSpeech/seed-tts-eval">seed-tts-eval</a>. Human votes are the preference ground truth; these are objective backstops.</div>
+<script>window.__defaultSort = {colIdx: 2, dir: -1};</script>
+<script>
+(function(){
+  // ---------- theme toggle ----------
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(name) {
+    document.documentElement.setAttribute('data-theme', name);
+    themeBtn.textContent = name === 'light' ? '☀ light' : '☾ dark';
+    try { localStorage.setItem('tts-bench-theme', name); } catch (e) {}
+  }
+  let stored = null;
+  try { stored = localStorage.getItem('tts-bench-theme'); } catch (e) {}
+  applyTheme(stored === 'light' ? 'light' : 'dark');
+  themeBtn.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- sort + filter ----------
+  const tables = document.querySelectorAll('table');
+  const filterInput = document.getElementById('filter');
+  const resetBtn = document.getElementById('reset-sort');
+  const sortState = { col: -1, dir: 0 };
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach(th => { th.dataset.label = th.textContent; });
+    table.querySelectorAll('tbody tr').forEach((row, i) => { row.dataset.origIdx = String(i); });
+  });
+
+  function applyFilter() {
+    const q = filterInput.value.toLowerCase().trim();
+    tables.forEach(t => {
+      t.querySelectorAll('tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+    });
+  }
+  filterInput.addEventListener('input', applyFilter);
+
+  function cellSortValue(row, colIdx) {
+    const cell = row.children[colIdx];
+    if (!cell) return Number.POSITIVE_INFINITY;
+    if (cell.hasAttribute('data-sort')) {
+      const raw = cell.getAttribute('data-sort');
+      if (raw === '' || raw === null) return Number.POSITIVE_INFINITY;
+      const v = parseFloat(raw);
+      return Number.isNaN(v) ? Number.POSITIVE_INFINITY : v;
+    }
+    return cell.textContent.toLowerCase();
+  }
+
+  function renderArrows() {
+    tables.forEach(t => {
+      t.querySelectorAll('thead th').forEach((th, i) => {
+        const arrow = (i === sortState.col && sortState.dir !== 0)
+                    ? (sortState.dir === 1 ? ' ▲' : ' ▼') : '';
+        th.textContent = th.dataset.label + arrow;
+      });
+    });
+  }
+
+  function restoreOrder() {
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => parseInt(a.dataset.origIdx) - parseInt(b.dataset.origIdx));
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  function sortAll(colIdx, explicitDir) {
+    if (explicitDir === 1 || explicitDir === -1) {
+      sortState.col = colIdx;
+      sortState.dir = explicitDir;
+    } else if (sortState.col === colIdx) {
+      sortState.dir = sortState.dir === 1 ? -1 : (sortState.dir === -1 ? 0 : 1);
+    } else {
+      sortState.col = colIdx;
+      sortState.dir = 1;
+    }
+    renderArrows();
+
+    if (sortState.dir === 0) {
+      restoreOrder();
+      return;
+    }
+
+    const dir = sortState.dir;
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const aSpan = a.querySelector('td[colspan]') !== null;
+        const bSpan = b.querySelector('td[colspan]') !== null;
+        if (aSpan !== bSpan) return aSpan ? 1 : -1;
+        const av = cellSortValue(a, colIdx);
+        const bv = cellSortValue(b, colIdx);
+        if (av < bv) return -dir;
+        if (av > bv) return dir;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach((th, idx) => {
+      th.addEventListener('click', () => sortAll(idx));
+    });
+  });
+
+  resetBtn.addEventListener('click', () => {
+    sortState.col = -1; sortState.dir = 0;
+    renderArrows();
+    restoreOrder();
+    filterInput.value = '';
+    applyFilter();
+  });
+
+  // Page-load default sort: pages can set window.__defaultSort = {colIdx, dir}
+  // (set in a tiny inline <script> earlier in the page).
+  if (window.__defaultSort &&
+      typeof window.__defaultSort.colIdx === 'number' &&
+      (window.__defaultSort.dir === 1 || window.__defaultSort.dir === -1)) {
+    sortAll(window.__defaultSort.colIdx, window.__defaultSort.dir);
+  }
+})();
+</script>
+<script>
+(function(){
+  var tabs = document.querySelectorAll('#mode-tabs .lens-tab');
+  var subs = document.querySelectorAll('.subsection[data-mode]');
+  function show(mode){
+    subs.forEach(function(s){ s.style.display = (s.dataset.mode === mode) ? '' : 'none'; });
+    tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.mode === mode); });
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(e){ e.preventDefault(); show(t.dataset.mode); });
+  });
+})();
+</script>
+</body></html>
