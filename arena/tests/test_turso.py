@@ -7,6 +7,33 @@ def test_connect_requires_url():
         turso.connect("", "token")
 
 
+def test_http_url_rewrites_websocket_schemes():
+    # libsql:// and wss:// -> https:// (host preserved); plain ws:// -> http://.
+    assert turso._http_url("libsql://x.turso.io") == "https://x.turso.io"
+    assert turso._http_url("wss://x.turso.io") == "https://x.turso.io"
+    assert turso._http_url("ws://localhost:8080") == "http://localhost:8080"
+    assert turso._http_url("https://x.turso.io") == "https://x.turso.io"
+    assert turso._http_url("file:local.db") == "file:local.db"
+
+
+def test_connect_forces_http_transport(monkeypatch):
+    # connect() must hand libsql-client an https:// URL so it uses the HTTP hrana
+    # transport, not the websocket one that current Turso rejects at handshake.
+    captured = {}
+
+    class _FakeModule:
+        @staticmethod
+        def create_client_sync(url, auth_token):
+            captured["url"] = url
+            captured["token"] = auth_token
+            return _FakeClient()
+
+    monkeypatch.setattr(turso, "_import_libsql", lambda: _FakeModule)
+    turso.connect("libsql://tts-arena-5uck1ess.aws-us-east-1.turso.io", "tok")
+    assert captured["url"] == "https://tts-arena-5uck1ess.aws-us-east-1.turso.io"
+    assert captured["token"] == "tok"
+
+
 def test_connect_reports_missing_dependency_clearly(monkeypatch):
     # Simulate libsql-client not installed: connect should raise a helpful error.
     monkeypatch.setattr(turso, "_import_libsql", lambda: (_ for _ in ()).throw(

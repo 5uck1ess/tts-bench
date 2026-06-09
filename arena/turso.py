@@ -12,6 +12,22 @@ def _import_libsql():
     return libsql_client
 
 
+def _http_url(url: str) -> str:
+    """Force the HTTP hrana transport by normalizing the scheme to https/http.
+
+    libsql-client picks its transport from the URL scheme: ``libsql://`` and
+    ``wss://`` select the WebSocket hrana protocol, which current Turso servers
+    reject at the handshake (``WSServerHandshakeError: 400``). The HTTP hrana
+    transport (``https://``) is the stable path, so rewrite the scheme — the host
+    is identical, so the Turso dashboard's ``libsql://`` URL works unchanged.
+    """
+    for ws, http in (("libsql://", "https://"), ("wss://", "https://"),
+                     ("ws://", "http://")):
+        if url.startswith(ws):
+            return http + url[len(ws):]
+    return url
+
+
 class _Cursor:
     def __init__(self, rows):
         self._rows = rows
@@ -64,5 +80,5 @@ def connect(url: str, token: str) -> TursoConnection:
             "Turso backend requested but libsql-client is not installed. "
             "Add `libsql-client` to arena/requirements.txt (it ships in the "
             f"Space image). Original error: {e}") from e
-    client = libsql_client.create_client_sync(url=url, auth_token=token)
+    client = libsql_client.create_client_sync(url=_http_url(url), auth_token=token)
     return TursoConnection(client)
