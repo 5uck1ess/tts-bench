@@ -28,6 +28,19 @@ Full per-rig reports (every model × prompt × device, plus by-prompt samples) a
 
 ---
 
+## 🗳 Vote
+
+Quality is subjective, so the ground truth is **your ears**. The companion **[TTS Voting Arena](https://5uck1ess-tts-arena.hf.space)** is a public, blind A/B listening test — two clips, no model names shown, pick the one that sounds better. No login, ~5 seconds a vote.
+
+- **Default voice** — which model sounds more natural?
+- **Cloning** — which clone better matches the reference voice?
+
+Votes feed a **live human-preference Elo leaderboard** right there on the arena. This is where the "best sounding" and cloning calls above come from — every vote sharpens the ranking.
+
+**[→ Vote now at the TTS Arena](https://5uck1ess-tts-arena.hf.space)**
+
+---
+
 ## Quick start
 
 Requires [`uv`](https://github.com/astral-sh/uv) and Python 3.11. ~10-15 min install. Disk for the full set is large: **~39 GB of per-model venvs** in the repo, plus **~125 GB of model weights** downloaded to your Hugging Face cache (`~/.cache/huggingface`, **not** the repo) — **~165 GB all-in**. Individual models are far smaller, so installing a subset costs a fraction of that.
