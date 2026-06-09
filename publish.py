@@ -393,6 +393,10 @@ def _top_controls(active):
         f'<a class="lens-tab{" active" if s == active else ""}" href="{s}.html">{l}</a>'
         for s, l in (("listen", "Listen"), ("speed", "Speed"), ("scores", "Scores"))
     )
+    # Vote is an external link to the HF arena (not a local data view), so it
+    # opens in a new tab and never takes the "active" state.
+    tabs += ('<a class="lens-tab lens-tab-ext" href="https://5uck1ess-tts-arena.hf.space" '
+             'target="_blank" rel="noopener">🗳 Vote ↗</a>')
     return ('<div class="controls">'
             f'<span class="lens-tabs">{tabs}</span>'
             '<input id="filter" type="search" placeholder="filter by model name…" autocomplete="off">'
@@ -888,7 +892,7 @@ _THEME_ONLY_SCRIPT = '''<script>
 
 
 def build_landing():
-    """Build index.html — the two-card landing (Listen / Speed) + archive/GitHub footer."""
+    """Build index.html — the landing cards (Listen / Speed / Scores / Vote) + archive/GitHub footer."""
     _copy_branding_assets()
     all_dirs = [n for (_r, dn, cn) in SPEED_RIGS for n in (dn, cn)]
     n_models = len(set().union(*(_ok_models(n) for n in all_dirs))) if all_dirs else 0
@@ -903,7 +907,7 @@ def build_landing():
            '<div class="home-controls"><button type="button" id="theme-toggle">☾ dark</button></div>',
            LOGO_HEADER,
            '<div class="meta">Open-source TTS models benchmarked side-by-side. '
-           'Three lenses — pick one:</div>',
+           'Three lenses plus a blind community vote — pick one:</div>',
            '<div class="home-grid">',
            '<div class="home-card"><a href="listen.html"><h2>▶ Listen</h2>'
            '<p>Hear every model on the same prompts — default voice and voice cloning, '
@@ -916,6 +920,11 @@ def build_landing():
            '<p>Objective metrics for every model — UTMOS naturalness, WER '
            'intelligibility, and cloning-fidelity SIM. Sortable, default voice '
            'and cloning. Human votes remain the ground truth; these are backstops.</p></a></div>',
+           '<div class="home-card"><a href="https://5uck1ess-tts-arena.hf.space" '
+           'target="_blank" rel="noopener"><h2>🗳 Vote ↗</h2>'
+           '<p>Hear two clips blind and pick the better one — default voice or voice '
+           'cloning. No install, ~5 seconds a vote, feeding a live human-preference '
+           'Elo leaderboard. This is the ground truth the Scores lens is measured against.</p></a></div>',
            '</div>',
            f'<div class="home-foot">{n_models} models · {n_rigs} rigs · '
            '<a href="archive.html">Archive — full per-rig reports</a> · '
