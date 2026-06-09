@@ -768,8 +768,11 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
     Rows aggregated per model; WER>threshold rows get the 'flagged' class.
     fallback_dirs/fallback_models: for NO_PRESET_VOICE models on the cloning board,
     append default dirs so a model benched only in default mode still appears."""
+    # Numeric headers get class="num" so they right-align over their right-aligned
+    # number cells (td.num); a plain <th> is left-aligned and visibly drifts off its
+    # column on wide screens where each column is stretched.
     head = '<th>Model</th><th>Size</th>' + "".join(
-        f'<th>{escape(h)} {"↑" if up else "↓"}</th>' for (_k, h, up) in columns)
+        f'<th class="num">{escape(h)} {"↑" if up else "↓"}</th>' for (_k, h, up) in columns)
     body = []
     aggs = []
     for m in sorted(models, key=lambda x: _display_name(x).lower()):
