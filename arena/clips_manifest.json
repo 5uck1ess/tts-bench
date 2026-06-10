@@ -1523,5 +1523,191 @@
         }
       ]
     }
+  },
+  "models": {
+    "chatterbox": {
+      "name": "Chatterbox",
+      "url": "https://huggingface.co/ResembleAI/chatterbox"
+    },
+    "chatterbox_turbo": {
+      "name": "Chatterbox Turbo",
+      "url": "https://huggingface.co/ResembleAI/chatterbox-turbo"
+    },
+    "coqui": {
+      "name": "Coqui XTTS-v2",
+      "url": "https://huggingface.co/coqui/XTTS-v2"
+    },
+    "dia": {
+      "name": "Dia 1.6B-0626",
+      "url": "https://huggingface.co/nari-labs/Dia-1.6B-0626"
+    },
+    "dots_tts": {
+      "name": "dots.tts (soar)",
+      "url": "https://huggingface.co/rednote-hilab/dots.tts-soar"
+    },
+    "dramabox": {
+      "name": "DramaBox",
+      "url": "https://github.com/resemble-ai/DramaBox"
+    },
+    "echo": {
+      "name": "Echo-TTS",
+      "url": "https://huggingface.co/jordand/echo-tts-base"
+    },
+    "f5tts": {
+      "name": "F5-TTS v1",
+      "url": "https://huggingface.co/SWivid/F5-TTS"
+    },
+    "fish_15": {
+      "name": "Fish Speech 1.5",
+      "url": "https://huggingface.co/fishaudio/fish-speech-1.5"
+    },
+    "fish_s2": {
+      "name": "Fish Speech S2-Pro",
+      "url": "https://huggingface.co/fishaudio/s2-pro"
+    },
+    "higgs_v3": {
+      "name": "Higgs Audio v3 TTS",
+      "url": "https://huggingface.co/bosonai/higgs-audio-v3-tts-4b"
+    },
+    "indextts": {
+      "name": "IndexTTS-2",
+      "url": "https://huggingface.co/IndexTeam/IndexTTS-2"
+    },
+    "kittentts": {
+      "name": "KittenTTS Nano 0.1",
+      "url": "https://huggingface.co/KittenML/kitten-tts-nano-0.1"
+    },
+    "kokoro": {
+      "name": "Kokoro",
+      "url": "https://huggingface.co/hexgrad/Kokoro-82M"
+    },
+    "luxtts": {
+      "name": "LuxTTS",
+      "url": "https://github.com/ysharma3501/LuxTTS"
+    },
+    "magpie": {
+      "name": "Magpie-TTS",
+      "url": "https://huggingface.co/nvidia/magpie_tts_multilingual_357m"
+    },
+    "mars5": {
+      "name": "Mars5-TTS",
+      "url": "https://huggingface.co/Camb-ai/mars5-tts"
+    },
+    "maya1": {
+      "name": "Maya1",
+      "url": "https://huggingface.co/maya-research/maya1"
+    },
+    "melotts": {
+      "name": "MeloTTS",
+      "url": "https://huggingface.co/myshell-ai/MeloTTS-English"
+    },
+    "metavoice": {
+      "name": "MetaVoice-1B",
+      "url": "https://huggingface.co/metavoiceio/metavoice-1B-v0.1"
+    },
+    "miratts": {
+      "name": "MiraTTS",
+      "url": "https://huggingface.co/YatharthS/MiraTTS"
+    },
+    "moss_tts": {
+      "name": "MOSS-TTS v1.0",
+      "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS"
+    },
+    "moss_tts_nano": {
+      "name": "MOSS-TTS-Nano",
+      "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano"
+    },
+    "moss_tts_v15": {
+      "name": "MOSS-TTS v1.5",
+      "url": "https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5"
+    },
+    "neutts_air": {
+      "name": "NeuTTS Air",
+      "url": "https://huggingface.co/neuphonic/neutts-air"
+    },
+    "neutts_nano": {
+      "name": "NeuTTS Nano",
+      "url": "https://huggingface.co/neuphonic/neutts-nano-q4-gguf"
+    },
+    "omnivoice": {
+      "name": "OmniVoice",
+      "url": "https://huggingface.co/k2-fsa/OmniVoice"
+    },
+    "openvoice": {
+      "name": "OpenVoice v2",
+      "url": "https://huggingface.co/myshell-ai/OpenVoiceV2"
+    },
+    "outetts": {
+      "name": "OuteTTS 1.0 1B",
+      "url": "https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B"
+    },
+    "parler": {
+      "name": "Parler-TTS Mini v1",
+      "url": "https://huggingface.co/parler-tts/parler-tts-mini-v1"
+    },
+    "piper": {
+      "name": "Piper",
+      "url": "https://github.com/OHF-Voice/piper1-gpl"
+    },
+    "pocket": {
+      "name": "Pocket-TTS",
+      "url": "https://github.com/kyutai-labs/pocket-tts"
+    },
+    "qwentts": {
+      "name": "Qwen3-TTS 1.7B Base",
+      "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base"
+    },
+    "qwentts_fast": {
+      "name": "Qwen3-TTS 1.7B (CUDA-graph)",
+      "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base"
+    },
+    "sesame": {
+      "name": "Sesame CSM-1B",
+      "url": "https://huggingface.co/sesame/csm-1b"
+    },
+    "soprano": {
+      "name": "Soprano 1.1 80M",
+      "url": "https://huggingface.co/ekwek/Soprano-1.1-80M"
+    },
+    "step_editx": {
+      "name": "Step-Audio-EditX",
+      "url": "https://huggingface.co/stepfun-ai/Step-Audio-EditX"
+    },
+    "styletts2": {
+      "name": "StyleTTS 2",
+      "url": "https://github.com/yl4579/StyleTTS2"
+    },
+    "supertonic": {
+      "name": "Supertonic 3",
+      "url": "https://huggingface.co/Supertone/supertonic-3"
+    },
+    "vibevoice": {
+      "name": "VibeVoice Realtime 0.5B",
+      "url": "https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B"
+    },
+    "vibevoice_15b": {
+      "name": "VibeVoice 1.5B",
+      "url": "https://huggingface.co/microsoft/VibeVoice-1.5B"
+    },
+    "vibevoice_7b": {
+      "name": "VibeVoice 7B",
+      "url": "https://huggingface.co/vibevoice/VibeVoice-7B"
+    },
+    "voxcpm": {
+      "name": "VoxCPM2 2B",
+      "url": "https://huggingface.co/openbmb/VoxCPM2"
+    },
+    "voxtral": {
+      "name": "Voxtral 4B TTS",
+      "url": "https://huggingface.co/mistralai/Voxtral-4B-TTS-2603"
+    },
+    "zipvoice": {
+      "name": "ZipVoice 123M",
+      "url": "https://huggingface.co/k2-fsa/ZipVoice"
+    },
+    "zonos": {
+      "name": "Zonos v0.1",
+      "url": "https://huggingface.co/Zyphra/Zonos-v0.1-transformer"
+    }
   }
 }

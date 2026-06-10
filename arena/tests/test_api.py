@@ -17,6 +17,11 @@ MANIFEST = {
             {"model": "indextts", "prompt": 1, "url": "https://gh.test/tts-bench/windows-cloning/indextts_cuda_p1.wav"},
         ]},
     },
+    # post-vote reveal metadata; cloning slugs deliberately absent -> slug fallback
+    "models": {
+        "alpha": {"name": "Alpha TTS 2", "url": "https://hf.test/org/alpha-2"},
+        "beta": {"name": "Beta-TTS", "url": "https://hf.test/org/beta"},
+    },
 }
 
 
@@ -120,6 +125,41 @@ def test_vote_voter_field_lands_in_token_column(client):
     assert client.post("/api/vote", json=body).json()["ok"] is True
     cur = appmod._conn.execute("SELECT token FROM votes ORDER BY id DESC LIMIT 1")
     assert cur.fetchone()["token"] == "real-voter"   # NOT collapsed to "anon"
+
+
+def _vote_body(d, voter="rev-voter", mode="default", choice="left"):
+    return {"voter": voter, "mode": mode, "prompt_id": d["prompt_id"],
+            "left_id": d["left_id"], "right_id": d["right_id"], "choice": choice,
+            "dwell_ms": 3000, "both_played": True, "turnstile_token": "x",
+            "pair_nonce": d["pair_nonce"]}
+
+
+def test_vote_response_reveals_names_and_urls(client):
+    # pre-vote payload stays blind...
+    d = client.get("/api/next?mode=default").json()
+    assert "reveal" not in d and "Alpha TTS 2" not in str(d)
+    # ...the post-vote response carries both models' display names + links
+    rev = client.post("/api/vote", json=_vote_body(d)).json()["reveal"]
+    names = {rev["left"]["name"], rev["right"]["name"]}
+    assert names == {"Alpha TTS 2", "Beta-TTS"}
+    urls = {rev["left"]["url"], rev["right"]["url"]}
+    assert urls == {"https://hf.test/org/alpha-2", "https://hf.test/org/beta"}
+
+
+def test_vote_reveal_falls_back_to_slug_without_meta(client):
+    # cloning slugs are not in the manifest's models map -> name=slug, url=None
+    d = client.get("/api/next?mode=cloning").json()
+    rev = client.post("/api/vote", json=_vote_body(d, mode="cloning")).json()["reveal"]
+    assert {rev["left"]["name"], rev["right"]["name"]} == {"echo", "indextts"}
+    assert rev["left"]["url"] is None and rev["right"]["url"] is None
+
+
+def test_rejected_vote_carries_no_reveal(client):
+    d = client.get("/api/next?mode=default").json()
+    body = _vote_body(d)
+    body["pair_nonce"] = "forged"
+    r = client.post("/api/vote", json=body)
+    assert r.status_code == 400 and "reveal" not in r.json()
 
 
 def test_distinct_voters_each_get_a_clean_vote(client):

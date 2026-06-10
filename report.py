@@ -535,6 +535,61 @@ MODEL_SIZE = {
     "dots_tts":      "2B",     # semantic encoder + LLM + flow-matching acoustic head (soar/SCA checkpoint)
 }
 
+# Canonical URL of the EXACT checkpoint each runner loads (HF model card, or the
+# GitHub repo when that's the pinned source). Extracted from runners/*.py and the
+# installed venv packages — keep in sync with the README model tables, which carry
+# the same links. Consumed by arena/build_manifest.py for the post-vote reveal.
+_HF = "https://huggingface.co/"
+MODEL_URL = {
+    "pocket":        "https://github.com/kyutai-labs/pocket-tts",
+    "neutts_air":    _HF + "neuphonic/neutts-air",
+    "neutts_nano":   _HF + "neuphonic/neutts-nano-q4-gguf",
+    "luxtts":        "https://github.com/ysharma3501/LuxTTS",
+    "chatterbox":       _HF + "ResembleAI/chatterbox",
+    "chatterbox_turbo": _HF + "ResembleAI/chatterbox-turbo",
+    "f5tts":         _HF + "SWivid/F5-TTS",
+    "coqui":         _HF + "coqui/XTTS-v2",
+    "vibevoice":     _HF + "microsoft/VibeVoice-Realtime-0.5B",
+    "vibevoice_15b": _HF + "microsoft/VibeVoice-1.5B",
+    "vibevoice_7b":  _HF + "vibevoice/VibeVoice-7B",
+    "omnivoice":     _HF + "k2-fsa/OmniVoice",
+    "zipvoice":      _HF + "k2-fsa/ZipVoice",
+    "voxcpm":        _HF + "openbmb/VoxCPM2",
+    "magpie":        _HF + "nvidia/magpie_tts_multilingual_357m",
+    "qwentts":       _HF + "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+    "qwentts_fast":  _HF + "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+    "indextts":      _HF + "IndexTeam/IndexTTS-2",
+    "sesame":        _HF + "sesame/csm-1b",
+    "mars5":         _HF + "Camb-ai/mars5-tts",
+    "dia":           _HF + "nari-labs/Dia-1.6B-0626",
+    "kokoro":        _HF + "hexgrad/Kokoro-82M",
+    "kittentts":     _HF + "KittenML/kitten-tts-nano-0.1",
+    "piper":         "https://github.com/OHF-Voice/piper1-gpl",
+    "soprano":       _HF + "ekwek/Soprano-1.1-80M",
+    "moss_tts_nano": _HF + "OpenMOSS-Team/MOSS-TTS-Nano",
+    "moss_tts":      _HF + "OpenMOSS-Team/MOSS-TTS",
+    "moss_tts_v15":  _HF + "OpenMOSS-Team/MOSS-TTS-v1.5",
+    "supertonic":    _HF + "Supertone/supertonic-3",
+    "maya1":         _HF + "maya-research/maya1",
+    "voxtral":       _HF + "mistralai/Voxtral-4B-TTS-2603",
+    "fish_15":       _HF + "fishaudio/fish-speech-1.5",
+    "fish_s2":       _HF + "fishaudio/s2-pro",
+    "echo":          _HF + "jordand/echo-tts-base",
+    "zonos":         _HF + "Zyphra/Zonos-v0.1-transformer",
+    "openvoice":     _HF + "myshell-ai/OpenVoiceV2",
+    "styletts2":     "https://github.com/yl4579/StyleTTS2",
+    "metavoice":     _HF + "metavoiceio/metavoice-1B-v0.1",
+    "step_editx":    _HF + "stepfun-ai/Step-Audio-EditX",
+    "miratts":       _HF + "YatharthS/MiraTTS",
+    "outetts":       _HF + "OuteAI/Llama-OuteTTS-1.0-1B",
+    "parler":        _HF + "parler-tts/parler-tts-mini-v1",
+    "melotts":       _HF + "myshell-ai/MeloTTS-English",
+    "higgs":         _HF + "bosonai/higgs-audio-v2-generation-3B-base",
+    "higgs_v3":      _HF + "bosonai/higgs-audio-v3-tts-4b",
+    "dramabox":      "https://github.com/resemble-ai/DramaBox",
+    "dots_tts":      _HF + "rednote-hilab/dots.tts-soar",
+}
+
 # Whether a model supports zero-shot voice cloning at runtime.
 # "predefined": fixed speaker(s) / preset voices only.
 # "cloning":    accepts a reference wav (or wav+text) at inference and matches that voice.

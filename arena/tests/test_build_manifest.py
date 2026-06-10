@@ -49,3 +49,17 @@ def test_scan_cloning_fallback_uses_default_dir_for_no_preset(tmp_path):
     clips, _ = scan_dirs(tmp_path, "cloning", base)
     models = {c["model"] for c in clips}
     assert sample in models  # pulled from default dir as a Chris clone
+
+
+def test_build_manifest_embeds_model_meta_for_present_slugs(tmp_path):
+    from arena.build_manifest import build_manifest
+    base = "https://x.test/tts-bench/"
+    _touch(tmp_path / "windows-default" / "kokoro_cpu_p1.wav")
+    _touch(tmp_path / "windows-cloning" / "echo_cuda_p1.wav")
+    meta = {"kokoro": {"name": "Kokoro", "url": "https://hf.test/hexgrad/Kokoro-82M"},
+            "unbenched": {"name": "Ghost", "url": "https://hf.test/x/ghost"}}
+    m = build_manifest(tmp_path, base, {"1": ["en", "hi"]}, meta)
+    # only slugs with clips are emitted; meta passthrough for known, fallback for unknown
+    assert set(m["models"]) == {"kokoro", "echo"}
+    assert m["models"]["kokoro"]["url"] == "https://hf.test/hexgrad/Kokoro-82M"
+    assert m["models"]["echo"] == {"name": "echo", "url": None}

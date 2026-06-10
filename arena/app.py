@@ -38,6 +38,15 @@ _PAGE_PATH = os.path.join(os.path.dirname(__file__), "page.html")
 with open(_PAGE_PATH, encoding="utf-8") as f:
     _PAGE = f.read()
 
+# slug -> {"name", "url"} for the post-vote reveal. Older manifests lack the key;
+# _reveal_meta falls back to the raw slug so the endpoint never depends on it.
+_MODEL_META = _MANIFEST.get("models", {})
+
+
+def _reveal_meta(model: str) -> dict:
+    meta = _MODEL_META.get(model, {})
+    return {"model": model, "name": meta.get("name") or model, "url": meta.get("url")}
+
 
 def _open_db():
     if SETTINGS.use_turso:
@@ -255,7 +264,10 @@ async def api_vote(request: Request):
             key = frozenset((left, right))
             st.pair_count[key] = st.pair_count.get(key, 0) + 1
 
-    return {"ok": True, "clean": bool(clean)}
+    # Reveal AFTER the vote is durably recorded — the voter can no longer change
+    # it, so showing names here doesn't break the blind for the decided pair.
+    return {"ok": True, "clean": bool(clean),
+            "reveal": {"left": _reveal_meta(left), "right": _reveal_meta(right)}}
 
 
 @app.post("/admin/flag_token")

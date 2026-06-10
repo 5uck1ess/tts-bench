@@ -92,12 +92,18 @@ def scan_dirs(gh_root, mode: str, base_url: str):
     return clips, reference_url
 
 
-def build_manifest(gh_root, base_url, prompts: dict) -> dict:
+def build_manifest(gh_root, base_url, prompts: dict, model_meta: dict | None = None) -> dict:
+    """model_meta: {slug: {"name": display, "url": checkpoint_url}} — embedded so
+    the Space can reveal model names+links AFTER a vote without importing report.py.
+    Only slugs that actually appear in the clips are emitted."""
     modes = {}
+    slugs = set()
     for mode in ("default", "cloning"):
         clips, ref = scan_dirs(gh_root, mode, base_url)
         modes[mode] = {"reference_url": ref, "clips": clips}
-    return {"base_url": base_url, "prompts": prompts, "modes": modes}
+        slugs.update(c["model"] for c in clips)
+    models = {s: (model_meta or {}).get(s, {"name": s, "url": None}) for s in sorted(slugs)}
+    return {"base_url": base_url, "prompts": prompts, "modes": modes, "models": models}
 
 
 def main():
@@ -108,9 +114,12 @@ def main():
 
     sys.path.insert(0, REPO)
     from scoring.prompts import PROMPT_BY_ID  # {str(pid): (lang, text)} — public
+    from report import MODEL_DISPLAY_NAMES, MODEL_URL  # presentation registry — public
     prompts = {pid: [lang, text] for pid, (lang, text) in PROMPT_BY_ID.items()}
+    meta = {s: {"name": MODEL_DISPLAY_NAMES.get(s, s), "url": MODEL_URL.get(s)}
+            for s in set(MODEL_DISPLAY_NAMES) | set(MODEL_URL)}
 
-    manifest = build_manifest(args.gh_root, _base_url(), prompts)
+    manifest = build_manifest(args.gh_root, _base_url(), prompts, meta)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
     n = {m: len(b["clips"]) for m, b in manifest["modes"].items()}

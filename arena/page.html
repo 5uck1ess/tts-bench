@@ -67,6 +67,13 @@ audio{width:100%}
   padding:.5rem .9rem;font:inherit;cursor:pointer;white-space:nowrap}
 .undobtn:hover{border-color:var(--accent);background:var(--panel2h)}
 .undobtn:disabled{opacity:.4;cursor:default}
+.reveal{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+  padding:.6rem 1rem;margin:.9rem 0;font-size:.9em;color:var(--muted)}
+.reveal .rlabel{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;
+  color:var(--muted);font-weight:700;margin-right:.5rem}
+.reveal a{color:var(--accent);text-decoration:none}
+.reveal a:hover{text-decoration:underline}
+.reveal .picked{color:var(--accent2);font-weight:700}
 .bar{display:flex;justify-content:space-between;align-items:center;gap:1rem;
   flex-wrap:wrap;margin-top:1.4rem}
 .bar .hint{font-size:.82rem}
@@ -132,6 +139,7 @@ summary{cursor:pointer;color:var(--muted)}
   <button class="bad locked" id="vX">Both bad <kbd>X</kbd></button>
   <button id="vB" class="locked">Right better <kbd>→</kbd></button>
 </div>
+<div class="reveal" id="reveal" style="display:none"></div>
 <div class="bar">
   <span class="muted hint" id="gatehint">▶ Play both clips to enable voting</span>
   <span class="muted">Votes: <b id="n">0</b></span></div>
@@ -199,7 +207,9 @@ function applyModeUI(){
   else { rb.style.display='none'; try{R.pause();}catch(e){} R.removeAttribute('src'); }
 }
 function setMode(m){ if(!MODES.includes(m)||m===mode) return;
-  mode=m; localStorage.setItem('arena_mode',mode); stopAll(); applyModeUI(); load(); refreshRank(); }
+  mode=m; localStorage.setItem('arena_mode',mode); stopAll();
+  document.getElementById('reveal').style.display='none';
+  applyModeUI(); load(); refreshRank(); }
 
 document.getElementById('pR').onclick=()=>playRef();
 function stopAll(){ A.pause(); B.pause(); try{R.pause();}catch(e){} }
@@ -225,18 +235,35 @@ function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg
 function bumpCount(){ const n=document.getElementById('n');
   n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
 
+// Post-vote reveal: names shown only for the round just decided (vote already
+// recorded server-side, so this can't influence it). Switching modes clears it.
+function esc(s){ const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function nameLink(m){ const n=esc(m.name||m.model);
+  return m.url?`<a href="${esc(m.url)}" target="_blank" rel="noopener">${n}</a>`:n; }
+function showReveal(rev, choice){
+  const el=document.getElementById('reveal');
+  if(!rev||!rev.left||!rev.right){ el.style.display='none'; return; }
+  const L=nameLink(rev.left), Rn=nameLink(rev.right);
+  const verdict=choice==='left'?`you picked <span class="picked">${esc(rev.left.name||rev.left.model)}</span>`
+    :choice==='right'?`you picked <span class="picked">${esc(rev.right.name||rev.right.model)}</span>`
+    :choice==='tie'?'you called it a tie':'you marked both bad';
+  el.innerHTML=`<span class="rlabel">🔍 Last round</span> Left was ${L} · Right was ${Rn} — ${verdict}`;
+  el.style.display='block';
+}
 async function vote(choice){
   if(busy||!cur) return;
   if(!gateReady()){ nudgeGate(); return; }   // too early -> flash hint + shake, don't silently no-op
   busy=true;
   const dwell_ms=Date.now()-renderTs;
-  await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},
+  const r=await fetch('/api/vote',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({voter:arena_token, session_id, mode, choice,
       prompt_id:cur.prompt_id, left_id:cur.left_id, right_id:cur.right_id,
       pair_nonce:cur.pair_nonce, dwell_ms, both_played:(playedA&&playedB),
       turnstile_token:turnstileToken})});
+  let rev=null; try{ rev=(await r.json()).reveal; }catch(e){}
   if(window.turnstile){ try{turnstile.reset();}catch(e){} turnstileToken=""; }
   stopAll(); await load(); refreshRank();
+  showReveal(rev, choice);
   toast('✓ '+PRAISE[Math.floor(Math.random()*PRAISE.length)]+' · '+cur.votes); bumpCount();
 }
 async function refreshRank(){
