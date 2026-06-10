@@ -1,9 +1,20 @@
-# Install model venvs (one per model, isolated dependency trees). Idempotent.
+﻿# Install model venvs (one per model, isolated dependency trees). Idempotent.
 #
 # Uses `uv pip install --python <venv-python>` rather than `python -m pip` because
 # `uv venv` doesn't seed pip into the venv by default. uv's pip is also much faster.
 
+# Optional model filter: .\install.ps1 kokoro,miso installs ONLY the named stanzas.
+# Slugs are the venvs\<slug> dir names; `scoring` selects the objective-metrics venv.
+# No args = install everything. bench.py skips models whose venv is absent, so a
+# partial install benches fine.
+param([string[]]$Models = @())
+
 Set-Location $PSScriptRoot
+
+function Want([string]$Slug) {
+    if ($Models.Count -eq 0) { return $true }
+    return [bool]($Models -contains $Slug)
+}
 
 function Step($name) { Write-Host "`n=== $name ===" -ForegroundColor Cyan }
 
@@ -17,7 +28,8 @@ function Invoke-Checked {
 }
 
 Step "Pocket-TTS"
-if (-not (Test-Path "venvs\pocket\Scripts\python.exe")) {
+if (-not (Want "pocket")) { Write-Host "pocket: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\pocket\Scripts\python.exe")) {
     Invoke-Checked "uv venv pocket" { uv venv venvs\pocket --python 3.11 }
     if (-not (Test-Path "venvs\pocket\src")) {
         Invoke-Checked "git clone pocket-tts" { git clone https://github.com/kyutai-labs/pocket-tts venvs\pocket\src }
@@ -30,7 +42,8 @@ if (-not (Test-Path "venvs\pocket\Scripts\python.exe")) {
 }
 
 Step "NeuTTS (Air + Nano share this venv)"
-if (-not (Test-Path "venvs\neutts\Scripts\python.exe")) {
+if (-not (Want "neutts")) { Write-Host "neutts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\neutts\Scripts\python.exe")) {
     Invoke-Checked "uv venv neutts" { uv venv venvs\neutts --python 3.11 }
     & uv pip install --python venvs\neutts\Scripts\python.exe neutts
     if ($LASTEXITCODE -ne 0) {
@@ -47,7 +60,8 @@ if (-not (Test-Path "venvs\neutts\Scripts\python.exe")) {
 }
 
 Step "LuxTTS"
-if (-not (Test-Path "venvs\luxtts\Scripts\python.exe")) {
+if (-not (Want "luxtts")) { Write-Host "luxtts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\luxtts\Scripts\python.exe")) {
     Invoke-Checked "uv venv luxtts" { uv venv venvs\luxtts --python 3.11 }
     & uv pip install --python venvs\luxtts\Scripts\python.exe luxtts
     if ($LASTEXITCODE -ne 0) {
@@ -64,7 +78,8 @@ if (-not (Test-Path "venvs\luxtts\Scripts\python.exe")) {
 }
 
 Step "Kokoro-82M"
-if (-not (Test-Path "venvs\kokoro\Scripts\python.exe")) {
+if (-not (Want "kokoro")) { Write-Host "kokoro: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\kokoro\Scripts\python.exe")) {
     Invoke-Checked "uv venv kokoro" { uv venv venvs\kokoro --python 3.11 }
     Invoke-Checked "uv pip install kokoro" { uv pip install --python venvs\kokoro\Scripts\python.exe kokoro soundfile numpy }
     # misaki (Kokoro's tokenizer) auto-downloads spaCy en_core_web_sm via spacy.cli.download()
@@ -79,7 +94,8 @@ if (-not (Test-Path "venvs\kokoro\Scripts\python.exe")) {
 }
 
 Step "KittenTTS"
-if (-not (Test-Path "venvs\kittentts\Scripts\python.exe")) {
+if (-not (Want "kittentts")) { Write-Host "kittentts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\kittentts\Scripts\python.exe")) {
     Invoke-Checked "uv venv kittentts" { uv venv venvs\kittentts --python 3.11 }
     # KittenTTS uses phonemizer + espeak-ng. espeakng-loader bundles the DLL.
     Invoke-Checked "uv pip install kittentts" { uv pip install --python venvs\kittentts\Scripts\python.exe kittentts espeakng-loader soundfile numpy }
@@ -89,7 +105,8 @@ if (-not (Test-Path "venvs\kittentts\Scripts\python.exe")) {
 }
 
 Step "Piper"
-if (-not (Test-Path "venvs\piper\Scripts\python.exe")) {
+if (-not (Want "piper")) { Write-Host "piper: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\piper\Scripts\python.exe")) {
     Invoke-Checked "uv venv piper" { uv venv venvs\piper --python 3.11 }
     # piper-tts 1.4+ bundles espeak-ng, no piper-phonemize dependency, Windows-clean.
     Invoke-Checked "uv pip install piper" { uv pip install --python venvs\piper\Scripts\python.exe piper-tts soundfile numpy }
@@ -99,7 +116,8 @@ if (-not (Test-Path "venvs\piper\Scripts\python.exe")) {
 }
 
 Step "ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv)"
-if (-not (Test-Path "venvs\chatterbox\Scripts\python.exe")) {
+if (-not (Want "chatterbox")) { Write-Host "chatterbox: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\chatterbox\Scripts\python.exe")) {
     Invoke-Checked "uv venv chatterbox" { uv venv venvs\chatterbox --python 3.11 }
     Invoke-Checked "uv pip install chatterbox" { uv pip install --python venvs\chatterbox\Scripts\python.exe chatterbox-tts soundfile numpy }
     # perth (ChatterBox's audio watermarker) imports pkg_resources, which was removed
@@ -116,7 +134,8 @@ if (-not (Test-Path "venvs\chatterbox\Scripts\python.exe")) {
 }
 
 Step "F5-TTS"
-if (-not (Test-Path "venvs\f5tts\Scripts\python.exe")) {
+if (-not (Want "f5tts")) { Write-Host "f5tts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\f5tts\Scripts\python.exe")) {
     Invoke-Checked "uv venv f5tts" { uv venv venvs\f5tts --python 3.11 }
     Invoke-Checked "uv pip install f5-tts" { uv pip install --python venvs\f5tts\Scripts\python.exe f5-tts soundfile numpy }
     # torch 2.12+ routes torchaudio.load() through torchcodec, which needs
@@ -134,7 +153,8 @@ if (-not (Test-Path "venvs\f5tts\Scripts\python.exe")) {
 }
 
 Step "Coqui XTTS-v2 (idiap fork)"
-if (-not (Test-Path "venvs\coqui\Scripts\python.exe")) {
+if (-not (Want "coqui")) { Write-Host "coqui: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\coqui\Scripts\python.exe")) {
     Invoke-Checked "uv venv coqui" { uv venv venvs\coqui --python 3.11 }
     # Original coqui-ai/TTS is archived; idiap/coqui-ai-TTS is the maintained fork.
     # PyPI package name is `coqui-tts` (not `TTS` - the old name is squatted).
@@ -154,7 +174,8 @@ if (-not (Test-Path "venvs\coqui\Scripts\python.exe")) {
 }
 
 Step "VibeVoice-Realtime-0.5B (community fork)"
-if (-not (Test-Path "venvs\vibevoice\Scripts\python.exe")) {
+if (-not (Want "vibevoice")) { Write-Host "vibevoice: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\vibevoice\Scripts\python.exe")) {
     Invoke-Checked "uv venv vibevoice" { uv venv venvs\vibevoice --python 3.11 }
     # The official microsoft/VibeVoice repo was taken down then partially restored
     # WITHOUT code. The community fork keeps the original code and added a
@@ -172,7 +193,8 @@ if (-not (Test-Path "venvs\vibevoice\Scripts\python.exe")) {
 }
 
 Step "OmniVoice (k2-fsa, 600+ languages)"
-if (-not (Test-Path "venvs\omnivoice\Scripts\python.exe")) {
+if (-not (Want "omnivoice")) { Write-Host "omnivoice: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\omnivoice\Scripts\python.exe")) {
     Invoke-Checked "uv venv omnivoice" { uv venv venvs\omnivoice --python 3.11 }
     Invoke-Checked "uv pip install omnivoice" { uv pip install --python venvs\omnivoice\Scripts\python.exe omnivoice soundfile numpy }
     # GPU-targeted (diffusion LM); cu128 wheels for Blackwell (RTX 5090, sm_120).
@@ -183,7 +205,8 @@ if (-not (Test-Path "venvs\omnivoice\Scripts\python.exe")) {
 }
 
 Step "ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning)"
-if (-not (Test-Path "venvs\zipvoice\Scripts\python.exe")) {
+if (-not (Want "zipvoice")) { Write-Host "zipvoice: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\zipvoice\Scripts\python.exe")) {
     # No pip wheel — source clone + editable install. Same lab as OmniVoice.
     # pyproject.toml in the repo has no [build-system]; we patch it during clone.
     Invoke-Checked "uv venv zipvoice" { uv venv venvs\zipvoice --python 3.11 }
@@ -208,7 +231,8 @@ if (-not (Test-Path "venvs\zipvoice\Scripts\python.exe")) {
 }
 
 Step "VoxCPM-0.5B (OpenBMB, multilingual cloning)"
-if (-not (Test-Path "venvs\voxcpm\Scripts\python.exe")) {
+if (-not (Want "voxcpm")) { Write-Host "voxcpm: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\voxcpm\Scripts\python.exe")) {
     # voxcpm requires Python >=3.10 <3.13 and torch >=2.5 with CUDA >=12.
     Invoke-Checked "uv venv voxcpm" { uv venv venvs\voxcpm --python 3.11 }
     Invoke-Checked "uv pip install voxcpm" { uv pip install --python venvs\voxcpm\Scripts\python.exe voxcpm soundfile numpy }
@@ -220,7 +244,8 @@ if (-not (Test-Path "venvs\voxcpm\Scripts\python.exe")) {
 }
 
 Step "Magpie-TTS Multilingual 357M (NVIDIA NeMo, predefined voices, 9 langs)"
-if (-not (Test-Path "venvs\magpie\Scripts\python.exe")) {
+if (-not (Want "magpie")) { Write-Host "magpie: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\magpie\Scripts\python.exe")) {
     Invoke-Checked "uv venv magpie" { uv venv venvs\magpie --python 3.11 }
     # nemo_toolkit[tts] pulls nemo_text_processing -> pynini, which has no Windows
     # wheel and needs OpenFST + bazel + MSVC to build from source. Skip the [tts]
@@ -252,7 +277,8 @@ if (-not (Test-Path "venvs\magpie\Scripts\python.exe")) {
 }
 
 Step "Qwen3-TTS-Base 1.7B (Alibaba Qwen, zero-shot cloning, 10 langs)"
-if (-not (Test-Path "venvs\qwentts\Scripts\python.exe")) {
+if (-not (Want "qwentts")) { Write-Host "qwentts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\qwentts\Scripts\python.exe")) {
     # qwen-tts requires Python 3.12 per upstream docs (works on 3.13 too but
     # 3.12 is what they test against).
     Invoke-Checked "uv venv qwentts" { uv venv venvs\qwentts --python 3.12 }
@@ -270,7 +296,8 @@ if (-not (Test-Path "venvs\qwentts\Scripts\python.exe")) {
 }
 
 Step "faster-qwen3-tts (CUDA-graph fast path for Qwen3-TTS-Base 1.7B)"
-if (-not (Test-Path "venvs\qwentts_fast\Scripts\python.exe")) {
+if (-not (Want "qwentts_fast")) { Write-Host "qwentts_fast: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\qwentts_fast\Scripts\python.exe")) {
     Invoke-Checked "uv venv qwentts_fast" { uv venv venvs\qwentts_fast --python 3.11 }
     Invoke-Checked "torch cu128 in qwentts_fast" {
         uv pip install --python venvs\qwentts_fast\Scripts\python.exe `
@@ -287,7 +314,8 @@ if (-not (Test-Path "venvs\qwentts_fast\Scripts\python.exe")) {
 }
 
 Step "IndexTTS-2 (Bilibili Index, zero-shot cloning + emotion control)"
-if (-not (Test-Path "venvs\indextts\Scripts\python.exe")) {
+if (-not (Want "indextts")) { Write-Host "indextts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\indextts\Scripts\python.exe")) {
     # No pip wheel - upstream requires source clone. We mirror the neutts/luxtts
     # pattern: venv + clone into venvs\indextts\src + uv pip install -e ...
     # Model weights (IndexTeam/IndexTTS-2) are downloaded by huggingface_hub
@@ -309,7 +337,8 @@ if (-not (Test-Path "venvs\indextts\Scripts\python.exe")) {
 }
 
 Step "Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning)"
-if (-not (Test-Path "venvs\dia\Scripts\python.exe")) {
+if (-not (Want "dia")) { Write-Host "dia: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\dia\Scripts\python.exe")) {
     Invoke-Checked "uv venv dia" { uv venv venvs\dia --python 3.11 }
     Invoke-Checked "uv pip install dia from git" { uv pip install --python venvs\dia\Scripts\python.exe "git+https://github.com/nari-labs/dia.git" soundfile numpy }
     # Dia's pyproject pulls cu126 torch 2.6; reinstall cu128 for Blackwell (5090, sm_120).
@@ -320,7 +349,8 @@ if (-not (Test-Path "venvs\dia\Scripts\python.exe")) {
 }
 
 Step "Sesame CSM-1B (conversational speech model, in-context cloning)"
-if (-not (Test-Path "venvs\sesame\Scripts\python.exe")) {
+if (-not (Want "sesame")) { Write-Host "sesame: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\sesame\Scripts\python.exe")) {
     # Native transformers support since 4.52.1 - no separate pip package needed.
     # MANUAL APPROVAL gating on HF: visit https://huggingface.co/sesame/csm-1b
     # and click "Ask for access" before first use. After approval lands in your
@@ -334,7 +364,8 @@ if (-not (Test-Path "venvs\sesame\Scripts\python.exe")) {
 }
 
 Step "MARS5-TTS (CAMB.AI, English zero-shot cloning, AGPL-3.0)"
-if (-not (Test-Path "venvs\mars5\Scripts\python.exe")) {
+if (-not (Want "mars5")) { Write-Host "mars5: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\mars5\Scripts\python.exe")) {
     # Loaded via torch.hub - no source clone needed. ~1.2GB AR+NAR checkpoints
     # auto-download on first runner call. AGPL-3.0 license: not for commercial
     # use without a separate license from CAMB.AI.
@@ -350,7 +381,8 @@ if (-not (Test-Path "venvs\mars5\Scripts\python.exe")) {
 }
 
 Step "Soprano 80M (ekwek1, Apache 2.0, predefined voice, 32kHz)"
-if (-not (Test-Path "venvs\soprano\Scripts\python.exe")) {
+if (-not (Want "soprano")) { Write-Host "soprano: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\soprano\Scripts\python.exe")) {
     Invoke-Checked "uv venv soprano" { uv venv venvs\soprano --python 3.11 }
     if (-not (Test-Path "venvs\soprano\src")) {
         Invoke-Checked "git clone soprano" { git clone --depth 1 https://github.com/ekwek1/soprano venvs\soprano\src }
@@ -365,7 +397,8 @@ if (-not (Test-Path "venvs\soprano\Scripts\python.exe")) {
 }
 
 Step "MOSS-TTS-Nano 100M (OpenMOSS/MOSI.AI, Apache 2.0, zero-shot cloning, 48kHz)"
-if (-not (Test-Path "venvs\moss_tts_nano\Scripts\python.exe")) {
+if (-not (Want "moss_tts_nano")) { Write-Host "moss_tts_nano: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\moss_tts_nano\Scripts\python.exe")) {
     # No PyPI wheel that ships the model code — install editable from source clone.
     # Upstream README recommends Python 3.12. The package's setup.py exposes
     # `moss-tts-nano` console-script + top-level py-modules (infer, app, etc.),
@@ -393,7 +426,8 @@ if (-not (Test-Path "venvs\moss_tts_nano\Scripts\python.exe")) {
 }
 
 Step "MOSS-TTS flagship (OpenMOSS, Apache 2.0, 8B Qwen3-backbone zero-shot cloning, 20 langs)"
-if (-not (Test-Path "venvs\moss_tts\Scripts\python.exe")) {
+if (-not (Want "moss_tts")) { Write-Host "moss_tts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\moss_tts\Scripts\python.exe")) {
     # Source-clone install. Upstream's [torch-runtime] extra pins torch==2.9.1
     # which routes torchaudio.load() through torchcodec — torchcodec's DLL fails
     # to load on Windows without FFmpeg shared libs on PATH. Install everything
@@ -417,7 +451,8 @@ if (-not (Test-Path "venvs\moss_tts\Scripts\python.exe")) {
 }
 
 Step "Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices)"
-if (-not (Test-Path "venvs\supertonic\Scripts\python.exe")) {
+if (-not (Want "supertonic")) { Write-Host "supertonic: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\supertonic\Scripts\python.exe")) {
     # Pure-ONNX runtime; no torch dependency. ~25MB weights auto-downloaded
     # from HF (Supertone/supertonic) on first run.
     # Open-weight release is fixed-voice only; cloning lives in the hosted
@@ -430,7 +465,8 @@ if (-not (Test-Path "venvs\supertonic\Scripts\python.exe")) {
 }
 
 Step "Fish Speech 1.5 (fishaudio, zero-shot cloning, 44.1kHz)"
-if (-not (Test-Path "venvs\fish\Scripts\python.exe")) {
+if (-not (Want "fish")) { Write-Host "fish: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\fish\Scripts\python.exe")) {
     # Source clone of the v1.5.0 tag. [stable] extras are intentionally SKIPPED:
     # they pin torch<=2.4.1 which is incompatible with the RTX 5090 (Blackwell
     # sm_120), which needs cu128 / torch 2.7+. We install fish-speech with no
@@ -448,7 +484,8 @@ if (-not (Test-Path "venvs\fish\Scripts\python.exe")) {
 } else { Write-Host "fish: already installed" -ForegroundColor Gray }
 
 Step "Maya1 (maya-research, Apache 2.0, voice-description default voice, 24kHz, SNAC codec)"
-if (-not (Test-Path "venvs\maya1\Scripts\python.exe")) {
+if (-not (Want "maya1")) { Write-Host "maya1: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\maya1\Scripts\python.exe")) {
     # Default-voice model: no audio cloning. The voice is steered by a natural-
     # language description string; the runner uses a fixed DEFAULT_VOICE_DESC.
     # Llama-style causal LM emits flat SNAC codec tokens -> decoded by the
@@ -462,7 +499,8 @@ if (-not (Test-Path "venvs\maya1\Scripts\python.exe")) {
 } else { Write-Host "maya1: already installed" -ForegroundColor Gray }
 
 Step "StyleTTS 2 (sidharthrajaram wrapper, MIT, LibriTTS, zero-shot cloning, 24kHz)"
-if (-not (Test-Path "venvs\styletts2\Scripts\python.exe")) {
+if (-not (Want "styletts2")) { Write-Host "styletts2: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\styletts2\Scripts\python.exe")) {
     # The `styletts2` PyPI wrapper (sidharthrajaram) uses gruut for phonemization
     # (no espeak-ng needed) and auto-downloads LibriTTS weights from HF on the
     # first StyleTTS2() call. Its dep `monotonic_align` is a Cython package that
@@ -476,7 +514,8 @@ if (-not (Test-Path "venvs\styletts2\Scripts\python.exe")) {
 } else { Write-Host "styletts2: already installed" -ForegroundColor Gray }
 
 Step "Zonos-v0.1 transformer (Zyphra, zero-shot cloning, 44.1kHz, espeakng-loader)"
-if (-not (Test-Path "venvs\zonos\Scripts\python.exe")) {
+if (-not (Want "zonos")) { Write-Host "zonos: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\zonos\Scripts\python.exe")) {
     # Transformer backbone only — do NOT install the `.[compile]` extras
     # (mamba-ssm/flash-attn are CUDA+Linux-only and unneeded for the transformer
     # variant). Zonos uses phonemizer -> espeak-ng; espeakng-loader bundles the
@@ -491,7 +530,8 @@ if (-not (Test-Path "venvs\zonos\Scripts\python.exe")) {
 } else { Write-Host "zonos: already installed" -ForegroundColor Gray }
 
 Step "OpenVoice v2 (myshell-ai, MeloTTS base + tone-color converter, zero-shot cloning, 22.05kHz)"
-if (-not (Test-Path "venvs\openvoice\Scripts\python.exe")) {
+if (-not (Want "openvoice")) { Write-Host "openvoice: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\openvoice\Scripts\python.exe")) {
     # OpenVoice v2 = MeloTTS (base TTS) + a ToneColorConverter (cloning). 3 in-process
     # steps wrapped as one runner call. Python 3.11 (NOT 3.12 - fugashi, pulled by
     # MeloTTS's Japanese path, has no prebuilt wheel for 3.12 and the source build needs
@@ -530,7 +570,8 @@ if (-not (Test-Path "venvs\openvoice\Scripts\python.exe")) {
 } else { Write-Host "openvoice: already installed" -ForegroundColor Gray }
 
 Step "Echo-TTS (Jordan Darefsky, DiT + Fish S1-DAC, 44.1k, cloning, CUDA-only)"
-if (-not (Test-Path "venvs\echo\Scripts\python.exe")) {
+if (-not (Want "echo")) { Write-Host "echo: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\echo\Scripts\python.exe")) {
     # Source-clone install: inference.py/model.py/autoencoder.py are imported from
     # the cloned tree (no pip package). We DROP upstream's torchaudio + torchcodec —
     # the runner stubs both in sys.modules and reimplements load_audio via
@@ -549,7 +590,8 @@ if (-not (Test-Path "venvs\echo\Scripts\python.exe")) {
 } else { Write-Host "echo: already installed" -ForegroundColor Gray }
 
 Step "MiraTTS (Yatharth Sharma, MIT, 0.5B LLM-TTS + FastBiCodec, 48k, cloning, CUDA-only)"
-if (-not (Test-Path "venvs\miratts\Scripts\python.exe")) {
+if (-not (Want "miratts")) { Write-Host "miratts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\miratts\Scripts\python.exe")) {
     # pip package (project name FastNeuTTS). Pulls lmdeploy (TurboMind engine) + the
     # author's git deps ncodec (FastBiCodec) + fastaudiosr (FlashSR 48k upsampler) +
     # onnxruntime-gpu. soundfile for wav write. omegaconf is needed by the codec but
@@ -566,7 +608,8 @@ if (-not (Test-Path "venvs\miratts\Scripts\python.exe")) {
 } else { Write-Host "miratts: already installed" -ForegroundColor Gray }
 
 Step "OuteTTS 1.0 1B (edwko/OuteAI, CC-BY-NC-SA-4.0 + Llama-3.2, DAC, cloning + presets)"
-if (-not (Test-Path "venvs\outetts\Scripts\python.exe")) {
+if (-not (Want "outetts")) { Write-Host "outetts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\outetts\Scripts\python.exe")) {
     # pip package. We drive the HF/transformers backend (no llama.cpp compile), so we
     # also need accelerate. The runner monkeypatches torchaudio.load/save -> soundfile to
     # dodge torchcodec (FFmpeg-8 box; same reason echo avoids it), so torchaudio just
@@ -580,7 +623,8 @@ if (-not (Test-Path "venvs\outetts\Scripts\python.exe")) {
 } else { Write-Host "outetts: already installed" -ForegroundColor Gray }
 
 Step "Parler-TTS Mini v1 (parler-tts, Apache-2.0, description-controlled, DAC 44.1k)"
-if (-not (Test-Path "venvs\parler\Scripts\python.exe")) {
+if (-not (Want "parler")) { Write-Host "parler: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\parler\Scripts\python.exe")) {
     # git package (no PyPI release tracks the current model code). Pulls transformers +
     # descript-audio-codec + sentencepiece. accelerate for device_map. Then the cu128
     # torch trio LAST (Blackwell sm_120; PyPI Windows torch is CPU-only) — include
@@ -592,7 +636,8 @@ if (-not (Test-Path "venvs\parler\Scripts\python.exe")) {
 } else { Write-Host "parler: already installed" -ForegroundColor Gray }
 
 Step "MeloTTS-English (myshell-ai, MIT, VITS predefined voice, 44.1k)"
-if (-not (Test-Path "venvs\melotts\Scripts\python.exe")) {
+if (-not (Want "melotts")) { Write-Host "melotts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\melotts\Scripts\python.exe")) {
     # git package + `unidic download` (dictionary the tokenizer loads at import). melo
     # imports ALL language modules at `from melo.api import TTS` (incl. pyopenjtalk/mecab),
     # even for English-only use. Upstream punts Windows to Docker, but the native build
@@ -612,7 +657,8 @@ if (-not (Test-Path "venvs\melotts\Scripts\python.exe")) {
 # Windows install here by design — leave higgs_v3 out of this script.
 
 Step "DramaBox (Resemble AI, LTX-2 Community/NC, LTX-2.3 3.3B audio DiT, 48k, dialogue + cloning, CUDA-only)"
-if (-not (Test-Path "venvs\dramabox\Scripts\python.exe")) {
+if (-not (Want "dramabox")) { Write-Host "dramabox: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\dramabox\Scripts\python.exe")) {
     # Source repo (no PyPI package): the runner imports `src.inference_server.TTSServer`
     # from the cloned tree (venvs\dramabox\src). requirements pins torch==2.8.0; on Windows
     # we satisfy that from the cu128 index FIRST (Blackwell sm_120; PyPI Windows torch is
@@ -636,7 +682,8 @@ if (-not (Test-Path "venvs\dramabox\Scripts\python.exe")) {
 # (torch cu128 + the editable dots_tts build), so there's no install.ps1 stanza.
 
 Step "Miso TTS 8B (Miso Labs, modified-MIT, Sesame-CSM arch 8.2B, 24k Mimi, cloning, CUDA-only)"
-if (-not (Test-Path "venvs\miso\Scripts\python.exe")) {
+if (-not (Want "miso")) { Write-Host "miso: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\miso\Scripts\python.exe")) {
     # Source-clone import: generator.py/models.py are flat modules imported from the
     # tree (the runner adds venvs/miso/src to sys.path). Deliberately NOT pip-installed —
     # upstream pins torch==2.4.0 (pre-Blackwell), but the code runs on torchtune 0.6.1 +
@@ -656,7 +703,8 @@ if (-not (Test-Path "venvs\miso\Scripts\python.exe")) {
 # Central scorer venv. SIM's UniSpeech-SAT stack (s3prl/fairseq) may fail on
 # Windows MSVC; if so, score on Linux (scoring is central). UTMOS+WER work here.
 Step "scoring: objective metrics (UTMOS + WER + SIM)"
-if (-not (Test-Path "venvs\scoring\Scripts\python.exe")) {
+if (-not (Want "scoring")) { Write-Host "scoring: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\scoring\Scripts\python.exe")) {
     Invoke-Checked "uv venv scoring" { uv venv venvs\scoring --python 3.11 }
     Invoke-Checked "uv pip install scoring deps" {
         uv pip install --python venvs\scoring\Scripts\python.exe `
@@ -682,7 +730,7 @@ if (-not (Test-Path "scoring\checkpoints\wavlm_large_finetune.pth")) {
 Step "psutil in every venv (for bench memory tracking)"
 # Bench reports include peak CPU RSS via psutil. The runner falls back to
 # `None` if psutil is missing, so this is best-effort — but cheap to install.
-Get-ChildItem venvs -Directory | ForEach-Object {
+Get-ChildItem venvs -Directory | Where-Object { Want $_.Name } | ForEach-Object {
     $py = Join-Path $_.FullName "Scripts\python.exe"
     if (Test-Path $py) {
         & uv pip install --python $py psutil --quiet 2>&1 | Out-Null
@@ -694,7 +742,7 @@ Step "NAQ deps in every venv (librosa + scipy for naq scoring)"
 # NAQ scoring runs after every wav is written. Pure-acoustic;
 # librosa + scipy are all that's needed. A learned-MOS predictor was considered
 # and dropped — install portability across heterogeneous venvs wasn't workable.
-Get-ChildItem venvs -Directory | ForEach-Object {
+Get-ChildItem venvs -Directory | Where-Object { Want $_.Name } | ForEach-Object {
     $py = Join-Path $_.FullName "Scripts\python.exe"
     if (Test-Path $py) {
         & uv pip install --python $py librosa scipy --quiet 2>&1 | Out-Null

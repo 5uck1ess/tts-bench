@@ -9,6 +9,17 @@ red()    { printf '\033[31m%s\033[0m\n' "$*"; }
 yellow() { printf '\033[33m%s\033[0m\n' "$*"; }
 die()    { red "FAILED: $*"; exit 1; }
 
+# Optional model filter: ./install.sh [slug ...] installs ONLY the named stanzas.
+# Slugs are the venvs/<slug> dir names (kokoro, miso, f5tts, ...); `scoring` and
+# `scoring_sim` select the objective-metrics venvs. No args = install everything.
+# bench.py skips models whose venv is absent, so a partial install benches fine.
+WANTED=("$@")
+want() {
+    [ ${#WANTED[@]} -eq 0 ] && return 0
+    local m; for m in "${WANTED[@]}"; do [ "$m" = "$1" ] && return 0; done
+    return 1
+}
+
 # --- Reference voices (default cloning voices; gitignored, fetched from upstream) ---
 # Several cloning runners (neutts, f5tts, indextts, qwentts, mars5) fall back to a shared
 # default reference voice in reference/ when --reference is omitted. These wavs are gitignored,
@@ -41,7 +52,8 @@ fi
 
 # --- Pocket-TTS ---
 echo; cyan "=== Pocket-TTS ==="
-if [ ! -x venvs/pocket/bin/python ]; then
+if ! want pocket; then echo "pocket: skipped (not in install filter)"
+elif [ ! -x venvs/pocket/bin/python ]; then
     uv venv venvs/pocket --python 3.11 || die "uv venv pocket"
     if [ ! -d venvs/pocket/src ]; then
         git clone https://github.com/kyutai-labs/pocket-tts venvs/pocket/src \
@@ -58,7 +70,8 @@ fi
 
 # --- NeuTTS (Air + Nano share this venv) ---
 echo; cyan "=== NeuTTS (Air + Nano share this venv) ==="
-if [ ! -x venvs/neutts/bin/python ]; then
+if ! want neutts; then echo "neutts: skipped (not in install filter)"
+elif [ ! -x venvs/neutts/bin/python ]; then
     uv venv venvs/neutts --python 3.11 || die "uv venv neutts"
     if ! uv pip install --python venvs/neutts/bin/python neutts; then
         yellow "PyPI install failed, cloning from GitHub..."
@@ -78,7 +91,8 @@ fi
 
 # --- LuxTTS (should install cleanly on macOS — piper-phonemize has macOS wheels) ---
 echo; cyan "=== LuxTTS ==="
-if [ ! -x venvs/luxtts/bin/python ]; then
+if ! want luxtts; then echo "luxtts: skipped (not in install filter)"
+elif [ ! -x venvs/luxtts/bin/python ]; then
     uv venv venvs/luxtts --python 3.11 || die "uv venv luxtts"
     if ! uv pip install --python venvs/luxtts/bin/python luxtts; then
         yellow "PyPI install failed, cloning from GitHub..."
@@ -98,7 +112,8 @@ fi
 
 # --- Kokoro-82M ---
 echo; cyan "=== Kokoro-82M ==="
-if [ ! -x venvs/kokoro/bin/python ]; then
+if ! want kokoro; then echo "kokoro: skipped (not in install filter)"
+elif [ ! -x venvs/kokoro/bin/python ]; then
     uv venv venvs/kokoro --python 3.11 || die "uv venv kokoro"
     uv pip install --python venvs/kokoro/bin/python kokoro soundfile numpy \
         || die "uv pip install kokoro"
@@ -114,7 +129,8 @@ fi
 
 # --- KittenTTS ---
 echo; cyan "=== KittenTTS ==="
-if [ ! -x venvs/kittentts/bin/python ]; then
+if ! want kittentts; then echo "kittentts: skipped (not in install filter)"
+elif [ ! -x venvs/kittentts/bin/python ]; then
     uv venv venvs/kittentts --python 3.11 || die "uv venv kittentts"
     uv pip install --python venvs/kittentts/bin/python kittentts espeakng-loader soundfile numpy \
         || die "uv pip install kittentts"
@@ -125,7 +141,8 @@ fi
 
 # --- Piper ---
 echo; cyan "=== Piper ==="
-if [ ! -x venvs/piper/bin/python ]; then
+if ! want piper; then echo "piper: skipped (not in install filter)"
+elif [ ! -x venvs/piper/bin/python ]; then
     uv venv venvs/piper --python 3.11 || die "uv venv piper"
     uv pip install --python venvs/piper/bin/python piper-tts soundfile numpy \
         || die "uv pip install piper-tts"
@@ -136,7 +153,8 @@ fi
 
 # --- ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ---
 echo; cyan "=== ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ==="
-if [ ! -x venvs/chatterbox/bin/python ]; then
+if ! want chatterbox; then echo "chatterbox: skipped (not in install filter)"
+elif [ ! -x venvs/chatterbox/bin/python ]; then
     uv venv venvs/chatterbox --python 3.11 || die "uv venv chatterbox"
     uv pip install --python venvs/chatterbox/bin/python chatterbox-tts soundfile numpy \
         || die "uv pip install chatterbox-tts"
@@ -155,7 +173,8 @@ fi
 
 # --- F5-TTS ---
 echo; cyan "=== F5-TTS ==="
-if [ ! -x venvs/f5tts/bin/python ]; then
+if ! want f5tts; then echo "f5tts: skipped (not in install filter)"
+elif [ ! -x venvs/f5tts/bin/python ]; then
     uv venv venvs/f5tts --python 3.11 || die "uv venv f5tts"
     uv pip install --python venvs/f5tts/bin/python f5-tts soundfile numpy \
         || die "uv pip install f5-tts"
@@ -175,7 +194,8 @@ fi
 
 # --- Coqui XTTS-v2 (idiap fork) ---
 echo; cyan "=== Coqui XTTS-v2 (idiap fork) ==="
-if [ ! -x venvs/coqui/bin/python ]; then
+if ! want coqui; then echo "coqui: skipped (not in install filter)"
+elif [ ! -x venvs/coqui/bin/python ]; then
     uv venv venvs/coqui --python 3.11 || die "uv venv coqui"
     # Original coqui-ai/TTS is archived; idiap/coqui-ai-TTS is the maintained
     # fork. PyPI package is `coqui-tts` (the old `TTS` name is squatted).
@@ -198,7 +218,8 @@ fi
 
 # --- VibeVoice-Realtime-0.5B (community fork) ---
 echo; cyan "=== VibeVoice-Realtime-0.5B (community fork) ==="
-if [ ! -x venvs/vibevoice/bin/python ]; then
+if ! want vibevoice; then echo "vibevoice: skipped (not in install filter)"
+elif [ ! -x venvs/vibevoice/bin/python ]; then
     uv venv venvs/vibevoice --python 3.11 || die "uv venv vibevoice"
     # The official microsoft/VibeVoice repo was taken down then partially restored
     # WITHOUT code. The community fork keeps the original code and added a
@@ -220,7 +241,8 @@ fi
 
 # --- OmniVoice (k2-fsa, 600+ languages) ---
 echo; cyan "=== OmniVoice (k2-fsa, 600+ languages) ==="
-if [ ! -x venvs/omnivoice/bin/python ]; then
+if ! want omnivoice; then echo "omnivoice: skipped (not in install filter)"
+elif [ ! -x venvs/omnivoice/bin/python ]; then
     uv venv venvs/omnivoice --python 3.11 || die "uv venv omnivoice"
     uv pip install --python venvs/omnivoice/bin/python omnivoice soundfile numpy \
         || die "uv pip install omnivoice"
@@ -233,7 +255,8 @@ fi
 
 # --- ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning) ---
 echo; cyan "=== ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning) ==="
-if [ ! -x venvs/zipvoice/bin/python ]; then
+if ! want zipvoice; then echo "zipvoice: skipped (not in install filter)"
+elif [ ! -x venvs/zipvoice/bin/python ]; then
     # No pip wheel — source clone + editable install. Same lab as OmniVoice.
     # pyproject.toml in the repo has no [build-system]; we patch it before installing.
     uv venv venvs/zipvoice --python 3.11 || die "uv venv zipvoice"
@@ -266,7 +289,8 @@ fi
 
 # --- VoxCPM-0.5B (OpenBMB, multilingual cloning) ---
 echo; cyan "=== VoxCPM-0.5B (OpenBMB, multilingual cloning) ==="
-if [ ! -x venvs/voxcpm/bin/python ]; then
+if ! want voxcpm; then echo "voxcpm: skipped (not in install filter)"
+elif [ ! -x venvs/voxcpm/bin/python ]; then
     # voxcpm requires Python >=3.10 <3.13 and torch >=2.5.
     uv venv venvs/voxcpm --python 3.11 || die "uv venv voxcpm"
     uv pip install --python venvs/voxcpm/bin/python voxcpm soundfile numpy \
@@ -278,7 +302,8 @@ fi
 
 # --- Magpie-TTS Multilingual 357M (NVIDIA NeMo, predefined voices, 9 langs) ---
 echo; cyan "=== Magpie-TTS Multilingual 357M (NVIDIA NeMo, predefined voices, 9 langs) ==="
-if [ ! -x venvs/magpie/bin/python ]; then
+if ! want magpie; then echo "magpie: skipped (not in install filter)"
+elif [ ! -x venvs/magpie/bin/python ]; then
     uv venv venvs/magpie --python 3.11 || die "uv venv magpie"
     # nemo_toolkit[tts] pulls nemo_text_processing -> pynini. On Mac/Linux pynini
     # has wheels and the [tts] extra works fine. We mirror the Windows recipe
@@ -310,7 +335,8 @@ fi
 
 # --- Qwen3-TTS-Base 1.7B (Alibaba Qwen, zero-shot cloning, 10 langs) ---
 echo; cyan "=== Qwen3-TTS-Base 1.7B (Alibaba Qwen, zero-shot cloning, 10 langs) ==="
-if [ ! -x venvs/qwentts/bin/python ]; then
+if ! want qwentts; then echo "qwentts: skipped (not in install filter)"
+elif [ ! -x venvs/qwentts/bin/python ]; then
     # qwen-tts targets Python 3.12 upstream.
     uv venv venvs/qwentts --python 3.12 || die "uv venv qwentts"
     uv pip install --python venvs/qwentts/bin/python qwen-tts soundfile numpy \
@@ -326,7 +352,8 @@ fi
 
 # --- faster-qwen3-tts (CUDA-graph fast path for Qwen3-TTS-Base 1.7B) ---
 echo; cyan "=== faster-qwen3-tts (CUDA-graph fast path for Qwen3-TTS-Base 1.7B) ==="
-if [ ! -x venvs/qwentts_fast/bin/python ]; then
+if ! want qwentts_fast; then echo "qwentts_fast: skipped (not in install filter)"
+elif [ ! -x venvs/qwentts_fast/bin/python ]; then
     uv venv venvs/qwentts_fast --python 3.11 || die "uv venv qwentts_fast"
     # CUDA-only on Linux/Windows; on Mac this installs CPU torch but the runner
     # will report CUDA unavailable and the bench cell will fail gracefully.
@@ -344,7 +371,8 @@ fi
 
 # --- IndexTTS-2 (Bilibili Index, zero-shot cloning + emotion control) ---
 echo; cyan "=== IndexTTS-2 (Bilibili Index, zero-shot cloning + emotion control) ==="
-if [ ! -x venvs/indextts/bin/python ]; then
+if ! want indextts; then echo "indextts: skipped (not in install filter)"
+elif [ ! -x venvs/indextts/bin/python ]; then
     # Source clone (no pip wheel). Model weights (IndexTeam/IndexTTS-2) are
     # downloaded by huggingface_hub on first runner call (~5GB), not here.
     uv venv venvs/indextts --python 3.11 || die "uv venv indextts"
@@ -366,7 +394,8 @@ fi
 
 # --- Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning) ---
 echo; cyan "=== Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning) ==="
-if [ ! -x venvs/dia/bin/python ]; then
+if ! want dia; then echo "dia: skipped (not in install filter)"
+elif [ ! -x venvs/dia/bin/python ]; then
     uv venv venvs/dia --python 3.11 || die "uv venv dia"
     uv pip install --python venvs/dia/bin/python "git+https://github.com/nari-labs/dia.git" soundfile numpy \
         || die "uv pip install dia from git"
@@ -381,7 +410,8 @@ fi
 
 # --- Sesame CSM-1B (conversational speech model, in-context cloning) ---
 echo; cyan "=== Sesame CSM-1B (conversational speech model, in-context cloning) ==="
-if [ ! -x venvs/sesame/bin/python ]; then
+if ! want sesame; then echo "sesame: skipped (not in install filter)"
+elif [ ! -x venvs/sesame/bin/python ]; then
     # Native transformers support since 4.52.1.
     # MANUAL APPROVAL gating on HF - visit https://huggingface.co/sesame/csm-1b
     # and click "Ask for access". After approval, `hf auth login` enables download.
@@ -395,7 +425,8 @@ fi
 
 # --- MARS5-TTS (CAMB.AI, English zero-shot cloning, AGPL-3.0) ---
 echo; cyan "=== MARS5-TTS (CAMB.AI, English zero-shot cloning, AGPL-3.0) ==="
-if [ ! -x venvs/mars5/bin/python ]; then
+if ! want mars5; then echo "mars5: skipped (not in install filter)"
+elif [ ! -x venvs/mars5/bin/python ]; then
     # torch.hub loads the model - no source clone needed. AGPL-3.0 license.
     uv venv venvs/mars5 --python 3.10 || die "uv venv mars5"
     # numpy<2.0 pin: MARS5's torch.hub'd code uses np.array(obj, copy=False),
@@ -409,7 +440,8 @@ fi
 
 # --- Soprano 80M (ekwek1, Apache 2.0, predefined voice, 32kHz) ---
 echo; cyan "=== Soprano 80M (ekwek1, Apache 2.0, predefined voice, 32kHz) ==="
-if [ ! -x venvs/soprano/bin/python ]; then
+if ! want soprano; then echo "soprano: skipped (not in install filter)"
+elif [ ! -x venvs/soprano/bin/python ]; then
     uv venv venvs/soprano --python 3.11 || die "uv venv soprano"
     if [ ! -d venvs/soprano/src ]; then
         git clone --depth 1 https://github.com/ekwek1/soprano venvs/soprano/src \
@@ -428,7 +460,8 @@ fi
 
 # --- MOSS-TTS-Nano 100M (OpenMOSS/MOSI.AI, Apache 2.0, zero-shot cloning, 48kHz) ---
 echo; cyan "=== MOSS-TTS-Nano 100M (OpenMOSS/MOSI.AI, Apache 2.0, zero-shot cloning, 48kHz) ==="
-if [ ! -x venvs/moss_tts_nano/bin/python ]; then
+if ! want moss_tts_nano; then echo "moss_tts_nano: skipped (not in install filter)"
+elif [ ! -x venvs/moss_tts_nano/bin/python ]; then
     # No PyPI wheel that ships the model code — install editable from source clone.
     # Upstream README recommends Python 3.12. The package's pyproject exposes
     # both the `moss_tts_nano` package + top-level py-modules (infer, app, ...),
@@ -460,7 +493,8 @@ fi
 
 # --- MOSS-TTS flagship (OpenMOSS, Apache 2.0, 8B Qwen3-backbone zero-shot cloning, 20 langs) ---
 echo; cyan "=== MOSS-TTS flagship (OpenMOSS, Apache 2.0, 8B Qwen3-backbone zero-shot cloning, 20 langs) ==="
-if [ ! -x venvs/moss_tts/bin/python ]; then
+if ! want moss_tts; then echo "moss_tts: skipped (not in install filter)"
+elif [ ! -x venvs/moss_tts/bin/python ]; then
     # Source-clone install — upstream pins torch==2.9.1+cu128 + transformers==5.0.0
     # via the [torch-runtime] extra. Python 3.12 per upstream README.
     uv venv venvs/moss_tts --python 3.12 || die "uv venv moss_tts"
@@ -492,7 +526,8 @@ fi
 
 # --- Echo-TTS (Jordan Darefsky, CC-BY-NC-SA-4.0, DiT flow-matching, 44.1k, zero-shot cloning) ---
 echo; cyan "=== Echo-TTS (Jordan Darefsky, DiT + Fish S1-DAC, 44.1k, cloning, CUDA-only) ==="
-if [ ! -x venvs/echo/bin/python ]; then
+if ! want echo; then echo "echo: skipped (not in install filter)"
+elif [ ! -x venvs/echo/bin/python ]; then
     # Source-clone install: inference.py/model.py/autoencoder.py/samplers.py are imported
     # from the tree (no pip package). requirements.txt pins torch>=2.9.1 + torchcodec>=0.8.1.
     uv venv venvs/echo --python 3.12 || die "uv venv echo"
@@ -521,7 +556,8 @@ fi
 
 # --- MiraTTS (Yatharth Sharma, MIT, 0.5B LLM-TTS + FastBiCodec, 48k, zero-shot cloning) ---
 echo; cyan "=== MiraTTS (Yatharth Sharma, 0.5B LLM-TTS + FastBiCodec, 48k, cloning, CUDA-only) ==="
-if [ ! -x venvs/miratts/bin/python ]; then
+if ! want miratts; then echo "miratts: skipped (not in install filter)"
+elif [ ! -x venvs/miratts/bin/python ]; then
     # pip package (project name FastNeuTTS). Pulls lmdeploy (TurboMind) + the author's
     # git deps ncodec (FastBiCodec) + fastaudiosr (FlashSR 48k upsampler) + onnxruntime-gpu.
     # omegaconf + torchaudio are needed by the codec/FlashSR upsampler but under-declared
@@ -540,7 +576,8 @@ fi
 
 # --- OuteTTS 1.0 1B (edwko/OuteAI, CC-BY-NC-SA-4.0 + Llama-3.2, DAC, cloning + presets) ---
 echo; cyan "=== OuteTTS 1.0 1B (edwko/OuteAI, Llama-3.2-1B, DAC, 44.1k, cloning + presets) ==="
-if [ ! -x venvs/outetts/bin/python ]; then
+if ! want outetts; then echo "outetts: skipped (not in install filter)"
+elif [ ! -x venvs/outetts/bin/python ]; then
     # HF/transformers backend (no llama.cpp compile) -> needs accelerate. The runner
     # monkeypatches torchaudio.load/save -> soundfile to dodge torchcodec; torchvision
     # must match torch or transformers' lazy Llama import dies on torchvision::nms.
@@ -554,7 +591,8 @@ fi
 
 # --- Parler-TTS Mini v1 (parler-tts, Apache-2.0, description-controlled, DAC 44.1k) ---
 echo; cyan "=== Parler-TTS Mini v1 (parler-tts, Apache-2.0, English, 44.1k, default-voice via description) ==="
-if [ ! -x venvs/parler/bin/python ]; then
+if ! want parler; then echo "parler: skipped (not in install filter)"
+elif [ ! -x venvs/parler/bin/python ]; then
     # git package (no PyPI release tracks the current model code). Pulls transformers +
     # descript-audio-codec + sentencepiece; accelerate for device_map. Linux PyPI torch
     # is CUDA-enabled, so no cu128 reinstall needed here.
@@ -568,7 +606,8 @@ fi
 
 # --- MeloTTS-English (myshell-ai, MIT, VITS predefined voice, 44.1k) ---
 echo; cyan "=== MeloTTS-English (myshell-ai, MIT, VITS predefined voice, EN-US, 44.1k) ==="
-if [ ! -x venvs/melotts/bin/python ]; then
+if ! want melotts; then echo "melotts: skipped (not in install filter)"
+elif [ ! -x venvs/melotts/bin/python ]; then
     # git package + `unidic download` (dictionary loaded at tokenizer import). melo imports
     # all language modules at `from melo.api import TTS` (pyopenjtalk/mecab build cleanly on
     # Linux, unlike Windows). Linux PyPI torch is CUDA-enabled — no cu128 reinstall.
@@ -608,7 +647,8 @@ fi
 # License: Research/Non-Commercial — benchmarking + publishing sample clips is explicitly
 # permitted. The model weights are NOT downloaded by this script (they live in the container).
 echo; cyan "=== Higgs Audio v3 TTS (Boson AI, server-backed client venv only — Linux-only) ==="
-if [ ! -x venvs/higgs_v3/bin/python ]; then
+if ! want higgs_v3; then echo "higgs_v3: skipped (not in install filter)"
+elif [ ! -x venvs/higgs_v3/bin/python ]; then
     uv venv venvs/higgs_v3 --python 3.11 || die "uv venv higgs_v3"
     uv pip install --python venvs/higgs_v3/bin/python requests soundfile numpy \
         || die "uv pip install higgs_v3 client"
@@ -619,7 +659,8 @@ fi
 
 # --- DramaBox (Resemble AI, LTX-2 Community/NC, LTX-2.3 3.3B audio DiT, 48k, dialogue + cloning, CUDA-only) ---
 echo; cyan "=== DramaBox (Resemble AI, LTX-2.3 audio DiT, 48k, dialogue + cloning, CUDA-only) ==="
-if [ ! -x venvs/dramabox/bin/python ]; then
+if ! want dramabox; then echo "dramabox: skipped (not in install filter)"
+elif [ ! -x venvs/dramabox/bin/python ]; then
     # Source repo (no PyPI): the runner imports src.inference_server.TTSServer from the
     # cloned tree (venvs/dramabox/src). Unlike Windows, Linux PyPI torch==2.8.0 is
     # CUDA-enabled (Ampere/3090 fine) so there's NO cu128 swap — install requirements.txt
@@ -641,7 +682,8 @@ fi
 
 # --- dots.tts (rednote-hilab, Apache-2.0, 2B continuous AR TTS, 48k, cloning + default voice, CUDA-only) ---
 echo; cyan "=== dots.tts (rednote-hilab, 2B continuous AR TTS, 48k, cloning, CUDA-only) ==="
-if [ ! -x venvs/dots_tts/bin/python ]; then
+if ! want dots_tts; then echo "dots_tts: skipped (not in install filter)"
+elif [ ! -x venvs/dots_tts/bin/python ]; then
     # pip package `dots_tts`, installed editable from the cloned tree (venvs/dots_tts/src);
     # the runner does `from dots_tts.runtime import DotsTtsRuntime`. Upstream pins torch==2.8.0
     # via constraints/recommended.txt — Linux PyPI torch 2.8.0 is cu128 (Ampere/3090 fine) so
@@ -663,7 +705,8 @@ fi
 
 # --- Miso TTS 8B (Miso Labs, modified-MIT, Sesame-CSM arch 8.2B, 24k Mimi, cloning, CUDA-only) ---
 echo; cyan "=== Miso TTS 8B (Miso Labs, Sesame-CSM arch 8.2B, 24k Mimi, cloning, CUDA-only) ==="
-if [ ! -x venvs/miso/bin/python ]; then
+if ! want miso; then echo "miso: skipped (not in install filter)"
+elif [ ! -x venvs/miso/bin/python ]; then
     # Source-clone import: generator.py/models.py are flat modules imported from the
     # tree (the runner adds venvs/miso/src to sys.path). Deliberately NOT pip-installed —
     # upstream pins torch==2.4.0, but the code runs on torchtune 0.6.1 + moshi 0.2.2 +
@@ -686,7 +729,8 @@ fi
 
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
-if [ ! -x venvs/supertonic/bin/python ]; then
+if ! want supertonic; then echo "supertonic: skipped (not in install filter)"
+elif [ ! -x venvs/supertonic/bin/python ]; then
     # Pure-ONNX runtime; no torch dependency. ~25MB weights auto-downloaded
     # from HF (Supertone/supertonic) on first run.
     # Open-weight release is fixed-voice only; cloning lives in the hosted
@@ -706,7 +750,8 @@ fi
 
 # --- Fish Audio S2-Pro (fishaudio/fish-speech, DualAR + DAC, 44.1k, CC-BY-NC-SA-4.0) ---
 echo; cyan "=== Fish Audio S2-Pro (Linux-only, cloning) ==="
-if [ ! -x venvs/fish_s2/bin/python ]; then
+if ! want fish_s2; then echo "fish_s2: skipped (not in install filter)"
+elif [ ! -x venvs/fish_s2/bin/python ]; then
     uv venv venvs/fish_s2 --python 3.12 || die "uv venv fish_s2"
     if [ ! -d venvs/fish_s2/src ]; then
         git clone --depth 1 https://github.com/fishaudio/fish-speech venvs/fish_s2/src \
@@ -731,7 +776,8 @@ fi
 
 # --- MetaVoice-1B v0.1 (metavoiceio/metavoice-src, Apache-2.0, 48k, cloning, ≥30s ref) ---
 echo; cyan "=== MetaVoice-1B v0.1 (Linux-only, cloning) ==="
-if [ ! -x venvs/metavoice/bin/python ]; then
+if ! want metavoice; then echo "metavoice: skipped (not in install filter)"
+elif [ ! -x venvs/metavoice/bin/python ]; then
     uv venv venvs/metavoice --python 3.10 || die "uv venv metavoice"
     if [ ! -d venvs/metavoice/src ]; then
         git clone --depth 1 https://github.com/metavoiceio/metavoice-src venvs/metavoice/src \
@@ -764,7 +810,8 @@ fi
 
 # --- Step-Audio-EditX (stepfun-ai, cloning-only, Linux-only, py3.12, torch 2.9, Apache-2.0) ---
 echo; cyan "=== Step-Audio-EditX (Linux-only, cloning) ==="
-if [ ! -x venvs/step_editx/bin/python ]; then
+if ! want step_editx; then echo "step_editx: skipped (not in install filter)"
+elif [ ! -x venvs/step_editx/bin/python ]; then
     # Repo requires python >=3.12,<3.14 and torch>=2.9.1. Heavy: vllm + deepspeed (compiled)
     # + bitsandbytes + funasr + onnxruntime-gpu + whisper. The liboptimus flash-attn lib is
     # optional (graceful try/except) so no extra system libs are needed.
@@ -789,7 +836,8 @@ fi
 
 # --- Fish Speech 1.5 (fishaudio, zero-shot cloning, 44.1kHz) ---
 echo; cyan "=== Fish Speech 1.5 (fishaudio, zero-shot cloning, 44.1kHz) ==="
-if [ ! -x venvs/fish/bin/python ]; then
+if ! want fish; then echo "fish: skipped (not in install filter)"
+elif [ ! -x venvs/fish/bin/python ]; then
     # Source clone of the v1.5.0 tag. The [stable] extras are intentionally
     # SKIPPED — they pin torch<=2.4.1, incompatible with Blackwell (sm_120) which
     # needs cu128 / torch 2.7+. Install fish-speech with no extras, hard-cap
@@ -836,7 +884,8 @@ fi
 
 # --- Maya1 (maya-research, Apache 2.0, voice-description default voice, 24kHz, SNAC codec) ---
 echo; cyan "=== Maya1 (maya-research, Apache 2.0, voice-description default voice, 24kHz, SNAC codec) ==="
-if [ ! -x venvs/maya1/bin/python ]; then
+if ! want maya1; then echo "maya1: skipped (not in install filter)"
+elif [ ! -x venvs/maya1/bin/python ]; then
     # Default-voice model: no audio cloning. The voice is steered by a natural-
     # language description string; the runner uses a fixed DEFAULT_VOICE_DESC.
     # Llama-style causal LM emits flat SNAC codec tokens -> decoded by the
@@ -868,7 +917,8 @@ fi
 
 # --- StyleTTS 2 (sidharthrajaram wrapper, MIT, LibriTTS, zero-shot cloning, 24kHz) ---
 echo; cyan "=== StyleTTS 2 (sidharthrajaram wrapper, MIT, LibriTTS, zero-shot cloning, 24kHz) ==="
-if [ ! -x venvs/styletts2/bin/python ]; then
+if ! want styletts2; then echo "styletts2: skipped (not in install filter)"
+elif [ ! -x venvs/styletts2/bin/python ]; then
     # The `styletts2` PyPI wrapper (sidharthrajaram) uses gruut for phonemization
     # (no espeak-ng needed) and auto-downloads LibriTTS weights from HF on the
     # first StyleTTS2() call. Its dep `monotonic_align` is a Cython package: Linux
@@ -893,7 +943,8 @@ fi
 
 # --- Zonos-v0.1 transformer (Zyphra, zero-shot cloning, 44.1kHz, espeakng-loader) ---
 echo; cyan "=== Zonos-v0.1 transformer (Zyphra, zero-shot cloning, 44.1kHz, espeakng-loader) ==="
-if [ ! -x venvs/zonos/bin/python ]; then
+if ! want zonos; then echo "zonos: skipped (not in install filter)"
+elif [ ! -x venvs/zonos/bin/python ]; then
     # Transformer backbone only — do NOT install the `.[compile]` extras
     # (mamba-ssm/flash-attn are CUDA+Linux-only and unneeded for the transformer
     # variant). Zonos uses phonemizer -> espeak-ng; espeakng-loader bundles the
@@ -918,7 +969,8 @@ fi
 
 # --- OpenVoice v2 (myshell-ai, MeloTTS base + tone-color converter, zero-shot cloning, 22.05kHz) ---
 echo; cyan "=== OpenVoice v2 (myshell-ai, MeloTTS base + tone-color converter, zero-shot cloning, 22.05kHz) ==="
-if [ ! -x venvs/openvoice/bin/python ]; then
+if ! want openvoice; then echo "openvoice: skipped (not in install filter)"
+elif [ ! -x venvs/openvoice/bin/python ]; then
     # OpenVoice v2 = MeloTTS (base TTS) + a ToneColorConverter (cloning). Python 3.11
     # (NOT 3.12 — fugashi, pulled by MeloTTS's Japanese path, has no prebuilt wheel for
     # 3.12 and the source build needs MeCab; on 3.11 wheels exist). NOTE: on Linux the
@@ -969,7 +1021,8 @@ fi
 
 # --- Voxtral-4B-TTS (mistralai, CC-BY-NC-4.0, 24kHz, preset voices / cloning) ---
 echo; cyan "=== Voxtral-4B-TTS (mistralai, CC-BY-NC-4.0, 24kHz) ==="
-if [ ! -x venvs/voxtral/bin/python ]; then
+if ! want voxtral; then echo "voxtral: skipped (not in install filter)"
+elif [ ! -x venvs/voxtral/bin/python ]; then
     # Mac is Voxtral's primary rig: the clean path is MLX. The runner loads the
     # 4-bit community port mlx-community/Voxtral-4B-TTS-2603-mlx-4bit (~2 GB, fits
     # 16 GB) and is PRESET-VOICE-ONLY there (the mlx-audio port has no wav-cloning
@@ -1005,7 +1058,8 @@ fi
 # (torch 2.0.1 / torchaudio 2.0.2 / numpy<2) in its own venv, leaving UTMOS/WER
 # untouched. See scoring/sim_pass.py.
 echo; cyan "=== scoring: objective metrics (UTMOS + WER) — py3.11 ==="
-if [ ! -x venvs/scoring/bin/python ]; then
+if ! want scoring; then echo "scoring: skipped (not in install filter)"
+elif [ ! -x venvs/scoring/bin/python ]; then
     uv venv venvs/scoring --python 3.11 || die "uv venv scoring"
     uv pip install --python venvs/scoring/bin/python \
         torch torchaudio librosa soundfile numpy \
@@ -1016,13 +1070,14 @@ else
     echo "scoring: already installed"
 fi
 # Canonical seed-tts-eval SIM model code (wavlm_large SV) — shared by the SIM venv.
-if [ ! -d scoring/thirdparty/UniSpeech ]; then
+if want scoring_sim && [ ! -d scoring/thirdparty/UniSpeech ]; then
     git clone https://github.com/microsoft/UniSpeech scoring/thirdparty/UniSpeech \
         || die "git clone UniSpeech"
 fi
 
 echo; cyan "=== scoring SIM: cloning fidelity (UniSpeech-SAT) — py3.10 ==="
-if [ ! -x venvs/scoring_sim/bin/python ]; then
+if ! want scoring_sim; then echo "scoring_sim: skipped (not in install filter)"
+elif [ ! -x venvs/scoring_sim/bin/python ]; then
     uv venv venvs/scoring_sim --python 3.10 || die "uv venv scoring_sim"
     # Pinned to the era where fairseq 0.12.2 + s3prl + the SV checkpoint agree.
     uv pip install --python venvs/scoring_sim/bin/python \
@@ -1059,6 +1114,7 @@ fi
 # `None` if psutil is missing, so this is best-effort — but cheap to install.
 echo; cyan "=== psutil in every venv (for bench memory tracking) ==="
 for v in venvs/*/bin/python; do
+    want "$(basename "$(dirname "$(dirname "$v")")")" || continue
     if [ -x "$v" ]; then
         uv pip install --python "$v" psutil --quiet >/dev/null 2>&1 || true
     fi
@@ -1071,6 +1127,7 @@ echo; cyan "=== NAQ deps in every venv (librosa + scipy for naq scoring) ==="
 # MOS predictor was considered and dropped — install portability across
 # heterogeneous venvs wasn't workable.
 for v in venvs/*/bin/python; do
+    want "$(basename "$(dirname "$(dirname "$v")")")" || continue
     if [ -x "$v" ]; then
         uv pip install --python "$v" librosa scipy --quiet >/dev/null 2>&1 || true
     fi

@@ -46,16 +46,20 @@ Votes feed a **live human-preference Elo leaderboard** right there on the arena.
 Requires [`uv`](https://github.com/astral-sh/uv) and Python 3.11. ~10-15 min install. Disk for the full set is large: **~39 GB of per-model venvs** in the repo, plus **~125 GB of model weights** downloaded to your Hugging Face cache (`~/.cache/huggingface`, **not** the repo) — **~165 GB all-in**. Individual models are far smaller, so installing a subset costs a fraction of that.
 
 ```powershell
-# Windows
+# Windows — everything, or just the models you want
 .\install.ps1
+.\install.ps1 kokoro,piper,miso
 python bench.py
 ```
 
 ```bash
-# macOS / Linux
+# macOS / Linux — everything, or just the models you want
 ./install.sh
+./install.sh kokoro piper miso
 python bench.py
 ```
+
+Pass model names to install only those (names = the `venvs/<name>` slugs, which match the tables below — lowercase, e.g. `kokoro`, `f5tts`, `chatterbox`, `miso`). A few share one install: `neutts` covers NeuTTS Air + Nano, `chatterbox` both ChatterBox variants, `vibevoice` the 0.5B/1.5B, `moss_tts` both MOSS checkpoints, `fish` is Fish Speech 1.5. Add `scoring` (plus `scoring_sim` on Linux) for the objective-metrics venv. `bench.py` only runs models whose venv exists, so a partial install benches cleanly — install more models later by re-running with new names.
 
 Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `python compare.py "your phrase"`. See [docs/architecture.md](docs/architecture.md) for the runner protocol and how to add a model.
 
