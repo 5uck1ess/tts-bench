@@ -677,7 +677,7 @@ if [ ! -x venvs/miso/bin/python ]; then
     fi
     uv pip install --python venvs/miso/bin/python \
         transformers tokenizers huggingface_hub "moshi==0.2.2" torchtune torchao \
-        safetensors soundfile numpy sentencepiece \
+        torchaudio safetensors soundfile numpy sentencepiece \
         || die "uv pip install miso deps"
     green "miso: ok (MisoLabs/MisoTTS ~33GB fp32 safetensors + kyutai Mimi + unsloth/Llama-3.2-1B tokenizer auto-download from HF on first run; CUDA-only, bf16 ~16GB VRAM, 24k)"
 else

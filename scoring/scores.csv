@@ -101,6 +101,10 @@ linux-cloning,miratts_cuda_p1.wav,miratts,cloning,1,3.5780,0.0000,0.5151
 linux-cloning,miratts_cuda_p2.wav,miratts,cloning,2,3.8460,0.0000,0.5768
 linux-cloning,miratts_cuda_p3.wav,miratts,cloning,3,4.0782,0.1212,0.5129
 linux-cloning,miratts_cuda_p4.wav,miratts,cloning,4,3.7098,0.2778,0.5370
+linux-cloning,miso_cuda_p1.wav,miso,cloning,1,3.7857,0.0000,0.5201
+linux-cloning,miso_cuda_p2.wav,miso,cloning,2,3.8366,0.0000,0.6701
+linux-cloning,miso_cuda_p3.wav,miso,cloning,3,4.3273,0.4848,0.7367
+linux-cloning,miso_cuda_p4.wav,miso,cloning,4,3.2492,0.3333,0.6902
 linux-cloning,moss_tts_cuda_p1.wav,moss_tts,cloning,1,4.2907,0.1429,0.6739
 linux-cloning,moss_tts_cuda_p2.wav,moss_tts,cloning,2,4.2682,0.0000,0.8466
 linux-cloning,moss_tts_cuda_p3.wav,moss_tts,cloning,3,4.3719,0.1515,0.8711
@@ -354,6 +358,10 @@ linux-default,miratts_cuda_p1.wav,miratts,default,1,3.5780,0.0000,
 linux-default,miratts_cuda_p2.wav,miratts,default,2,3.8460,0.0000,
 linux-default,miratts_cuda_p3.wav,miratts,default,3,4.0782,0.1212,
 linux-default,miratts_cuda_p4.wav,miratts,default,4,3.7098,0.2778,
+linux-default,miso_cuda_p1.wav,miso,default,1,4.1318,0.2857,
+linux-default,miso_cuda_p2.wav,miso,default,2,4.4568,0.3158,
+linux-default,miso_cuda_p3.wav,miso,default,3,3.6810,0.4848,
+linux-default,miso_cuda_p4.wav,miso,default,4,4.0176,0.5000,
 linux-default,moss_tts_cuda_p1.wav,moss_tts,default,1,4.0163,0.0000,
 linux-default,moss_tts_cuda_p2.wav,moss_tts,default,2,4.2720,0.1053,
 linux-default,moss_tts_cuda_p3.wav,moss_tts,default,3,4.4158,0.1818,
@@ -603,6 +611,10 @@ windows-cloning,miratts_cuda_p1.wav,miratts,cloning,1,3.9120,0.0000,0.4794
 windows-cloning,miratts_cuda_p2.wav,miratts,cloning,2,3.9193,0.2105,0.5685
 windows-cloning,miratts_cuda_p3.wav,miratts,cloning,3,3.5850,0.1818,0.4235
 windows-cloning,miratts_cuda_p4.wav,miratts,cloning,4,3.4885,0.3333,0.5487
+windows-cloning,miso_cuda_p1.wav,miso,cloning,1,3.5039,1.0000,0.3932
+windows-cloning,miso_cuda_p2.wav,miso,cloning,2,4.0542,0.1579,0.0304
+windows-cloning,miso_cuda_p3.wav,miso,cloning,3,3.8698,0.5455,0.6027
+windows-cloning,miso_cuda_p4.wav,miso,cloning,4,4.0105,0.2222,0.7353
 windows-cloning,moss_tts_cuda_p1.wav,moss_tts,cloning,1,3.7037,0.0000,0.6754
 windows-cloning,moss_tts_cuda_p2.wav,moss_tts,cloning,2,4.2835,0.0000,0.7801
 windows-cloning,moss_tts_cuda_p3.wav,moss_tts,cloning,3,4.3397,0.1515,0.8686
@@ -618,6 +630,11 @@ windows-cloning,moss_tts_nano_cuda_p2.wav,moss_tts_nano,cloning,2,3.7770,0.0000,
 windows-cloning,moss_tts_nano_cuda_p3.wav,moss_tts_nano,cloning,3,4.1684,0.2121,0.7397
 windows-cloning,moss_tts_nano_cuda_p4.wav,moss_tts_nano,cloning,4,3.9179,0.3889,0.7413
 windows-cloning,moss_tts_nano_cuda_p5.wav,moss_tts_nano,cloning,5,3.5661,0.1333,0.3556
+windows-cloning,moss_tts_v15_cuda_p1.wav,moss_tts_v15,cloning,1,3.8115,0.0000,0.5574
+windows-cloning,moss_tts_v15_cuda_p2.wav,moss_tts_v15,cloning,2,4.3589,0.0000,0.8249
+windows-cloning,moss_tts_v15_cuda_p3.wav,moss_tts_v15,cloning,3,4.3576,0.2424,0.8236
+windows-cloning,moss_tts_v15_cuda_p4.wav,moss_tts_v15,cloning,4,4.3415,0.0556,0.8342
+windows-cloning,moss_tts_v15_cuda_p5.wav,moss_tts_v15,cloning,5,3.3810,0.0000,0.4538
 windows-cloning,neutts_air_cpu_p1.wav,neutts_air,cloning,1,3.2506,1.0000,0.2428
 windows-cloning,neutts_air_cpu_p2.wav,neutts_air,cloning,2,4.0912,0.3684,0.4583
 windows-cloning,neutts_air_cpu_p3.wav,neutts_air,cloning,3,3.9006,0.3030,0.4760
@@ -831,6 +848,10 @@ windows-default,melotts_cuda_p1.wav,melotts,default,1,3.2643,0.0000,
 windows-default,melotts_cuda_p2.wav,melotts,default,2,3.6601,0.0526,
 windows-default,melotts_cuda_p3.wav,melotts,default,3,3.8348,0.1818,
 windows-default,melotts_cuda_p4.wav,melotts,default,4,3.5570,0.0556,
+windows-default,miso_cuda_p1.wav,miso,default,1,4.1888,0.0000,
+windows-default,miso_cuda_p2.wav,miso,default,2,4.3886,0.2632,
+windows-default,miso_cuda_p3.wav,miso,default,3,4.2663,0.9697,
+windows-default,miso_cuda_p4.wav,miso,default,4,4.0844,1.1111,
 windows-default,moss_tts_cuda_p1.wav,moss_tts,default,1,4.0522,0.0000,
 windows-default,moss_tts_cuda_p2.wav,moss_tts,default,2,4.4036,0.0000,
 windows-default,moss_tts_cuda_p3.wav,moss_tts,default,3,4.2900,0.1515,
@@ -846,6 +867,11 @@ windows-default,moss_tts_nano_cuda_p2.wav,moss_tts_nano,default,2,4.2461,0.0000,
 windows-default,moss_tts_nano_cuda_p3.wav,moss_tts_nano,default,3,4.0631,0.1515,
 windows-default,moss_tts_nano_cuda_p4.wav,moss_tts_nano,default,4,4.1041,0.3333,
 windows-default,moss_tts_nano_cuda_p5.wav,moss_tts_nano,default,5,3.2871,0.2000,
+windows-default,moss_tts_v15_cuda_p1.wav,moss_tts_v15,default,1,3.6445,0.0000,
+windows-default,moss_tts_v15_cuda_p2.wav,moss_tts_v15,default,2,4.3727,0.0000,
+windows-default,moss_tts_v15_cuda_p3.wav,moss_tts_v15,default,3,4.2712,0.1515,
+windows-default,moss_tts_v15_cuda_p4.wav,moss_tts_v15,default,4,4.1389,0.0556,
+windows-default,moss_tts_v15_cuda_p5.wav,moss_tts_v15,default,5,3.8838,0.0000,
 windows-default,neutts_air_cpu_p1.wav,neutts_air,default,1,4.0317,0.0000,
 windows-default,neutts_air_cpu_p2.wav,neutts_air,default,2,4.1094,0.0000,
 windows-default,neutts_air_cpu_p3.wav,neutts_air,default,3,3.8623,0.1212,
