@@ -76,12 +76,20 @@ KNOWN_ISSUES = {
         "Default voice is sampled fresh per generation (no fixed preset) — each prompt's "
         "clip is a different speaker. Cloning stays consistent with the reference."
     ),
+    ("miso", "default"): (
+        "warn", "⚠ artifacts",
+        "Audible artifacts/glitches across generations (by-ear QA, 2026-06-10) — the "
+        "default voice character is good but the texture is rough; UTMOS sits in the "
+        "bench's bottom half and long prompts can run on past the text (high WER)."
+    ),
     ("miso", "cloning"): (
         "warn", "⟳ clone unstable",
         "Voice retention from the reference is stochastic shot-to-shot: at upstream "
         "sampling (temp 0.9/topk 50) the clone usually loses the reference voice, so the "
         "bench runs cloning at temp 0.7/topk 30, which holds the voice most of the time "
-        "but can still drift on a given generation (by-ear A/B, 2026-06-10)."
+        "but can still drift on a given generation (by-ear A/B, 2026-06-10; SIM ranges "
+        "0.03-0.74 across clips). The artifact-prone texture flagged on the default lens "
+        "applies here too."
     ),
     # Add new entries here as QA surfaces them — use "warn" only for genuine defects.
 }
