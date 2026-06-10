@@ -367,6 +367,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/linux-default/miratts_cuda_p4.wav"
         },
         {
+          "model": "miso",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/miso_cuda_p1.wav"
+        },
+        {
+          "model": "miso",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/miso_cuda_p2.wav"
+        },
+        {
+          "model": "miso",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/miso_cuda_p3.wav"
+        },
+        {
+          "model": "miso",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/miso_cuda_p4.wav"
+        },
+        {
           "model": "neutts_air",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/neutts_air_cuda_p1.wav"
@@ -1102,6 +1122,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/miratts_cuda_p4.wav"
         },
         {
+          "model": "miso",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/miso_cuda_p1.wav"
+        },
+        {
+          "model": "miso",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/miso_cuda_p2.wav"
+        },
+        {
+          "model": "miso",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/miso_cuda_p3.wav"
+        },
+        {
+          "model": "miso",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/miso_cuda_p4.wav"
+        },
+        {
           "model": "moss_tts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/moss_tts_cuda_p1.wav"
@@ -1154,27 +1194,27 @@
         {
           "model": "moss_tts_v15",
           "prompt": 1,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/moss_tts_v15_cuda_p1.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/moss_tts_v15_cuda_p1.wav"
         },
         {
           "model": "moss_tts_v15",
           "prompt": 2,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/moss_tts_v15_cuda_p2.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/moss_tts_v15_cuda_p2.wav"
         },
         {
           "model": "moss_tts_v15",
           "prompt": 3,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/moss_tts_v15_cuda_p3.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/moss_tts_v15_cuda_p3.wav"
         },
         {
           "model": "moss_tts_v15",
           "prompt": 4,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/moss_tts_v15_cuda_p4.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/moss_tts_v15_cuda_p4.wav"
         },
         {
           "model": "moss_tts_v15",
           "prompt": 5,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/moss_tts_v15_cuda_p5.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/moss_tts_v15_cuda_p5.wav"
         },
         {
           "model": "neutts_air",
@@ -1608,6 +1648,10 @@
     "miratts": {
       "name": "MiraTTS",
       "url": "https://huggingface.co/YatharthS/MiraTTS"
+    },
+    "miso": {
+      "name": "Miso TTS 8B",
+      "url": "https://huggingface.co/MisoLabs/MisoTTS"
     },
     "moss_tts": {
       "name": "MOSS-TTS v1.0",
