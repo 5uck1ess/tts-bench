@@ -429,6 +429,7 @@ def _humanize_error(err):
 # Keys not present here fall through to the raw key (Title-cased by convention).
 MODEL_DISPLAY_NAMES = {
     "sesame":        "Sesame CSM-1B",
+    "miso":          "Miso TTS 8B",
     "coqui":         "Coqui XTTS-v2",
     "vibevoice":     "VibeVoice Realtime 0.5B",
     "vibevoice_15b": "VibeVoice 1.5B",
@@ -503,6 +504,7 @@ MODEL_SIZE = {
     "qwentts_fast":  "1.7B",
     "indextts":      "1.5B",
     "sesame":        "1B",
+    "miso":          "8.2B",
     "mars5":         "1.2B",
     "dia":           "1.6B",
     "kokoro":        "82M",
@@ -560,6 +562,7 @@ MODEL_URL = {
     "qwentts_fast":  _HF + "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
     "indextts":      _HF + "IndexTeam/IndexTTS-2",
     "sesame":        _HF + "sesame/csm-1b",
+    "miso":          _HF + "MisoLabs/MisoTTS",
     "mars5":         _HF + "Camb-ai/mars5-tts",
     "dia":           _HF + "nari-labs/Dia-1.6B-0626",
     "kokoro":        _HF + "hexgrad/Kokoro-82M",
@@ -615,6 +618,7 @@ MODEL_KIND = {
     "qwentts":       "cloning",
     "qwentts_fast":  "cloning",
     "sesame":        "cloning",
+    "miso":          "cloning",
     "mars5":         "cloning",
     "dia":           "cloning",
     "neutts_air":    "cloning",

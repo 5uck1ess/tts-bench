@@ -79,7 +79,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (46)
+## Models tracked (47)
 
 #### Predefined voices
 
@@ -118,6 +118,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [Mars5-TTS](https://huggingface.co/Camb-ai/mars5-tts) | 1.2B | — | ✓ | — | 24k | AGPL-3.0 |
 | [MetaVoice-1B](https://huggingface.co/metavoiceio/metavoice-1B-v0.1) | 1.2B | — | ✓ | — | **48k** | Apache 2.0 |
 | [MiraTTS](https://huggingface.co/YatharthS/MiraTTS) | 0.5B | — | ✓ | — | **48k** | MIT |
+| [Miso TTS 8B](https://huggingface.co/MisoLabs/MisoTTS) | 8.2B | — | ✓ | — (en) | 24k | Modified MIT |
 | [MOSS-TTS v1.0](https://huggingface.co/OpenMOSS-Team/MOSS-TTS) | 8B (Qwen3) | — | ✓ | ✓ (20) | 24k | Apache 2.0 |
 | [MOSS-TTS v1.5](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5) | 8B (Qwen3) | — | ✓ | ✓ (31) | 24k | Apache 2.0 |
 | [MOSS-TTS-Nano](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano) | 100M | — | ✓ | ✓ (zh+en) | **48k** | Apache 2.0 |
@@ -147,7 +148,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**34 of the 46 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**35 of the 47 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 of 32 cloning models, 397 votes, human-preference A/B): **[docs/cloning.md](docs/cloning.md)**.
 

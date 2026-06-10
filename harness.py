@@ -129,6 +129,15 @@ MODELS = [
     # source-clone editable install (venvs/dots_tts/src); weights snapshot-download from HF
     # on first run. CUDA-only here (bf16 backbone, ~2B; Ampere/3090 ok). Best on Seed-TTS-Eval.
     ("dots_tts",    "dots_tts",   "runners/dots_tts_runner.py",   True,  ["cuda"],  None,   True),
+    # Miso TTS 8B (Miso Labs, modified-MIT) — Sesame-CSM architecture scaled to 8B:
+    # Llama-8B backbone + Llama-300M audio decoder over 32 Mimi codebooks, 24 kHz.
+    # Same conversational cloning paradigm as sesame (reference text+audio as a
+    # prior turn from speaker 0); default mode = speaker 0, no context. Source-clone
+    # import (venvs/miso/src) — upstream pins torch==2.4.0 but runs on cu128 torch
+    # 2.7.1 + torchtune 0.6.1; the runner stubs the silentcipher watermark and swaps
+    # the gated llama tokenizer for the unsloth mirror (see runner docstring).
+    # English. CUDA-only: 8B bf16 ~16 GB VRAM (fits 5090 + 3090).
+    ("miso",        "miso",       "runners/miso_runner.py",       False, ["cuda"],  None,   True),
 ]
 
 
@@ -151,6 +160,8 @@ GPU_CLASS = {
     "dramabox",
     # dots_tts: 2B bf16 AR + flow-matching head — CUDA-only here (no CPU/MPS path benched).
     "dots_tts",
+    # miso: 8B bf16 CSM — CUDA-only (fp32 CPU would need ~33 GB RAM, far sub-realtime).
+    "miso",
 }
 
 

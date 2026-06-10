@@ -635,6 +635,23 @@ if (-not (Test-Path "venvs\dramabox\Scripts\python.exe")) {
 # dots.tts is LINUX-ONLY — see install.sh. The Windows install never worked
 # (torch cu128 + the editable dots_tts build), so there's no install.ps1 stanza.
 
+Step "Miso TTS 8B (Miso Labs, modified-MIT, Sesame-CSM arch 8.2B, 24k Mimi, cloning, CUDA-only)"
+if (-not (Test-Path "venvs\miso\Scripts\python.exe")) {
+    # Source-clone import: generator.py/models.py are flat modules imported from the
+    # tree (the runner adds venvs/miso/src to sys.path). Deliberately NOT pip-installed —
+    # upstream pins torch==2.4.0 (pre-Blackwell), but the code runs on torchtune 0.6.1 +
+    # moshi 0.2.2 + current transformers, so resolve those freely and swap in cu128 torch
+    # LAST (2.7.1 = the cu128 build closest to torchtune 0.6.1's supported range).
+    # silentcipher (watermarking) is intentionally NOT installed — the runner stubs it.
+    Invoke-Checked "uv venv miso" { uv venv venvs\miso --python 3.12 }
+    if (-not (Test-Path "venvs\miso\src")) {
+        Invoke-Checked "git clone MisoTTS" { git clone --depth 1 https://github.com/MisoLabsAI/MisoTTS venvs\miso\src }
+    }
+    Invoke-Checked "uv pip install miso deps" { uv pip install --python venvs\miso\Scripts\python.exe transformers tokenizers huggingface_hub "moshi==0.2.2" torchtune torchao safetensors soundfile numpy sentencepiece }
+    Invoke-Checked "torch cu128 for miso (LAST)" { uv pip install --python venvs\miso\Scripts\python.exe --reinstall-package torch --reinstall-package torchaudio torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "miso: ok (MisoLabs/MisoTTS ~33GB fp32 safetensors + kyutai Mimi + unsloth/Llama-3.2-1B tokenizer auto-download from HF on first run; CUDA-only, bf16 ~16GB VRAM, 24k)" -ForegroundColor Green
+} else { Write-Host "miso: already installed" -ForegroundColor Gray }
+
 # --- scoring: objective metrics (UTMOS + WER + SIM) ---------------------------
 # Central scorer venv. SIM's UniSpeech-SAT stack (s3prl/fairseq) may fail on
 # Windows MSVC; if so, score on Linux (scoring is central). UTMOS+WER work here.

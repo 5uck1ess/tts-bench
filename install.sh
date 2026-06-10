@@ -661,6 +661,29 @@ else
     echo "dots_tts: already installed"
 fi
 
+# --- Miso TTS 8B (Miso Labs, modified-MIT, Sesame-CSM arch 8.2B, 24k Mimi, cloning, CUDA-only) ---
+echo; cyan "=== Miso TTS 8B (Miso Labs, Sesame-CSM arch 8.2B, 24k Mimi, cloning, CUDA-only) ==="
+if [ ! -x venvs/miso/bin/python ]; then
+    # Source-clone import: generator.py/models.py are flat modules imported from the
+    # tree (the runner adds venvs/miso/src to sys.path). Deliberately NOT pip-installed —
+    # upstream pins torch==2.4.0, but the code runs on torchtune 0.6.1 + moshi 0.2.2 +
+    # current transformers. On Linux the free resolve's PyPI torch is already CUDA-enabled
+    # (no cu128 swap needed, unlike Windows); the 3090 (Ampere) is fine on it.
+    # silentcipher (watermarking) is intentionally NOT installed — the runner stubs it.
+    uv venv venvs/miso --python 3.12 || die "uv venv miso"
+    if [ ! -d venvs/miso/src ]; then
+        git clone --depth 1 https://github.com/MisoLabsAI/MisoTTS venvs/miso/src \
+            || die "git clone MisoTTS"
+    fi
+    uv pip install --python venvs/miso/bin/python \
+        transformers tokenizers huggingface_hub "moshi==0.2.2" torchtune torchao \
+        safetensors soundfile numpy sentencepiece \
+        || die "uv pip install miso deps"
+    green "miso: ok (MisoLabs/MisoTTS ~33GB fp32 safetensors + kyutai Mimi + unsloth/Llama-3.2-1B tokenizer auto-download from HF on first run; CUDA-only, bf16 ~16GB VRAM, 24k)"
+else
+    echo "miso: already installed"
+fi
+
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
 if [ ! -x venvs/supertonic/bin/python ]; then

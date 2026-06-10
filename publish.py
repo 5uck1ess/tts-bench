@@ -76,6 +76,13 @@ KNOWN_ISSUES = {
         "Default voice is sampled fresh per generation (no fixed preset) — each prompt's "
         "clip is a different speaker. Cloning stays consistent with the reference."
     ),
+    ("miso", "cloning"): (
+        "warn", "⟳ clone unstable",
+        "Voice retention from the reference is stochastic shot-to-shot: at upstream "
+        "sampling (temp 0.9/topk 50) the clone usually loses the reference voice, so the "
+        "bench runs cloning at temp 0.7/topk 30, which holds the voice most of the time "
+        "but can still drift on a given generation (by-ear A/B, 2026-06-10)."
+    ),
     # Add new entries here as QA surfaces them — use "warn" only for genuine defects.
 }
 
