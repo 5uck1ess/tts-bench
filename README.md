@@ -87,60 +87,62 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 #### Predefined voices
 
-| Model | Params | Predefined | Cloning | Multilingual | SR | License |
-|---|---|---|---|---|---|---|
-| [KittenTTS Nano 0.1](https://huggingface.co/KittenML/kitten-tts-nano-0.1) | <100M | ✓ | — | — | 24k | Apache 2.0 |
-| [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) | 82M | ✓ | — | ✓ | 24k | Apache 2.0 |
-| [LuxTTS](https://github.com/ysharma3501/LuxTTS) | 123M | ✓ | — | — | 22.05k | MIT |
-| [Magpie-TTS](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) | 357M | ✓ | — | ✓ (9) | 22.05k | NVIDIA OML |
-| [Maya1](https://huggingface.co/maya-research/maya1) | 3B | ✓ (voice desc) | — | — | 24k | Apache 2.0 |
-| [MeloTTS](https://huggingface.co/myshell-ai/MeloTTS-English) | ~52M | ✓ | — | — (en) | **44.1k** | MIT |
-| [OuteTTS 1.0 1B](https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B) | ~1B | ✓ | ✓ | ✓ (12) | 44.1k | CC-BY-NC-SA 4.0 + Llama 3.2 |
-| [Parler-TTS Mini v1](https://huggingface.co/parler-tts/parler-tts-mini-v1) | 878M | ✓ (voice desc) | — | — | **44.1k** | Apache 2.0 |
-| [Piper](https://github.com/OHF-Voice/piper1-gpl) | ~15M | ✓ | — | ✓ | 22.05k | GPL-3.0 |
-| [Soprano 1.1 80M](https://huggingface.co/ekwek/Soprano-1.1-80M) | 80M | ✓ | — | — | 32k | Apache 2.0 |
-| [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) | 99M | ✓ | — | ✓ (31) | 24k | MIT + OpenRAIL-M |
-| [VibeVoice Realtime 0.5B](https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B) | 0.5B | ✓ | — | — | 24k | MIT |
-| [Voxtral 4B TTS](https://huggingface.co/mistralai/Voxtral-4B-TTS-2603) | 4B | ✓ (20) | ✓ | ✓ | 24k | CC-BY-NC 4.0 |
+| Model | Params | Predefined | Cloning | Multilingual | SR | Expressive | License |
+|---|---|---|---|---|---|---|---|
+| [KittenTTS Nano 0.1](https://huggingface.co/KittenML/kitten-tts-nano-0.1) | <100M | ✓ | — | — | 24k | — | Apache 2.0 |
+| [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) | 82M | ✓ | — | ✓ | 24k | — | Apache 2.0 |
+| [LuxTTS](https://github.com/ysharma3501/LuxTTS) | 123M | ✓ | — | — | 22.05k | — | MIT |
+| [Magpie-TTS](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) | 357M | ✓ | — | ✓ (9) | 22.05k | emotion voices\* | NVIDIA OML |
+| [Maya1](https://huggingface.co/maya-research/maya1) | 3B | ✓ (voice desc) | — | — | 24k | tags + desc | Apache 2.0 |
+| [MeloTTS](https://huggingface.co/myshell-ai/MeloTTS-English) | ~52M | ✓ | — | — (en) | **44.1k** | — | MIT |
+| [OuteTTS 1.0 1B](https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B) | ~1B | ✓ | ✓ | ✓ (12) | 44.1k | — | CC-BY-NC-SA 4.0 + Llama 3.2 |
+| [Parler-TTS Mini v1](https://huggingface.co/parler-tts/parler-tts-mini-v1) | 878M | ✓ (voice desc) | — | — | **44.1k** | desc\* | Apache 2.0 |
+| [Piper](https://github.com/OHF-Voice/piper1-gpl) | ~15M | ✓ | — | ✓ | 22.05k | — | GPL-3.0 |
+| [Soprano 1.1 80M](https://huggingface.co/ekwek/Soprano-1.1-80M) | 80M | ✓ | — | — | 32k | — | Apache 2.0 |
+| [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) | 99M | ✓ | — | ✓ (31) | 24k | tags | MIT + OpenRAIL-M |
+| [VibeVoice Realtime 0.5B](https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B) | 0.5B | ✓ | — | — | 24k | — | MIT |
+| [Voxtral 4B TTS](https://huggingface.co/mistralai/Voxtral-4B-TTS-2603) | 4B | ✓ (20) | ✓ | ✓ | 24k | — | CC-BY-NC 4.0 |
 
 #### Zero-shot cloning
 
-| Model | Params | Predefined | Cloning | Multilingual | SR | License |
-|---|---|---|---|---|---|---|
-| [ChatterBox](https://huggingface.co/ResembleAI/chatterbox) | 1.2B | — | ✓ | — | 24k | MIT |
-| [ChatterBox Turbo](https://huggingface.co/ResembleAI/chatterbox-turbo) | 744M | — | ✓ | — | 24k | MIT |
-| [Coqui XTTS-v2](https://huggingface.co/coqui/XTTS-v2) | 750M | — | ✓ | ✓ (17) | 24k | CPML (non-commercial) |
-| [Dia 1.6B-0626](https://huggingface.co/nari-labs/Dia-1.6B-0626) | 1.6B | — | ✓ | — | 44.1k | Apache 2.0 |
-| [dots.tts (soar)](https://huggingface.co/rednote-hilab/dots.tts-soar) | 2B | — | ✓ | ✓ (24) | **48k** | Apache 2.0 |
-| [DramaBox](https://github.com/resemble-ai/DramaBox) | 3.3B | — | ✓ | — (en) | **48k** | LTX-2 Community (NC) |
-| [Echo-TTS](https://huggingface.co/jordand/echo-tts-base) | ~2.8B | — | ✓ | — | **44.1k** | CC-BY-NC-SA 4.0 |
-| [F5-TTS v1](https://huggingface.co/SWivid/F5-TTS) | 330M | — | ✓ | ✓ | 24k | CC-BY-NC |
-| [Fish Speech 1.5](https://huggingface.co/fishaudio/fish-speech-1.5) | ~500M | — | ✓ | ✓ | **44.1k** | CC-BY-NC-SA 4.0 |
-| [Fish Speech S2-Pro](https://huggingface.co/fishaudio/s2-pro) | 4B | — | ✓ | — | **44.1k** | Research (non-commercial) |
-| [Higgs Audio v3 TTS](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) | 4B | — | ✓ | ✓ (100) | 24k | Research (NC) |
-| [IndexTTS-2](https://huggingface.co/IndexTeam/IndexTTS-2) | 1.5B | — | ✓ | ✓ | 24k | Apache 2.0 |
-| [Mars5-TTS](https://huggingface.co/Camb-ai/mars5-tts) | 1.2B | — | ✓ | — | 24k | AGPL-3.0 |
-| [MetaVoice-1B](https://huggingface.co/metavoiceio/metavoice-1B-v0.1) | 1.2B | — | ✓ | — | **48k** | Apache 2.0 |
-| [MiraTTS](https://huggingface.co/YatharthS/MiraTTS) | 0.5B | — | ✓ | — | **48k** | MIT |
-| [Miso TTS 8B](https://huggingface.co/MisoLabs/MisoTTS) | 8.2B | — | ✓ | — (en) | 24k | Modified MIT |
-| [MOSS-TTS v1.0](https://huggingface.co/OpenMOSS-Team/MOSS-TTS) | 8B (Qwen3) | — | ✓ | ✓ (20) | 24k | Apache 2.0 |
-| [MOSS-TTS v1.5](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5) | 8B (Qwen3) | — | ✓ | ✓ (31) | 24k | Apache 2.0 |
-| [MOSS-TTS-Nano](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano) | 100M | — | ✓ | ✓ (zh+en) | **48k** | Apache 2.0 |
-| [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air) | 748M | — | ✓ | — | 24k | Apache 2.0 |
-| [NeuTTS Nano](https://huggingface.co/neuphonic/neutts-nano-q4-gguf) | 229M | — | ✓ | — | 24k | Apache 2.0 |
-| [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) | ~1B | — | ✓ | ✓ (600+) | 24k | Apache 2.0 |
-| [OpenVoice v2](https://huggingface.co/myshell-ai/OpenVoiceV2) | ~100M | — | ✓ | ✓ | 22.05k | MIT |
-| [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | 100M | — | ✓ | — | 24k | Apache 2.0 |
-| [Qwen3-TTS 1.7B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | — | ✓ | ✓ | 24k | Apache 2.0 |
-| [Qwen3-TTS 1.7B (CUDA-graph)](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | — | ✓ | ✓ | 24k | MIT |
-| [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) | 1B | — | ✓ | — | 24k | Apache 2.0 |
-| [Step-Audio-EditX](https://huggingface.co/stepfun-ai/Step-Audio-EditX) | 3B | — | ✓ | — | 24k | Apache 2.0 |
-| [StyleTTS 2](https://github.com/yl4579/StyleTTS2) | ~148M | — | ✓ | — | 24k | MIT |
-| [VibeVoice 1.5B](https://huggingface.co/microsoft/VibeVoice-1.5B) | 1.5B | — | ✓ | — | 24k | MIT |
-| [VibeVoice 7B](https://huggingface.co/vibevoice/VibeVoice-7B) | 7B | — | ✓ | — | 24k | MIT |
-| [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) | 2B | — | ✓ | ✓ (30) | **48k** | Apache 2.0 |
-| [ZipVoice](https://huggingface.co/k2-fsa/ZipVoice) | 123M | — | ✓ | ✓ (zh+en) | 24k | Apache 2.0 |
-| [Zonos v0.1](https://huggingface.co/Zyphra/Zonos-v0.1-transformer) | 1.6B | — | ✓ | ✓ | **44.1k** | Apache 2.0 |
+| Model | Params | Predefined | Cloning | Multilingual | SR | Expressive | License |
+|---|---|---|---|---|---|---|---|
+| [ChatterBox](https://huggingface.co/ResembleAI/chatterbox) | 1.2B | — | ✓ | — | 24k | knob | MIT |
+| [ChatterBox Turbo](https://huggingface.co/ResembleAI/chatterbox-turbo) | 744M | — | ✓ | — | 24k | —\* | MIT |
+| [Coqui XTTS-v2](https://huggingface.co/coqui/XTTS-v2) | 750M | — | ✓ | ✓ (17) | 24k | — | CPML (non-commercial) |
+| [Dia 1.6B-0626](https://huggingface.co/nari-labs/Dia-1.6B-0626) | 1.6B | — | ✓ | — | 44.1k | tags | Apache 2.0 |
+| [dots.tts (soar)](https://huggingface.co/rednote-hilab/dots.tts-soar) | 2B | — | ✓ | ✓ (24) | **48k** | — | Apache 2.0 |
+| [DramaBox](https://github.com/resemble-ai/DramaBox) | 3.3B | — | ✓ | — (en) | **48k** | desc | LTX-2 Community (NC) |
+| [Echo-TTS](https://huggingface.co/jordand/echo-tts-base) | ~2.8B | — | ✓ | — | **44.1k** | tags | CC-BY-NC-SA 4.0 |
+| [F5-TTS v1](https://huggingface.co/SWivid/F5-TTS) | 330M | — | ✓ | ✓ | 24k | — | CC-BY-NC |
+| [Fish Speech 1.5](https://huggingface.co/fishaudio/fish-speech-1.5) | ~500M | — | ✓ | ✓ | **44.1k** | — | CC-BY-NC-SA 4.0 |
+| [Fish Speech S2-Pro](https://huggingface.co/fishaudio/s2-pro) | 4B | — | ✓ | — | **44.1k** | tags | Research (non-commercial) |
+| [Higgs Audio v3 TTS](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) | 4B | — | ✓ | ✓ (100) | 24k | tags | Research (NC) |
+| [IndexTTS-2](https://huggingface.co/IndexTeam/IndexTTS-2) | 1.5B | — | ✓ | ✓ | 24k | emo-ref + desc + knob | Apache 2.0 |
+| [Mars5-TTS](https://huggingface.co/Camb-ai/mars5-tts) | 1.2B | — | ✓ | — | 24k | — | AGPL-3.0 |
+| [MetaVoice-1B](https://huggingface.co/metavoiceio/metavoice-1B-v0.1) | 1.2B | — | ✓ | — | **48k** | — | Apache 2.0 |
+| [MiraTTS](https://huggingface.co/YatharthS/MiraTTS) | 0.5B | — | ✓ | — | **48k** | knob | MIT |
+| [Miso TTS 8B](https://huggingface.co/MisoLabs/MisoTTS) | 8.2B | — | ✓ | — (en) | 24k | — | Modified MIT |
+| [MOSS-TTS v1.0](https://huggingface.co/OpenMOSS-Team/MOSS-TTS) | 8B (Qwen3) | — | ✓ | ✓ (20) | 24k | — | Apache 2.0 |
+| [MOSS-TTS v1.5](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5) | 8B (Qwen3) | — | ✓ | ✓ (31) | 24k | tags (pause) | Apache 2.0 |
+| [MOSS-TTS-Nano](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano) | 100M | — | ✓ | ✓ (zh+en) | **48k** | — | Apache 2.0 |
+| [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air) | 748M | — | ✓ | — | 24k | — | Apache 2.0 |
+| [NeuTTS Nano](https://huggingface.co/neuphonic/neutts-nano-q4-gguf) | 229M | — | ✓ | — | 24k | — | Apache 2.0 |
+| [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) | ~1B | — | ✓ | ✓ (600+) | 24k | tags\* | Apache 2.0 |
+| [OpenVoice v2](https://huggingface.co/myshell-ai/OpenVoiceV2) | ~100M | — | ✓ | ✓ | 22.05k | knob | MIT |
+| [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | 100M | — | ✓ | — | 24k | — | Apache 2.0 |
+| [Qwen3-TTS 1.7B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | — | ✓ | ✓ | 24k | — | Apache 2.0 |
+| [Qwen3-TTS 1.7B (CUDA-graph)](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | — | ✓ | ✓ | 24k | — | MIT |
+| [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) | 1B | — | ✓ | — | 24k | — | Apache 2.0 |
+| [Step-Audio-EditX](https://huggingface.co/stepfun-ai/Step-Audio-EditX) | 3B | — | ✓ | — | 24k | tags + desc | Apache 2.0 |
+| [StyleTTS 2](https://github.com/yl4579/StyleTTS2) | ~148M | — | ✓ | — | 24k | knob | MIT |
+| [VibeVoice 1.5B](https://huggingface.co/microsoft/VibeVoice-1.5B) | 1.5B | — | ✓ | — | 24k | — | MIT |
+| [VibeVoice 7B](https://huggingface.co/vibevoice/VibeVoice-7B) | 7B | — | ✓ | — | 24k | — | MIT |
+| [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) | 2B | — | ✓ | ✓ (30) | **48k** | desc | Apache 2.0 |
+| [ZipVoice](https://huggingface.co/k2-fsa/ZipVoice) | 123M | — | ✓ | ✓ (zh+en) | 24k | — | Apache 2.0 |
+| [Zonos v0.1](https://huggingface.co/Zyphra/Zonos-v0.1-transformer) | 1.6B | — | ✓ | ✓ | **44.1k** | emo-ref + knob | Apache 2.0 |
+
+> **Expressive column** — what explicit emotion/delivery control the model offers: `tags` = inline cues in the text itself (`(laughs)`, `[sigh]`, `<laugh>`); `desc` = natural-language style/emotion instructions; `knob` = numeric or preset parameter (exaggeration, style enum, pitch/speed); `emo-ref` = emotion conditioned on a separate reference clip or emotion vector; `—` = none (for cloning models, expression simply follows the reference clip). `*` = caveat applies. Exact syntax, sources, and caveats per model: **[docs/expressive-control.md](docs/expressive-control.md)**. Note the bench feeds every model the same plain prompts for fairness, so these features are not exercised in any score.
 
 Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-issues.md)**. Models considered but excluded: **[docs/considered.md](docs/considered.md)**.
 
@@ -175,6 +177,7 @@ If you reproduce on different hardware, file an issue or PR with your results an
 - [Full results tables](docs/results.md) — per-rig, per-prompt, per-model
 - [Cloning ranking](docs/cloning.md) — reference formats + blind-vote ranking (28 of 32 cloning models, human-preference A/B)
 - [Architecture](docs/architecture.md) — bench design, runner protocol, adding a model
+- [Expressive control](docs/expressive-control.md) — which models take emotion tags / style prompts / knobs, with exact syntax
 - [Known issues](docs/known-issues.md) — per-model gotchas + per-license table
 - [Considered but skipped](docs/considered.md) — models evaluated and excluded
 - [Tasks & pending work](docs/tasks.md) — open issues, planned features
