@@ -108,7 +108,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | Model | Params | Predefined | Cloning | Multilingual | SR | Expressive | License |
 |---|---|---|---|---|---|---|---|
 | [ChatterBox](https://huggingface.co/ResembleAI/chatterbox) | 1.2B | — | ✓ | — | 24k | knob | MIT |
-| [ChatterBox Turbo](https://huggingface.co/ResembleAI/chatterbox-turbo) | 744M | — | ✓ | — | 24k | —\* | MIT |
+| [ChatterBox Turbo](https://huggingface.co/ResembleAI/chatterbox-turbo) | 744M | — | ✓ | — | 24k | tags\* | MIT |
 | [Coqui XTTS-v2](https://huggingface.co/coqui/XTTS-v2) | 750M | — | ✓ | ✓ (17) | 24k | — | CPML (non-commercial) |
 | [Dia 1.6B-0626](https://huggingface.co/nari-labs/Dia-1.6B-0626) | 1.6B | — | ✓ | — | 44.1k | tags | Apache 2.0 |
 | [dots.tts (soar)](https://huggingface.co/rednote-hilab/dots.tts-soar) | 2B | — | ✓ | ✓ (24) | **48k** | — | Apache 2.0 |
