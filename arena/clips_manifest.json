@@ -242,6 +242,46 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/kokoro_cuda_p5.wav"
         },
         {
+          "model": "longcat_1b",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_1b_cuda_p1.wav"
+        },
+        {
+          "model": "longcat_1b",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_1b_cuda_p2.wav"
+        },
+        {
+          "model": "longcat_1b",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_1b_cuda_p3.wav"
+        },
+        {
+          "model": "longcat_1b",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_1b_cuda_p4.wav"
+        },
+        {
+          "model": "longcat_3p5b",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_3p5b_cuda_p1.wav"
+        },
+        {
+          "model": "longcat_3p5b",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_3p5b_cuda_p2.wav"
+        },
+        {
+          "model": "longcat_3p5b",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_3p5b_cuda_p3.wav"
+        },
+        {
+          "model": "longcat_3p5b",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_3p5b_cuda_p4.wav"
+        },
+        {
           "model": "luxtts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/linux-default/luxtts_cuda_p1.wav"
@@ -1042,6 +1082,46 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/indextts_cuda_p4.wav"
         },
         {
+          "model": "longcat_1b",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/longcat_1b_cuda_p1.wav"
+        },
+        {
+          "model": "longcat_1b",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/longcat_1b_cuda_p2.wav"
+        },
+        {
+          "model": "longcat_1b",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/longcat_1b_cuda_p3.wav"
+        },
+        {
+          "model": "longcat_1b",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/longcat_1b_cuda_p4.wav"
+        },
+        {
+          "model": "longcat_3p5b",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/longcat_3p5b_cuda_p1.wav"
+        },
+        {
+          "model": "longcat_3p5b",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/longcat_3p5b_cuda_p2.wav"
+        },
+        {
+          "model": "longcat_3p5b",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/longcat_3p5b_cuda_p3.wav"
+        },
+        {
+          "model": "longcat_3p5b",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/longcat_3p5b_cuda_p4.wav"
+        },
+        {
           "model": "luxtts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/luxtts_cuda_p1.wav"
@@ -1620,6 +1700,14 @@
     "kokoro": {
       "name": "Kokoro",
       "url": "https://huggingface.co/hexgrad/Kokoro-82M"
+    },
+    "longcat_1b": {
+      "name": "LongCat-AudioDiT 1B",
+      "url": "https://huggingface.co/meituan-longcat/LongCat-AudioDiT-1B"
+    },
+    "longcat_3p5b": {
+      "name": "LongCat-AudioDiT 3.5B",
+      "url": "https://huggingface.co/meituan-longcat/LongCat-AudioDiT-3.5B"
     },
     "luxtts": {
       "name": "LuxTTS",
