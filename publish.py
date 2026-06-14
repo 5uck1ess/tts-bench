@@ -91,6 +91,23 @@ KNOWN_ISSUES = {
         "0.03-0.74 across clips). The artifact-prone texture flagged on the default lens "
         "applies here too."
     ),
+    ("longcat_1b", "default"): (
+        "note", "⟳ voice varies",
+        "Default voice is sampled fresh per generation (no fixed preset) — each prompt's "
+        "clip is a different speaker. Cloning stays consistent with the reference."
+    ),
+    ("longcat_3p5b", "default"): (
+        "note", "⟳ voice varies",
+        "Default voice is sampled fresh per generation (no fixed preset) — each prompt's "
+        "clip is a different speaker. Cloning stays consistent with the reference."
+    ),
+    ("longcat_3p5b", "cloning"): (
+        "warn", "⟳ clone less reliable",
+        "The 3.5B clone is weaker than the 1B despite the larger model: it can lose the "
+        "reference voice on a generation (p1 SIM 0.63 vs the 1B's ~0.87 mean) and carries "
+        "the same texture issues — by-ear A/B + Seed-style SIM (2026-06-14) make the 1B the "
+        "recommended LongCat variant for cloning."
+    ),
     # Add new entries here as QA surfaces them — use "warn" only for genuine defects.
 }
 

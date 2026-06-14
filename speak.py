@@ -46,6 +46,8 @@ MODELS = {
     "mars5":       ("mars5",      "runners/mars5_runner.py",      None),
     "supertonic":  ("supertonic", "runners/supertonic_runner.py", None),
     "miso":        ("miso",       "runners/miso_runner.py",       None),
+    "longcat_1b":   ("longcat",   "runners/longcat_runner.py",    "1b"),
+    "longcat_3p5b": ("longcat",   "runners/longcat_runner.py",    "3.5b"),
 }
 
 

@@ -699,6 +699,24 @@ if (-not (Want "miso")) { Write-Host "miso: skipped (not in install filter)" -Fo
     Write-Host "miso: ok (MisoLabs/MisoTTS ~33GB fp32 safetensors + kyutai Mimi + unsloth/Llama-3.2-1B tokenizer auto-download from HF on first run; CUDA-only, bf16 ~16GB VRAM, 24k)" -ForegroundColor Green
 } else { Write-Host "miso: already installed" -ForegroundColor Gray }
 
+# --- LongCat-AudioDiT (Meituan, MIT, Wav-VAE+DiT diffusion, 1B/3.5B, ZH+EN, cloning, CUDA-only) ---
+Step "LongCat-AudioDiT (Meituan, MIT, Wav-VAE+DiT diffusion, 1B/3.5B, ZH+EN, cloning, CUDA-only)"
+if (-not (Want "longcat")) { Write-Host "longcat: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\longcat\Scripts\python.exe")) {
+    # Source-clone import: inference.py is NOT a pip package; the runner adds
+    # venvs/longcat/src to sys.path and `import audiodit` auto-registers the model
+    # with transformers (>=5.3). Deps are upstream's requirements.txt; unlike Linux
+    # (where the free PyPI torch is CUDA-enabled), Windows PyPI torch is CPU-only, so
+    # reinstall cu128 torch LAST for Blackwell (RTX 5090, sm_120).
+    Invoke-Checked "uv venv longcat" { uv venv venvs\longcat --python 3.12 }
+    if (-not (Test-Path "venvs\longcat\src")) {
+        Invoke-Checked "git clone LongCat-AudioDiT" { git clone --depth 1 https://github.com/meituan-longcat/LongCat-AudioDiT venvs\longcat\src }
+    }
+    Invoke-Checked "uv pip install longcat deps" { uv pip install --python venvs\longcat\Scripts\python.exe -r venvs\longcat\src\requirements.txt }
+    Invoke-Checked "torch cu128 for longcat (LAST)" { uv pip install --python venvs\longcat\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "longcat: ok (meituan-longcat/LongCat-AudioDiT-1B + -3.5B weights + google/umt5-base tokenizer auto-download from HF on first run; CUDA-only, DiT + fp16 Wav-VAE, 24k; --variant 1b|3.5b)" -ForegroundColor Green
+} else { Write-Host "longcat: already installed" -ForegroundColor Gray }
+
 # --- scoring: objective metrics (UTMOS + WER + SIM) ---------------------------
 # Central scorer venv. SIM's UniSpeech-SAT stack (s3prl/fairseq) may fail on
 # Windows MSVC; if so, score on Linux (scoring is central). UTMOS+WER work here.

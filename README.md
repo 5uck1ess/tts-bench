@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (47)
+## Models tracked (49)
 
 #### Predefined voices
 
@@ -119,6 +119,8 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [Fish Speech S2-Pro](https://huggingface.co/fishaudio/s2-pro) | 4B | — | ✓ | — | **44.1k** | tags | Research (non-commercial) |
 | [Higgs Audio v3 TTS](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) | 4B | — | ✓ | ✓ (100) | 24k | tags | Research (NC) |
 | [IndexTTS-2](https://huggingface.co/IndexTeam/IndexTTS-2) | 1.5B | — | ✓ | ✓ | 24k | emo-ref + desc + knob | Apache 2.0 |
+| [LongCat-AudioDiT 1B](https://huggingface.co/meituan-longcat/LongCat-AudioDiT-1B) | 1.42B | — | ✓ | ✓ (zh+en) | 24k | — | MIT |
+| [LongCat-AudioDiT 3.5B](https://huggingface.co/meituan-longcat/LongCat-AudioDiT-3.5B) | 3.83B | — | ✓ | ✓ (zh+en) | 24k | — | MIT |
 | [Mars5-TTS](https://huggingface.co/Camb-ai/mars5-tts) | 1.2B | — | ✓ | — | 24k | — | AGPL-3.0 |
 | [MetaVoice-1B](https://huggingface.co/metavoiceio/metavoice-1B-v0.1) | 1.2B | — | ✓ | — | **48k** | — | Apache 2.0 |
 | [MiraTTS](https://huggingface.co/YatharthS/MiraTTS) | 0.5B | — | ✓ | — | **48k** | knob | MIT |
@@ -154,7 +156,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**35 of the 47 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**37 of the 49 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 of 32 cloning models, 397 votes, human-preference A/B): **[docs/cloning.md](docs/cloning.md)**.
 
