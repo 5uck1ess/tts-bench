@@ -38,6 +38,34 @@ def test_score_clips_unknown_prompt_blank_wer():
     assert rows[0]["wer"] == ""  # no prompt 9 in PROMPT_BY_ID
 
 
+class FakeHealth:
+    name = "health"
+    def __init__(self, flags=""): self.flags = flags
+    def score(self, wav): return self.flags
+
+
+def test_score_clips_health_blank_when_no_scorer():
+    clips = [Clip("windows-default", "kokoro_cuda_p1.wav", "kokoro", "cuda", "1", "default")]
+    rows = score_clips(clips, FakeUtmos(), FakeWer(), FakeSim(), ref_for_dir=lambda d: None)
+    assert rows[0]["health"] == ""
+
+
+def test_score_clips_health_recorded_when_scorer_flags():
+    clips = [Clip("windows-cloning", "miso_cuda_p3.wav", "miso", "cuda", "3", "cloning")]
+    rows = score_clips(clips, FakeUtmos(), FakeWer(), FakeSim(), FakeHealth("gap"),
+                       ref_for_dir=lambda d: "ref.wav")
+    assert rows[0]["health"] == "gap"
+
+
+def test_score_clips_health_failure_is_blank_not_crash():
+    class Boom:
+        name = "health"
+        def score(self, wav): raise RuntimeError("boom")
+    clips = [Clip("windows-default", "kokoro_cuda_p1.wav", "kokoro", "cuda", "1", "default")]
+    rows = score_clips(clips, FakeUtmos(), FakeWer(), FakeSim(), Boom(), ref_for_dir=lambda d: None)
+    assert rows[0]["health"] == "" and rows[0]["utmos"] == "4.0000"
+
+
 def test_score_clips_per_metric_failure_is_blank_not_crash():
     class Boom:
         name = "utmos"

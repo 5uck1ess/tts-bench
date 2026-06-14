@@ -46,7 +46,7 @@ def ref_for_dir(dir_name):
     return ref if os.path.exists(ref) else None
 
 
-def score_clips(clips, utmos, wer, sim, ref_for_dir=ref_for_dir, gh_root=_GH):
+def score_clips(clips, utmos, wer, sim, health=None, ref_for_dir=ref_for_dir, gh_root=_GH):
     """Score each clip → list of scores.csv row dicts. Pure given injected scorers."""
     rows = []
     for c in clips:
@@ -61,9 +61,12 @@ def score_clips(clips, utmos, wer, sim, ref_for_dir=ref_for_dir, gh_root=_GH):
             ref = ref_for_dir(c.dir)
             if ref:
                 s = _try(lambda: sim.score(wav, ref), "sim", c.wav)
+        # Deterministic health triage — reference-free, no text, no ML. "" = clean.
+        h = _try(lambda: health.score(wav), "health", c.wav) if health else None
         rows.append({"dir": c.dir, "wav": c.wav, "model": c.model, "mode": c.mode,
                      "prompt_id": c.prompt_id,
-                     "utmos": _fmt(u), "wer": _fmt(w), "sim": _fmt(s)})
+                     "utmos": _fmt(u), "wer": _fmt(w), "sim": _fmt(s),
+                     "health": h or ""})
     return rows
 
 
@@ -91,9 +94,10 @@ def main(argv=None):
     from scoring.utmos import UtmosScorer
     from scoring.wer import WerScorer
     from scoring.sim import SimScorer
-    utmos, wer, sim = UtmosScorer(), WerScorer(), SimScorer()
+    from scoring.health import HealthScorer
+    utmos, wer, sim, health = UtmosScorer(), WerScorer(), SimScorer(), HealthScorer()
 
-    fresh = score_clips(todo, utmos, wer, sim, gh_root=args.gh_root)
+    fresh = score_clips(todo, utmos, wer, sim, health, gh_root=args.gh_root)
     merged = merge_rows(existing, fresh, overwrite=args.rescore)
     write_scores(_SCORES_CSV, merged)
     print(f"Wrote {_SCORES_CSV} ({len(merged)} rows).")

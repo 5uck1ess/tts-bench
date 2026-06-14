@@ -148,6 +148,7 @@ def _read_scores_csv():
         for k in ("utmos", "wer", "sim"):
             v = row.get(k, "")
             vals[k] = float(v) if v not in ("", None) else None
+        vals["health"] = (row.get("health", "") or "").strip()  # "" = clean / unscored
         look[(row["dir"], row["wav"])] = vals
     return look
 
@@ -157,6 +158,7 @@ def _model_scores(model, prompt_ids, dirs, look):
     Returns {'utmos','wer','sim': float|None, 'n': int}. Blanks are skipped per
     metric; n = number of prompts that had a picked clip present in scores.csv."""
     acc = {"utmos": [], "wer": [], "sim": []}
+    health_flags = []                         # [(prompt_id, "gap"), ...] over picked clips
     n = 0
     for pid in prompt_ids:
         picked = _pick_clip(dirs, model, pid)
@@ -171,7 +173,11 @@ def _model_scores(model, prompt_ids, dirs, look):
         for k in acc:
             if row.get(k) is not None:
                 acc[k].append(row[k])
+        for flag in (row.get("health") or "").split(";"):
+            if flag:
+                health_flags.append((pid, flag))
     out = {k: (sum(v) / len(v) if v else None) for k, v in acc.items()}
+    out["health_flags"] = health_flags
     out["n"] = n
     return out
 
@@ -787,7 +793,10 @@ _SCORES_GUIDE = (
     '<strong>WER</strong> = ASR word-error rate vs the intended text — a '
     '<em>failure-detector</em>, not a fine ranking (lower better); '
     '<strong>SIM</strong> = speaker similarity to the cloned reference '
-    '(<code>chris_hemsworth_15s</code>, higher better). Switch '
+    '(<code>chris_hemsworth_15s</code>, higher better); '
+    '<strong>Health</strong> = deterministic defect triage of the published clip '
+    '(⚠ flags long internal silence / clipping / dead audio — a "go listen" cue, '
+    'not a score). Switch '
     '<strong>Default</strong> / <strong>Cloning</strong> below; click any header to '
     're-sort. Each score is the mean over the exact clips shown on '
     '<a href="listen.html">Listen</a>. Human votes are the preference ground truth; '
@@ -795,9 +804,28 @@ _SCORES_GUIDE = (
 )
 
 
-def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_models=frozenset()):
+def _health_cell(flags):
+    """Render the Health column cell from [(prompt_id, flag), ...] over a model's
+    picked clips. "" of flags ⇒ a muted ✓; otherwise a ⚠ badge naming the flag(s)
+    and which prompt(s). data-sort = flag count so the column sorts clean-first."""
+    if not flags:
+        return '<td class="num muted" data-sort="0">✓</td>'
+    by_flag = {}
+    for pid, f in flags:
+        by_flag.setdefault(f, []).append(pid)
+    label = "; ".join(f'{f} ({",".join(sorted(set(pids)))})'
+                      for f, pids in sorted(by_flag.items()))
+    return (f'<td class="num" data-sort="{len(flags)}">'
+            f'<span class="health-flag" title="mechanical defect in the published clip '
+            f'(long internal silence / clipping / dead audio) — listen before trusting">'
+            f'⚠ {escape(label)}</span></td>')
+
+
+def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_models=frozenset(),
+                  show_health=True):
     """One sortable table. columns = list of (metric_key, header, higher_better).
     Rows aggregated per model; WER>threshold rows get the 'flagged' class.
+    show_health appends a non-ranking Health triage column (clip/silent/gap).
     fallback_dirs/fallback_models: for NO_PRESET_VOICE models on the cloning board,
     append default dirs so a model benched only in default mode still appears."""
     # Numeric headers get class="num" so they right-align over their right-aligned
@@ -805,6 +833,8 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
     # column on wide screens where each column is stretched.
     head = '<th>Model</th><th>Size</th>' + "".join(
         f'<th class="num">{escape(h)} {"↑" if up else "↓"}</th>' for (_k, h, up) in columns)
+    if show_health:
+        head += '<th class="num">Health</th>'
     body = []
     aggs = []
     for m in sorted(models, key=lambda x: _display_name(x).lower()):
@@ -826,6 +856,8 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
                 cells.append('<td class="num muted" data-sort="">—</td>')
             else:
                 cells.append(f'<td class="num" data-sort="{v:.4f}">{v:.3f}</td>')
+        if show_health:
+            cells.append(_health_cell(agg.get("health_flags", [])))
         body.append(f'<tr{cls}>' + "".join(cells) + '</tr>')
     if not body:
         return '<p class="mode-empty muted">No scored models yet.</p>'
@@ -856,6 +888,7 @@ def build_scores():
     flagged_style = (
         '<style>tr.flagged>td{opacity:.55;}'
         'tr.flagged>td:first-child::after{content:" \\26A0";color:var(--fail);}'
+        '.health-flag{color:var(--fail);white-space:nowrap;}'
         '.scores-foot{color:var(--muted);font-size:.85em;margin-top:1.4rem;'
         'border-top:1px solid var(--border);padding-top:.8rem;line-height:1.5;}'
         '.scores-foot a{color:var(--accent);}</style>')

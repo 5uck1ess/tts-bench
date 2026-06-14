@@ -6,7 +6,7 @@ Deterministic row order (sorted by dir, wav) so diffs stay small across re-runs.
 
 import csv
 
-FIELDNAMES = ["dir", "wav", "model", "mode", "prompt_id", "utmos", "wer", "sim"]
+FIELDNAMES = ["dir", "wav", "model", "mode", "prompt_id", "utmos", "wer", "sim", "health"]
 
 
 def read_scores(path):
