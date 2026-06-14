@@ -727,6 +727,27 @@ else
     echo "miso: already installed"
 fi
 
+# --- LongCat-AudioDiT (Meituan, MIT, diffusion TTS in waveform latent space, cloning, CUDA-only) ---
+echo; cyan "=== LongCat-AudioDiT (Meituan, MIT, Wav-VAE+DiT diffusion, 1B/3.5B, ZH+EN, cloning, CUDA-only) ==="
+if ! want longcat; then echo "longcat: skipped (not in install filter)"
+elif [ ! -x venvs/longcat/bin/python ]; then
+    # Source-clone import: inference.py is NOT a pip package; the runner adds
+    # venvs/longcat/src to sys.path and `import audiodit` auto-registers the model
+    # with transformers (>=5.3). Deps are upstream's requirements.txt; on Linux the
+    # free resolve's PyPI torch is CUDA-enabled (Ampere/3090 fine).
+    uv venv venvs/longcat --python 3.12 || die "uv venv longcat"
+    if [ ! -d venvs/longcat/src ]; then
+        git clone --depth 1 https://github.com/meituan-longcat/LongCat-AudioDiT venvs/longcat/src \
+            || die "git clone LongCat-AudioDiT"
+    fi
+    uv pip install --python venvs/longcat/bin/python \
+        -r venvs/longcat/src/requirements.txt \
+        || die "uv pip install longcat deps"
+    green "longcat: ok (meituan-longcat/LongCat-AudioDiT-1B + -3.5B weights + text-encoder tokenizer auto-download from HF on first run; CUDA-only, DiT + fp16 Wav-VAE, 24k; --variant 1b|3.5b)"
+else
+    echo "longcat: already installed"
+fi
+
 # --- Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ---
 echo; cyan "=== Supertonic (Supertone Inc., ONNX, 99M, 31 langs, predefined voices) ==="
 if ! want supertonic; then echo "supertonic: skipped (not in install filter)"

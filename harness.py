@@ -138,6 +138,17 @@ MODELS = [
     # the gated llama tokenizer for the unsloth mirror (see runner docstring).
     # English. CUDA-only: 8B bf16 ~16 GB VRAM (fits 5090 + 3090).
     ("miso",        "miso",       "runners/miso_runner.py",       False, ["cuda"],  None,   True),
+    # LongCat-AudioDiT (Meituan, MIT) — non-autoregressive diffusion TTS that generates
+    # directly in a Wav-VAE waveform latent space (no mel, no codec tokens): Wav-VAE + DiT
+    # backbone, ODE-sampled over NFE steps, adaptive projection guidance (APG). SOTA-ish
+    # zero-shot cloning on Seed (3.5B: EN SIM 0.786 / ZH SIM 0.818). Does BOTH zero-shot
+    # default voice (no prompt) and reference-wav cloning (reference text prepended, like
+    # sesame/miso -> sibling .txt required) -> can_clone=True, both lenses. ZH + EN only
+    # (multilingual=False -> FR prompt skipped). Source-clone import (venvs/longcat/src;
+    # `import audiodit` auto-registers the model with transformers>=5.3). Two sizes share
+    # the venv+runner; --variant picks the HF checkpoint. CUDA-only (DiT + fp16 VAE), 24 kHz.
+    ("longcat_1b",   "longcat",   "runners/longcat_runner.py",    False, ["cuda"],  "1b",   True),
+    ("longcat_3p5b", "longcat",   "runners/longcat_runner.py",    False, ["cuda"],  "3.5b", True),
 ]
 
 
@@ -162,6 +173,8 @@ GPU_CLASS = {
     "dots_tts",
     # miso: 8B bf16 CSM — CUDA-only (fp32 CPU would need ~33 GB RAM, far sub-realtime).
     "miso",
+    # longcat: DiT + fp16 Wav-VAE diffusion — CUDA-only (no CPU/MPS path benched).
+    "longcat_1b", "longcat_3p5b",
 }
 
 
