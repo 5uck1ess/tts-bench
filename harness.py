@@ -92,11 +92,12 @@ MODELS = [
     # untested). variant "large" = parler-tts-large-v1 (2.33B) — one-line add once the
     # mini's speed/disk cost is known.
     ("parler",      "parler",     "runners/parler_runner.py",     False, ["cpu", "cuda"],        None,   False),
-    # MeloTTS (myshell-ai/MeloTTS-English, MIT): VITS multi-speaker predefined-voice TTS,
-    # EN-US speaker, 44.1 kHz. The base speaker engine OpenVoice v2 wraps — here benched
-    # standalone as a fast CPU baseline. No cloning. (Upstream punts Windows to Docker;
-    # native install needs mecab/unidic — see install stanza.)
-    ("melotts",     "melotts",    "runners/melotts_runner.py",    False, ["cpu", "cuda", "mps"], None,   False),
+    # MeloTTS (myshell-ai/MeloTTS, MIT): VITS multi-speaker predefined-voice TTS, EN-US
+    # speaker, 44.1 kHz. The base speaker engine OpenVoice v2 wraps — here benched
+    # standalone as a fast CPU baseline. No cloning. Multilingual=True: MeloTTS ships a
+    # per-language checkpoint, so the runner loads the FR model (-> runs the FR prompt);
+    # EN/ES/FR/ZH only — JP/KR need extra g2p deps (mecab/unidic, g2pkk) not installed.
+    ("melotts",     "melotts",    "runners/melotts_runner.py",    True,  ["cpu", "cuda", "mps"], None,   False),
     # Higgs Audio v3 TTS (Boson AI, Research/Non-Commercial, ~4B) — SERVER-BACKED, Linux-only.
     # First server-backed model in the bench: v3 ships no modeling_*.py / auto_map and the
     # higgs_multimodal_qwen3 class isn't in stock transformers, so there's no single-process

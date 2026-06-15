@@ -1,9 +1,10 @@
-"""MeloTTS runner (myshell-ai/MeloTTS-English, MIT, predefined-voice TTS).
+"""MeloTTS runner (myshell-ai/MeloTTS, MIT, predefined-voice TTS, multilingual).
 
-PREDEFINED-VOICE model: VITS-style multi-speaker TTS with baked-in speaker IDs
-(EN-US / EN-BR / EN-AU / EN-Default / EN_INDIA for English). No zero-shot
-cloning, so can_clone=False and --reference is accepted but ignored. This is the
-base speaker engine that OpenVoice v2 wraps with a tone-color converter; here we
+PREDEFINED-VOICE model: VITS-style multi-speaker TTS with baked-in speaker IDs.
+MeloTTS ships a separate checkpoint per language; --language picks which one to
+load and its default speaker (see LANG_CFG). No zero-shot cloning, so
+can_clone=False and --reference is accepted but ignored. This is the base
+speaker engine that OpenVoice v2 wraps with a tone-color converter; here we
 bench it standalone as a fast CPU baseline.
 
 API (melo.api.TTS):
@@ -23,7 +24,16 @@ import time
 import _meminfo
 
 
-SPEAKER = "EN-US"
+# (melo language code, default speaker key) per ISO-639-1 --language.
+# EN keeps EN-US so the existing English sample is unchanged; FR loads the
+# French checkpoint (myshell-ai/MeloTTS-French), same mapping OpenVoice uses.
+# JP/KR are omitted: they need extra g2p deps (mecab/unidic, g2pkk) not installed.
+LANG_CFG = {
+    "en": ("EN", "EN-US"),
+    "es": ("ES", "ES"),
+    "fr": ("FR", "FR"),
+    "zh": ("ZH", "ZH"),
+}
 
 
 def main() -> int:
@@ -47,12 +57,21 @@ def main() -> int:
         import soundfile as sf
         from melo.api import TTS
 
+        lang = (args.language or "en").lower()
+        if lang not in LANG_CFG:
+            print(json.dumps({"ok": False, "run_index": 0,
+                              "error": f"MeloTTS runner not wired for language={args.language!r} "
+                                       f"(supported: {sorted(LANG_CFG)})"}))
+            return 1
+        melo_lang, speaker_key = LANG_CFG[lang]
+
         device = args.device if args.device in ("cpu", "cuda", "mps") else "cpu"
-        model = TTS(language="EN", device=device)
+        model = TTS(language=melo_lang, device=device)
         spk2id = model.hps.data.spk2id
-        if SPEAKER not in spk2id:
-            raise RuntimeError(f"speaker {SPEAKER} not in {list(spk2id)}")
-        speaker_id = spk2id[SPEAKER]
+        if speaker_key not in spk2id:
+            # Fall back to whatever single speaker this language exposes.
+            speaker_key = next(iter(spk2id))
+        speaker_id = spk2id[speaker_key]
         samplerate = int(model.hps.data.sampling_rate)
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
