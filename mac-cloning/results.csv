@@ -357,3 +357,21 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 4,omnivoice,mps,,True,0,True,28181.8,28.1818,7.24,0.26,746.2,,34.581,True,
 5,omnivoice,cpu,,True,0,True,38782.8,38.7828,4.61,0.12,3644.3,,43.943,True,
 5,omnivoice,mps,,True,0,True,27297.8,27.2978,5.92,0.22,808.5,,33.025,True,
+1,outetts,cpu,,True,0,True,42965.6,42.9656,1.666,0.04,6714.1,,153.541,True,
+1,outetts,cpu,,True,1,False,44444.6,44.4446,1.946,0.04,6642.8,,0,True,
+1,outetts,cpu,,True,2,False,45735.2,45.7352,2.026,0.04,6634.9,,0,True,
+1,outetts,mps,,True,0,True,49831.8,49.8318,1.906,0.04,974.5,,163.597,True,
+1,outetts,mps,,True,1,False,46470.3,46.4703,1.946,0.04,602.4,,0,True,
+1,outetts,mps,,True,2,False,43247.0,43.247,1.786,0.04,558.9,,0,True,
+2,outetts,cpu,,True,0,True,102902.0,102.902,4.466,0.04,6991.9,,318.946,True,
+2,outetts,cpu,,True,1,False,97155.6,97.1556,4.306,0.04,7255.0,,0,True,
+2,outetts,cpu,,True,2,False,98357.3,98.3573,4.413,0.04,7255.2,,0,True,
+2,outetts,mps,,True,0,True,102912.6,102.9126,4.013,0.04,881.4,,326.966,True,
+2,outetts,mps,,True,1,False,98656.1,98.6561,4.133,0.04,1122.3,,0,True,
+2,outetts,mps,,True,2,False,100347.3,100.3473,4.253,0.04,1152.4,,0,True,
+3,outetts,cpu,,True,0,True,,,,,,,600.076,False,timeout 600s
+3,outetts,mps,,True,0,True,,,,,,,600.332,False,timeout 600s
+4,outetts,cpu,,True,0,True,,,,,,,0,False,skipped: timed out on an earlier prompt
+4,outetts,mps,,True,0,True,,,,,,,0,False,skipped: timed out on an earlier prompt
+5,outetts,cpu,,True,0,True,,,,,,,0,False,skipped: timed out on an earlier prompt
+5,outetts,mps,,True,0,True,,,,,,,0,False,skipped: timed out on an earlier prompt
