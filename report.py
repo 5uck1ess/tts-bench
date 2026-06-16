@@ -432,6 +432,8 @@ MODEL_DISPLAY_NAMES = {
     "miso":          "Miso TTS 8B",
     "longcat_1b":    "LongCat-AudioDiT 1B",
     "longcat_3p5b":  "LongCat-AudioDiT 3.5B",
+    "orpheus":       "Orpheus-TTS 3B",
+    "cosyvoice":     "CosyVoice 3 0.5B",
     "coqui":         "Coqui XTTS-v2",
     "vibevoice":     "VibeVoice Realtime 0.5B",
     "vibevoice_15b": "VibeVoice 1.5B",
@@ -509,6 +511,8 @@ MODEL_SIZE = {
     "miso":          "8.2B",
     "longcat_1b":    "1.42B",
     "longcat_3p5b":  "3.83B",
+    "orpheus":       "3.3B",   # Llama-3.2-3B backbone + SNAC decoder
+    "cosyvoice":     "0.5B",   # Fun-CosyVoice3-0.5B-2512
     "mars5":         "1.2B",
     "dia":           "1.6B",
     "kokoro":        "82M",
@@ -569,6 +573,8 @@ MODEL_URL = {
     "miso":          _HF + "MisoLabs/MisoTTS",
     "longcat_1b":    _HF + "meituan-longcat/LongCat-AudioDiT-1B",
     "longcat_3p5b":  _HF + "meituan-longcat/LongCat-AudioDiT-3.5B",
+    "orpheus":       _HF + "canopylabs/orpheus-3b-0.1-ft",
+    "cosyvoice":     _HF + "FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
     "mars5":         _HF + "Camb-ai/mars5-tts",
     "dia":           _HF + "nari-labs/Dia-1.6B-0626",
     "kokoro":        _HF + "hexgrad/Kokoro-82M",
@@ -627,6 +633,8 @@ MODEL_KIND = {
     "miso":          "cloning",
     "longcat_1b":    "cloning",
     "longcat_3p5b":  "cloning",
+    "orpheus":       "predefined",   # named preset voices (tara, ...), no wav cloning
+    "cosyvoice":     "cloning",
     "mars5":         "cloning",
     "dia":           "cloning",
     "neutts_air":    "cloning",

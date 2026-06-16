@@ -57,6 +57,9 @@ NO_PRESET_VOICE = {
     "moss_tts", "moss_tts_v15", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
     "openvoice", "zipvoice", "zonos", "vibevoice_15b", "vibevoice_7b",
     "echo",
+    # cosyvoice: pure zero-shot cloning, no model-native preset — its "default"
+    # lens just clones the house ref (chris_hemsworth), like moss_tts.
+    "cosyvoice",
 }
 
 # Curated per-(model, voice-mode) QA findings, surfaced as a small badge + tooltip on
