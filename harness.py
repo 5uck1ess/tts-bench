@@ -150,6 +150,20 @@ MODELS = [
     # the venv+runner; --variant picks the HF checkpoint. CUDA-only (DiT + fp16 VAE), 24 kHz.
     ("longcat_1b",   "longcat",   "runners/longcat_runner.py",    False, ["cuda"],  "1b",   True),
     ("longcat_3p5b", "longcat",   "runners/longcat_runner.py",    False, ["cuda"],  "3.5b", True),
+    # Orpheus-TTS (Canopy Labs, Apache-2.0): 3B Llama speech-LM -> SNAC codec, 24 kHz,
+    # streaming (~200 ms TTFA). Served via vLLM (orpheus-speech pkg, AsyncLLMEngine) ->
+    # CUDA-only. PRESET-VOICE only (named voices, no wav cloning) -> can_clone=False,
+    # default lens only. English -> multilingual=False, FR prompt skipped. Gated HF
+    # repo (accept the license once). Re-queued from the Windows-blocked list: the only
+    # blocker was vLLM's no-Blackwell-wheel wall, native on the Ampere 3090.
+    ("orpheus",     "orpheus",    "runners/orpheus_runner.py",    False, ["cuda"],  None,   False),
+    # CosyVoice 3 (FunAudioLLM, Apache-2.0): 0.5B Qwen LLM-TTS + flow-matching, 24 kHz,
+    # zero-shot multilingual cloning. Source-clone import (venvs/cosyvoice/src + its
+    # third_party/Matcha-TTS). PURE CLONING (no preset voice -> NO_PRESET_VOICE in
+    # publish.py/vote.py): default lens uses the house ref (chris_hemsworth_15s), cloning
+    # lens uses the supplied wav; both need the reference's literal transcript (sibling
+    # .txt). Multilingual=True (ZH/EN/JA/KO/yue+) -> FR prompt runs. CUDA-only (fp16).
+    ("cosyvoice",   "cosyvoice",  "runners/cosyvoice_runner.py",  True,  ["cuda"],  None,   True),
 ]
 
 
@@ -176,6 +190,10 @@ GPU_CLASS = {
     "miso",
     # longcat: DiT + fp16 Wav-VAE diffusion — CUDA-only (no CPU/MPS path benched).
     "longcat_1b", "longcat_3p5b",
+    # orpheus: 3B Llama + vLLM — CUDA-only (vLLM has no CPU path here).
+    "orpheus",
+    # cosyvoice: 0.5B LLM + fp16 flow-matching — CUDA-only (no CPU/MPS path benched).
+    "cosyvoice",
 }
 
 

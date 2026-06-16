@@ -1069,6 +1069,56 @@ else
     echo "voxtral: already installed"
 fi
 
+# --- Orpheus-TTS (Canopy Labs, Apache-2.0, 3B Llama + SNAC, 24kHz, preset voices) ---
+echo; cyan "=== Orpheus-TTS (Canopy Labs, Apache-2.0, 3B Llama + SNAC, 24kHz) ==="
+if ! want orpheus; then echo "orpheus: skipped (not in install filter)"
+elif [ "$(uname)" != "Linux" ]; then echo "orpheus: skipped (Linux/CUDA only — vLLM backend, no Windows/Mac wheel)"
+elif [ ! -x venvs/orpheus/bin/python ]; then
+    # orpheus-speech wraps the checkpoint in a vLLM AsyncLLMEngine (CUDA-only). It
+    # co-resolves a modern vllm/torch stack on its own — no manual pins needed. The
+    # model repo canopylabs/orpheus-3b-0.1-ft is GATED: accept the license once at
+    # https://huggingface.co/canopylabs/orpheus-3b-0.1-ft (logged in via `hf auth login`)
+    # or the first run 403s. Preset-voice only (named voices, no wav cloning).
+    uv venv venvs/orpheus --python 3.12 || die "uv venv orpheus"
+    # soundfile: the runner writes the SNAC PCM out with it (orpheus-speech itself
+    # doesn't pull it in).
+    uv pip install --python venvs/orpheus/bin/python orpheus-speech soundfile \
+        || die "uv pip install orpheus-speech"
+    green "orpheus: ok"
+else
+    echo "orpheus: already installed"
+fi
+
+# --- CosyVoice 3 (FunAudioLLM, Apache-2.0, 0.5B LLM-TTS + flow-matching, 24kHz, cloning) ---
+echo; cyan "=== CosyVoice 3 (FunAudioLLM, Apache-2.0, Fun-CosyVoice3-0.5B-2512, 24kHz) ==="
+if ! want cosyvoice; then echo "cosyvoice: skipped (not in install filter)"
+elif [ "$(uname)" != "Linux" ]; then echo "cosyvoice: skipped (Linux/CUDA only — cu121 torch / onnxruntime-gpu / tensorrt / deepspeed)"
+elif [ ! -x venvs/cosyvoice/bin/python ]; then
+    # Source clone (no pip pkg) + the third_party/Matcha-TTS submodule. py3.10: the
+    # researcher requirements pin torch==2.3.1 (cu121), which has no cp312 wheel.
+    uv venv venvs/cosyvoice --python 3.10 || die "uv venv cosyvoice"
+    [ -d venvs/cosyvoice/src ] || git clone --recursive https://github.com/FunAudioLLM/CosyVoice venvs/cosyvoice/src \
+        || die "git clone CosyVoice"
+    # requirements.txt is fragile, in three ways:
+    #   1. protobuf==4.25 isn't on the first (onnxruntime-cuda VS) feed -> uv's
+    #      dependency-confusion guard refuses it. --index-strategy unsafe-best-match.
+    #   2. openai-whisper's sdist build imports pkg_resources, which setuptools>=81
+    #      dropped -> pin setuptools<81.
+    #   3. the sdists (openai-whisper / pyworld / deepspeed) need torch+numpy present
+    #      at build time -> seed torch/numpy/build-backend first, THEN install the rest
+    #      with --no-build-isolation so the builds see them.
+    uv pip install --python venvs/cosyvoice/bin/python --index-strategy unsafe-best-match \
+        "setuptools<81" wheel cython "numpy==1.26.4" \
+        --extra-index-url https://download.pytorch.org/whl/cu121 "torch==2.3.1" "torchaudio==2.3.1" \
+        || die "uv pip install cosyvoice torch/build seed"
+    uv pip install --python venvs/cosyvoice/bin/python --no-build-isolation --index-strategy unsafe-best-match \
+        -r venvs/cosyvoice/src/requirements.txt \
+        || die "uv pip install cosyvoice requirements"
+    green "cosyvoice: ok"
+else
+    echo "cosyvoice: already installed"
+fi
+
 # --- scoring: objective metrics (UTMOS + WER + SIM) ----------------------------
 # Central scorer (one rig scores all published clips). TWO venvs, by necessity:
 #   venvs/scoring     (py3.11) — UTMOS + WER. Run: scoring.score_all
