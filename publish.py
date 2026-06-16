@@ -111,13 +111,8 @@ KNOWN_ISSUES = {
         "the same texture issues — by-ear A/B + Seed-style SIM (2026-06-14) make the 1B the "
         "recommended LongCat variant for cloning."
     ),
-    ("cosyvoice", "default"): (
-        "note", "⟳ length varies",
-        "Output length is unstable by design: short prompts can collapse to under a "
-        "second (p1) and long prompts over-generate — the model's LLM decoder has no "
-        "hard length cap. Inherent CosyVoice behavior at upstream defaults, not a bench "
-        "defect. Default lens clones the house reference (no model-native preset voice)."
-    ),
+    # cosyvoice is NO_PRESET_VOICE -> renders only on the cloning board (its default
+    # clips fall back there), so a single cloning-lens note avoids a doubled badge.
     ("cosyvoice", "cloning"): (
         "note", "⟳ length varies",
         "Output length is unstable by design: short prompts can collapse to under a "
