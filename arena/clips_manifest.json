@@ -387,6 +387,11 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/melotts_cuda_p4.wav"
         },
         {
+          "model": "melotts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/melotts_cuda_p5.wav"
+        },
+        {
           "model": "miratts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/linux-default/miratts_cuda_p1.wav"
@@ -495,6 +500,26 @@
           "model": "omnivoice",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/omnivoice_cuda_p5.wav"
+        },
+        {
+          "model": "orpheus",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/orpheus_cuda_p1.wav"
+        },
+        {
+          "model": "orpheus",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/orpheus_cuda_p2.wav"
+        },
+        {
+          "model": "orpheus",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/orpheus_cuda_p3.wav"
+        },
+        {
+          "model": "orpheus",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/orpheus_cuda_p4.wav"
         },
         {
           "model": "outetts",
@@ -1768,6 +1793,10 @@
     "openvoice": {
       "name": "OpenVoice v2",
       "url": "https://huggingface.co/myshell-ai/OpenVoiceV2"
+    },
+    "orpheus": {
+      "name": "Orpheus-TTS 3B",
+      "url": "https://huggingface.co/canopylabs/orpheus-3b-0.1-ft"
     },
     "outetts": {
       "name": "OuteTTS 1.0 1B",

@@ -24,7 +24,13 @@ DEV_PRIO = {"cuda": 0, "mps": 1, "cpu": 2}
 NO_PRESET_VOICE = {
     "moss_tts", "moss_tts_v15", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
     "openvoice", "zipvoice", "zonos", "vibevoice_15b", "vibevoice_7b", "echo", "dots_tts",
+    "cosyvoice",  # pure zero-shot cloning, no model-native preset (mirrors publish.py)
 }
+
+# Held OUT of the manifest entirely (BOTH lenses) — known-bad output that would
+# pollute the live Elo. Remove a slug here once its bench output is fixed/re-benched.
+#   cosyvoice: cloning output garbled (Tym, 2026-06-16); held pending Linux QA note + re-bench.
+HOLD_FROM_POOL = {"cosyvoice"}
 
 _WAV_RE = re.compile(r"(.+)_(cuda|mps|cpu)_p(\d+)\.wav$")
 
@@ -49,7 +55,8 @@ def scan_dirs(gh_root, mode: str, base_url: str):
     """
     gh_root = str(gh_root)
     found = {}   # (model, prompt) -> (rank, url)
-    drop = NO_PRESET_VOICE if mode == "default" else set()
+    # HOLD_FROM_POOL is dropped in every mode (known-bad output, not votable yet).
+    drop = (NO_PRESET_VOICE if mode == "default" else set()) | HOLD_FROM_POOL
 
     def scan(glob_pat, only=None):
         for d in glob.glob(glob_pat):
