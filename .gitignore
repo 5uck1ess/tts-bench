@@ -42,3 +42,10 @@ scoring/thirdparty/
 # arena local datastore (prod uses Turso; local sqlite is throwaway)
 arena/arena.db
 arena/arena.db-journal
+
+# arena local Turso creds for export_votes (prod reads HF Space secrets, not this
+# file). Never commit; arena/.env.example is the committed template.
+arena/.env
+
+# arena vote-DB backups (manual Turso dumps + their CSV exports) — local only.
+arena/backups/

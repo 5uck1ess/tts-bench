@@ -20,6 +20,7 @@ the local sqlite at ARENA_DB) via config.load_settings(), so:
 
 import argparse
 import csv
+import os
 import sys
 from datetime import datetime, timezone
 
@@ -102,6 +103,16 @@ def main(argv=None) -> int:
     ap.add_argument("--raw", action="store_true",
                     help="dump the full votes schema instead of the NAQ layout")
     args = ap.parse_args(argv)
+
+    # Local convenience: pull arena/.env (TURSO_URL/TURSO_TOKEN) into the environment
+    # so CLI runs reach prod Turso without exporting vars by hand. The deployed Space
+    # never runs this CLI (it reads its own HF secrets), so python-dotenv is a dev-only
+    # dep and the import is optional — its absence is a silent no-op.
+    try:
+        from dotenv import load_dotenv
+        load_dotenv(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".env"))
+    except ImportError:
+        pass
 
     settings = load_settings()
     conn = open_conn(settings)
