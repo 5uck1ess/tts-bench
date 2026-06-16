@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (49)
+## Models tracked (51)
 
 #### Predefined voices
 
@@ -95,6 +95,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [Magpie-TTS](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) | 357M | ✓ | — | ✓ (9) | 22.05k | emotion voices\* | NVIDIA OML |
 | [Maya1](https://huggingface.co/maya-research/maya1) | 3B | ✓ (voice desc) | — | — | 24k | tags + desc | Apache 2.0 |
 | [MeloTTS](https://huggingface.co/myshell-ai/MeloTTS-English) | ~52M | ✓ | — | — (en) | **44.1k** | — | MIT |
+| [Orpheus TTS](https://huggingface.co/canopylabs/orpheus-3b-0.1-ft) | 3B | ✓ (8) | — | — (en) | 24k | tags | Apache 2.0 |
 | [OuteTTS 1.0 1B](https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B) | ~1B | ✓ | ✓ | ✓ (12) | 44.1k | — | CC-BY-NC-SA 4.0 + Llama 3.2 |
 | [Parler-TTS Mini v1](https://huggingface.co/parler-tts/parler-tts-mini-v1) | 878M | ✓ (voice desc) | — | — | **44.1k** | desc\* | Apache 2.0 |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) | ~15M | ✓ | — | ✓ | 22.05k | — | GPL-3.0 |
@@ -110,6 +111,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [ChatterBox](https://huggingface.co/ResembleAI/chatterbox) | 1.2B | — | ✓ | — | 24k | knob | MIT |
 | [ChatterBox Turbo](https://huggingface.co/ResembleAI/chatterbox-turbo) | 744M | — | ✓ | — | 24k | tags\* | MIT |
 | [Coqui XTTS-v2](https://huggingface.co/coqui/XTTS-v2) | 750M | — | ✓ | ✓ (17) | 24k | — | CPML (non-commercial) |
+| [CosyVoice 3 0.5B](https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512) | 0.5B | — | ✓ | ✓ | 24k | desc | Apache 2.0 |
 | [Dia 1.6B-0626](https://huggingface.co/nari-labs/Dia-1.6B-0626) | 1.6B | — | ✓ | — | 44.1k | tags | Apache 2.0 |
 | [dots.tts (soar)](https://huggingface.co/rednote-hilab/dots.tts-soar) | 2B | — | ✓ | ✓ (24) | **48k** | — | Apache 2.0 |
 | [DramaBox](https://github.com/resemble-ai/DramaBox) | 3.3B | — | ✓ | — (en) | **48k** | desc | LTX-2 Community (NC) |
@@ -150,13 +152,13 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 > **Predefined vs Cloning.** *Predefined* models have fixed/selectable speaker voices baked into the weights — they speak with no reference needed. *Cloning* (zero-shot) models have **no voice of their own**: they synthesize whatever voice you hand them as a reference clip at inference. Given no reference, a pure zero-shot model falls back to a bundled sample (this bench uses `chris_hemsworth_15s.wav`), so its "default voice" is just a clone of that clip. A few models do both (e.g. Voxtral has 20 presets *and* cloning).
 
-> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Higgs Audio v3 / dots.tts are Linux-only (CUDA) — Higgs v3 is the one **server-backed** model (it runs via a Docker `sgl-omni` HTTP server, not an in-process load), and dots.tts is Linux-only because its `WeTextProcessing`→`pynini` dependency won't build under Windows MSVC; Echo-TTS and DramaBox are Windows + Linux (CUDA-only, no CPU/MPS; DramaBox needs ~18 GB VRAM). The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
+> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Higgs Audio v3 / dots.tts / Orpheus / CosyVoice 3 are Linux-only (CUDA) — Higgs v3 is the one **server-backed** model (it runs via a Docker `sgl-omni` HTTP server, not an in-process load), dots.tts is Linux-only because its `WeTextProcessing`→`pynini` dependency won't build under Windows MSVC, and Orpheus (vLLM) + CosyVoice 3 (cu121 / torch 2.3.1) have no Blackwell-compatible Windows path; Echo-TTS and DramaBox are Windows + Linux (CUDA-only, no CPU/MPS; DramaBox needs ~18 GB VRAM). The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
 
 ---
 
 ## Voice cloning
 
-**37 of the 49 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**38 of the 51 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 of 32 cloning models, 397 votes, human-preference A/B): **[docs/cloning.md](docs/cloning.md)**.
 
