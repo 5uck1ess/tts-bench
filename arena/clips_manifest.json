@@ -912,6 +912,31 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/coqui_cuda_p5.wav"
         },
         {
+          "model": "cosyvoice",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/cosyvoice_cuda_p1.wav"
+        },
+        {
+          "model": "cosyvoice",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/cosyvoice_cuda_p2.wav"
+        },
+        {
+          "model": "cosyvoice",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/cosyvoice_cuda_p3.wav"
+        },
+        {
+          "model": "cosyvoice",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/cosyvoice_cuda_p4.wav"
+        },
+        {
+          "model": "cosyvoice",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/cosyvoice_cuda_p5.wav"
+        },
+        {
           "model": "dia",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/dia_cuda_p1.wav"
@@ -1681,6 +1706,10 @@
     "coqui": {
       "name": "Coqui XTTS-v2",
       "url": "https://huggingface.co/coqui/XTTS-v2"
+    },
+    "cosyvoice": {
+      "name": "CosyVoice 3 0.5B",
+      "url": "https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512"
     },
     "dia": {
       "name": "Dia 1.6B-0626",

@@ -28,9 +28,11 @@ NO_PRESET_VOICE = {
 }
 
 # Held OUT of the manifest entirely (BOTH lenses) — known-bad output that would
-# pollute the live Elo. Remove a slug here once its bench output is fixed/re-benched.
-#   cosyvoice: cloning output garbled (Tym, 2026-06-16); held pending Linux QA note + re-bench.
-HOLD_FROM_POOL = {"cosyvoice"}
+# pollute the live Elo. Add a slug here to hold it; remove once it's fixed/re-OK'd.
+#   (empty) — cosyvoice un-held 2026-06-16: long-form output is unstable, but Tym
+#   OK'd adding it (cloning lens only — it stays in NO_PRESET_VOICE) so public votes
+#   reflect its real, sometimes-bad quality.
+HOLD_FROM_POOL = set()
 
 _WAV_RE = re.compile(r"(.+)_(cuda|mps|cpu)_p(\d+)\.wav$")
 
