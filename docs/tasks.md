@@ -26,6 +26,10 @@ These were skipped on the **Windows-primary** judgement (vLLM has no Blackwell w
 - [ ] **Step-Audio-TTS-3B** (`stepfun-ai/Step-Audio-TTS-3B`) — *low priority / likely dead end.* Linux-only compiled `.so` extensions make it natively Linux, but upstream github is 404 (abandoned), successor isn't TTS, ~70 downloads/month. Attempt only if the bundled `.so` still loads via `trust_remote_code` on the current torch. NOT the same as `step_editx` (already in).
 - [ ] **VibeVoice-Large 9B** (`aoi-ot/VibeVoice-Large`) — quality-ceiling; ~20-24 GB fp16 is **borderline on the 3090's 24 GB** with our 100+ token prompts. Fit-check (does KV cache fit?), not a clean add — or ship a 4-bit GGUF variant. See considered.md "Future enhancement".
 
+## Tuning notes (documented, not actioned)
+
+- [ ] **Fish S2 temperature** — community tip (Reddit, 2026-06-23): Fish S2 "stays stable at high temp but sounds much more alive than the defaults." A/B'd on the cloning ref at temp 0.80 (bench default) / 0.95 / 1.00, scored through our lenses: **higher temp does not score better.** Per-temp avg — UTMOS 4.232 / 4.221 / 4.202 (flat, slight drop), WER 0.040 / 0.071 / 0.040 (0.95 worst), SIM 0.707 / 0.700 / **0.683** (1.0 measurably erodes clone fidelity; the long-prompt clip audibly drops in volume at 1.0). Bench kept at 0.8. The "more alive" quality is real but our objective lenses can't measure expressivity (same gap as the NAQ-redesign note below — UTMOS rewards stationary tonal output), so it's a real-world usage lever, not a bench win. `fish_s2_runner.py` now exposes `--temperature` (default 0.8) for ad-hoc tuning.
+
 ## Future
 
 - [ ] **NAQ redesign (v3)** — current ARTIFACT macro (HNR-driven) anti-correlates with expressive speech: punishes natural noisiness (breath, plosives, sibilance) and rewards stationary tonal output. NATURALNESS macro rewards raw F0 variance regardless of whether it's linguistically appropriate. Needs features that proxy what they're named for, not what's easy to measure. NAQ has been pulled from the bench entirely — redesign happens offline over the saved wavs, not during a run.

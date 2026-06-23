@@ -43,6 +43,8 @@ def main() -> int:
                    help="Wav path for zero-shot cloning. A sibling .txt (the "
                         "reference transcript) is used if present.")
     p.add_argument("--variant", default=None)
+    p.add_argument("--temperature", type=float, default=0.8,
+                   help="DualAR sampling temperature (bench default 0.8).")
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--language", default="en")
     p.add_argument("--stdin", action="store_true")
@@ -102,7 +104,7 @@ def main() -> int:
                 torch.cuda.manual_seed(42)
             gen = generate_long(
                 model=model, device=args.device, decode_one_token=decode_one_token,
-                text=text, num_samples=1, top_p=0.8, top_k=30, temperature=0.8,
+                text=text, num_samples=1, top_p=0.8, top_k=30, temperature=args.temperature,
                 repetition_penalty=1.1, compile=False, iterative_prompt=True,
                 chunk_length=300,
                 prompt_text=[ref_text] if ref_text else None,
