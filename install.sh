@@ -620,6 +620,21 @@ else
     echo "melotts: already installed"
 fi
 
+# --- LFM2.5-Audio-1.5B (Liquid AI, LFM Open License v1.0, omni S2S -> TTS mode, 4 preset voices, 24k) ---
+echo; cyan "=== LFM2.5-Audio-1.5B (Liquid AI, omni S2S — TTS mode, 4 preset voices, 24k) ==="
+if ! want lfm2_audio; then echo "lfm2_audio: skipped (not in install filter)"
+elif [ ! -x venvs/lfm2_audio/bin/python ]; then
+    # liquid-audio needs Python >=3.12 (NOT 3.11). Linux PyPI torch is CUDA-enabled — no
+    # cu128 reinstall. flash-attn optional (torch-SDPA fallback) — skip it. Install ONLY
+    # liquid-audio (it pulls librosa/soundfile/numpy + torch); passing numpy explicitly
+    # backtracks numba->0.53 which rejects py3.12. Single-process; benches the TTS mode only.
+    uv venv venvs/lfm2_audio --python 3.12 || die "uv venv lfm2_audio"
+    uv pip install --python venvs/lfm2_audio/bin/python liquid-audio || die "uv pip install liquid-audio"
+    green "lfm2_audio: ok (LFM2.5-Audio-1.5B weights auto-download from HF on first run; English, 24k, 4 preset voices, no cloning)"
+else
+    echo "lfm2_audio: already installed"
+fi
+
 # --- Higgs Audio v3 TTS (Boson AI, Research/Non-Commercial, ~4B) — SERVER-BACKED, LINUX-ONLY ---
 #
 # Unlike every other model here, Higgs v3 is NOT a venv install: its only supported
@@ -655,6 +670,40 @@ elif [ ! -x venvs/higgs_v3/bin/python ]; then
     green "higgs_v3: ok (HTTP client only — start the sgl-omni Docker server before benching; see comment above)"
 else
     echo "higgs_v3: already installed (client venv; remember to start the sgl-omni Docker server)"
+fi
+
+# --- MioTTS (Aratako, LLM-codec TTS) — SERVER-BACKED, LINUX-ONLY (reuses the box's llama.cpp) ---
+#
+# MioTTS is NOT a single-process venv: a base LLM (GGUF) emits MioCodec tokens that a
+# MioCodec torch model decodes to a 44.1 kHz wav. Inference is TWO standing servers; this
+# stanza creates ONLY the thin HTTP-client venv (requests + soundfile + numpy, no torch).
+# The two sizes (0.1b/0.6b) share this client venv + runner; --variant is labeling only.
+#
+# SERVER PREREQUISITES (run manually, once per size, before benching) — Linux + CUDA:
+#   1. LLM server — reuse the box's llama.cpp (hosts ONE GGUF at a time):
+#        llama-server -hf Aratako/MioTTS-GGUF -hff MioTTS-0.6B-BF16.gguf -c 8192 \
+#          --cont-batching --batch_size 8 --port 8000
+#      (0.1B: -hff MioTTS-0.1B-BF16.gguf — restart the server to switch sizes, one per pass.)
+#   2. MioTTS REST orchestrator (clone the inference repo into venvs/miotts/src; uv sync):
+#        git clone https://github.com/Aratako/MioTTS-Inference venvs/miotts/src
+#        ( cd venvs/miotts/src && uv sync )      # pulls torch + MioCodec deps
+#        venvs/miotts/src/.venv/bin/python venvs/miotts/src/run_server.py \
+#          --llm-base-url http://localhost:8000/v1 --port 8001
+#      (downloads MioCodec-25Hz-44.1kHz-v2 on first run; --device cuda.)
+#   Smoke-test:  curl -X POST http://localhost:8001/v1/tts -H "Content-Type: application/json" \
+#                  -d '{"text":"The quick brown fox.","reference":{"type":"base64","data":"<b64 wav>"},"output":{"format":"wav"}}' \
+#                  --output /tmp/m.wav
+# Licenses: code MIT; weights — 0.6B Apache-2.0, 0.1B Falcon-LLM. The GGUFs + MioCodec are
+# downloaded by the servers above, NOT by this script. See docs/known-issues.md.
+echo; cyan "=== MioTTS (Aratako, server-backed client venv only — Linux-only) ==="
+if ! want miotts_01b && ! want miotts_06b; then echo "miotts: skipped (not in install filter)"
+elif [ ! -x venvs/miotts/bin/python ]; then
+    uv venv venvs/miotts --python 3.11 || die "uv venv miotts"
+    uv pip install --python venvs/miotts/bin/python requests soundfile numpy \
+        || die "uv pip install miotts client"
+    green "miotts: ok (HTTP client only — start the llama.cpp + MioTTS REST servers before benching; see comment above)"
+else
+    echo "miotts: already installed (client venv; remember to start the LLM + MioTTS REST servers)"
 fi
 
 # --- DramaBox (Resemble AI, LTX-2 Community/NC, LTX-2.3 3.3B audio DiT, 48k, dialogue + cloning, CUDA-only) ---

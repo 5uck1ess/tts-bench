@@ -164,6 +164,22 @@ MODELS = [
     # lens uses the supplied wav; both need the reference's literal transcript (sibling
     # .txt). Multilingual=True (ZH/EN/JA/KO/yue+) -> FR prompt runs. CUDA-only (fp16).
     ("cosyvoice",   "cosyvoice",  "runners/cosyvoice_runner.py",  True,  ["cuda"],  None,   True),
+    # LFM2.5-Audio-1.5B (Liquid AI, LFM Open License v1.0) — end-to-end omni speech<->text
+    # model; we bench its TTS mode (sequential generation) only. PREDEFINED-VOICE (4 voices
+    # via system prompt, no wav cloning -> can_clone=False, default lens). Single-process
+    # `pip install liquid-audio` (py>=3.12), in-process torch model, 24 kHz, English-only.
+    # cpu+cuda (cross-rig). NOT in NO_PRESET_VOICE.
+    ("lfm2_audio",  "lfm2_audio", "runners/lfm2_audio_runner.py", False, ["cpu", "cuda"], None,  False),
+    # MioTTS (Aratako) — LLM-codec TTS, SERVER-BACKED, runs on Linux-3090 (reuses its
+    # llama.cpp). A llama.cpp/Ollama OpenAI server (emits MioCodec tokens) + the
+    # MioTTS-Inference run_server.py REST orchestrator (decodes via MioCodec torch -> 44.1 kHz
+    # wav); miotts_runner.py is a thin HTTP client (no torch in its venv -> SERVER_BACKED).
+    # Pure zero-shot cloner, base64 reference in-band (no bind-mount, no transcript) ->
+    # NO_PRESET_VOICE (cloning board only, like cosyvoice). The two sizes share runner+venv+
+    # servers; --variant is labeling only (the LLM server hosts one GGUF at a time, so each
+    # size benches in its own server session). 0.6B = Apache-2.0, 0.1B = Falcon-LLM. EN/JA.
+    ("miotts_01b",  "miotts",     "runners/miotts_runner.py",     False, ["cuda"],  "0.1b", True),
+    ("miotts_06b",  "miotts",     "runners/miotts_runner.py",     False, ["cuda"],  "0.6b", True),
 ]
 
 
@@ -194,6 +210,9 @@ GPU_CLASS = {
     "orpheus",
     # cosyvoice: 0.5B LLM + fp16 flow-matching — CUDA-only (no CPU/MPS path benched).
     "cosyvoice",
+    # miotts: server-backed (the llama.cpp LLM + MioCodec servers run on the GPU); the
+    # thin HTTP-client venv has no torch, so tag gpu-class to skip non-CUDA rigs by default.
+    "miotts_01b", "miotts_06b",
 }
 
 
@@ -206,6 +225,9 @@ SERVER_BACKED = {
     # vibevoice_15b: ~0.03-0.07x RTF on M4 CPU (long-form times out at 600s) and
     # OOMs at load on mps (10.94 GiB > 16 GB). Runs on CUDA rigs; skip on non-CUDA.
     "vibevoice_15b",
+    # miotts: inference is in the llama.cpp LLM server + MioTTS REST orchestrator; the
+    # client venv has no torch, so build_cells uses detect_cuda_smi() for these.
+    "miotts_01b", "miotts_06b",
 }
 
 

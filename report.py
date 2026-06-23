@@ -434,6 +434,9 @@ MODEL_DISPLAY_NAMES = {
     "longcat_3p5b":  "LongCat-AudioDiT 3.5B",
     "orpheus":       "Orpheus-TTS 3B",
     "cosyvoice":     "CosyVoice 3 0.5B",
+    "lfm2_audio":    "LFM2.5-Audio 1.5B",
+    "miotts_01b":    "MioTTS 0.1B",
+    "miotts_06b":    "MioTTS 0.6B",
     "coqui":         "Coqui XTTS-v2",
     "vibevoice":     "VibeVoice Realtime 0.5B",
     "vibevoice_15b": "VibeVoice 1.5B",
@@ -513,6 +516,9 @@ MODEL_SIZE = {
     "longcat_3p5b":  "3.83B",
     "orpheus":       "3.3B",   # Llama-3.2-3B backbone + SNAC decoder
     "cosyvoice":     "0.5B",   # Fun-CosyVoice3-0.5B-2512
+    "lfm2_audio":    "1.5B",   # 1.2B LFM2.5 LM + 115M FastConformer encoder
+    "miotts_01b":    "0.1B",   # Falcon-H1-Tiny-Multilingual-100M backbone
+    "miotts_06b":    "0.6B",   # Qwen3-0.6B-Base backbone
     "mars5":         "1.2B",
     "dia":           "1.6B",
     "kokoro":        "82M",
@@ -575,6 +581,9 @@ MODEL_URL = {
     "longcat_3p5b":  _HF + "meituan-longcat/LongCat-AudioDiT-3.5B",
     "orpheus":       _HF + "canopylabs/orpheus-3b-0.1-ft",
     "cosyvoice":     _HF + "FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
+    "lfm2_audio":    _HF + "LiquidAI/LFM2.5-Audio-1.5B",
+    "miotts_01b":    _HF + "Aratako/MioTTS-0.1B",
+    "miotts_06b":    _HF + "Aratako/MioTTS-0.6B",
     "mars5":         _HF + "Camb-ai/mars5-tts",
     "dia":           _HF + "nari-labs/Dia-1.6B-0626",
     "kokoro":        _HF + "hexgrad/Kokoro-82M",
@@ -635,6 +644,9 @@ MODEL_KIND = {
     "longcat_3p5b":  "cloning",
     "orpheus":       "predefined",   # named preset voices (tara, ...), no wav cloning
     "cosyvoice":     "cloning",
+    "lfm2_audio":    "predefined",   # 4 preset voices (US/UK x m/f) via system prompt; no wav cloning
+    "miotts_01b":    "cloning",      # zero-shot clone; no-reference run = bundled chris clip
+    "miotts_06b":    "cloning",
     "mars5":         "cloning",
     "dia":           "cloning",
     "neutts_air":    "cloning",

@@ -650,6 +650,25 @@ if (-not (Want "melotts")) { Write-Host "melotts: skipped (not in install filter
     Write-Host "melotts: ok (MeloTTS-English weights auto-download from HF on first run; EN-US speaker, 44.1k, predefined voice)" -ForegroundColor Green
 } else { Write-Host "melotts: already installed" -ForegroundColor Gray }
 
+Step "LFM2.5-Audio-1.5B (Liquid AI, LFM Open License v1.0, omni S2S -> TTS mode, predefined voices, 24k)"
+if (-not (Want "lfm2_audio")) { Write-Host "lfm2_audio: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\lfm2_audio\Scripts\python.exe")) {
+    # liquid-audio needs Python >=3.12 (NOT 3.11). Install the package (pulls librosa /
+    # soundfile / numpy + a CPU torch), THEN swap in the cu128 torch+torchaudio LAST
+    # (Blackwell sm_120; PyPI Windows torch is CPU-only). flash-attn intentionally skipped
+    # on Windows (optional; torch-SDPA fallback). Single-process; benches the TTS mode only.
+    Invoke-Checked "uv venv lfm2_audio" { uv venv venvs\lfm2_audio --python 3.12 }
+    Invoke-Checked "uv pip install liquid-audio" { uv pip install --python venvs\lfm2_audio\Scripts\python.exe liquid-audio }
+    Invoke-Checked "torch cu128 for lfm2_audio (LAST)" { uv pip install --python venvs\lfm2_audio\Scripts\python.exe --reinstall-package torch --reinstall-package torchaudio torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "lfm2_audio: ok (LFM2.5-Audio-1.5B weights auto-download from HF on first run; English, 24k, 4 preset voices, no cloning)" -ForegroundColor Green
+} else { Write-Host "lfm2_audio: already installed" -ForegroundColor Gray }
+
+# --- MioTTS — LINUX-ONLY here, intentionally no Windows stanza ---
+# MioTTS is server-backed: a llama.cpp/Ollama LLM server (emits MioCodec tokens) + the
+# MioTTS-Inference REST orchestrator (run_server.py). We run it on the Linux-3090 (reuses
+# its existing llama.cpp); see install.sh's miotts stanza + docs/known-issues.md. The thin
+# HTTP-client runner (runners/miotts_runner.py) is rig-agnostic. No Windows install here.
+
 # --- Higgs Audio v3 TTS — LINUX-ONLY, intentionally no Windows stanza ---
 # Higgs v3 is server-backed: its only inference path is a Docker container running
 # `sgl-omni serve` (an HTTP server), driven by a thin client venv. That path is set up on

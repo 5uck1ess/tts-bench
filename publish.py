@@ -60,6 +60,9 @@ NO_PRESET_VOICE = {
     # cosyvoice: pure zero-shot cloning, no model-native preset — its "default"
     # lens just clones the house ref (chris_hemsworth), like moss_tts.
     "cosyvoice",
+    # miotts: pure zero-shot cloner (base64 ref), no model-native preset voice —
+    # cloning board only, like cosyvoice. (Keep in sync with arena/build_manifest.py.)
+    "miotts_01b", "miotts_06b",
 }
 
 # Curated per-(model, voice-mode) QA findings, surfaced as a small badge + tooltip on
