@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (51)
+## Models tracked (52)
 
 #### Predefined voices
 
@@ -91,6 +91,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 |---|---|---|---|---|---|---|---|
 | [KittenTTS Nano 0.1](https://huggingface.co/KittenML/kitten-tts-nano-0.1) | <100M | ✓ | — | — | 24k | — | Apache 2.0 |
 | [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) | 82M | ✓ | — | ✓ | 24k | — | Apache 2.0 |
+| [LFM2.5-Audio 1.5B](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B) | 1.5B | ✓ (4) | — | — (en) | 24k | — | LFM Open v1.0 |
 | [LuxTTS](https://github.com/ysharma3501/LuxTTS) | 123M | ✓ | — | — | 22.05k | — | MIT |
 | [Magpie-TTS](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) | 357M | ✓ | — | ✓ (9) | 22.05k | emotion voices\* | NVIDIA OML |
 | [Maya1](https://huggingface.co/maya-research/maya1) | 3B | ✓ (voice desc) | — | — | 24k | tags + desc | Apache 2.0 |
