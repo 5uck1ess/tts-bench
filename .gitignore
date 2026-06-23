@@ -3,6 +3,8 @@
 venvs/
 results/
 outputs/
+scratch_fish_ab/
+scratch_*/
 .claude/
 _gh-pages/
 reference/*.wav
