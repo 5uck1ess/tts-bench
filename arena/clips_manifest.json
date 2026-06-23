@@ -242,6 +242,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/kokoro_cuda_p5.wav"
         },
         {
+          "model": "lfm2_audio",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm2_audio_cuda_p1.wav"
+        },
+        {
+          "model": "lfm2_audio",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm2_audio_cuda_p2.wav"
+        },
+        {
+          "model": "lfm2_audio",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm2_audio_cuda_p3.wav"
+        },
+        {
+          "model": "lfm2_audio",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm2_audio_cuda_p4.wav"
+        },
+        {
           "model": "longcat_1b",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_1b_cuda_p1.wav"
@@ -1232,6 +1252,46 @@
           "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/metavoice_cuda_p4.wav"
         },
         {
+          "model": "miotts_01b",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/miotts_01b_cuda_p1.wav"
+        },
+        {
+          "model": "miotts_01b",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/miotts_01b_cuda_p2.wav"
+        },
+        {
+          "model": "miotts_01b",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/miotts_01b_cuda_p3.wav"
+        },
+        {
+          "model": "miotts_01b",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/miotts_01b_cuda_p4.wav"
+        },
+        {
+          "model": "miotts_06b",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/miotts_06b_cuda_p1.wav"
+        },
+        {
+          "model": "miotts_06b",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/miotts_06b_cuda_p2.wav"
+        },
+        {
+          "model": "miotts_06b",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/miotts_06b_cuda_p3.wav"
+        },
+        {
+          "model": "miotts_06b",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/miotts_06b_cuda_p4.wav"
+        },
+        {
           "model": "miratts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/miratts_cuda_p1.wav"
@@ -1755,6 +1815,10 @@
       "name": "Kokoro",
       "url": "https://huggingface.co/hexgrad/Kokoro-82M"
     },
+    "lfm2_audio": {
+      "name": "LFM2.5-Audio 1.5B",
+      "url": "https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B"
+    },
     "longcat_1b": {
       "name": "LongCat-AudioDiT 1B",
       "url": "https://huggingface.co/meituan-longcat/LongCat-AudioDiT-1B"
@@ -1786,6 +1850,14 @@
     "metavoice": {
       "name": "MetaVoice-1B",
       "url": "https://huggingface.co/metavoiceio/metavoice-1B-v0.1"
+    },
+    "miotts_01b": {
+      "name": "MioTTS 0.1B",
+      "url": "https://huggingface.co/Aratako/MioTTS-0.1B"
+    },
+    "miotts_06b": {
+      "name": "MioTTS 0.6B",
+      "url": "https://huggingface.co/Aratako/MioTTS-0.6B"
     },
     "miratts": {
       "name": "MiraTTS",
