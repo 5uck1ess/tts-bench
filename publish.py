@@ -122,6 +122,15 @@ KNOWN_ISSUES = {
         "second (p1) and long prompts over-generate — the model's LLM decoder has no "
         "hard length cap. Inherent CosyVoice behavior at upstream defaults, not a bench defect."
     ),
+    # miotts is NO_PRESET_VOICE -> cloning board only (like cosyvoice). Only the 0.6B
+    # shows the instability; the 0.1B sibling is clean, so it carries no badge.
+    ("miotts_06b", "cloning"): (
+        "note", "⟳ length varies",
+        "Output length is unstable: on the short prompt (p1) the LLM-codec decoder "
+        "over-generated to ~17 s, dragging that clip to UTMOS 1.34 / WER 0.43. Inherent "
+        "MioTTS-0.6B behavior at upstream defaults (same class as cosyvoice), not a bench "
+        "defect — the 0.1B sibling stays clean."
+    ),
     # Add new entries here as QA surfaces them — use "warn" only for genuine defects.
 }
 
