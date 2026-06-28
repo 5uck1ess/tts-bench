@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (54)
+## Models tracked (55)
 
 #### Predefined voices
 
@@ -146,6 +146,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [VibeVoice 1.5B](https://huggingface.co/microsoft/VibeVoice-1.5B) | 1.5B | — | ✓ | — | 24k | — | MIT |
 | [VibeVoice 7B](https://huggingface.co/vibevoice/VibeVoice-7B) | 7B | — | ✓ | — | 24k | — | MIT |
 | [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) | 2B | — | ✓ | ✓ (30) | **48k** | desc | Apache 2.0 |
+| [WavTTS](https://github.com/cwx-worst-one/WavTTS) | 0.67B | — | ✓ | ✓ (zh+en) | **16k** | — | MIT code / CC-BY-NC 4.0 weights |
 | [ZipVoice](https://huggingface.co/k2-fsa/ZipVoice) | 123M | — | ✓ | ✓ (zh+en) | 24k | — | Apache 2.0 |
 | [Zonos v0.1](https://huggingface.co/Zyphra/Zonos-v0.1-transformer) | 1.6B | — | ✓ | ✓ | **44.1k** | emo-ref + knob | Apache 2.0 |
 
@@ -161,7 +162,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**40 of the 54 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**41 of the 55 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 of 32 cloning models, 397 votes, human-preference A/B): **[docs/cloning.md](docs/cloning.md)**.
 
