@@ -26,6 +26,7 @@ NO_PRESET_VOICE = {
     "openvoice", "zipvoice", "zonos", "vibevoice_15b", "vibevoice_7b", "echo", "dots_tts",
     "cosyvoice",  # pure zero-shot cloning, no model-native preset (mirrors publish.py)
     "miotts_01b", "miotts_06b",  # MioTTS: pure zero-shot cloner, cloning board only
+    "wavtts",  # WavTTS: pure zero-shot cloner (ref wav + .txt), cloning board only
 }
 
 # Held OUT of the manifest entirely (BOTH lenses) — known-bad output that would

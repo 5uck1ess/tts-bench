@@ -437,6 +437,7 @@ MODEL_DISPLAY_NAMES = {
     "lfm2_audio":    "LFM2.5-Audio 1.5B",
     "miotts_01b":    "MioTTS 0.1B",
     "miotts_06b":    "MioTTS 0.6B",
+    "wavtts":        "WavTTS 0.67B",
     "coqui":         "Coqui XTTS-v2",
     "vibevoice":     "VibeVoice Realtime 0.5B",
     "vibevoice_15b": "VibeVoice 1.5B",
@@ -519,6 +520,7 @@ MODEL_SIZE = {
     "lfm2_audio":    "1.5B",   # 1.2B LFM2.5 LM + 115M FastConformer encoder
     "miotts_01b":    "0.1B",   # Falcon-H1-Tiny-Multilingual-100M backbone
     "miotts_06b":    "0.6B",   # Qwen3-0.6B-Base backbone
+    "wavtts":        "0.67B",  # WavTTS_Large DiT (1152x28), 673M from checkpoint
     "mars5":         "1.2B",
     "dia":           "1.6B",
     "kokoro":        "82M",
@@ -612,6 +614,7 @@ MODEL_URL = {
     "higgs_v3":      _HF + "bosonai/higgs-audio-v3-tts-4b",
     "dramabox":      "https://github.com/resemble-ai/DramaBox",
     "dots_tts":      _HF + "rednote-hilab/dots.tts-soar",
+    "wavtts":        "https://github.com/cwx-worst-one/WavTTS",
 }
 
 # Whether a model supports zero-shot voice cloning at runtime.
@@ -674,6 +677,7 @@ MODEL_KIND = {
     "higgs_v3":      "cloning",   # zero-shot cloning; no-reference run = its own default voice
     "dramabox":      "cloning",   # 10s+ wav cloning; no-reference run = prompt-described voice
     "dots_tts":      "cloning",   # zero-shot cloning (+ ref transcript); no-reference run = bundled chris clip
+    "wavtts":        "cloning",   # no preset voice — zero-shot clones from ref wav + sibling .txt
 }
 
 

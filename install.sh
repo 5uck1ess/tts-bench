@@ -192,6 +192,23 @@ else
     echo "f5tts: already installed"
 fi
 
+# --- WavTTS 0.67B (cwx-worst-one/worstchan, MIT code / CC-BY-NC-4.0 weights, raw-waveform DiT, 16kHz, zero-shot cloning) ---
+echo; cyan "=== WavTTS 0.67B (raw-waveform DiT, 16kHz, zero-shot cloning) ==="
+if ! want wavtts; then echo "wavtts: skipped (not in install filter)"
+elif [ ! -x venvs/wavtts/bin/python ]; then
+    uv venv venvs/wavtts --python 3.11 || die "uv venv wavtts"
+    [ -d venvs/wavtts/src ] || git clone https://github.com/cwx-worst-one/WavTTS venvs/wavtts/src || die "git clone WavTTS"
+    # WavTTS is F5-based, CUDA-only. On Linux the PyPI torch the editable install pulls is
+    # already CUDA-enabled (Ampere 3090 — no cu128 swap needed). torchcodec is a hard dep but
+    # stays dormant: the runner monkey-patches torchaudio.load to soundfile (the f5tts dodge).
+    # numpy<2.0 + pydantic<=2.10.6 are pinned by the package.
+    uv pip install --python venvs/wavtts/bin/python -e venvs/wavtts/src \
+        || die "uv pip install wavtts"
+    green "wavtts: ok (16kHz raw-waveform DiT; checkpoint auto-downloads from HF on first run)"
+else
+    echo "wavtts: already installed"
+fi
+
 # --- Coqui XTTS-v2 (idiap fork) ---
 echo; cyan "=== Coqui XTTS-v2 (idiap fork) ==="
 if ! want coqui; then echo "coqui: skipped (not in install filter)"

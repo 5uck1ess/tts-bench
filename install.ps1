@@ -152,6 +152,25 @@ if (-not (Want "f5tts")) { Write-Host "f5tts: skipped (not in install filter)" -
     Write-Host "f5tts: already installed" -ForegroundColor Gray
 }
 
+Step "WavTTS 0.67B (cwx-worst-one/worstchan, MIT code / CC-BY-NC-4.0 weights, raw-waveform DiT, 16kHz, zero-shot cloning)"
+if (-not (Want "wavtts")) { Write-Host "wavtts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\wavtts\Scripts\python.exe")) {
+    Invoke-Checked "uv venv wavtts" { uv venv venvs\wavtts --python 3.11 }
+    if (-not (Test-Path "venvs\wavtts\src")) {
+        Invoke-Checked "git clone WavTTS" { git clone https://github.com/cwx-worst-one/WavTTS venvs\wavtts\src }
+    }
+    # WavTTS is built on the F5-TTS codebase. Install Blackwell cu128 torch FIRST (RTX 5090,
+    # sm_120) so the editable install sees torch>=2.0 satisfied and doesn't pull a CPU build.
+    Invoke-Checked "torch cu128 for wavtts" { uv pip install --python venvs\wavtts\Scripts\python.exe torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    # Editable wavtts package. It hard-deps torchcodec (a Windows wheel installs, but the
+    # runner monkey-patches torchaudio.load to soundfile so torchcodec stays dormant — same
+    # FFmpeg-DLL dodge as f5tts). numpy<2.0 + pydantic<=2.10.6 are pinned by the package.
+    Invoke-Checked "uv pip install wavtts" { uv pip install --python venvs\wavtts\Scripts\python.exe -e venvs\wavtts\src }
+    Write-Host "wavtts: ok (16kHz raw-waveform DiT; checkpoint auto-downloads from HF on first run)" -ForegroundColor Green
+} else {
+    Write-Host "wavtts: already installed" -ForegroundColor Gray
+}
+
 Step "Coqui XTTS-v2 (idiap fork)"
 if (-not (Want "coqui")) { Write-Host "coqui: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\coqui\Scripts\python.exe")) {

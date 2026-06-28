@@ -63,6 +63,9 @@ NO_PRESET_VOICE = {
     # miotts: pure zero-shot cloner (base64 ref), no model-native preset voice —
     # cloning board only, like cosyvoice. (Keep in sync with arena/build_manifest.py.)
     "miotts_01b", "miotts_06b",
+    # wavtts: pure zero-shot cloner (ref wav + sibling .txt), no model-native preset —
+    # its "default" lens clones the house ref, like cosyvoice. Cloning board only.
+    "wavtts",
 }
 
 # Curated per-(model, voice-mode) QA findings, surfaced as a small badge + tooltip on

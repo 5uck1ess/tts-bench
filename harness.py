@@ -180,6 +180,17 @@ MODELS = [
     # size benches in its own server session). 0.6B = Apache-2.0, 0.1B = Falcon-LLM. EN/JA.
     ("miotts_01b",  "miotts",     "runners/miotts_runner.py",     False, ["cuda"],  "0.1b", True),
     ("miotts_06b",  "miotts",     "runners/miotts_runner.py",     False, ["cuda"],  "0.6b", True),
+    # WavTTS (cwx-worst-one / worstchan, MIT code / CC-BY-NC-4.0 weights) — zero-shot TTS
+    # that generates DIRECTLY in the raw waveform space (no mel, no VAE latent, no codec
+    # tokens): a flow-matching DiT (WavTTS_Large, 1152x28, ~673M) built on the F5-TTS
+    # codebase, 16 kHz. PURE CLONING (reference wav + sibling .txt transcript, like
+    # cosyvoice/longcat) -> NO_PRESET_VOICE in publish.py / arena/build_manifest.py
+    # (cloning board only; default lens clones the house chris_hemsworth ref). ZH/EN only
+    # (Emilia ZH_EN, pinyin tokenizer) -> multilingual=False, FR prompt skipped. The
+    # `wavtts` package is an editable clone in venvs/wavtts/src; the checkpoint
+    # cached_path-downloads from HF on first run. CUDA-only (NFE-50 DiT diffusion);
+    # torchaudio.load is monkey-patched to soundfile so torchcodec stays dormant (f5tts trick).
+    ("wavtts",      "wavtts",     "runners/wavtts_runner.py",     False, ["cuda"],  None,   True),
 ]
 
 
@@ -210,6 +221,8 @@ GPU_CLASS = {
     "orpheus",
     # cosyvoice: 0.5B LLM + fp16 flow-matching — CUDA-only (no CPU/MPS path benched).
     "cosyvoice",
+    # wavtts: NFE-50 raw-waveform DiT diffusion (~673M) — CUDA-only (no CPU/MPS path benched).
+    "wavtts",
     # miotts: server-backed (the llama.cpp LLM + MioCodec servers run on the GPU); the
     # thin HTTP-client venv has no torch, so tag gpu-class to skip non-CUDA rigs by default.
     "miotts_01b", "miotts_06b",
