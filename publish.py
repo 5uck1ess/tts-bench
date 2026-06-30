@@ -36,7 +36,7 @@ if hasattr(sys.stderr, "reconfigure"):
 from report import (
     STYLE, CONTROLS, SCRIPT, PROMPT_INFO, MODEL_SIZE, MODEL_KIND,
     _ds, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
-    _build_context, _speed_table_html, _display_name,
+    _build_context, _speed_table_html, _display_name, _release_label, _release_td,
 )
 
 # Models that synthesize more than English (from the README capability table) —
@@ -651,8 +651,10 @@ def build_listen():
 
     bm = ['<div id="view-by-model" style="display:none">']
     for m in _by_name(set(default_clips) | set(cloning_clips)):
+        rel = _release_label(m)
+        meta = escape(MODEL_SIZE.get(m, "—")) + (f' · {escape(rel)}' if rel else "")
         bm.append(f'<details class="panel" id="m-{escape(m)}"><summary>{escape(_display_name(m))} '
-                  f'<span class="summary-meta">{escape(MODEL_SIZE.get(m, "—"))}</span> '
+                  f'<span class="summary-meta">{meta}</span> '
                   f'{_badges(m)}{_issue_badge(m, "default")}{_issue_badge(m, "cloning")}</summary>')
         bm.append(_model_section("Default voice", default_clips.get(m, {}), m, "default"))
         bm.append(_model_section("Cloning — chris_hemsworth", cloning_clips.get(m, {}), m, "cloning",
@@ -857,7 +859,7 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
     # Numeric headers get class="num" so they right-align over their right-aligned
     # number cells (td.num); a plain <th> is left-aligned and visibly drifts off its
     # column on wide screens where each column is stretched.
-    head = '<th>Model</th><th>Size</th>' + "".join(
+    head = '<th>Model</th><th>Size</th><th>Released</th>' + "".join(
         f'<th class="num">{escape(h)} {"↑" if up else "↓"}</th>' for (_k, h, up) in columns)
     if show_health:
         head += '<th class="num">Health</th>'
@@ -875,7 +877,8 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
         flagged = agg.get("wer") is not None and agg["wer"] > WER_FAIL_THRESHOLD
         cls = ' class="flagged"' if flagged else ""
         cells = [f'<td>{escape(_display_name(m))}</td>',
-                 f'<td class="muted">{escape(MODEL_SIZE.get(m, "—"))}</td>']
+                 f'<td class="muted">{escape(MODEL_SIZE.get(m, "—"))}</td>',
+                 _release_td(m)]
         for (k, _h, _up) in columns:
             v = agg.get(k)
             if v is None:
@@ -945,7 +948,9 @@ def build_scores():
            f'<h3 class="sub-head">Cloning <span class="muted">· fidelity + naturalness + '
            f'intelligibility</span></h3>{cloning_tbl}</div>',
            foot,
-           '<script>window.__defaultSort = {colIdx: 2, dir: -1};</script>',
+           # colIdx 3 = first metric column (after Model/Size/Released): UTMOS on
+           # the default board, SIM on the cloning board — keep the metric-led sort.
+           '<script>window.__defaultSort = {colIdx: 3, dir: -1};</script>',
            SCRIPT, _MODE_TAB_SCRIPT, '</body></html>']
     (WORKTREE / "scores.html").write_text("\n".join(out), encoding="utf-8")
 

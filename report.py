@@ -681,6 +681,101 @@ MODEL_KIND = {
 }
 
 
+# Release month (YYYY-MM) per model. Sourced programmatically from the canonical
+# checkpoint repo's creation date — HF `createdAt` / GitHub `created_at` — which is
+# the first public appearance of the weights, a faithful release proxy at month
+# granularity. Variants sharing a checkpoint share its date (qwentts/qwentts_fast).
+# NOTE: piper is dated to the ORIGINAL rhasspy/piper engine (2023-01); MODEL_URL
+# points at the later piper1-gpl GPL re-home (2025), which would misdate a classic.
+MODEL_RELEASE = {
+    "pocket":        "2026-01",
+    "neutts_air":    "2025-09",
+    "neutts_nano":   "2025-12",
+    "luxtts":        "2026-01",
+    "chatterbox":       "2025-04",
+    "chatterbox_turbo": "2025-12",
+    "f5tts":         "2024-10",
+    "coqui":         "2023-10",
+    "vibevoice":     "2025-12",
+    "vibevoice_15b": "2025-08",
+    "vibevoice_7b":  "2025-09",
+    "omnivoice":     "2026-03",
+    "zipvoice":      "2025-06",
+    "voxcpm":        "2026-04",
+    "magpie":        "2025-12",
+    "qwentts":       "2026-01",
+    "qwentts_fast":  "2026-01",
+    "indextts":      "2025-06",
+    "sesame":        "2025-03",
+    "miso":          "2026-05",
+    "longcat_1b":    "2026-03",
+    "longcat_3p5b":  "2026-03",
+    "orpheus":       "2025-03",
+    "cosyvoice":     "2025-12",
+    "lfm2_audio":    "2025-12",
+    "miotts_01b":    "2026-02",
+    "miotts_06b":    "2026-02",
+    "mars5":         "2024-06",
+    "dia":           "2025-06",
+    "kokoro":        "2024-12",
+    "kittentts":     "2025-08",
+    "piper":         "2023-01",   # original rhasspy/piper engine, not the piper1-gpl re-home
+    "soprano":       "2026-01",
+    "moss_tts_nano": "2026-04",
+    "moss_tts":      "2026-02",
+    "moss_tts_v15":  "2026-05",
+    "supertonic":    "2026-05",
+    "maya1":         "2025-10",
+    "voxtral":       "2025-11",
+    "fish_15":       "2024-11",
+    "fish_s2":       "2026-03",
+    "echo":          "2025-12",
+    "zonos":         "2025-02",
+    "openvoice":     "2024-04",
+    "styletts2":     "2023-06",
+    "metavoice":     "2024-02",
+    "step_editx":    "2025-10",
+    "miratts":       "2025-12",
+    "outetts":       "2025-04",
+    "parler":        "2024-06",
+    "melotts":       "2024-02",
+    "higgs":         "2025-07",
+    "higgs_v3":      "2026-06",
+    "dramabox":      "2026-04",
+    "dots_tts":      "2026-06",
+    "wavtts":        "2026-05",
+}
+
+_MONTHS = ("", "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+           "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def _release_label(model):
+    """Human label for the Released column, e.g. 'May 2026'; '' when unknown."""
+    ym = MODEL_RELEASE.get(model)
+    if not ym:
+        return ""
+    y, m = ym.split("-")
+    return f"{_MONTHS[int(m)]} {y}"
+
+
+def _release_sort(model):
+    """Numeric YYYYMM for the data-sort attr (parseFloat-friendly, chronological);
+    None when unknown so the cell sorts to the bottom like other missing values."""
+    ym = MODEL_RELEASE.get(model)
+    if not ym:
+        return None
+    y, m = ym.split("-")
+    return int(y) * 100 + int(m)
+
+
+def _release_td(model, cls="muted"):
+    """A sortable Released table cell: 'May 2026' display, numeric YYYYMM data-sort."""
+    s = _release_sort(model)
+    ds = f' data-sort="{s}"' if s is not None else ' data-sort=""'
+    return f'<td class="{cls}"{ds}>{escape(_release_label(model) or "—")}</td>'
+
+
 def _ds(val):
     """data-sort attribute for numeric cells; empty when None."""
     return f' data-sort="{val}"' if val is not None else ' data-sort=""'
@@ -996,7 +1091,7 @@ def _speed_table_html(ctx):
     The caller decides where to place it and whether to set window.__defaultSort
     (rtf_warm_col_idx is returned so the caller can default-sort by warm RTF)."""
     cols = ("Model", "Device", "TTFA cold", "TTFA warm",
-            "RTF cold", "RTF warm", "Peak RAM", "Peak VRAM", "Size")
+            "RTF cold", "RTF warm", "Peak RAM", "Peak VRAM", "Size", "Released")
     num_cols = {"TTFA cold", "TTFA warm", "RTF cold", "RTF warm",
                 "Peak RAM", "Peak VRAM"}
     rtf_warm_idx = cols.index("RTF warm")
@@ -1044,6 +1139,7 @@ def _speed_table_html(ctx):
         out.append(f'<td class="num"{_ds(a["peak_mem"])}>{_fmt_mb(a["peak_mem"])}</td>')
         out.append(f'<td class="num"{_ds(a["peak_vram"])}>{_fmt_mb(a["peak_vram"])}</td>')
         out.append(f'<td class="muted">{escape(size_str)}</td>')
+        out.append(_release_td(model))
         out.append('</tr>')
     out.append('</tbody></table>')
     return "".join(out), rtf_warm_idx
