@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tts-bench — Capabilities</title>
+<link rel="icon" type="image/svg+xml" href="logo-mark.svg"><link rel="icon" type="image/png" sizes="32x32" href="favicon.png"><link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
+<style>
+  :root {
+    color-scheme: dark light;
+    --bg: #1a1a1a;
+    --panel: #242424;
+    --text: #e0e0e0;
+    --muted: #888;
+    --accent: #6cf;
+    --num: #cfc;
+    --fail: #f88;
+    --border: #333;
+    --row-hover: #2a2a2a;
+    --th-bg: #2c2c2c;
+    --th-hover: #353535;
+    --input-bg: #2a2a2a;
+    --input-border: #444;
+    --controls-border: #2a2a2a;
+    --dev-cpu: #ddd;
+    --dev-cuda: #9cf;
+    --dev-mps: #fc9;
+    --lang: #6cf;
+    --prompt-text: #9c9;
+    --code-bg: #2a2a2a;
+  }
+  [data-theme="light"] {
+    color-scheme: light;
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --text: #1a1d22;
+    --muted: #6b7280;
+    --accent: #1a73e8;
+    --num: #137333;
+    --fail: #c5221f;
+    --border: #e2e6eb;
+    --row-hover: #f0f4f8;
+    --th-bg: #eef1f4;
+    --th-hover: #e2e6eb;
+    --input-bg: #ffffff;
+    --input-border: #cdd3da;
+    --controls-border: #e2e6eb;
+    --dev-cpu: #555;
+    --dev-cuda: #1a73e8;
+    --dev-mps: #c2410c;
+    --lang: #1a73e8;
+    --prompt-text: #2d6a4f;
+    --code-bg: #eef1f4;
+  }
+  * { box-sizing: border-box; }
+  body { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+         background: var(--bg); color: var(--text);
+         margin: 0; padding: 1.5rem 2rem 3rem;
+         max-width: 1400px; margin-inline: auto;
+         transition: background 0.15s, color 0.15s; }
+  h1, h2 { color: var(--text); margin-top: 0; }
+  h1 { font-size: 1.5em; }
+  h2 { font-size: 1.05em; }
+  .meta { color: var(--muted); font-size: 0.88em; margin-bottom: 0.4rem; }
+  .prompt { background: var(--panel); padding: 1rem 1.2rem;
+            border-radius: 10px; margin-bottom: 1.4rem;
+            border: 1px solid var(--border); }
+  .prompt-text { color: var(--prompt-text); font-style: italic;
+                 display: block; margin: 0.2rem 0 0.8rem 0; }
+  .lang { color: var(--lang); font-style: normal; margin-right: 0.4rem;
+          font-weight: 500; }
+  table { border-collapse: collapse; width: 100%; font-size: 0.92em; }
+  th, td { padding: 7px 10px; text-align: left;
+           border-bottom: 1px solid var(--border); }
+  th { background: var(--th-bg); color: var(--text);
+       cursor: pointer; user-select: none; white-space: nowrap;
+       font-weight: 600; }
+  th:hover { background: var(--th-hover); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums;
+           color: var(--num); }
+  th.num { text-align: right; }
+  td.fail { color: var(--fail); font-style: italic; }
+  td.dev-cuda { color: var(--dev-cuda); }
+  td.dev-mps  { color: var(--dev-mps); }
+  td.dev-cpu  { color: var(--dev-cpu); }
+  .muted { color: var(--muted); }
+  audio { width: 220px; height: 30px; vertical-align: middle; }
+  tr:hover td { background: var(--row-hover); }
+  code { background: var(--code-bg); padding: 1px 6px; border-radius: 3px;
+         font-size: 0.92em; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .nav { margin-bottom: 0.6rem; }
+  .controls { position: sticky; top: 0; background: var(--bg); z-index: 10;
+              padding: 0.7rem 0 0.7rem; margin-bottom: 1rem;
+              display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;
+              border-bottom: 1px solid var(--controls-border); }
+  .controls input { background: var(--input-bg); color: var(--text);
+                    border: 1px solid var(--input-border);
+                    border-radius: 6px; padding: 7px 11px; font: inherit;
+                    min-width: 320px; }
+  .controls input:focus { outline: none; border-color: var(--accent); }
+  .controls .hint { color: var(--muted); font-size: 0.85em; }
+  .controls button { background: var(--input-bg); color: var(--text);
+                     border: 1px solid var(--input-border);
+                     border-radius: 6px; padding: 6px 12px; font: inherit;
+                     cursor: pointer; transition: border-color 0.15s; }
+  .controls button:hover { border-color: var(--accent); }
+  .spacer { flex: 1; }
+
+  /* Lens picker grid */
+  .lens-grid { display: grid; grid-template-columns: repeat(3, 1fr);
+               gap: 1rem; margin: 1.5rem 0; }
+  @media (max-width: 760px) { .lens-grid { grid-template-columns: 1fr; } }
+  .lens-card { background: var(--panel); border: 1px solid var(--border);
+               border-radius: 10px; padding: 1.2rem 1.4rem;
+               transition: border-color 0.15s; }
+  .lens-card:hover { border-color: var(--accent); }
+  .lens-card a { display: block; text-decoration: none; color: var(--text); }
+  .lens-card h3 { margin: 0 0 0.4rem 0; font-size: 1.1em; color: var(--accent); }
+  .lens-card .desc { color: var(--muted); font-size: 0.9em; }
+
+  /* TLDR callout used by speed.html */
+  .tldr { background: var(--panel); border-left: 3px solid var(--accent);
+          padding: 0.8rem 1.1rem; margin: 1rem 0 1.4rem; border-radius: 4px; }
+  .tldr h2 { margin: 0 0 0.4rem 0; font-size: 1em; }
+  .tldr p { margin: 0.2rem 0; color: var(--text); }
+  .tldr strong { color: var(--accent); }
+
+  /* Secondary-axis "badge" pill cells */
+  td.pill { font-size: 0.82em; color: var(--muted); }
+  td.pill[data-sort] { font-variant-numeric: tabular-nums; }
+  td.pill a { color: inherit; }
+
+  /* Prompt jumper for samples.html */
+  .prompt-jumper { position: sticky; top: 3rem; background: var(--bg);
+                   padding: 0.4rem 0; margin-bottom: 0.8rem;
+                   border-bottom: 1px solid var(--border); font-size: 0.9em; }
+  .prompt-jumper a { margin-right: 0.6rem; }
+
+  /* Lens-to-lens nav tabs at top of each lens page */
+  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem;
+               align-items: center; }
+  .lens-tab { display: inline-block; padding: 4px 12px; border-radius: 6px;
+              border: 1px solid var(--border); color: var(--text);
+              text-decoration: none; font-size: 0.92em;
+              transition: border-color 0.15s, background 0.15s; }
+  .lens-tab:hover { border-color: var(--accent); text-decoration: none; }
+  .lens-tab.active { background: var(--accent); color: var(--bg);
+                     border-color: var(--accent); }
+  .lens-arrow { display: inline-block; padding: 4px 10px; border-radius: 6px;
+                border: 1px solid var(--border); color: var(--muted);
+                text-decoration: none; font-size: 0.92em;
+                transition: border-color 0.15s, color 0.15s; }
+  .lens-arrow:hover { border-color: var(--accent); color: var(--accent);
+                      text-decoration: none; }
+  .lens-arrow-disabled { opacity: 0.35; cursor: default;
+                         border-style: dashed; }
+  .lens-arrow-disabled:hover { border-color: var(--border); color: var(--muted); }
+
+  /* "Reading this report" explainer above tables */
+  .reading-guide { background: var(--panel); border-left: 3px solid var(--muted);
+                   padding: 0.55rem 0.9rem; margin: 0.7rem 0 1rem;
+                   border-radius: 4px; font-size: 0.88em; color: var(--text); }
+  .reading-guide strong { color: var(--accent); }
+  .reading-guide a { color: var(--accent); }
+</style>
+<style>.site-header{margin:1rem 0 1.25rem;}.site-logo-link{display:inline-block;text-decoration:none;}.site-logo-link:hover{text-decoration:none;}.site-logo{display:block;height:auto;max-width:min(320px,80vw);}.site-logo--light{display:none;}[data-theme="light"] .site-logo--dark{display:none;}[data-theme="light"] .site-logo--light{display:block;}</style>
+<style>.cap-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0 1.4rem;}.cap-chip{display:inline-flex;align-items:center;gap:.4rem;background:var(--input-bg);border:1px solid var(--input-border);border-radius:999px;padding:5px 13px;font-size:.9em;cursor:pointer;user-select:none;}.cap-chip input{accent-color:var(--accent);cursor:pointer;margin:0;}.cap-chip:has(input:checked){border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 12%,transparent);}.cap-yes{color:var(--accent);font-weight:600;}td.cap-type{font-variant:small-caps;letter-spacing:.03em;}#caps-table td a{color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted);}#caps-table td a:hover{color:var(--accent);}</style>
+</head><body>
+<div class="controls"><span class="lens-tabs"><a class="lens-tab" href="listen.html">Listen</a><a class="lens-tab" href="speed.html">Speed</a><a class="lens-tab" href="scores.html">Scores</a><a class="lens-tab active" href="capabilities.html">Capabilities</a><a class="lens-tab lens-tab-ext" href="https://5uck1ess-tts-arena.hf.space" target="_blank" rel="noopener">🗳 Vote ↗</a></span><input id="filter" type="search" placeholder="filter by model name…" autocomplete="off"><button type="button" id="reset-sort">reset sort</button><span class="spacer"></span><button type="button" id="theme-toggle" title="Toggle theme">☾ dark</button></div>
+<header class="site-header"><a href="index.html" class="site-logo-link" title="Home"><img class="site-logo site-logo--dark" src="logo-flat-dark.svg" alt="tts-bench" width="320" height="auto"><img class="site-logo site-logo--light" src="logo-flat-light.svg" alt="tts-bench" width="320" height="auto"></a></header>
+<h1>Capabilities <span class="muted" style="font-size:.5em;font-weight:400;">· 55 models</span></h1>
+<div class="reading-guide">Every tracked model and what it can do. The capability toggles <strong>combine</strong> — check two and you see only models with both; the search box filters by name; click any column header to sort. <strong>Cross-lingual clone</strong> = clones a voice from a reference in one language and speaks a <em>different</em> one in that same voice (verified per-model from each model card/paper). The License column shows the exact license; the <em>commercial</em> toggle is a coarse "no NC / research-only clause" filter — check the license before relying on it.</div>
+<div class="cap-filters"><label class="cap-chip"><input type="checkbox" data-cap="clone"> clones</label><label class="cap-chip"><input type="checkbox" data-cap="preset"> presets</label><label class="cap-chip"><input type="checkbox" data-cap="multi"> multilingual</label><label class="cap-chip"><input type="checkbox" data-cap="xling"> cross-lingual clone</label><label class="cap-chip"><input type="checkbox" data-cap="expr"> expressive</label><label class="cap-chip"><input type="checkbox" data-cap="comm"> commercial license</label><label class="cap-chip"><input type="checkbox" data-cap="cpu"> runs on CPU</label></div>
+<table id="caps-table"><thead><tr><th>Model</th><th class="num">Params</th><th>Released</th><th>Type</th><th>Languages</th><th class="num">Cross-lingual</th><th>Expressive</th><th class="num">Sample rate</th><th>License</th><th class="num">CPU</th></tr></thead><tbody><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/ResembleAI/chatterbox" target="_blank" rel="noopener">Chatterbox</a></td><td class="num" data-sort="1200000000.0">1.2B</td><td class="muted" data-sort="202504">Apr 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="1">knob</td><td class="num" data-sort="24000">24k</td><td>MIT</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/ResembleAI/chatterbox-turbo" target="_blank" rel="noopener">Chatterbox Turbo</a></td><td class="num" data-sort="744000000.0">744M</td><td class="muted" data-sort="202512">Dec 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="1">tags*</td><td class="num" data-sort="24000">24k</td><td>MIT</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="0" data-comm="0" data-cpu="1"><td><a href="https://huggingface.co/coqui/XTTS-v2" target="_blank" rel="noopener">Coqui XTTS-v2</a></td><td class="num" data-sort="750000000.0">750M</td><td class="muted" data-sort="202310">Oct 2023</td><td class="cap-type">clone</td><td data-sort="17">✓ (17)</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>CPML (non-commercial)</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="1" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/FunAudioLLM/Fun-CosyVoice3-0.5B-2512" target="_blank" rel="noopener">CosyVoice 3 0.5B</a></td><td class="num" data-sort="500000000.0">0.5B</td><td class="muted" data-sort="202512">Dec 2025</td><td class="cap-type">clone</td><td data-sort="1">✓</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="1">desc</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="1" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/nari-labs/Dia-1.6B-0626" target="_blank" rel="noopener">Dia 1.6B-0626</a></td><td class="num" data-sort="1600000000.0">1.6B</td><td class="muted" data-sort="202506">Jun 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="1">tags</td><td class="num" data-sort="44100">44.1k</td><td>Apache 2.0</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="0" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/rednote-hilab/dots.tts-soar" target="_blank" rel="noopener">dots.tts (soar)</a></td><td class="num" data-sort="2000000000.0">2B</td><td class="muted" data-sort="202606">Jun 2026</td><td class="cap-type">clone</td><td data-sort="24">✓ (24)</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="0">—</td><td class="num" data-sort="48000">48k</td><td>Apache 2.0</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="1" data-comm="0" data-cpu="0"><td><a href="https://github.com/resemble-ai/DramaBox" target="_blank" rel="noopener">DramaBox</a></td><td class="num" data-sort="3300000000.0">3.3B</td><td class="muted" data-sort="202604">Apr 2026</td><td class="cap-type">clone</td><td data-sort="0">— (en)</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="1">desc</td><td class="num" data-sort="48000">48k</td><td>LTX-2 Community (NC)</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="1" data-comm="0" data-cpu="0"><td><a href="https://huggingface.co/jordand/echo-tts-base" target="_blank" rel="noopener">Echo-TTS</a></td><td class="num" data-sort="2800000000.0">2.8B</td><td class="muted" data-sort="202512">Dec 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="1">tags</td><td class="num" data-sort="44100">44.1k</td><td>CC-BY-NC-SA 4.0</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="0" data-comm="0" data-cpu="1"><td><a href="https://huggingface.co/SWivid/F5-TTS" target="_blank" rel="noopener">F5-TTS v1</a></td><td class="num" data-sort="330000000.0">330M</td><td class="muted" data-sort="202410">Oct 2024</td><td class="cap-type">clone</td><td data-sort="1">✓</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>CC-BY-NC</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="0" data-expr="0" data-comm="0" data-cpu="1"><td><a href="https://huggingface.co/fishaudio/fish-speech-1.5" target="_blank" rel="noopener">Fish Speech 1.5</a></td><td class="num" data-sort="500000000.0">~500M</td><td class="muted" data-sort="202411">Nov 2024</td><td class="cap-type">clone</td><td data-sort="1">✓</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="44100">44.1k</td><td>CC-BY-NC-SA 4.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="1" data-comm="0" data-cpu="0"><td><a href="https://huggingface.co/fishaudio/s2-pro" target="_blank" rel="noopener">Fish Speech S2-Pro</a></td><td class="num" data-sort="4000000000.0">4B</td><td class="muted" data-sort="202603">Mar 2026</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="1">tags</td><td class="num" data-sort="44100">44.1k</td><td>Research (non-commercial)</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="1" data-comm="0" data-cpu="0"><td><a href="https://huggingface.co/bosonai/higgs-audio-v3-tts-4b" target="_blank" rel="noopener">Higgs Audio v3 TTS</a></td><td class="num" data-sort="4000000000.0">4B</td><td class="muted" data-sort="202606">Jun 2026</td><td class="cap-type">clone</td><td data-sort="100">✓ (100)</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="1">tags</td><td class="num" data-sort="24000">24k</td><td>Research (NC)</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/IndexTeam/IndexTTS-2" target="_blank" rel="noopener">IndexTTS-2</a></td><td class="num" data-sort="1500000000.0">1.5B</td><td class="muted" data-sort="202506">Jun 2025</td><td class="cap-type">clone</td><td data-sort="1">✓</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="1">emo-ref + desc + knob</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/KittenML/kitten-tts-nano-0.1" target="_blank" rel="noopener">KittenTTS Nano 0.1</a></td><td class="num" data-sort="100000000.0">&lt;100M</td><td class="muted" data-sort="202508">Aug 2025</td><td class="cap-type">preset</td><td data-sort="0">—</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="1" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/hexgrad/Kokoro-82M" target="_blank" rel="noopener">Kokoro</a></td><td class="num" data-sort="82000000.0">82M</td><td class="muted" data-sort="202412">Dec 2024</td><td class="cap-type">preset</td><td data-sort="1">✓</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B" target="_blank" rel="noopener">LFM2.5-Audio 1.5B</a></td><td class="num" data-sort="1500000000.0">1.5B</td><td class="muted" data-sort="202512">Dec 2025</td><td class="cap-type">preset</td><td data-sort="0">— (en)</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>LFM Open v1.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="0" data-expr="0" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/meituan-longcat/LongCat-AudioDiT-1B" target="_blank" rel="noopener">LongCat-AudioDiT 1B</a></td><td class="num" data-sort="1420000000.0">1.42B</td><td class="muted" data-sort="202603">Mar 2026</td><td class="cap-type">clone</td><td data-sort="2">✓ (zh+en)</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>MIT</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="0" data-expr="0" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/meituan-longcat/LongCat-AudioDiT-3.5B" target="_blank" rel="noopener">LongCat-AudioDiT 3.5B</a></td><td class="num" data-sort="3830000000.0">3.83B</td><td class="muted" data-sort="202603">Mar 2026</td><td class="cap-type">clone</td><td data-sort="2">✓ (zh+en)</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>MIT</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="0" data-preset="1" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://github.com/ysharma3501/LuxTTS" target="_blank" rel="noopener">LuxTTS</a></td><td class="num" data-sort="123000000.0">123M</td><td class="muted" data-sort="202601">Jan 2026</td><td class="cap-type">preset</td><td data-sort="0">—</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="0">—</td><td class="num" data-sort="22050">22.05k</td><td>MIT</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="1" data-xling="0" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/nvidia/magpie_tts_multilingual_357m" target="_blank" rel="noopener">Magpie-TTS</a></td><td class="num" data-sort="357000000.0">357M</td><td class="muted" data-sort="202512">Dec 2025</td><td class="cap-type">preset</td><td data-sort="9">✓ (9)</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="1">emotion voices*</td><td class="num" data-sort="22050">22.05k</td><td>NVIDIA OML</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/Camb-ai/mars5-tts" target="_blank" rel="noopener">Mars5-TTS</a></td><td class="num" data-sort="1200000000.0">1.2B</td><td class="muted" data-sort="202406">Jun 2024</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>AGPL-3.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="0" data-xling="0" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/maya-research/maya1" target="_blank" rel="noopener">Maya1</a></td><td class="num" data-sort="3000000000.0">3B</td><td class="muted" data-sort="202510">Oct 2025</td><td class="cap-type">preset</td><td data-sort="0">—</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="1">tags + desc</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/myshell-ai/MeloTTS-English" target="_blank" rel="noopener">MeloTTS</a></td><td class="num" data-sort="52000000.0">~52M</td><td class="muted" data-sort="202402">Feb 2024</td><td class="cap-type">preset</td><td data-sort="0">— (en)</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="0">—</td><td class="num" data-sort="44100">44.1k</td><td>MIT</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/metavoiceio/metavoice-1B-v0.1" target="_blank" rel="noopener">MetaVoice-1B</a></td><td class="num" data-sort="1200000000.0">1.2B</td><td class="muted" data-sort="202402">Feb 2024</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="48000">48k</td><td>Apache 2.0</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="0" data-expr="0" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/Aratako/MioTTS-0.1B" target="_blank" rel="noopener">MioTTS 0.1B</a></td><td class="num" data-sort="100000000.0">0.1B</td><td class="muted" data-sort="202602">Feb 2026</td><td class="cap-type">clone</td><td data-sort="2">✓ (en+ja)</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="44100">44.1k</td><td>Falcon-LLM</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="0" data-expr="0" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/Aratako/MioTTS-0.6B" target="_blank" rel="noopener">MioTTS 0.6B</a></td><td class="num" data-sort="600000000.0">0.6B</td><td class="muted" data-sort="202602">Feb 2026</td><td class="cap-type">clone</td><td data-sort="2">✓ (en+ja)</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="44100">44.1k</td><td>Apache 2.0</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="1" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/YatharthS/MiraTTS" target="_blank" rel="noopener">MiraTTS</a></td><td class="num" data-sort="500000000.0">0.5B</td><td class="muted" data-sort="202512">Dec 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="1">knob</td><td class="num" data-sort="48000">48k</td><td>MIT</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/MisoLabs/MisoTTS" target="_blank" rel="noopener">Miso TTS 8B</a></td><td class="num" data-sort="8199999999.999999">8.2B</td><td class="muted" data-sort="202605">May 2026</td><td class="cap-type">clone</td><td data-sort="0">— (en)</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>Modified MIT</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="0" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/OpenMOSS-Team/MOSS-TTS" target="_blank" rel="noopener">MOSS-TTS v1.0</a></td><td class="num" data-sort="8000000000.0">8B</td><td class="muted" data-sort="202602">Feb 2026</td><td class="cap-type">clone</td><td data-sort="20">✓ (20)</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="1" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5" target="_blank" rel="noopener">MOSS-TTS v1.5</a></td><td class="num" data-sort="8000000000.0">8B</td><td class="muted" data-sort="202605">May 2026</td><td class="cap-type">clone</td><td data-sort="31">✓ (31)</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="1">tags (pause)</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano" target="_blank" rel="noopener">MOSS-TTS-Nano</a></td><td class="num" data-sort="100000000.0">100M</td><td class="muted" data-sort="202604">Apr 2026</td><td class="cap-type">clone</td><td data-sort="2">✓ (zh+en)</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="48000">48k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/neuphonic/neutts-air" target="_blank" rel="noopener">NeuTTS Air</a></td><td class="num" data-sort="748000000.0">748M</td><td class="muted" data-sort="202509">Sep 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/neuphonic/neutts-nano-q4-gguf" target="_blank" rel="noopener">NeuTTS Nano</a></td><td class="num" data-sort="229000000.0">229M</td><td class="muted" data-sort="202512">Dec 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/k2-fsa/OmniVoice" target="_blank" rel="noopener">OmniVoice</a></td><td class="num" data-sort="1000000000.0">~1B</td><td class="muted" data-sort="202603">Mar 2026</td><td class="cap-type">clone</td><td data-sort="600">✓ (600+)</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="1">tags*</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/myshell-ai/OpenVoiceV2" target="_blank" rel="noopener">OpenVoice v2</a></td><td class="num" data-sort="100000000.0">~100M</td><td class="muted" data-sort="202404">Apr 2024</td><td class="cap-type">clone</td><td data-sort="1">✓</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="1">knob</td><td class="num" data-sort="22050">22.05k</td><td>MIT</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="0" data-xling="0" data-expr="1" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/canopylabs/orpheus-3b-0.1-ft" target="_blank" rel="noopener">Orpheus-TTS 3B</a></td><td class="num" data-sort="3300000000.0">3.3B</td><td class="muted" data-sort="202503">Mar 2025</td><td class="cap-type">preset</td><td data-sort="0">— (en)</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="1">tags</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="1" data-multi="1" data-xling="1" data-expr="0" data-comm="0" data-cpu="1"><td><a href="https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B" target="_blank" rel="noopener">OuteTTS 1.0 1B</a></td><td class="num" data-sort="1000000000.0">1B</td><td class="muted" data-sort="202504">Apr 2025</td><td class="cap-type">both</td><td data-sort="12">✓ (12)</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="0">—</td><td class="num" data-sort="44100">44.1k</td><td>CC-BY-NC-SA 4.0 + Llama 3.2</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="0" data-xling="0" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/parler-tts/parler-tts-mini-v1" target="_blank" rel="noopener">Parler-TTS Mini v1</a></td><td class="num" data-sort="878000000.0">878M</td><td class="muted" data-sort="202406">Jun 2024</td><td class="cap-type">preset</td><td data-sort="0">—</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="1">desc*</td><td class="num" data-sort="44100">44.1k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="1" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://github.com/OHF-Voice/piper1-gpl" target="_blank" rel="noopener">Piper</a></td><td class="num" data-sort="25000000.0">~25MB</td><td class="muted" data-sort="202301">Jan 2023</td><td class="cap-type">preset</td><td data-sort="1">✓</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="0">—</td><td class="num" data-sort="22050">22.05k</td><td>GPL-3.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://github.com/kyutai-labs/pocket-tts" target="_blank" rel="noopener">Pocket-TTS</a></td><td class="num" data-sort="100000000.0">100M</td><td class="muted" data-sort="202601">Jan 2026</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="0" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base" target="_blank" rel="noopener">Qwen3-TTS 1.7B (CUDA-graph)</a></td><td class="num" data-sort="1700000000.0">1.7B</td><td class="muted" data-sort="202601">Jan 2026</td><td class="cap-type">clone</td><td data-sort="1">✓</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>MIT</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base" target="_blank" rel="noopener">Qwen3-TTS 1.7B Base</a></td><td class="num" data-sort="1700000000.0">1.7B</td><td class="muted" data-sort="202601">Jan 2026</td><td class="cap-type">clone</td><td data-sort="1">✓</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/sesame/csm-1b" target="_blank" rel="noopener">Sesame CSM-1B</a></td><td class="num" data-sort="1000000000.0">1B</td><td class="muted" data-sort="202503">Mar 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/ekwek/Soprano-1.1-80M" target="_blank" rel="noopener">Soprano 1.1 80M</a></td><td class="num" data-sort="80000000.0">80M</td><td class="muted" data-sort="202601">Jan 2026</td><td class="cap-type">preset</td><td data-sort="0">—</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="0">—</td><td class="num" data-sort="32000">32k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="1" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/stepfun-ai/Step-Audio-EditX" target="_blank" rel="noopener">Step-Audio-EditX</a></td><td class="num" data-sort="3000000000.0">3B</td><td class="muted" data-sort="202510">Oct 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="1">tags + desc</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://github.com/yl4579/StyleTTS2" target="_blank" rel="noopener">StyleTTS 2</a></td><td class="num" data-sort="148000000.0">~148M</td><td class="muted" data-sort="202306">Jun 2023</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="1">knob</td><td class="num" data-sort="24000">24k</td><td>MIT</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="0" data-preset="1" data-multi="1" data-xling="0" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/Supertone/supertonic-3" target="_blank" rel="noopener">Supertonic 3</a></td><td class="num" data-sort="99000000.0">99M</td><td class="muted" data-sort="202605">May 2026</td><td class="cap-type">preset</td><td data-sort="31">✓ (31)</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="1">tags</td><td class="num" data-sort="24000">24k</td><td>MIT + OpenRAIL-M</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/microsoft/VibeVoice-1.5B" target="_blank" rel="noopener">VibeVoice 1.5B</a></td><td class="num" data-sort="1500000000.0">1.5B</td><td class="muted" data-sort="202508">Aug 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>MIT</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="0"><td><a href="https://huggingface.co/vibevoice/VibeVoice-7B" target="_blank" rel="noopener">VibeVoice 7B</a></td><td class="num" data-sort="7000000000.0">7B</td><td class="muted" data-sort="202509">Sep 2025</td><td class="cap-type">clone</td><td data-sort="0">—</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>MIT</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="0" data-preset="1" data-multi="0" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B" target="_blank" rel="noopener">VibeVoice Realtime 0.5B</a></td><td class="num" data-sort="500000000.0">0.5B</td><td class="muted" data-sort="202512">Dec 2025</td><td class="cap-type">preset</td><td data-sort="0">—</td><td class="num muted" data-sort="-1">n/a</td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>MIT</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="0" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/openbmb/VoxCPM2" target="_blank" rel="noopener">VoxCPM2 2B</a></td><td class="num" data-sort="2000000000.0">2B</td><td class="muted" data-sort="202604">Apr 2026</td><td class="cap-type">clone</td><td data-sort="30">✓ (30)</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="1">desc</td><td class="num" data-sort="48000">48k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="1" data-multi="1" data-xling="0" data-expr="0" data-comm="0" data-cpu="1"><td><a href="https://huggingface.co/mistralai/Voxtral-4B-TTS-2603" target="_blank" rel="noopener">Voxtral 4B TTS</a></td><td class="num" data-sort="4000000000.0">4B</td><td class="muted" data-sort="202511">Nov 2025</td><td class="cap-type">both</td><td data-sort="1">✓</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>CC-BY-NC 4.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="0" data-expr="0" data-comm="0" data-cpu="0"><td><a href="https://github.com/cwx-worst-one/WavTTS" target="_blank" rel="noopener">WavTTS 0.67B</a></td><td class="num" data-sort="670000000.0">0.67B</td><td class="muted" data-sort="202605">May 2026</td><td class="cap-type">clone</td><td data-sort="2">✓ (zh+en)</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="16000">16k</td><td>MIT code / CC-BY-NC 4.0 weights</td><td class="num" data-sort="0"><span class="muted">—</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="0" data-expr="0" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/k2-fsa/ZipVoice" target="_blank" rel="noopener">ZipVoice 123M</a></td><td class="num" data-sort="123000000.0">123M</td><td class="muted" data-sort="202506">Jun 2025</td><td class="cap-type">clone</td><td data-sort="2">✓ (zh+en)</td><td class="num" data-sort="0"><span class="muted">—</span></td><td data-sort="0">—</td><td class="num" data-sort="24000">24k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr><tr data-clone="1" data-preset="0" data-multi="1" data-xling="1" data-expr="1" data-comm="1" data-cpu="1"><td><a href="https://huggingface.co/Zyphra/Zonos-v0.1-transformer" target="_blank" rel="noopener">Zonos v0.1</a></td><td class="num" data-sort="1600000000.0">1.6B</td><td class="muted" data-sort="202502">Feb 2025</td><td class="cap-type">clone</td><td data-sort="1">✓</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td><td data-sort="1">emo-ref + knob</td><td class="num" data-sort="44100">44.1k</td><td>Apache 2.0</td><td class="num" data-sort="1"><span class="cap-yes">✓</span></td></tr></tbody></table>
+<script>
+(function(){
+  // ---------- theme toggle ----------
+  const themeBtn = document.getElementById('theme-toggle');
+  function applyTheme(name) {
+    document.documentElement.setAttribute('data-theme', name);
+    themeBtn.textContent = name === 'light' ? '☀ light' : '☾ dark';
+    try { localStorage.setItem('tts-bench-theme', name); } catch (e) {}
+  }
+  let stored = null;
+  try { stored = localStorage.getItem('tts-bench-theme'); } catch (e) {}
+  applyTheme(stored === 'light' ? 'light' : 'dark');
+  themeBtn.addEventListener('click', () => {
+    const cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(cur === 'dark' ? 'light' : 'dark');
+  });
+
+  // ---------- sort + filter ----------
+  const tables = document.querySelectorAll('table');
+  const filterInput = document.getElementById('filter');
+  const resetBtn = document.getElementById('reset-sort');
+  const sortState = { col: -1, dir: 0 };
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach(th => { th.dataset.label = th.textContent; });
+    table.querySelectorAll('tbody tr').forEach((row, i) => { row.dataset.origIdx = String(i); });
+  });
+
+  function applyFilter() {
+    const q = filterInput.value.toLowerCase().trim();
+    tables.forEach(t => {
+      t.querySelectorAll('tbody tr').forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = (!q || text.includes(q)) ? '' : 'none';
+      });
+    });
+  }
+  filterInput.addEventListener('input', applyFilter);
+
+  function cellSortValue(row, colIdx) {
+    const cell = row.children[colIdx];
+    if (!cell) return Number.POSITIVE_INFINITY;
+    if (cell.hasAttribute('data-sort')) {
+      const raw = cell.getAttribute('data-sort');
+      if (raw === '' || raw === null) return Number.POSITIVE_INFINITY;
+      const v = parseFloat(raw);
+      return Number.isNaN(v) ? Number.POSITIVE_INFINITY : v;
+    }
+    return cell.textContent.toLowerCase();
+  }
+
+  function renderArrows() {
+    tables.forEach(t => {
+      t.querySelectorAll('thead th').forEach((th, i) => {
+        const arrow = (i === sortState.col && sortState.dir !== 0)
+                    ? (sortState.dir === 1 ? ' ▲' : ' ▼') : '';
+        th.textContent = th.dataset.label + arrow;
+      });
+    });
+  }
+
+  function restoreOrder() {
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => parseInt(a.dataset.origIdx) - parseInt(b.dataset.origIdx));
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  function sortAll(colIdx, explicitDir) {
+    if (explicitDir === 1 || explicitDir === -1) {
+      sortState.col = colIdx;
+      sortState.dir = explicitDir;
+    } else if (sortState.col === colIdx) {
+      sortState.dir = sortState.dir === 1 ? -1 : (sortState.dir === -1 ? 0 : 1);
+    } else {
+      sortState.col = colIdx;
+      sortState.dir = 1;
+    }
+    renderArrows();
+
+    if (sortState.dir === 0) {
+      restoreOrder();
+      return;
+    }
+
+    const dir = sortState.dir;
+    tables.forEach(table => {
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        const aSpan = a.querySelector('td[colspan]') !== null;
+        const bSpan = b.querySelector('td[colspan]') !== null;
+        if (aSpan !== bSpan) return aSpan ? 1 : -1;
+        const av = cellSortValue(a, colIdx);
+        const bv = cellSortValue(b, colIdx);
+        if (av < bv) return -dir;
+        if (av > bv) return dir;
+        return 0;
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    });
+  }
+
+  tables.forEach(table => {
+    table.querySelectorAll('thead th').forEach((th, idx) => {
+      th.addEventListener('click', () => sortAll(idx));
+    });
+  });
+
+  resetBtn.addEventListener('click', () => {
+    sortState.col = -1; sortState.dir = 0;
+    renderArrows();
+    restoreOrder();
+    filterInput.value = '';
+    applyFilter();
+  });
+
+  // Page-load default sort: pages can set window.__defaultSort = {colIdx, dir}
+  // (set in a tiny inline <script> earlier in the page).
+  if (window.__defaultSort &&
+      typeof window.__defaultSort.colIdx === 'number' &&
+      (window.__defaultSort.dir === 1 || window.__defaultSort.dir === -1)) {
+    sortAll(window.__defaultSort.colIdx, window.__defaultSort.dir);
+  }
+})();
+</script>
+<script>
+(function(){
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.cap-chip input'));
+  var nameInput = document.getElementById('filter');
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#caps-table tbody tr'));
+  function apply(){
+    var q = ((nameInput && nameInput.value) || '').toLowerCase().trim();
+    var active = chips.filter(function(c){ return c.checked; })
+                      .map(function(c){ return c.getAttribute('data-cap'); });
+    rows.forEach(function(r){
+      var nameHit = !q || r.textContent.toLowerCase().indexOf(q) !== -1;
+      var capHit = active.every(function(cap){ return r.getAttribute('data-' + cap) === '1'; });
+      r.style.display = (nameHit && capHit) ? '' : 'none';
+    });
+  }
+  // Registered AFTER the shared SCRIPT, so on a name-filter input this runs last
+  // and is the final authority on row visibility (name AND active chips).
+  chips.forEach(function(c){ c.addEventListener('change', apply); });
+  if(nameInput) nameInput.addEventListener('input', apply);
+  var reset = document.getElementById('reset-sort');
+  if(reset) reset.addEventListener('click', function(){
+    chips.forEach(function(c){ c.checked = false; });
+    setTimeout(apply, 0);
+  });
+  apply();
+})();
+</script>
+</body></html>
