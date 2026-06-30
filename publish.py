@@ -34,10 +34,21 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from report import (
-    STYLE, CONTROLS, SCRIPT, PROMPT_INFO, MODEL_SIZE, MODEL_KIND,
+    STYLE, CONTROLS, SCRIPT, PROMPT_INFO, MODEL_SIZE, MODEL_KIND, MODEL_URL,
+    MODEL_SR, MODEL_EXPRESSIVE, MODEL_LICENSE, MODEL_LANGS,
     _ds, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
     _build_context, _speed_table_html, _display_name, _release_label, _release_td,
+    _is_multilingual, _is_commercial, _sr_hz, _is_crosslingual,
 )
+from harness import MODELS as _HARNESS_MODELS
+
+# Models whose runner advertises a CPU device (harness MODELS tuple, devices at
+# index 4) — drives the "runs on CPU" capability flag/filter.
+_CPU_OK = frozenset(row[0] for row in _HARNESS_MODELS if "cpu" in row[4])
+
+# Cloning models that ALSO ship selectable preset voices (README: both Predefined
+# and Cloning are ✓). Every other model is clone-only or preset-only via MODEL_KIND.
+_PRESET_AND_CLONE = {"outetts", "voxtral"}
 
 # Models that synthesize more than English (from the README capability table) —
 # used only for the at-a-glance "multilingual" badge in the Listen by-model view.
@@ -455,7 +466,8 @@ def _top_controls(active):
     switcher + the filter/reset/theme controls SCRIPT (from report.py) wires to by id."""
     tabs = "".join(
         f'<a class="lens-tab{" active" if s == active else ""}" href="{s}.html">{l}</a>'
-        for s, l in (("listen", "Listen"), ("speed", "Speed"), ("scores", "Scores"))
+        for s, l in (("listen", "Listen"), ("speed", "Speed"), ("scores", "Scores"),
+                     ("capabilities", "Capabilities"))
     )
     # Vote is an external link to the HF arena (not a local data view), so it
     # opens in a new tab and never takes the "active" state.
@@ -955,6 +967,170 @@ def build_scores():
     (WORKTREE / "scores.html").write_text("\n".join(out), encoding="utf-8")
 
 
+def _params_num(m):
+    """Rough param/size magnitude from the MODEL_SIZE cell, for a sortable Params
+    column. Best-effort: "1.5B"->1.5e9, "<100M"/"~500M"->Ne6, "~25MB"->disk proxy."""
+    s = MODEL_SIZE.get(m, "").lstrip("~<").strip()
+    num = ""
+    for ch in s:
+        if ch.isdigit() or ch == ".":
+            num += ch
+        else:
+            break
+    if not num:
+        return None
+    val = float(num)
+    unit = s[len(num):].strip().upper()
+    if unit.startswith("B"):
+        return val * 1e9
+    return val * 1e6  # "M" params or "MB" disk — both small relative to B
+
+
+def _langs_num(m):
+    """Sort key for the Languages column: 0 = English-only, else the language
+    count (parsed from "(31)"/"(600+)"), token count for "(zh+en)", or 1 for a
+    bare ✓ with unstated count."""
+    cell = MODEL_LANGS.get(m, "")
+    if not cell.startswith("✓"):
+        return 0
+    inside = cell[cell.find("(") + 1:cell.find(")")] if "(" in cell else ""
+    digits = "".join(c for c in inside if c.isdigit())
+    if digits:
+        return int(digits)
+    if "+" in inside:
+        return inside.count("+") + 1
+    return 1
+
+
+_CAPS_GUIDE = (
+    '<div class="reading-guide">Every tracked model and what it can do. The '
+    'capability toggles <strong>combine</strong> — check two and you see only models '
+    'with both; the search box filters by name; click any column header to sort. '
+    '<strong>Cross-lingual clone</strong> = clones a voice from a reference in one '
+    'language and speaks a <em>different</em> one in that same voice (verified '
+    'per-model from each model card/paper). The License column shows the exact '
+    'license; the <em>commercial</em> toggle is a coarse "no NC / research-only '
+    'clause" filter — check the license before relying on it.</div>'
+)
+
+_CAPS_STYLE = (
+    '<style>'
+    '.cap-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0 1.4rem;}'
+    '.cap-chip{display:inline-flex;align-items:center;gap:.4rem;background:var(--input-bg);'
+    'border:1px solid var(--input-border);border-radius:999px;padding:5px 13px;'
+    'font-size:.9em;cursor:pointer;user-select:none;}'
+    '.cap-chip input{accent-color:var(--accent);cursor:pointer;margin:0;}'
+    '.cap-chip:has(input:checked){border-color:var(--accent);color:var(--accent);'
+    'background:color-mix(in srgb,var(--accent) 12%,transparent);}'
+    '.cap-yes{color:var(--accent);font-weight:600;}'
+    'td.cap-type{font-variant:small-caps;letter-spacing:.03em;}'
+    '#caps-table td a{color:var(--text);text-decoration:none;border-bottom:1px dotted var(--muted);}'
+    '#caps-table td a:hover{color:var(--accent);}'
+    '</style>'
+)
+
+_CAPS_SCRIPT = '''<script>
+(function(){
+  var chips = Array.prototype.slice.call(document.querySelectorAll('.cap-chip input'));
+  var nameInput = document.getElementById('filter');
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#caps-table tbody tr'));
+  function apply(){
+    var q = ((nameInput && nameInput.value) || '').toLowerCase().trim();
+    var active = chips.filter(function(c){ return c.checked; })
+                      .map(function(c){ return c.getAttribute('data-cap'); });
+    rows.forEach(function(r){
+      var nameHit = !q || r.textContent.toLowerCase().indexOf(q) !== -1;
+      var capHit = active.every(function(cap){ return r.getAttribute('data-' + cap) === '1'; });
+      r.style.display = (nameHit && capHit) ? '' : 'none';
+    });
+  }
+  // Registered AFTER the shared SCRIPT, so on a name-filter input this runs last
+  // and is the final authority on row visibility (name AND active chips).
+  chips.forEach(function(c){ c.addEventListener('change', apply); });
+  if(nameInput) nameInput.addEventListener('input', apply);
+  var reset = document.getElementById('reset-sort');
+  if(reset) reset.addEventListener('click', function(){
+    chips.forEach(function(c){ c.checked = false; });
+    setTimeout(apply, 0);
+  });
+  apply();
+})();
+</script>'''
+
+
+def build_capabilities():
+    """Build capabilities.html — one sortable capability matrix over every tracked
+    model, with toggle-chip filters (clone/preset/multilingual/cross-lingual/
+    expressive/commercial/CPU) that AND together on top of the shared name filter."""
+    raw_default = set().union(*(_ok_models(n) for n in LISTEN_DEFAULT_DIRS)) if LISTEN_DEFAULT_DIRS else set()
+    raw_cloning = set().union(*(_ok_models(n) for n in LISTEN_CLONING_DIRS)) if LISTEN_CLONING_DIRS else set()
+    models = sorted(raw_default | raw_cloning, key=lambda m: _display_name(m).lower())
+
+    def yn(b):
+        return '<span class="cap-yes">✓</span>' if b else '<span class="muted">—</span>'
+
+    def _row(m):
+        clone = MODEL_KIND.get(m) == "cloning"
+        preset = MODEL_KIND.get(m) == "predefined" or m in _PRESET_AND_CLONE
+        multi = _is_multilingual(m)
+        xling = _is_crosslingual(m)
+        expr = MODEL_EXPRESSIVE.get(m, "—")
+        has_expr = expr not in ("", "—")
+        comm = _is_commercial(m)
+        cpu = m in _CPU_OK
+        typ = "both" if (clone and preset) else ("clone" if clone else "preset")
+        url = MODEL_URL.get(m)
+        name = escape(_display_name(m))
+        name_cell = (f'<a href="{escape(url)}" target="_blank" rel="noopener">{name}</a>'
+                     if url else name)
+        # Cross-lingual is only meaningful for cloners; preset models show n/a and
+        # sort to the bottom (data-sort -1 < the 0/1 cloners use).
+        xling_cell = (f'<td class="num" data-sort="{1 if xling else 0}">{yn(xling)}</td>'
+                      if clone else '<td class="num muted" data-sort="-1">n/a</td>')
+        return (
+            f'<tr data-clone="{1 if clone else 0}" data-preset="{1 if preset else 0}" '
+            f'data-multi="{1 if multi else 0}" data-xling="{1 if xling else 0}" '
+            f'data-expr="{1 if has_expr else 0}" data-comm="{1 if comm else 0}" '
+            f'data-cpu="{1 if cpu else 0}">'
+            f'<td>{name_cell}</td>'
+            f'<td class="num"{_ds(_params_num(m))}>{escape(MODEL_SIZE.get(m, "—"))}</td>'
+            f'{_release_td(m)}'
+            f'<td class="cap-type">{typ}</td>'
+            f'<td data-sort="{_langs_num(m)}">{escape(MODEL_LANGS.get(m, "—"))}</td>'
+            f'{xling_cell}'
+            f'<td data-sort="{1 if has_expr else 0}">{escape(expr)}</td>'
+            f'<td class="num"{_ds(_sr_hz(m))}>{escape(MODEL_SR.get(m, "—"))}</td>'
+            f'<td>{escape(MODEL_LICENSE.get(m, "—"))}</td>'
+            f'<td class="num" data-sort="{1 if cpu else 0}">{yn(cpu)}</td>'
+            '</tr>'
+        )
+
+    head = ('<th>Model</th><th class="num">Params</th><th>Released</th><th>Type</th>'
+            '<th>Languages</th><th class="num">Cross-lingual</th><th>Expressive</th>'
+            '<th class="num">Sample rate</th><th>License</th><th class="num">CPU</th>')
+    table = (f'<table id="caps-table"><thead><tr>{head}</tr></thead><tbody>'
+             + "".join(_row(m) for m in models) + '</tbody></table>')
+
+    chips = [("clone", "clones"), ("preset", "presets"), ("multi", "multilingual"),
+             ("xling", "cross-lingual clone"), ("expr", "expressive"),
+             ("comm", "commercial license"), ("cpu", "runs on CPU")]
+    chip_html = "".join(
+        f'<label class="cap-chip"><input type="checkbox" data-cap="{c}"> {l}</label>'
+        for c, l in chips)
+
+    out = ['<!doctype html>', '<html lang="en"><head><meta charset="utf-8">',
+           '<meta name="viewport" content="width=device-width, initial-scale=1">',
+           '<title>tts-bench — Capabilities</title>',
+           FAVICON_LINK, STYLE, LOGO_STYLE, _CAPS_STYLE,
+           '</head><body>', _top_controls("capabilities"), LOGO_HEADER,
+           f'<h1>Capabilities <span class="muted" style="font-size:.5em;font-weight:400;">'
+           f'· {len(models)} models</span></h1>',
+           _CAPS_GUIDE,
+           f'<div class="cap-filters">{chip_html}</div>',
+           table, SCRIPT, _CAPS_SCRIPT, '</body></html>']
+    (WORKTREE / "capabilities.html").write_text("\n".join(out), encoding="utf-8")
+
+
 _HOME_STYLE = (
     '<style>'
     '.home-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.2rem;margin:1.8rem 0;}'
@@ -1019,6 +1195,10 @@ def build_landing():
            '<p>Objective metrics for every model — UTMOS naturalness, WER '
            'intelligibility, and cloning-fidelity SIM. Sortable, default voice '
            'and cloning. Human votes remain the ground truth; these are backstops.</p></a></div>',
+           '<div class="home-card"><a href="capabilities.html"><h2>▶ Capabilities</h2>'
+           '<p>What each model can actually do — voice cloning, cross-lingual cloning, '
+           'languages, expressive control, sample rate, license, CPU support. Toggle '
+           'filters that combine, plus sort by any column.</p></a></div>',
            '<div class="home-card"><a href="https://5uck1ess-tts-arena.hf.space" '
            'target="_blank" rel="noopener"><h2>🗳 Vote ↗</h2>'
            '<p>Hear two clips blind and pick the better one — default voice or voice '
@@ -1126,6 +1306,7 @@ def build_top_level():
     build_listen()
     build_speed_hub()
     build_scores()
+    build_capabilities()
     build_archive_index()
     build_landing()  # last: counts depend on the dirs, not the other pages
 

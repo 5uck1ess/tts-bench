@@ -776,6 +776,138 @@ def _release_td(model, cls="muted"):
     return f'<td class="{cls}"{ds}>{escape(_release_label(model) or "—")}</td>'
 
 
+# ---------------------------------------------------------------------------
+# Capability matrix data — the structured source behind the Capabilities page.
+# Lifted from the curated README model tables (single values, kept in sync with
+# them). License / SR / Expressive / Langs mirror the README cells verbatim; the
+# README stays hand-maintained for now (single-sourcing it from these dicts is a
+# deferred follow-up). MODEL_CROSSLINGUAL is curated separately (see below).
+# ---------------------------------------------------------------------------
+
+# Output sample rate, as shown in the README (e.g. "44.1k").
+MODEL_SR = {
+    "kittentts": "24k", "kokoro": "24k", "lfm2_audio": "24k", "luxtts": "22.05k",
+    "magpie": "22.05k", "maya1": "24k", "melotts": "44.1k", "orpheus": "24k",
+    "outetts": "44.1k", "parler": "44.1k", "piper": "22.05k", "soprano": "32k",
+    "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
+    "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
+    "dots_tts": "48k", "dramabox": "48k", "echo": "44.1k", "f5tts": "24k",
+    "fish_15": "44.1k", "fish_s2": "44.1k", "higgs_v3": "24k", "indextts": "24k",
+    "longcat_1b": "24k", "longcat_3p5b": "24k", "mars5": "24k", "metavoice": "48k",
+    "miotts_01b": "44.1k", "miotts_06b": "44.1k", "miratts": "48k", "miso": "24k",
+    "moss_tts": "24k", "moss_tts_v15": "24k", "moss_tts_nano": "48k",
+    "neutts_air": "24k", "neutts_nano": "24k", "omnivoice": "24k", "openvoice": "22.05k",
+    "pocket": "24k", "qwentts": "24k", "qwentts_fast": "24k", "sesame": "24k",
+    "step_editx": "24k", "styletts2": "24k", "vibevoice_15b": "24k", "vibevoice_7b": "24k",
+    "voxcpm": "48k", "wavtts": "16k", "zipvoice": "24k", "zonos": "44.1k",
+}
+
+# Explicit emotion/delivery control offered (tags / desc / knob / emo-ref / —);
+# "*" = a caveat applies (see docs/expressive-control.md). "—" = none.
+MODEL_EXPRESSIVE = {
+    "kittentts": "—", "kokoro": "—", "lfm2_audio": "—", "luxtts": "—",
+    "magpie": "emotion voices*", "maya1": "tags + desc", "melotts": "—", "orpheus": "tags",
+    "outetts": "—", "parler": "desc*", "piper": "—", "soprano": "—", "supertonic": "tags",
+    "vibevoice": "—", "voxtral": "—", "chatterbox": "knob", "chatterbox_turbo": "tags*",
+    "coqui": "—", "cosyvoice": "desc", "dia": "tags", "dots_tts": "—", "dramabox": "desc",
+    "echo": "tags", "f5tts": "—", "fish_15": "—", "fish_s2": "tags", "higgs_v3": "tags",
+    "indextts": "emo-ref + desc + knob", "longcat_1b": "—", "longcat_3p5b": "—", "mars5": "—",
+    "metavoice": "—", "miotts_01b": "—", "miotts_06b": "—", "miratts": "knob", "miso": "—",
+    "moss_tts": "—", "moss_tts_v15": "tags (pause)", "moss_tts_nano": "—", "neutts_air": "—",
+    "neutts_nano": "—", "omnivoice": "tags*", "openvoice": "knob", "pocket": "—",
+    "qwentts": "—", "qwentts_fast": "—", "sesame": "—", "step_editx": "tags + desc",
+    "styletts2": "knob", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "desc",
+    "wavtts": "—", "zipvoice": "—", "zonos": "emo-ref + knob",
+}
+
+# License string as shown in the README (the precise truth; the commercial-OK
+# filter is a coarse heuristic derived from it — see _is_commercial).
+MODEL_LICENSE = {
+    "kittentts": "Apache 2.0", "kokoro": "Apache 2.0", "lfm2_audio": "LFM Open v1.0",
+    "luxtts": "MIT", "magpie": "NVIDIA OML", "maya1": "Apache 2.0", "melotts": "MIT",
+    "orpheus": "Apache 2.0", "outetts": "CC-BY-NC-SA 4.0 + Llama 3.2", "parler": "Apache 2.0",
+    "piper": "GPL-3.0", "soprano": "Apache 2.0", "supertonic": "MIT + OpenRAIL-M",
+    "vibevoice": "MIT", "voxtral": "CC-BY-NC 4.0", "chatterbox": "MIT",
+    "chatterbox_turbo": "MIT", "coqui": "CPML (non-commercial)", "cosyvoice": "Apache 2.0",
+    "dia": "Apache 2.0", "dots_tts": "Apache 2.0", "dramabox": "LTX-2 Community (NC)",
+    "echo": "CC-BY-NC-SA 4.0", "f5tts": "CC-BY-NC", "fish_15": "CC-BY-NC-SA 4.0",
+    "fish_s2": "Research (non-commercial)", "higgs_v3": "Research (NC)", "indextts": "Apache 2.0",
+    "longcat_1b": "MIT", "longcat_3p5b": "MIT", "mars5": "AGPL-3.0", "metavoice": "Apache 2.0",
+    "miotts_01b": "Falcon-LLM", "miotts_06b": "Apache 2.0", "miratts": "MIT", "miso": "Modified MIT",
+    "moss_tts": "Apache 2.0", "moss_tts_v15": "Apache 2.0", "moss_tts_nano": "Apache 2.0",
+    "neutts_air": "Apache 2.0", "neutts_nano": "Apache 2.0", "omnivoice": "Apache 2.0",
+    "openvoice": "MIT", "pocket": "Apache 2.0", "qwentts": "Apache 2.0", "qwentts_fast": "MIT",
+    "sesame": "Apache 2.0", "step_editx": "Apache 2.0", "styletts2": "MIT", "vibevoice_15b": "MIT",
+    "vibevoice_7b": "MIT", "voxcpm": "Apache 2.0", "wavtts": "MIT code / CC-BY-NC 4.0 weights",
+    "zipvoice": "Apache 2.0", "zonos": "Apache 2.0",
+}
+
+# Language coverage cell from the README: "✓" multilingual, "✓ (N)"/"✓ (zh+en)"
+# with detail, "—"/"— (en)" English-only. _is_multilingual keys off the leading ✓.
+MODEL_LANGS = {
+    "kittentts": "—", "kokoro": "✓", "lfm2_audio": "— (en)", "luxtts": "—",
+    "magpie": "✓ (9)", "maya1": "—", "melotts": "— (en)", "orpheus": "— (en)",
+    "outetts": "✓ (12)", "parler": "—", "piper": "✓", "soprano": "—",
+    "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
+    "chatterbox_turbo": "—", "coqui": "✓ (17)", "cosyvoice": "✓", "dia": "—",
+    "dots_tts": "✓ (24)", "dramabox": "— (en)", "echo": "—", "f5tts": "✓",
+    "fish_15": "✓", "fish_s2": "—", "higgs_v3": "✓ (100)", "indextts": "✓",
+    "longcat_1b": "✓ (zh+en)", "longcat_3p5b": "✓ (zh+en)", "mars5": "—", "metavoice": "—",
+    "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)",
+    "moss_tts": "✓ (20)", "moss_tts_v15": "✓ (31)", "moss_tts_nano": "✓ (zh+en)",
+    "neutts_air": "—", "neutts_nano": "—", "omnivoice": "✓ (600+)", "openvoice": "✓",
+    "pocket": "—", "qwentts": "✓", "qwentts_fast": "✓", "sesame": "—", "step_editx": "—",
+    "styletts2": "—", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "✓ (30)",
+    "wavtts": "✓ (zh+en)", "zipvoice": "✓ (zh+en)", "zonos": "✓",
+}
+
+# Tokens in a license string that signal NON-commercial / research-only use.
+_NONCOMMERCIAL_TOKENS = ("NC", "non-commercial", "Non-commercial", "CPML", "Research")
+
+
+def _is_multilingual(model):
+    """True if the model synthesizes more than English (README ✓ in the langs cell)."""
+    return MODEL_LANGS.get(model, "").startswith("✓")
+
+
+def _is_commercial(model):
+    """Coarse 'commercial use permitted' flag derived from the license string.
+    The Capabilities table always shows the exact license too — this only drives
+    the convenience filter, so it errs toward the literal NC/Research signal."""
+    lic = MODEL_LICENSE.get(model, "")
+    return bool(lic) and not any(tok in lic for tok in _NONCOMMERCIAL_TOKENS)
+
+
+def _sr_hz(model):
+    """Numeric sample rate in Hz from the 'NN.Nk' README cell, for sortable cells."""
+    s = MODEL_SR.get(model, "")
+    try:
+        return int(float(s.rstrip("k")) * 1000) if s.endswith("k") else None
+    except ValueError:
+        return None
+
+
+# Cross-lingual voice cloning: clones a voice from a reference in one language and
+# speaks a DIFFERENT one in that same voice. CURATED, not derived — each entry was
+# verified against the model's card/paper (2026-06-30). A multilingual cloner is NOT
+# automatically cross-lingual: longcat (1B/3.5B), miotts (0.1B/0.6B), and voxtral are
+# multilingual cloners documented to clone only within a single language, so they are
+# omitted. Multilingual cloners with no documented cross-lingual transfer are also
+# left out (fish_15, moss_tts_nano, voxcpm, wavtts, zipvoice) — flagged only on
+# positive evidence. Everything not listed (incl. all English-only cloners) is False.
+MODEL_CROSSLINGUAL = {
+    "coqui", "cosyvoice", "dots_tts", "f5tts", "higgs_v3", "indextts", "moss_tts",
+    "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_fast",
+    "zonos",
+}
+
+
+def _is_crosslingual(model):
+    """True if the model can clone a voice and then speak a different language in it
+    (curated per-model — see MODEL_CROSSLINGUAL)."""
+    return model in MODEL_CROSSLINGUAL
+
+
 def _ds(val):
     """data-sort attribute for numeric cells; empty when None."""
     return f' data-sort="{val}"' if val is not None else ' data-sort=""'
