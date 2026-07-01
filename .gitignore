@@ -3,6 +3,7 @@
 venvs/
 results/
 outputs/
+models/
 scratch_fish_ab/
 scratch_*/
 .claude/
