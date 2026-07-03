@@ -458,6 +458,7 @@ MODEL_DISPLAY_NAMES = {
     "zipvoice":      "ZipVoice 123M",
     "piper":         "Piper",
     "kokoro":        "Kokoro",
+    "kokoro_mlx":    "Kokoro (MLX)",
     "kittentts":     "KittenTTS Nano 0.1",
     "soprano":       "Soprano 1.1 80M",
     "moss_tts_nano": "MOSS-TTS-Nano",
@@ -524,6 +525,7 @@ MODEL_SIZE = {
     "mars5":         "1.2B",
     "dia":           "1.6B",
     "kokoro":        "82M",
+    "kokoro_mlx":    "82M",
     "kittentts":     "<100M",
     "piper":         "~25MB",
     "soprano":       "80M",
@@ -589,6 +591,7 @@ MODEL_URL = {
     "mars5":         _HF + "Camb-ai/mars5-tts",
     "dia":           _HF + "nari-labs/Dia-1.6B-0626",
     "kokoro":        _HF + "hexgrad/Kokoro-82M",
+    "kokoro_mlx":    _HF + "prince-canuma/Kokoro-82M",
     "kittentts":     _HF + "KittenML/kitten-tts-nano-0.1",
     "piper":         "https://github.com/OHF-Voice/piper1-gpl",
     "soprano":       _HF + "ekwek/Soprano-1.1-80M",
@@ -623,6 +626,7 @@ MODEL_URL = {
 MODEL_KIND = {
     "piper":         "predefined",
     "kokoro":        "predefined",
+    "kokoro_mlx":    "predefined",
     "kittentts":     "predefined",
     "magpie":        "predefined",
     "vibevoice":     "predefined",
@@ -1381,7 +1385,11 @@ def _render_samples(ctx):
     cols = ("Rank", "Model", "Device", "TTFA warm", "Audio")
     num_cols = {"Rank", "TTFA warm"}
     for pid in prompts:
-        items = ctx["per_prompt"].get(pid, [])
+        # Samples only lists clips we can actually play. A successful row normally
+        # ships its cold-run wav; a speed-only model (e.g. kokoro_mlx, benched for
+        # timing but publishing no Mac clip) lands here with no wav — skip it rather
+        # than render a dead "missing" row.
+        items = [it for it in ctx["per_prompt"].get(pid, []) if it.get("wav_exists")]
         out.append(f'<div class="prompt" id="p{escape(pid)}"><h2>Prompt {escape(pid)}</h2>')
         ptext = PROMPT_INFO.get(pid)
         if ptext:

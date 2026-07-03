@@ -47,6 +47,12 @@ MODELS = [
     ("fish_15",     "fish",       "runners/fish_runner.py",       True,  ["cpu", "cuda", "mps"], None,   True),
     # Predefined-voice-only (no cloning)
     ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     True,  ["cpu", "cuda", "mps"], None,   False),
+    # kokoro_mlx: same Kokoro-82M weights + voices, but generation runs on Apple's
+    # MLX (mlx-audio) instead of PyTorch-MPS. Apple-Silicon-only (mlx has no
+    # CUDA/CPU-rig wheel) -> devices=["mps"]; the torch-free venv passes detect_mps
+    # via MLX's Metal probe. Speed-only twin of `kokoro` (identical audio) — see
+    # SPEED_ONLY in publish.py. MPS still wins; docs/known-issues.md has the numbers.
+    ("kokoro_mlx",  "kokoro_mlx", "runners/kokoro_mlx_runner.py", True,  ["mps"],                None,   False),
     ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  False, ["cpu"],                None,   False),
     ("piper",       "piper",      "runners/piper_runner.py",      True,  ["cpu", "cuda"],        None,   False),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,    False),

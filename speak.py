@@ -31,6 +31,7 @@ MODELS = {
     "neutts_nano": ("neutts",     "runners/neutts_runner.py",     "nano"),
     "luxtts":      ("luxtts",     "runners/luxtts_runner.py",     None),
     "kokoro":      ("kokoro",     "runners/kokoro_runner.py",     None),
+    "kokoro_mlx":  ("kokoro_mlx", "runners/kokoro_mlx_runner.py", None),
     "kittentts":   ("kittentts",  "runners/kittentts_runner.py",  None),
     "piper":       ("piper",      "runners/piper_runner.py",      None),
     "chatterbox":  ("chatterbox", "runners/chatterbox_runner.py", None),

@@ -36,6 +36,10 @@ NO_PRESET_VOICE = {
 #   reflect its real, sometimes-bad quality.
 HOLD_FROM_POOL = set()
 
+# Mirrors publish.py SPEED_ONLY: models with a speed row but no place in the vote
+# pool because their audio duplicates another tracked model (kokoro_mlx == kokoro).
+SPEED_ONLY = {"kokoro_mlx"}
+
 _WAV_RE = re.compile(r"(.+)_(cuda|mps|cpu)_p(\d+)\.wav$")
 
 
@@ -59,8 +63,9 @@ def scan_dirs(gh_root, mode: str, base_url: str):
     """
     gh_root = str(gh_root)
     found = {}   # (model, prompt) -> (rank, url)
-    # HOLD_FROM_POOL is dropped in every mode (known-bad output, not votable yet).
-    drop = (NO_PRESET_VOICE if mode == "default" else set()) | HOLD_FROM_POOL
+    # HOLD_FROM_POOL (known-bad, not votable yet) and SPEED_ONLY (audio duplicates
+    # another tracked model) are both dropped in every mode.
+    drop = (NO_PRESET_VOICE if mode == "default" else set()) | HOLD_FROM_POOL | SPEED_ONLY
 
     def scan(glob_pat, only=None):
         for d in glob.glob(glob_pat):

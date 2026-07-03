@@ -79,6 +79,15 @@ NO_PRESET_VOICE = {
     "wavtts",
 }
 
+# Speed-only models: they carry a real speed row on the per-rig leaderboard but
+# must NOT appear on Listen / Scores / Arena, because their audio is identical to
+# another tracked model (same weights, different runtime). kokoro_mlx is the MLX
+# twin of `kokoro` — published so the M4 speed board shows MLX vs PyTorch-MPS
+# side by side, but its clips/scores would just duplicate PyTorch Kokoro's.
+# Filtered out in _ok_models (Listen + Scores) and arena/build_manifest.py (Arena);
+# the Speed hub reads CSV rows directly, so the row still shows there.
+SPEED_ONLY = {"kokoro_mlx"}
+
 # Curated per-(model, voice-mode) QA findings, surfaced as a small badge + tooltip on
 # the model's row in the Listen gallery and recorded in docs/known-issues.md.
 # Each value is (kind, label, note): kind "note" renders a neutral badge for a
@@ -366,7 +375,9 @@ def _ok_models(name):
     if not d:
         return set()
     try:
-        return {r["model"] for r in _read_csv(d / "results.csv") if r["ok"]}
+        # SPEED_ONLY models are dropped here so Listen + Scores (which derive their
+        # model sets from _ok_models) never show them; the Speed hub bypasses this.
+        return {r["model"] for r in _read_csv(d / "results.csv") if r["ok"]} - SPEED_ONLY
     except Exception:
         return set()
 

@@ -127,6 +127,31 @@ else
     echo "kokoro: already installed"
 fi
 
+# --- Kokoro-82M (MLX / Apple Silicon) ---
+# Same weights + voices as kokoro, but generation runs on Apple's MLX (mlx-audio)
+# instead of PyTorch-MPS — a speed-only twin so the Mac board shows MLX vs MPS.
+# Apple-Silicon only: mlx ships no CUDA/Linux wheel, so skip off Darwin.
+echo; cyan "=== Kokoro-82M (MLX) ==="
+if ! want kokoro_mlx; then echo "kokoro_mlx: skipped (not in install filter)"
+elif [ "$(uname)" != "Darwin" ]; then
+    echo "kokoro_mlx: skipped (MLX is Apple-Silicon only; no CUDA/Linux wheel)"
+elif [ ! -x venvs/kokoro_mlx/bin/python ]; then
+    uv venv venvs/kokoro_mlx --python 3.12 || die "uv venv kokoro_mlx"
+    # misaki[en] pulls num2words; mlx-audio's Kokoro G2P imports misaki.en. psutil
+    # feeds the runner's peak-RSS column (parity with the torch runners).
+    uv pip install --python venvs/kokoro_mlx/bin/python \
+        mlx-audio "misaki[en]" num2words soundfile numpy psutil \
+        || die "uv pip install kokoro_mlx"
+    # Same uv-venv-has-no-pip gotcha as kokoro: pre-install the spaCy model wheel
+    # so misaki.en doesn't try to spacy.cli.download() it at runtime.
+    uv pip install --python venvs/kokoro_mlx/bin/python \
+        https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl \
+        || die "spacy en_core_web_sm install (kokoro_mlx)"
+    green "kokoro_mlx: ok"
+else
+    echo "kokoro_mlx: already installed"
+fi
+
 # --- KittenTTS ---
 echo; cyan "=== KittenTTS ==="
 if ! want kittentts; then echo "kittentts: skipped (not in install filter)"
