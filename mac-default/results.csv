@@ -504,3 +504,16 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 4,melotts,mps,,False,2,False,486.7,0.4867,7.028,14.44,1692.8,,0,True,
 5,outetts,cpu,,True,0,True,,,,,,,0,False,skipped: timed out on an earlier prompt
 5,outetts,mps,,True,0,True,,,,,,,0,False,skipped: timed out on an earlier prompt
+1,kokoro_mlx,mps,,False,0,True,2057.0,2.0646,2.65,1.28,764.7,,2.958,True,
+1,kokoro_mlx,mps,,False,1,False,185.5,0.1917,2.65,13.83,765.1,,0,True,
+1,kokoro_mlx,mps,,False,2,False,188.0,0.1941,2.65,13.65,765.1,,0,True,
+2,kokoro_mlx,mps,,False,0,True,,,,,,,2.451,False,"ValueError: [broadcast_shapes] Shapes (1,140400,1) and (1,140700,9) cannot be broadcast."
+3,kokoro_mlx,mps,,False,0,True,3094.9,3.1047,17.8,5.73,537.0,,5.859,True,
+3,kokoro_mlx,mps,,False,1,False,1087.3,1.0952,17.8,16.25,556.0,,0,True,
+3,kokoro_mlx,mps,,False,2,False,1082.5,1.0979,17.8,16.21,565.7,,0,True,
+4,kokoro_mlx,mps,,False,0,True,2386.7,2.4041,7.05,2.93,774.0,,3.853,True,
+4,kokoro_mlx,mps,,False,1,False,457.9,0.4712,7.05,14.96,774.9,,0,True,
+4,kokoro_mlx,mps,,False,2,False,453.9,0.4729,7.05,14.91,774.9,,0,True,
+5,kokoro_mlx,mps,,False,0,True,877.6,0.8921,5.025,5.63,444.2,,1.917,True,
+5,kokoro_mlx,mps,,False,1,False,331.8,0.3442,5.025,14.6,445.0,,0,True,
+5,kokoro_mlx,mps,,False,2,False,327.9,0.3427,5.025,14.66,445.0,,0,True,
