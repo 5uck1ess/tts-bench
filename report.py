@@ -470,7 +470,6 @@ MODEL_DISPLAY_NAMES = {
     "voxtral":       "Voxtral 4B TTS",
     "fish_15":       "Fish Speech 1.5",
     "fish_s2":       "Fish Speech S2-Pro",
-    "echo":          "Echo-TTS",
     "zonos":         "Zonos v0.1",
     "openvoice":     "OpenVoice v2",
     "styletts2":     "StyleTTS 2",
@@ -482,7 +481,6 @@ MODEL_DISPLAY_NAMES = {
     "outetts":       "OuteTTS 1.0 1B",
     "parler":        "Parler-TTS Mini v1",
     "melotts":       "MeloTTS",
-    "higgs":         "Higgs Audio v2 3B",
     "higgs_v3":      "Higgs Audio v3 TTS",
     "dramabox":      "DramaBox",
     "dots_tts":      "dots.tts (soar)",
@@ -537,7 +535,6 @@ MODEL_SIZE = {
     "voxtral":       "4B",
     "fish_15":       "~500M",
     "fish_s2":       "4B",
-    "echo":          "~2.8B",
     "zonos":         "1.6B",
     "openvoice":     "~100M",
     "styletts2":     "~148M",
@@ -549,7 +546,6 @@ MODEL_SIZE = {
     "outetts":       "1B",     # Llama-3.2-1B backbone
     "parler":        "878M",   # parler-tts-mini-v1 safetensors total; large variant = 2.33B
     "melotts":       "~52M",   # MeloTTS-English checkpoint.pth (~208 MB fp32 / 4)
-    "higgs":         "3.6B",   # generation LLM; +2.2B audio adapter (DualFFN) not counted (echo/fish convention)
     "higgs_v3":      "4B",     # Qwen3 ~4B backbone (HF card); Higgs audio tokenizer not counted
     "dramabox":      "3.3B",   # LTX-2.3 audio-only DiT (IC-LoRA merged); 12B 4-bit text encoder not counted
     "dots_tts":      "2B",     # semantic encoder + LLM + flow-matching acoustic head (soar/SCA checkpoint)
@@ -613,7 +609,6 @@ MODEL_URL = {
     "outetts":       _HF + "OuteAI/Llama-OuteTTS-1.0-1B",
     "parler":        _HF + "parler-tts/parler-tts-mini-v1",
     "melotts":       _HF + "myshell-ai/MeloTTS-English",
-    "higgs":         _HF + "bosonai/higgs-audio-v2-generation-3B-base",
     "higgs_v3":      _HF + "bosonai/higgs-audio-v3-tts-4b",
     "dramabox":      "https://github.com/resemble-ai/DramaBox",
     "dots_tts":      _HF + "rednote-hilab/dots.tts-soar",
@@ -665,7 +660,6 @@ MODEL_KIND = {
     "voxtral":       "cloning",      # cuda/vLLM path clones; MLX path preset-only
     "fish_15":       "cloning",
     "fish_s2":       "cloning",
-    "echo":          "cloning",
     "zonos":         "cloning",
     "openvoice":     "cloning",
     "styletts2":     "cloning",
@@ -677,7 +671,6 @@ MODEL_KIND = {
     "outetts":       "cloning",   # clones from a reference wav; ALSO has preset voices (default lens)
     "parler":        "predefined",   # voice set by a text description, no wav cloning
     "melotts":       "predefined",   # VITS preset speakers (EN-US), no wav cloning
-    "higgs":         "cloning",   # in-context cloning from a reference wav + transcript
     "higgs_v3":      "cloning",   # zero-shot cloning; no-reference run = its own default voice
     "dramabox":      "cloning",   # 10s+ wav cloning; no-reference run = prompt-described voice
     "dots_tts":      "cloning",   # zero-shot cloning (+ ref transcript); no-reference run = bundled chris clip
@@ -722,6 +715,7 @@ MODEL_RELEASE = {
     "mars5":         "2024-06",
     "dia":           "2025-06",
     "kokoro":        "2024-12",
+    "kokoro_mlx":    "2024-12",   # same Kokoro-82M checkpoint (MLX backend) — shares its date
     "kittentts":     "2025-08",
     "piper":         "2023-01",   # original rhasspy/piper engine, not the piper1-gpl re-home
     "soprano":       "2026-01",
@@ -743,7 +737,6 @@ MODEL_RELEASE = {
     "outetts":       "2025-04",
     "parler":        "2024-06",
     "melotts":       "2024-02",
-    "higgs":         "2025-07",
     "higgs_v3":      "2026-06",
     "dramabox":      "2026-04",
     "dots_tts":      "2026-06",
@@ -790,7 +783,7 @@ def _release_td(model, cls="muted"):
 
 # Output sample rate, as shown in the README (e.g. "44.1k").
 MODEL_SR = {
-    "kittentts": "24k", "kokoro": "24k", "lfm2_audio": "24k", "luxtts": "22.05k",
+    "kittentts": "24k", "kokoro": "24k", "kokoro_mlx": "24k", "lfm2_audio": "24k", "luxtts": "22.05k",
     "magpie": "22.05k", "maya1": "24k", "melotts": "44.1k", "orpheus": "24k",
     "outetts": "44.1k", "parler": "44.1k", "piper": "22.05k", "soprano": "32k",
     "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
@@ -809,7 +802,7 @@ MODEL_SR = {
 # Explicit emotion/delivery control offered (tags / desc / knob / emo-ref / —);
 # "*" = a caveat applies (see docs/expressive-control.md). "—" = none.
 MODEL_EXPRESSIVE = {
-    "kittentts": "—", "kokoro": "—", "lfm2_audio": "—", "luxtts": "—",
+    "kittentts": "—", "kokoro": "—", "kokoro_mlx": "—", "lfm2_audio": "—", "luxtts": "—",
     "magpie": "emotion voices*", "maya1": "tags + desc", "melotts": "—", "orpheus": "tags",
     "outetts": "—", "parler": "desc*", "piper": "—", "soprano": "—", "supertonic": "tags",
     "vibevoice": "—", "voxtral": "—", "chatterbox": "knob", "chatterbox_turbo": "tags*",
@@ -827,7 +820,8 @@ MODEL_EXPRESSIVE = {
 # License string as shown in the README (the precise truth; the commercial-OK
 # filter is a coarse heuristic derived from it — see _is_commercial).
 MODEL_LICENSE = {
-    "kittentts": "Apache 2.0", "kokoro": "Apache 2.0", "lfm2_audio": "LFM Open v1.0",
+    "kittentts": "Apache 2.0", "kokoro": "Apache 2.0", "kokoro_mlx": "Apache 2.0",
+    "lfm2_audio": "LFM Open v1.0",
     "luxtts": "MIT", "magpie": "NVIDIA OML", "maya1": "Apache 2.0", "melotts": "MIT",
     "orpheus": "Apache 2.0", "outetts": "CC-BY-NC-SA 4.0 + Llama 3.2", "parler": "Apache 2.0",
     "piper": "GPL-3.0", "soprano": "Apache 2.0", "supertonic": "MIT + OpenRAIL-M",
@@ -849,7 +843,7 @@ MODEL_LICENSE = {
 # Language coverage cell from the README: "✓" multilingual, "✓ (N)"/"✓ (zh+en)"
 # with detail, "—"/"— (en)" English-only. _is_multilingual keys off the leading ✓.
 MODEL_LANGS = {
-    "kittentts": "—", "kokoro": "✓", "lfm2_audio": "— (en)", "luxtts": "—",
+    "kittentts": "—", "kokoro": "✓", "kokoro_mlx": "✓", "lfm2_audio": "— (en)", "luxtts": "—",
     "magpie": "✓ (9)", "maya1": "—", "melotts": "— (en)", "orpheus": "— (en)",
     "outetts": "✓ (12)", "parler": "—", "piper": "✓", "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
@@ -864,6 +858,25 @@ MODEL_LANGS = {
     "styletts2": "—", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "✓ (30)",
     "wavtts": "✓ (zh+en)", "zipvoice": "✓ (zh+en)", "zonos": "✓",
 }
+
+# --- Registry-drift guard -------------------------------------------------
+# Every model must appear in ALL capability registries: a missing key silently
+# renders "—" cells on Capabilities and mislabels licenses via _is_commercial.
+# Fails at import time (publish.py imports this module) so drift can't ship.
+_REGISTRIES = {
+    "MODEL_DISPLAY_NAMES": MODEL_DISPLAY_NAMES, "MODEL_SIZE": MODEL_SIZE,
+    "MODEL_URL": MODEL_URL, "MODEL_KIND": MODEL_KIND, "MODEL_RELEASE": MODEL_RELEASE,
+    "MODEL_SR": MODEL_SR, "MODEL_EXPRESSIVE": MODEL_EXPRESSIVE,
+    "MODEL_LICENSE": MODEL_LICENSE, "MODEL_LANGS": MODEL_LANGS,
+}
+_ALL_REGISTRY_MODELS = set().union(*(d.keys() for d in _REGISTRIES.values()))
+_REGISTRY_DRIFT = {name: sorted(_ALL_REGISTRY_MODELS - d.keys())
+                   for name, d in _REGISTRIES.items() if _ALL_REGISTRY_MODELS - d.keys()}
+if _REGISTRY_DRIFT:
+    raise AssertionError(
+        "model registry drift — these registries are missing keys that other "
+        f"registries have: {_REGISTRY_DRIFT}")
+
 
 # Tokens in a license string that signal NON-commercial / research-only use.
 _NONCOMMERCIAL_TOKENS = ("NC", "non-commercial", "Non-commercial", "CPML", "Research")

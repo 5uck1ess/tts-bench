@@ -38,7 +38,7 @@ from report import (
     MODEL_SR, MODEL_EXPRESSIVE, MODEL_LICENSE, MODEL_LANGS,
     _ds, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
     _build_context, _speed_table_html, _display_name, _release_label, _release_td,
-    _is_multilingual, _is_commercial, _sr_hz, _is_crosslingual,
+    _is_multilingual, _is_commercial, _sr_hz, _is_crosslingual, MODEL_LANGS,
 )
 from harness import MODELS as _HARNESS_MODELS
 
@@ -50,13 +50,10 @@ _CPU_OK = frozenset(row[0] for row in _HARNESS_MODELS if "cpu" in row[4])
 # and Cloning are ✓). Every other model is clone-only or preset-only via MODEL_KIND.
 _PRESET_AND_CLONE = {"outetts", "voxtral"}
 
-# Models that synthesize more than English (from the README capability table) —
-# used only for the at-a-glance "multilingual" badge in the Listen by-model view.
-MODEL_MULTILINGUAL = {
-    "piper", "kokoro", "magpie", "supertonic", "f5tts", "indextts", "omnivoice",
-    "zipvoice", "voxcpm", "coqui", "qwentts", "qwentts_fast", "moss_tts_nano",
-    "moss_tts", "moss_tts_v15", "voxtral", "fish_15", "zonos", "openvoice", "dots_tts",
-}
+# Models that synthesize more than English — derived from report.MODEL_LANGS (the
+# single source of truth) so the Listen badge can never disagree with the
+# Capabilities page. Used only for the at-a-glance "multilingual" badge.
+MODEL_MULTILINGUAL = frozenset(m for m in MODEL_LANGS if _is_multilingual(m))
 
 # Cloning models with NO preset/built-in voice: their no-`--reference` "default"
 # run falls back to cloning the bundled reference clip, so the default sample is
@@ -378,7 +375,9 @@ def _ok_models(name):
         # SPEED_ONLY models are dropped here so Listen + Scores (which derive their
         # model sets from _ok_models) never show them; the Speed hub bypasses this.
         return {r["model"] for r in _read_csv(d / "results.csv") if r["ok"]} - SPEED_ONLY
-    except Exception:
+    except Exception as e:  # a broken CSV must be VISIBLE — it hides a whole rig
+        print(f"WARNING: failed to read {d / 'results.csv'} — its models will be "
+              f"missing from the site: {type(e).__name__}: {e}", file=sys.stderr)
         return set()
 
 
@@ -391,8 +390,9 @@ def _all_prompt_ids(dirs):
             continue
         try:
             ids |= {r["prompt_id"] for r in _read_csv(d / "results.csv")}
-        except Exception:
-            pass
+        except Exception as e:  # same visibility rule as _ok_models
+            print(f"WARNING: failed to read {d / 'results.csv'} — its prompts are "
+                  f"missing from the site: {type(e).__name__}: {e}", file=sys.stderr)
     return _sort_prompt_ids(ids)
 
 
