@@ -29,6 +29,19 @@ class Settings:
     def use_turso(self) -> bool:
         return bool(self.turso_url)
 
+    @property
+    def missing_prod_secrets(self) -> list:
+        """Anti-abuse secrets still at their insecure dev defaults. Non-empty in a
+        production (Turso-backed) deploy means: nonces are signed with the PUBLIC
+        _DEV_HMAC committed to the repo (pair tokens forgeable) and/or Turnstile
+        verification is silently disabled (bot gate off)."""
+        out = []
+        if self.hmac_secret == _DEV_HMAC:
+            out.append("HMAC_SECRET")
+        if not self.turnstile_secret:
+            out.append("TURNSTILE_SECRET")
+        return out
+
 
 def load_settings(env: dict | None = None) -> Settings:
     e = os.environ if env is None else env

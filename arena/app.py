@@ -29,6 +29,16 @@ import os
 import random
 
 SETTINGS = load_settings()
+
+# A Turso-backed deploy is production: refuse to start if the anti-abuse secrets
+# are missing/defaulted. Failing open here means forgeable pair nonces (public
+# dev HMAC) and a silently-disabled bot gate — worse than downtime.
+if SETTINGS.use_turso and SETTINGS.missing_prod_secrets:
+    raise RuntimeError(
+        f"arena refusing to start: {', '.join(SETTINGS.missing_prod_secrets)} not set "
+        "while TURSO_URL is configured. Set them as Space secrets (or unset TURSO_URL "
+        "for a local dev run).")
+
 RE_DERIVE_INTERVAL_S = 6 * 3600
 
 with open(SETTINGS.manifest_path, encoding="utf-8") as f:
