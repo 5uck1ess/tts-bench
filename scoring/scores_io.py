@@ -21,15 +21,31 @@ def read_scores(path):
     return out
 
 
+# Metric fields owned by more than one scoring pass/venv: a blank fresh value
+# means "this pass couldn't compute it" (e.g. SIM from the py3.11 scoring venv,
+# where fairseq is absent — sim_pass.py owns SIM from its own py3.10 venv), NOT
+# "the metric is now blank". An overwrite merge must never clobber a real
+# existing value with "". `health` is excluded on purpose: "" is its legitimate
+# "clean" verdict, so a fresh blank there is a real result and wins.
+_KEEP_EXISTING_IF_BLANK = ("utmos", "wer", "sim")
+
+
 def merge_rows(existing, fresh_rows, overwrite=False):
     """Merge freshly-scored rows into existing. overwrite=False keeps existing
-    rows for keys already present (incremental); True replaces them (--rescore)."""
+    rows for keys already present (incremental); True replaces them (--rescore) —
+    except a blank metric cell never overwrites a non-blank one (see above)."""
     merged = dict(existing)
     for row in fresh_rows:
         key = (row["dir"], row["wav"])
         if key in merged and not overwrite:
             continue
-        merged[key] = {k: row.get(k, "") for k in FIELDNAMES}
+        new = {k: row.get(k, "") for k in FIELDNAMES}
+        old = merged.get(key)
+        if old:
+            for k in _KEEP_EXISTING_IF_BLANK:
+                if not new[k] and old.get(k, ""):
+                    new[k] = old[k]
+        merged[key] = new
     return merged
 
 

@@ -31,6 +31,24 @@ def test_merge_keeps_existing_unless_overwrite():
     assert merged2[("d", "w.wav")]["utmos"] == "9.9"
 
 
+def test_rescore_never_blanks_sim_from_the_wrong_venv():
+    """Regression: `score_all --rescore` runs in the py3.11 venv where SIM always
+    fails (no fairseq) → fresh rows carry sim="". The overwrite merge must keep
+    the existing sim_pass-computed value instead of wiping the board's SIM column."""
+    existing = {("d", "w.wav"): {"dir": "d", "wav": "w.wav", "model": "m",
+                                 "mode": "cloning", "prompt_id": "1",
+                                 "utmos": "4.0", "wer": "0.1", "sim": "0.8000",
+                                 "health": "gap"}}
+    fresh = {"dir": "d", "wav": "w.wav", "model": "m", "mode": "cloning",
+             "prompt_id": "1", "utmos": "4.2", "wer": "0.1", "sim": "",
+             "health": ""}
+    merged = merge_rows(existing, [fresh], overwrite=True)
+    row = merged[("d", "w.wav")]
+    assert row["sim"] == "0.8000"    # blank fresh never clobbers a real value
+    assert row["utmos"] == "4.2"     # non-blank fresh still wins
+    assert row["health"] == ""       # health excluded: "" = clean is a real verdict
+
+
 def test_write_is_sorted_and_has_header(tmp_path):
     p = tmp_path / "scores.csv"
     rows = [
