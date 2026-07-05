@@ -20,6 +20,7 @@ Usage:
 
 import argparse
 import csv
+import os
 import re
 import shutil
 import sys
@@ -95,11 +96,15 @@ def main() -> int:
     if args.replace:
         kept = [r for r in into_rows if r["model"] not in set(models)]
         removed_rows = before - len(kept)
-        with into_csv.open("w", newline="", encoding="utf-8") as f:
+        # Write to a temp file and swap atomically — never truncate the canonical
+        # CSV in place (a mid-write failure would destroy it unrecoverably).
+        tmp_csv = into_csv.with_suffix(".csv.tmp")
+        with tmp_csv.open("w", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=into_fields)
             writer.writeheader()
             for r in (kept + add_rows):
                 writer.writerow(r)
+        os.replace(tmp_csv, into_csv)
     else:
         with into_csv.open("a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=into_fields)

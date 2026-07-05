@@ -401,10 +401,16 @@ def main() -> int:
                     continue
                 cold = ok_rows[0]
                 warms = ok_rows[1:]
-                cold_msg = f"cold ttfa={cold.get('ttfa_ms', 0):.0f}ms rtf={(cold['audio_s']/cold['gen_s']):.1f}x" if cold.get('gen_s') else "cold ok"
+                # ttfa_ms is nullable in the runner protocol (streaming detection can
+                # legitimately yield no chunks) — never format/average a None.
+                cold_msg = (f"cold ttfa={(cold.get('ttfa_ms') or 0):.0f}ms rtf={(cold['audio_s']/cold['gen_s']):.1f}x"
+                            if cold.get('gen_s') and cold.get('audio_s') else "cold ok")
                 if warms:
-                    warm_ttfa = sum(w["ttfa_ms"] for w in warms) / len(warms)
-                    warm_rtf = sum(w["audio_s"]/w["gen_s"] for w in warms) / len(warms)
+                    ttfas = [w["ttfa_ms"] for w in warms if w.get("ttfa_ms") is not None]
+                    rtfs = [w["audio_s"] / w["gen_s"] for w in warms
+                            if w.get("audio_s") and w.get("gen_s")]
+                    warm_ttfa = sum(ttfas) / len(ttfas) if ttfas else 0
+                    warm_rtf = sum(rtfs) / len(rtfs) if rtfs else 0
                     warm_msg = f"warm-avg ttfa={warm_ttfa:.0f}ms rtf={warm_rtf:.1f}x"
                     print(f"{cold_msg}  |  {warm_msg}")
                 else:
@@ -442,12 +448,11 @@ def _print_summary(rows, prompts):
                 return f"{r['ttfa_ms']:.0f}ms" if r and r["ttfa_ms"] != "" else "—"
             def fmt_r(r):
                 return f"{r['rtf']:.1f}x" if r and r["rtf"] != "" else "—"
-            warm_ttfa_avg = (
-                f"{sum(r['ttfa_ms'] for r in warms)/len(warms):.0f}ms" if warms else "—"
-            )
-            warm_rtf_avg = (
-                f"{sum(r['rtf'] for r in warms)/len(warms):.1f}x" if warms else "—"
-            )
+            # CSV-shaped rows use "" for missing values — filter before averaging.
+            w_tt = [r["ttfa_ms"] for r in warms if r["ttfa_ms"] != ""]
+            w_rt = [r["rtf"] for r in warms if r["rtf"] != ""]
+            warm_ttfa_avg = f"{sum(w_tt)/len(w_tt):.0f}ms" if w_tt else "—"
+            warm_rtf_avg = f"{sum(w_rt)/len(w_rt):.1f}x" if w_rt else "—"
             print(f"  {model:<14} {device:<6} {fmt_t(cold):>10} {warm_ttfa_avg:>10} {fmt_r(cold):>9} {warm_rtf_avg:>9}")
         print()
 
