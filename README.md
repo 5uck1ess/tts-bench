@@ -135,7 +135,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [MOSS-TTS-Nano](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano) | 100M | Apr 2026 | — | ✓ | ✓ (zh+en) | **48k** | — | Apache 2.0 |
 | [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air) | 748M | Sep 2025 | — | ✓ | — | 24k | — | Apache 2.0 |
 | [NeuTTS Nano](https://huggingface.co/neuphonic/neutts-nano-q4-gguf) | 229M | Dec 2025 | — | ✓ | — | 24k | — | Apache 2.0 |
-| [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) | ~1B | Mar 2026 | — | ✓ | ✓ (600+) | 24k | tags\* | Apache 2.0 |
+| [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) | ~1B | Mar 2026 | — | ✓ | ✓ (600+) | 24k | tags\* | Apache 2.0 code / CC-BY-NC weights |
 | [OpenVoice v2](https://huggingface.co/myshell-ai/OpenVoiceV2) | ~100M | Apr 2024 | — | ✓ | ✓ | 22.05k | knob | MIT |
 | [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | 100M | Jan 2026 | — | ✓ | — | 24k | — | Apache 2.0 |
 | [Qwen3-TTS 1.7B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
