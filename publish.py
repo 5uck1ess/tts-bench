@@ -702,10 +702,10 @@ def build_listen():
 
 _SPEED_GUIDE = (
     '<div class="reading-guide"><strong>TTFA</strong> = time to first audio (lower is better). '
-    '<strong>RTF</strong> = real-time factor (× realtime; higher is better). '
+    '<strong>RTFx</strong> = realtime speed (× realtime; higher is better). '
     '<strong>Cold</strong> = first run after load; <strong>warm</strong> = subsequent runs. '
     'Pick a rig below — each shows its default-voice and cloning runs. Tables default to '
-    '<strong>warm RTF, fastest first</strong>; click any column header to re-sort. '
+    '<strong>warm RTFx, fastest first</strong>; click any column header to re-sort. '
     'Audio is on the <a href="listen.html">Listen</a> page.</div>'
 )
 
@@ -1200,7 +1200,7 @@ def build_landing():
            'side by side. One clip per model, sourced from the highest-fidelity rig. '
            'Quality and prosody are obvious in seconds.</p></a></div>',
            '<div class="home-card"><a href="speed.html"><h2>▶ Speed</h2>'
-           '<p>Time-to-first-audio, real-time factor, and memory for every model — '
+           '<p>Time-to-first-audio, realtime speed (RTFx), and memory for every model — '
            'per rig (windows-5090 · linux-3090 · mac-m4), cold and warm. Sortable.</p></a></div>',
            '<div class="home-card"><a href="scores.html"><h2>▶ Scores</h2>'
            '<p>Objective metrics for every model — UTMOS naturalness, WER '

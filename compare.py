@@ -148,7 +148,7 @@ def _write_html_report(out_dir, text, results, reference, language):
                f'{sum(1 for r in results if r["ok"])} ok</div>')
 
     out.append('<table><thead><tr>')
-    for col in ("Model", "Device", "TTFA", "gen", "audio", "RTF", "wall", "Audio"):
+    for col in ("Model", "Device", "TTFA", "gen", "audio", "RTFx", "wall", "Audio"):
         out.append(f'<th>{col}</th>')
     out.append('</tr></thead><tbody>')
 

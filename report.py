@@ -1,6 +1,6 @@
 """Generate a self-contained HTML report from a bench.py results directory.
 
-Shows TTFA cold/warm + RTF cold/warm per (model, device, prompt), with an
+Shows TTFA cold/warm + RTFx cold/warm per (model, device, prompt), with an
 inline <audio> player for the cold run of each cell so you can click-play
 each wav in the browser without leaving the page.
 
@@ -1158,7 +1158,7 @@ def _render_lens_picker(ctx):
     out.append(
         '<div class="lens-card"><a href="speed.html">'
         '<h3>▶ Speed</h3>'
-        f'<div class="desc">TTFA, RTF, memory · {n_models} models · sortable</div>'
+        f'<div class="desc">TTFA, RTFx, memory · {n_models} models · sortable</div>'
         '</a></div>'
     )
     out.append(
@@ -1182,7 +1182,7 @@ _READING_GUIDE = {
     "speed": (
         '<div class="reading-guide">'
         '<strong>TTFA</strong> = time to first audio (ms; lower is better). '
-        '<strong>RTF</strong> = real-time factor (× realtime; higher is better; e.g. 10× means '
+        '<strong>RTFx</strong> = realtime speed (× realtime; higher is better; e.g. 10× means '
         '10 sec of audio generated per 1 sec of compute). '
         '<strong>Cold</strong> = first run after process start; <strong>warm</strong> = subsequent runs.'
         '</div>'
@@ -1241,17 +1241,17 @@ def _speed_table_html(ctx):
     The caller decides where to place it and whether to set window.__defaultSort
     (rtf_warm_col_idx is returned so the caller can default-sort by warm RTF)."""
     cols = ("Model", "Device", "TTFA cold", "TTFA warm",
-            "RTF cold", "RTF warm", "Peak RAM", "Peak VRAM", "Size", "Released")
-    num_cols = {"TTFA cold", "TTFA warm", "RTF cold", "RTF warm",
+            "RTFx cold", "RTFx warm", "Peak RAM", "Peak VRAM", "Size", "Released")
+    num_cols = {"TTFA cold", "TTFA warm", "RTFx cold", "RTFx warm",
                 "Peak RAM", "Peak VRAM"}
-    rtf_warm_idx = cols.index("RTF warm")
+    rtf_warm_idx = cols.index("RTFx warm")
     out = ['<table><thead><tr>']
     for c in cols:
         cls = ' class="num"' if c in num_cols else ''
         out.append(f'<th{cls}>{c}</th>')
     out.append('</tr></thead><tbody>')
 
-    # Sort rows by RTF warm desc for stable origIdx ordering
+    # Sort rows by RTFx warm desc for stable origIdx ordering
     keys_sorted = sorted(
         ctx["per_model"].keys(),
         key=lambda k: (ctx["per_model"][k]["rtf_warm"] is None,
@@ -1327,7 +1327,7 @@ def _render_speed(ctx):
             return f'<p>{label}: <span class="muted">no data</span></p>'
         model, dev, rtf, ttfa = entry
         return (f'<p>{label}: <strong>{escape(_display_name(model))}</strong> ({escape(dev)}) — '
-                f'{_fmt_rtf(rtf)} warm RTF, {_fmt_ttfa(ttfa)} warm TTFA</p>')
+                f'{_fmt_rtf(rtf)} warm RTFx, {_fmt_ttfa(ttfa)} warm TTFA</p>')
     if has_ref:
         # Cloning-only run; collapse to single line
         best = tldr["cloning"] or tldr["predefined"]
@@ -1341,7 +1341,7 @@ def _render_speed(ctx):
     table_html, rtf_warm_idx = _speed_table_html(ctx)
     out.append(table_html)
 
-    # Default sort: RTF warm desc
+    # Default sort: RTFx warm desc
     out.append(f'<script>window.__defaultSort = {{colIdx: {rtf_warm_idx}, dir: -1}};</script>')
     out.append(SCRIPT)
     out.append('</body></html>')

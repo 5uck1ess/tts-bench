@@ -8,7 +8,7 @@
 
 Bench for local text-to-speech (TTS) models. Three lenses, on whatever hardware you put it on:
 
-- **Speed** — cold + warm **TTFA** (time to first audio), **RTF** (real-time factor; higher = faster than realtime), memory, on CPU / CUDA / Apple Silicon
+- **Speed** — cold + warm **TTFA** (time to first audio), **RTFx** (realtime speed; higher = faster than realtime), memory, on CPU / CUDA / Apple Silicon
 - **Listen** — every model on every prompt, default voice + voice cloning, with inline audio players, so you can pick a model by ear
 - **Scores** — objective metrics per model: UTMOS (naturalness), WER (intelligibility), SIM (cloning fidelity), scored over the bench prompts via [seed-tts-eval](https://github.com/BytedanceSpeech/seed-tts-eval)-style ASR + speaker-verification. Sortable, with a Default/Cloning toggle.
 
@@ -21,7 +21,7 @@ An objective quality score (NAQ) was prototyped but isn't part of the bench — 
 **[5uck1ess.github.io/tts-bench](https://5uck1ess.github.io/tts-bench/)** — listen to every model, no install. Three lenses:
 
 - **Listen** — one consolidated gallery with an inline `<audio>` player for every model on every prompt, in **default voice** and **voice cloning** (each clone sits next to the reference it's imitating). Browse **by prompt** (compare all models on one sentence) or **by model** (audition one model across prompts); only one clip plays at a time. Audio is rig-independent, so each sample is sourced once from the highest-fidelity rig and tagged with where it came from. Quality, prosody, and artifacts are obvious in 5 seconds — benchmark tables can't show that.
-- **Speed** — per-rig leaderboards (Ryzen 9 9950X3D + RTX 5090, Apple M4, Ryzen + RTX 3090) with cold/warm TTFA, RTF, and memory, sortable. Pick the box you actually own.
+- **Speed** — per-rig leaderboards (Ryzen 9 9950X3D + RTX 5090, Apple M4, Ryzen + RTX 3090) with cold/warm TTFA, RTFx, and memory, sortable. Pick the box you actually own.
 - **Scores** — objective metrics per model (UTMOS naturalness, WER intelligibility, SIM cloning fidelity), sortable, with a Default/Cloning toggle. Human votes remain the preference ground truth; these are objective backstops.
 
 Full per-rig reports (every model × prompt × device, plus by-prompt samples) are linked from the **Archive**.
@@ -68,9 +68,9 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 ## TLDR (June 2026)
 
 **Fastest:**
-- CPU (Ryzen 9 9950X3D, Windows): **Piper** — 107ms warm TTFA, 59× RTF
-- CUDA (RTX 5090): **Kokoro** — 67ms warm TTFA, 104× RTF
-- CPU + MPS (Apple M4, 16 GB): **Piper** — 208ms warm TTFA, 32× RTF
+- CPU (Ryzen 9 9950X3D, Windows): **Piper** — 107ms warm TTFA, 59× RTFx
+- CUDA (RTX 5090): **Kokoro** — 67ms warm TTFA, 104× RTFx
+- CPU + MPS (Apple M4, 16 GB): **Piper** — 208ms warm TTFA, 32× RTFx
 
 **Best sounding:** *No objective ranking right now — the NAQ score is paused pending redesign. Open the [Demos site](https://5uck1ess.github.io/tts-bench/) and use the Listen lens.*
 
