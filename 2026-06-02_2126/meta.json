@@ -1,0 +1,19 @@
+{
+  "rig": "windows-5090",
+  "os": "Windows 11",
+  "os_version": "10.0.26200",
+  "python": "3.14.4",
+  "cpu": "AMD Ryzen 9 9950X3D 16-Core Processor",
+  "cpu_cores_logical": 32,
+  "cpu_cores_physical": 16,
+  "ram_gb": 126,
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "gpu_vram_gb": 32,
+  "captured_at": "2026-06-03T01:26:57Z",
+  "label": "cloning \u00b7 chris_hemsworth_15s \u00b7 outetts",
+  "reference": "chris_hemsworth_15s.wav",
+  "models_filter": [
+    "outetts"
+  ],
+  "prompts_filter": null
+}

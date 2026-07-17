@@ -1,0 +1,2 @@
+prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,peak_vram_mb,wall_s,ok,error
+1,echo,cuda,,True,0,True,3899.4,3.8994,2.879,0.74,2165.8,9600.4,91.837,True,

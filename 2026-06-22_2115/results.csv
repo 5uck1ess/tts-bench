@@ -1,0 +1,2 @@
+prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,peak_vram_mb,wall_s,ok,error
+1,lfm2_audio,cpu,,False,0,True,343.7,2.7044,2.64,0.98,2243.3,,9.68,True,

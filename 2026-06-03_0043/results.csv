@@ -1,0 +1,4 @@
+prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,peak_vram_mb,wall_s,ok,error
+4,dia,cuda,,True,0,True,16179.3,16.1793,4.83,0.3,8739.4,4589.8,51.483,True,
+4,dia,cuda,,True,1,False,10952.4,10.9524,4.772,0.44,8939.0,4798.1,0,True,
+4,dia,cuda,,True,2,False,10109.6,10.1096,4.249,0.42,8939.2,4797.0,0,True,

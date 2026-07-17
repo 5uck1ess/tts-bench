@@ -1,0 +1,13 @@
+prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,peak_vram_mb,wall_s,ok,error
+1,dramabox,cuda,,True,0,True,5523.1,5.5231,5.889,1.07,2409.2,17807.0,28.62,True,
+1,dramabox,cuda,,True,1,False,4322.2,4.3222,5.889,1.36,2428.7,17807.0,0,True,
+1,dramabox,cuda,,True,2,False,3915.3,3.9153,5.889,1.5,2444.8,17807.0,0,True,
+2,dramabox,cuda,,True,0,True,6154.6,6.1546,8.173,1.33,2449.6,17807.2,30.828,True,
+2,dramabox,cuda,,True,1,False,4729.8,4.7298,8.173,1.73,2467.6,17807.2,0,True,
+2,dramabox,cuda,,True,2,False,4521.4,4.5214,8.173,1.81,2486.2,17807.2,0,True,
+3,dramabox,cuda,,True,0,True,7798.3,7.7983,21.612,2.77,2513.6,17809.4,35.588,True,
+3,dramabox,cuda,,True,1,False,6436.4,6.4364,21.612,3.36,2571.3,17809.4,0,True,
+3,dramabox,cuda,,True,2,False,6007.5,6.0075,21.612,3.6,2606.4,17809.4,0,True,
+4,dramabox,cuda,,True,0,True,6351.9,6.3519,9.402,1.48,2437.3,17807.3,32.149,True,
+4,dramabox,cuda,,True,1,False,4946.0,4.946,9.402,1.9,2472.8,17807.3,0,True,
+4,dramabox,cuda,,True,2,False,5008.0,5.008,9.402,1.88,2488.0,17807.3,0,True,

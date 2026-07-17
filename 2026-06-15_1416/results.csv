@@ -1,0 +1,7 @@
+prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,peak_vram_mb,wall_s,ok,error
+5,melotts,cpu,,False,0,True,1543.8,1.5438,4.52,2.93,2368.1,,10.315,True,
+5,melotts,cpu,,False,1,False,533.0,0.533,4.473,8.39,2135.2,,0,True,
+5,melotts,cpu,,False,2,False,394.3,0.3943,4.52,11.46,2136.2,,0,True,
+5,melotts,cuda,,False,0,True,1708.9,1.7089,4.59,2.69,2916.5,800.3,10.193,True,
+5,melotts,cuda,,False,1,False,150.4,0.1504,4.566,30.36,2908.7,801.6,0,True,
+5,melotts,cuda,,False,2,False,127.4,0.1274,4.531,35.58,2908.3,797.9,0,True,

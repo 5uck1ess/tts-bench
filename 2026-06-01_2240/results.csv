@@ -1,0 +1,13 @@
+prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,peak_vram_mb,wall_s,ok,error
+1,echo,cuda,,True,0,True,2964.6,2.9646,2.879,0.97,1987.6,9600.4,15.716,True,
+1,echo,cuda,,True,1,False,2116.6,2.1166,2.879,1.36,2000.0,9600.4,0,True,
+1,echo,cuda,,True,2,False,2105.7,2.1057,2.879,1.37,2000.1,9600.4,0,True,
+2,echo,cuda,,True,0,True,2716.9,2.7169,5.155,1.9,1987.9,9600.4,15.194,True,
+2,echo,cuda,,True,1,False,2104.6,2.1046,5.155,2.45,1998.7,9600.4,0,True,
+2,echo,cuda,,True,2,False,2288.1,2.2881,5.155,2.25,1998.7,9600.4,0,True,
+3,echo,cuda,,True,0,True,2895.7,2.8957,15.279,5.28,1988.7,9600.4,17.327,True,
+3,echo,cuda,,True,1,False,2183.5,2.1835,15.279,7.0,2001.6,9600.4,0,True,
+3,echo,cuda,,True,2,False,2218.7,2.2187,15.279,6.89,2001.6,9600.4,0,True,
+4,echo,cuda,,True,0,True,2756.2,2.7562,6.502,2.36,1987.6,9600.4,15.156,True,
+4,echo,cuda,,True,1,False,2091.2,2.0912,6.502,3.11,1999.0,9600.4,0,True,
+4,echo,cuda,,True,2,False,2094.2,2.0942,6.502,3.1,1999.0,9600.4,0,True,

@@ -1,0 +1,13 @@
+prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,peak_vram_mb,wall_s,ok,error
+1,wavtts,cuda,,True,0,True,2274.4,2.2744,1.909,0.84,2005.6,1421.1,19.135,True,
+1,wavtts,cuda,,True,1,False,1954.1,1.9541,1.909,0.98,2005.7,1421.1,0,True,
+1,wavtts,cuda,,True,2,False,1986.7,1.9867,1.909,0.96,2005.8,1421.1,0,True,
+2,wavtts,cuda,,True,0,True,2569.0,2.569,4.964,1.93,2045.4,1449.5,18.928,True,
+2,wavtts,cuda,,True,1,False,2196.4,2.1964,4.964,2.26,2045.7,1449.5,0,True,
+2,wavtts,cuda,,True,2,False,2190.4,2.1904,4.964,2.27,2045.8,1449.5,0,True,
+3,wavtts,cuda,,True,0,True,5153.8,5.1538,13.596,2.64,2048.3,1469.6,27.3,True,
+3,wavtts,cuda,,True,1,False,4889.8,4.8898,13.596,2.78,2048.4,1469.6,0,True,
+3,wavtts,cuda,,True,2,False,4924.2,4.9242,13.596,2.76,2048.4,1469.6,0,True,
+4,wavtts,cuda,,True,0,True,2659.4,2.6594,5.291,1.99,2018.0,1453.8,19.232,True,
+4,wavtts,cuda,,True,1,False,2285.6,2.2856,5.291,2.32,2018.1,1453.8,0,True,
+4,wavtts,cuda,,True,2,False,2290.9,2.2909,5.291,2.31,2018.4,1453.8,0,True,
