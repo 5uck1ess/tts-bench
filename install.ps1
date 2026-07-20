@@ -115,6 +115,21 @@ if (-not (Want "piper")) { Write-Host "piper: skipped (not in install filter)" -
     Write-Host "piper: already installed" -ForegroundColor Gray
 }
 
+Step "Scylla's Band"
+if (-not (Want "scyllasband")) { Write-Host "scyllasband: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\scyllasband\Scripts\python.exe")) {
+    Invoke-Checked "uv venv scyllasband" { uv venv venvs\scyllasband --python 3.11 }
+    Invoke-Checked "git clone scyllasband" { git clone --depth 1 https://github.com/lowkeytea/scyllasband venvs\scyllasband\src }
+    Invoke-Checked "uv pip install scyllasband" { uv pip install --python venvs\scyllasband\Scripts\python.exe -e venvs\scyllasband\src numpy huggingface_hub onnxruntime soundfile }
+    Invoke-Checked "download scyllasband bundle" {
+        Push-Location venvs\scyllasband\src
+        try { & "..\Scripts\python.exe" -m scyllasband download } finally { Pop-Location }
+    }
+    Write-Host "scyllasband: ok" -ForegroundColor Green
+} else {
+    Write-Host "scyllasband: already installed" -ForegroundColor Gray
+}
+
 Step "ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv)"
 if (-not (Want "chatterbox")) { Write-Host "chatterbox: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\chatterbox\Scripts\python.exe")) {

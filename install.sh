@@ -176,6 +176,23 @@ else
     echo "piper: already installed"
 fi
 
+# --- Scylla's Band ---
+echo; cyan "=== Scylla's Band ==="
+if ! want scyllasband; then echo "scyllasband: skipped (not in install filter)"
+elif [ ! -x venvs/scyllasband/bin/python ]; then
+    uv venv venvs/scyllasband --python 3.11 || die "uv venv scyllasband"
+    git clone --depth 1 https://github.com/lowkeytea/scyllasband venvs/scyllasband/src \
+        || die "git clone scyllasband"
+    uv pip install --python venvs/scyllasband/bin/python -e venvs/scyllasband/src \
+        numpy huggingface_hub onnxruntime soundfile \
+        || die "uv pip install scyllasband"
+    (cd venvs/scyllasband/src && ../bin/python -m scyllasband download) \
+        || die "download scyllasband bundle"
+    green "scyllasband: ok"
+else
+    echo "scyllasband: already installed"
+fi
+
 # --- ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ---
 echo; cyan "=== ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ==="
 if ! want chatterbox; then echo "chatterbox: skipped (not in install filter)"

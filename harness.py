@@ -55,6 +55,10 @@ MODELS = [
     ("kokoro_mlx",  "kokoro_mlx", "runners/kokoro_mlx_runner.py", True,  ["mps"],                None,   False),
     ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  False, ["cpu"],                None,   False),
     ("piper",       "piper",      "runners/piper_runner.py",      True,  ["cpu", "cuda"],        None,   False),
+    # Scylla's Band: pure ONNX Runtime on CPU (no torch); ten predefined voices, no
+    # wav cloning -> can_clone=False, default lens only. en_us/en_gb/es/it, no French
+    # -> multilingual=False, FR prompt skipped. ~103M core params + 15M neural G2P, 24 kHz.
+    ("scyllasband", "scyllasband","runners/scyllasband_runner.py", False, ["cpu"],                None,   False),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], "1.5b", False),
     ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  False, ["cuda"],               "7b",   True),
