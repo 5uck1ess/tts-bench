@@ -26,11 +26,18 @@ from pathlib import Path
 import _meminfo
 
 
+# Harness language code -> model language code. The harness only ever passes
+# "en"/"fr"/etc, and "en" means en_us for bench comparability.
 LANGUAGE_MAP = {
     "en": "en_us",
     "es": "es",
     "it": "it",
 }
+
+# Model-native codes are also accepted verbatim, so a voice can be driven at its
+# manifest default_language (ink/orpheus/tuesday are en_gb) for A/B work that the
+# harness itself never asks for.
+NATIVE_LANGUAGES = {"en_us", "en_gb", "es", "it"}
 
 
 def main() -> int:
@@ -51,9 +58,13 @@ def main() -> int:
         return 1
 
     language = LANGUAGE_MAP.get(args.language)
+    if language is None and args.language in NATIVE_LANGUAGES:
+        language = args.language
     if not language:
         print(json.dumps({"ok": False, "run_index": 0,
-                          "error": f"unsupported Scylla's Band language={args.language}; supported harness languages: en, es, it"}))
+                          "error": f"unsupported Scylla's Band language={args.language}; "
+                                   f"harness codes: en, es, it; native codes: "
+                                   f"{', '.join(sorted(NATIVE_LANGUAGES))}"}))
         return 1
 
     try:
