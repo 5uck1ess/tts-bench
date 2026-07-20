@@ -2,6 +2,18 @@
 
 Ten managed voices support en_us, en_gb, es, and it. The harness language
 codes map to en_us, es, and it; French is not supported. Output is 24 kHz.
+
+Uses synthesize_stream(), NOT synthesize(). The bundle ships fixed-size graph
+exports capped at 640 latent frames, and the single-shot synthesize() path
+raises on anything longer:
+
+    ValueError: Predicted 670 latent frames, but this bundle supports at most 640.
+
+Bench prompt 3 (the ~24s Parakeet sentence) trips that on every voice.
+synthesize_stream() is the long-form path — it plans the text into chunks,
+renders each within the frame cap, and emits `audio_chunk` events we
+concatenate. It also yields a real TTFA (time to the first chunk) rather than
+the whole-utterance time.
 """
 
 import argparse
@@ -45,7 +57,7 @@ def main() -> int:
         return 1
 
     try:
-        from scyllasband import ScyllasBandRuntime, SynthesisRequest
+        from scyllasband import ScyllasBandRuntime
         import numpy as np
         import soundfile as sf
 
@@ -65,21 +77,30 @@ def main() -> int:
         try:
             _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
-            result = rt.synthesize(SynthesisRequest(
+            first = None
+            chunks = []
+            samplerate = None
+            for event in rt.synthesize_stream(
                 text=text, voice_id=voice_id, language=language,
-            ))
+            ):
+                if event.type != "audio_chunk" or event.audio is None:
+                    continue
+                if first is None:
+                    first = time.perf_counter()
+                chunks.append(np.asarray(event.audio, dtype=np.float32))
+                samplerate = int(event.sample_rate)
             t_end = time.perf_counter()
 
-            audio = np.asarray(result.audio, dtype=np.float32)
-            samplerate = int(result.sample_rate)
+            if not chunks:
+                raise RuntimeError("no audio_chunk events emitted")
+            audio = np.concatenate(chunks)
             audio_s = float(len(audio) / samplerate)
             if write_wav:
                 sf.write(out_path, audio, samplerate)
 
-            # Non-streaming: the full waveform is returned at once, so TTFA == generation time.
             print(json.dumps({
                 "ok": True, "run_index": run_index,
-                "ttfa_ms": (t_end - t0) * 1000,
+                "ttfa_ms": (first - t0) * 1000,
                 "gen_s": t_end - t0, "audio_s": audio_s,
                 **_meminfo.sample(args.device),
             }), flush=True)
