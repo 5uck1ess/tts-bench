@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (55)
+## Models tracked (56)
 
 #### Predefined voices
 
@@ -100,6 +100,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [OuteTTS 1.0 1B](https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B) | ~1B | Apr 2025 | ✓ | ✓ | ✓ (12) | 44.1k | — | CC-BY-NC-SA 4.0 + Llama 3.2 |
 | [Parler-TTS Mini v1](https://huggingface.co/parler-tts/parler-tts-mini-v1) | 878M | Jun 2024 | ✓ (voice desc) | — | — | **44.1k** | desc\* | Apache 2.0 |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) | ~15M | Jan 2023 | ✓ | — | ✓ | 22.05k | — | GPL-3.0 |
+| [Scylla's Band](https://huggingface.co/spybyscript/scyllasband) | ~103M | Jul 2026 | ✓ (10) | — | ✓ (4) | 24k | 6 knobs | Apache 2.0 |
 | [Soprano 1.1 80M](https://huggingface.co/ekwek/Soprano-1.1-80M) | 80M | Jan 2026 | ✓ | — | — | 32k | — | Apache 2.0 |
 | [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) | 99M | May 2026 | ✓ | — | ✓ (31) | 24k | tags | MIT + OpenRAIL-M |
 | [VibeVoice Realtime 0.5B](https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B) | 0.5B | Dec 2025 | ✓ | — | — | 24k | — | MIT |
@@ -162,7 +163,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**41 of the 55 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**41 of the 56 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 of 32 cloning models, 397 votes, human-preference A/B): **[docs/cloning.md](docs/cloning.md)**.
 
