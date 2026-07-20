@@ -460,6 +460,7 @@ MODEL_DISPLAY_NAMES = {
     "kokoro":        "Kokoro",
     "kokoro_mlx":    "Kokoro (MLX)",
     "kittentts":     "KittenTTS Nano 0.1",
+    "scyllasband":   "Scylla's Band",
     "soprano":       "Soprano 1.1 80M",
     "moss_tts_nano": "MOSS-TTS-Nano",
     "moss_tts":      "MOSS-TTS v1.0",
@@ -526,6 +527,7 @@ MODEL_SIZE = {
     "kokoro_mlx":    "82M",
     "kittentts":     "<100M",
     "piper":         "~25MB",
+    "scyllasband":   "~103M",
     "soprano":       "80M",
     "moss_tts_nano": "100M",
     "moss_tts":      "8B",
@@ -590,6 +592,7 @@ MODEL_URL = {
     "kokoro_mlx":    _HF + "prince-canuma/Kokoro-82M",
     "kittentts":     _HF + "KittenML/kitten-tts-nano-0.1",
     "piper":         "https://github.com/OHF-Voice/piper1-gpl",
+    "scyllasband":   _HF + "spybyscript/scyllasband",
     "soprano":       _HF + "ekwek/Soprano-1.1-80M",
     "moss_tts_nano": _HF + "OpenMOSS-Team/MOSS-TTS-Nano",
     "moss_tts":      _HF + "OpenMOSS-Team/MOSS-TTS",
@@ -626,6 +629,7 @@ MODEL_KIND = {
     "magpie":        "predefined",
     "vibevoice":     "predefined",
     "vibevoice_15b": "cloning",   # no preset voice — clones from a reference wav
+    "scyllasband":   "predefined",
     "soprano":       "predefined",
     "supertonic":    "predefined",
     "luxtts":        "predefined",
@@ -718,6 +722,7 @@ MODEL_RELEASE = {
     "kokoro_mlx":    "2024-12",   # same Kokoro-82M checkpoint (MLX backend) — shares its date
     "kittentts":     "2025-08",
     "piper":         "2023-01",   # original rhasspy/piper engine, not the piper1-gpl re-home
+    "scyllasband":   "2026-07",
     "soprano":       "2026-01",
     "moss_tts_nano": "2026-04",
     "moss_tts":      "2026-02",
@@ -785,7 +790,7 @@ def _release_td(model, cls="muted"):
 MODEL_SR = {
     "kittentts": "24k", "kokoro": "24k", "kokoro_mlx": "24k", "lfm2_audio": "24k", "luxtts": "22.05k",
     "magpie": "22.05k", "maya1": "24k", "melotts": "44.1k", "orpheus": "24k",
-    "outetts": "44.1k", "parler": "44.1k", "piper": "22.05k", "soprano": "32k",
+    "outetts": "44.1k", "parler": "44.1k", "piper": "22.05k", "scyllasband": "24k", "soprano": "32k",
     "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
     "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
     "dots_tts": "48k", "dramabox": "48k", "echo": "44.1k", "f5tts": "24k",
@@ -804,7 +809,8 @@ MODEL_SR = {
 MODEL_EXPRESSIVE = {
     "kittentts": "—", "kokoro": "—", "kokoro_mlx": "—", "lfm2_audio": "—", "luxtts": "—",
     "magpie": "emotion voices*", "maya1": "tags + desc", "melotts": "—", "orpheus": "tags",
-    "outetts": "—", "parler": "desc*", "piper": "—", "soprano": "—", "supertonic": "tags",
+    "outetts": "—", "parler": "desc*", "piper": "—", "scyllasband": "6 knobs",
+    "soprano": "—", "supertonic": "tags",
     "vibevoice": "—", "voxtral": "—", "chatterbox": "knob", "chatterbox_turbo": "tags*",
     "coqui": "—", "cosyvoice": "desc", "dia": "tags", "dots_tts": "—", "dramabox": "desc",
     "echo": "tags", "f5tts": "—", "fish_15": "—", "fish_s2": "tags", "higgs_v3": "tags",
@@ -824,7 +830,8 @@ MODEL_LICENSE = {
     "lfm2_audio": "LFM Open v1.0",
     "luxtts": "MIT", "magpie": "NVIDIA OML", "maya1": "Apache 2.0", "melotts": "MIT",
     "orpheus": "Apache 2.0", "outetts": "CC-BY-NC-SA 4.0 + Llama 3.2", "parler": "Apache 2.0",
-    "piper": "GPL-3.0", "soprano": "Apache 2.0", "supertonic": "MIT + OpenRAIL-M",
+    "piper": "GPL-3.0", "scyllasband": "Apache 2.0", "soprano": "Apache 2.0",
+    "supertonic": "MIT + OpenRAIL-M",
     "vibevoice": "MIT", "voxtral": "CC-BY-NC 4.0", "chatterbox": "MIT",
     "chatterbox_turbo": "MIT", "coqui": "CPML (non-commercial)", "cosyvoice": "Apache 2.0",
     "dia": "Apache 2.0", "dots_tts": "Apache 2.0", "dramabox": "LTX-2 Community (NC)",
@@ -846,7 +853,8 @@ MODEL_LICENSE = {
 MODEL_LANGS = {
     "kittentts": "—", "kokoro": "✓", "kokoro_mlx": "✓", "lfm2_audio": "— (en)", "luxtts": "—",
     "magpie": "✓ (9)", "maya1": "—", "melotts": "— (en)", "orpheus": "— (en)",
-    "outetts": "✓ (12)", "parler": "—", "piper": "✓", "soprano": "—",
+    "outetts": "✓ (12)", "parler": "—", "piper": "✓", "scyllasband": "✓ (4)",
+    "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
     "chatterbox_turbo": "—", "coqui": "✓ (17)", "cosyvoice": "✓", "dia": "—",
     "dots_tts": "✓ (24)", "dramabox": "— (en)", "echo": "—", "f5tts": "✓",
@@ -870,13 +878,26 @@ _REGISTRIES = {
     "MODEL_SR": MODEL_SR, "MODEL_EXPRESSIVE": MODEL_EXPRESSIVE,
     "MODEL_LICENSE": MODEL_LICENSE, "MODEL_LANGS": MODEL_LANGS,
 }
-_ALL_REGISTRY_MODELS = set().union(*(d.keys() for d in _REGISTRIES.values()))
+# The expected set MUST include harness.MODELS, not just the union of the
+# registries. A model absent from EVERY registry contributes nothing to that
+# union, so it was invisible to this check — the guard caught partial
+# registration but not zero registration. `scyllasband` shipped to gh-pages
+# exactly that way (2026-07-20): it rendered as the raw slug with empty
+# size/kind/license/SR/language cells, and nothing failed. harness.MODELS is
+# the real source of truth for "what models exist", so fold it in.
+import harness as _harness  # stdlib-only at module level; no import cost, no cycle
+
+_HARNESS_MODELS = {_m[0] for _m in _harness.MODELS}
+_ALL_REGISTRY_MODELS = set().union(
+    *(d.keys() for d in _REGISTRIES.values())) | _HARNESS_MODELS
 _REGISTRY_DRIFT = {name: sorted(_ALL_REGISTRY_MODELS - d.keys())
                    for name, d in _REGISTRIES.items() if _ALL_REGISTRY_MODELS - d.keys()}
 if _REGISTRY_DRIFT:
     raise AssertionError(
-        "model registry drift — these registries are missing keys that other "
-        f"registries have: {_REGISTRY_DRIFT}")
+        "model registry drift — these registries are missing models that "
+        "harness.MODELS or another registry declares. Every model in "
+        "harness.MODELS must appear in ALL registries, or it renders on the "
+        f"board as a raw slug with empty capability cells: {_REGISTRY_DRIFT}")
 
 
 # Tokens in a license string that signal NON-commercial / research-only use.
