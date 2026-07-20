@@ -10,9 +10,11 @@ models), then scores each clip with UTMOS (naturalness, reference-free) and WER
 (intelligibility). SIM is deliberately absent: this is a default-voice question,
 not a cloning one.
 
-MUST RUN ON LINUX. The scoring venv's stack is Windows-hostile (see the SIM/fairseq
-note in docs/known-issues.md) — that constraint applies to the whole scoring venv,
-not just SIM.
+Needs only `venvs/scoring` (UTMOS + WER). It does NOT need `venvs/scoring_sim` —
+SIM is the cloning metric and is out of scope here, and scoring_sim's py3.10
+fairseq stack is the part that's Windows-hostile. UTMOS (torch.hub SpeechMOS) and
+WER (transformers Whisper-large-v3) are portable; run this wherever the scoring
+venv and a GPU live, which by convention is the Linux box.
 
 Run under the SCORING venv; it subprocesses the MODEL venv to generate:
 
