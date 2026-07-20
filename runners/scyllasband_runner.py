@@ -46,7 +46,8 @@ def main() -> int:
     p.add_argument("--out", default=None)
     p.add_argument("--device", default="cpu")
     p.add_argument("--reference", default=None,
-                   help="Voice ID (e.g. 'gwen') — Scylla's Band doesn't support wav cloning.")
+                   help="Voice ID (e.g. 'gwen'); defaults to 'ink'. "
+                        "Scylla's Band doesn't support wav cloning.")
     p.add_argument("--variant", default=None)
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--language", default="en")
@@ -77,7 +78,15 @@ def main() -> int:
             "SCYLLASBAND_BUNDLE",
             repo_root / "venvs" / "scyllasband" / "src" / "scyllasband" / "models" / "onnx",
         )).expanduser().resolve()
-        voice_id = args.reference or "scylla"
+        # ink won the objective voice sweep (UTMOS 4.348, best of 10; scoring/voice_sweep.py).
+        # `scylla` is only the project's namesake and placed 5th with the 2nd-worst WER.
+        #
+        # DO NOT "fix" this by rendering ink at en_gb because its manifest
+        # default_language says en_gb. That was measured: ink drops to 4.205 at en_gb
+        # (orpheus 4.239->4.213, tuesday 4.282->4.075 — all three got worse). The
+        # benched number IS ink-at-en_us, which is what the harness's en -> en_us
+        # mapping produces. See docs/known-issues.md.
+        voice_id = args.reference or "ink"
         rt = ScyllasBandRuntime.from_bundle(bundle_dir, backends=["onnx"])
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
