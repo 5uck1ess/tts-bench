@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (56)
+## Models tracked (57)
 
 #### Predefined voices
 
@@ -150,6 +150,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [WavTTS](https://github.com/cwx-worst-one/WavTTS) | 0.67B | May 2026 | — | ✓ | ✓ (zh+en) | **16k** | — | MIT code / CC-BY-NC 4.0 weights |
 | [ZipVoice](https://huggingface.co/k2-fsa/ZipVoice) | 123M | Jun 2025 | — | ✓ | ✓ (zh+en) | 24k | — | Apache 2.0 |
 | [Zonos v0.1](https://huggingface.co/Zyphra/Zonos-v0.1-transformer) | 1.6B | Feb 2025 | — | ✓ | ✓ | **44.1k** | emo-ref + knob | Apache 2.0 |
+| [Zonos2](https://huggingface.co/Zyphra/Zonos2) | 8B (MoE, ~900M active) | Jun 2026 | — | ✓ | — | **44.1k** | knob | Apache 2.0 |
 
 > **Expressive column** — what explicit emotion/delivery control the model offers: `tags` = inline cues in the text itself (`(laughs)`, `[sigh]`, `<laugh>`); `desc` = natural-language style/emotion instructions; `knob` = numeric or preset parameter (exaggeration, style enum, pitch/speed); `emo-ref` = emotion conditioned on a separate reference clip or emotion vector; `—` = none (for cloning models, expression simply follows the reference clip). `*` = caveat applies. Exact syntax, sources, and caveats per model: **[docs/expressive-control.md](docs/expressive-control.md)**. Note the bench feeds every model the same plain prompts for fairness, so these features are not exercised in any score.
 
@@ -157,13 +158,13 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 > **Predefined vs Cloning.** *Predefined* models have fixed/selectable speaker voices baked into the weights — they speak with no reference needed. *Cloning* (zero-shot) models have **no voice of their own**: they synthesize whatever voice you hand them as a reference clip at inference. Given no reference, a pure zero-shot model falls back to a bundled sample (this bench uses `chris_hemsworth_15s.wav`), so its "default voice" is just a clone of that clip. A few models do both (e.g. Voxtral has 20 presets *and* cloning).
 
-> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Higgs Audio v3 / dots.tts / Orpheus / CosyVoice 3 are Linux-only (CUDA) — Higgs v3 is the one **server-backed** model (it runs via a Docker `sgl-omni` HTTP server, not an in-process load), dots.tts is Linux-only because its `WeTextProcessing`→`pynini` dependency won't build under Windows MSVC, and Orpheus (vLLM) + CosyVoice 3 (cu121 / torch 2.3.1) have no Blackwell-compatible Windows path; Echo-TTS and DramaBox are Windows + Linux (CUDA-only, no CPU/MPS; DramaBox needs ~18 GB VRAM). The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
+> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Higgs Audio v3 / dots.tts / Zonos2 / Orpheus / CosyVoice 3 are Linux-only (CUDA) — Higgs v3 is the one **server-backed** model (it runs via a Docker `sgl-omni` HTTP server, not an in-process load), dots.tts and Zonos2 require Linux-only dependencies/compiled CUDA kernels, and Orpheus (vLLM) + CosyVoice 3 (cu121 / torch 2.3.1) have no Blackwell-compatible Windows path; Echo-TTS and DramaBox are Windows + Linux (CUDA-only, no CPU/MPS; DramaBox needs ~18 GB VRAM). The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
 
 ---
 
 ## Voice cloning
 
-**41 of the 56 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**42 of the 57 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 of 32 cloning models, 397 votes, human-preference A/B): **[docs/cloning.md](docs/cloning.md)**.
 
