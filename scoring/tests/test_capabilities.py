@@ -5,25 +5,45 @@ without capability data (SR / Expressive / License / Langs / ...) fails here, an
 the curated cross-lingual flag can't drift onto a model that can't support it.
 """
 import importlib
+import re
+from pathlib import Path
 
 report = importlib.import_module("report")
 harness = importlib.import_module("harness")
 publish = importlib.import_module("publish")
 
 TRACKED = [row[0] for row in harness.MODELS]
+TRACKED_SET = set(TRACKED)
+ROOT = Path(__file__).resolve().parents[2]
 
-CAP_DICTS = ("MODEL_SR", "MODEL_EXPRESSIVE", "MODEL_LICENSE", "MODEL_LANGS",
-             "MODEL_SIZE", "MODEL_KIND", "MODEL_RELEASE", "MODEL_URL")
+CAP_DICTS = ("MODEL_DISPLAY_NAMES", "MODEL_SR", "MODEL_EXPRESSIVE",
+             "MODEL_LICENSE", "MODEL_LANGS", "MODEL_SIZE", "MODEL_KIND",
+             "MODEL_RELEASE", "MODEL_URL")
 
 
-def test_every_tracked_model_has_all_capability_data():
-    missing = {}
+def test_capability_data_matches_registry_exactly():
+    drift = {}
     for name in CAP_DICTS:
-        d = getattr(report, name)
-        gaps = [m for m in TRACKED if m not in d]
-        if gaps:
-            missing[name] = gaps
-    assert not missing, f"capability data gaps: {missing}"
+        keys = set(getattr(report, name))
+        missing = sorted(TRACKED_SET - keys)
+        stale = sorted(keys - TRACKED_SET)
+        if missing or stale:
+            drift[name] = {"missing": missing, "stale": stale}
+    assert not drift, f"capability data drift: {drift}"
+
+
+def test_readme_model_counts_match_registry():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    tracked_match = re.search(r"^## Models tracked \((\d+)\)$", readme, re.MULTILINE)
+    cloning_match = re.search(
+        r"\*\*(\d+) of the (\d+) tracked models can clone\*\*", readme)
+    assert tracked_match, "README is missing the tracked-model count"
+    assert cloning_match, "README is missing the cloning-model count"
+
+    clone_capable = sum(row[6] is not False for row in harness.MODELS)
+    assert int(tracked_match.group(1)) == len(TRACKED)
+    assert int(cloning_match.group(1)) == clone_capable
+    assert int(cloning_match.group(2)) == len(TRACKED)
 
 
 def test_crosslingual_only_for_cloners():
