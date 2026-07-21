@@ -29,3 +29,20 @@ def test_env_overrides():
 def test_langs_all_means_none():
     s = load_settings(env={"ARENA_LANGS": "all"})
     assert s.langs is None
+
+
+def test_turso_requires_all_production_secrets():
+    s = load_settings(env={"TURSO_URL": "libsql://db.example"})
+    assert s.missing_prod_secrets == [
+        "HMAC_SECRET", "TURNSTILE_SECRET", "TURNSTILE_SITEKEY", "TURSO_TOKEN"]
+
+
+def test_turso_accepts_complete_production_secrets():
+    s = load_settings(env={
+        "TURSO_URL": "libsql://db.example",
+        "TURSO_TOKEN": "db-token",
+        "HMAC_SECRET": "hmac-secret",
+        "TURNSTILE_SECRET": "turnstile-secret",
+        "TURNSTILE_SITEKEY": "turnstile-sitekey",
+    })
+    assert s.missing_prod_secrets == []
