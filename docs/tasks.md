@@ -4,6 +4,7 @@
 
 ## Active
 
+- [ ] **Zonos2 — install + speed bench + scoring on the Linux-3090. LINUX-ONLY — do NOT attempt on Windows or Mac.** Zyphra/Zonos2 ships compiled CUDA kernels (`python/zonos2/kernel/csrc`) and is Linux-x86_64 + NVIDIA-CUDA only; `install.sh` skips it on non-Linux, and on Windows it correctly yields zero bench cells. Runner + full registration are DONE and test-verified on branch **`zonos2-add`** (pushed to origin, not yet merged to master). On the 3090: `./install.sh zonos2` (git clone Zyphra/Zonos2 + `uv sync` + CUDA kernel build) → `python bench.py` (speed: cold/warm TTFA, RTFx, mem — this is the runner's FIRST real execution, so it doubles as the smoke test) → scoring pass (UTMOS/WER/SIM via `scoring` + `scoring_sim`). The runner's API was confirmed vs upstream commit `194c0a3` but **not executed** — watch the 3 VERIFY items in `runners/zonos2_runner.py` (`TTSLLM(...)` device kwarg, `result["audio"]` shape, long-prompt VRAM on 24 GB). Then merge `zonos2-add` → master + publish; move it out of considered.md's queued section.
 - [ ] Subjective listening pass on predefined-voice tier (CUDA) — cloning got the full ranking; predefined didn't
 - [ ] MARS5 CUDA investigation — 0.1× RTFx + cloning that doesn't match reference. Both unusable. Needs deeper look or "skipped after investigation" entry in docs/considered.md
 - [ ] Qwen3-TTS Base cloning timeout on long prompts — at the 15s Chris Hemsworth ref, prompts 2-5 hit the 10-min per-cell wall
