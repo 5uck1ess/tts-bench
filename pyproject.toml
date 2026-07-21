@@ -1,0 +1,20 @@
+[tool.pytest.ini_options]
+testpaths = ["arena/tests", "scoring/tests"]
+markers = [
+    "asyncio: coroutine test executed by arena/tests/conftest.py",
+]
+
+[tool.ruff]
+target-version = "py311"
+extend-exclude = [
+    ".devkit",
+    "_gh-pages",
+    "naq_lab",
+    "results",
+    "venvs",
+]
+
+[tool.ruff.lint]
+# Begin with correctness checks that the existing repository can enforce cleanly.
+# Formatting and broader pyflakes cleanup can be enabled incrementally.
+select = ["E9", "F63", "F7", "F82"]
