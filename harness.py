@@ -75,6 +75,12 @@ MODELS = [
     ("maya1",       "maya1",      "runners/maya1_runner.py",      False, ["cpu", "cuda", "mps"], None,   False),
     ("styletts2",   "styletts2",  "runners/styletts2_runner.py",  False, ["cpu", "cuda", "mps"], None,   True),
     ("zonos",       "zonos",      "runners/zonos_runner.py",      True,  ["cpu", "cuda"],        None,   True),
+    # Zonos2 (Zyphra, Apache-2.0): successor to zonos v0.1 — sparse MoE (~900M active /
+    # 8B total), byte-level text -> 9-codebook AR transformer -> DAC @ 44.1 kHz, zero-shot
+    # cloning. CUDA-only (compiled CUDA kernels in python/zonos2/kernel/csrc; no CPU/MPS),
+    # so Linux-3090 only. Vendored NeMo normalizer covers en/de/zh but no fr -> multilingual
+    # =False (FR prompt skipped, like scyllasband). Pure cloner -> NO_PRESET_VOICE.
+    ("zonos2",      "zonos2",     "runners/zonos2_runner.py",     False, ["cuda"],               None,   True),
     ("openvoice",   "openvoice",  "runners/openvoice_runner.py",  True,  ["cpu", "cuda", "mps"], None,   True),
     # Voxtral: mps/cpu -> MLX (preset-voice only on Apple Silicon); cuda -> vllm-omni.
     # can_clone=True is for the cross-rig cuda path; the MLX runner fails a
