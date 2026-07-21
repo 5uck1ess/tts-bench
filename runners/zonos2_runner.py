@@ -32,13 +32,26 @@ belongs in the NO_PRESET_VOICE lists (cloning board only).
 Non-streaming here: generate_one() blocks and returns the full result, so
 ttfa_ms == gen_s (same convention as zonos_runner).
 
-VERIFY on Linux-3090:
-  - TTSLLM(model_path=...) device kwarg / auto-CUDA selection (assumed auto).
-  - result["audio"] dtype/shape (assumed 1-D or (1, N) float waveform @ 44.1 kHz).
-  - VRAM for our 100+ token prompts (8B-total MoE, ~900M active; fits 24 GB per
-    upstream, but confirm long prompt 3 doesn't OOM the 3090).
-  - whether TTSLLM spins up an internal multi-process (mini-sglang) engine — if so
-    confirm meminfo + the --stdin persistent-process loop still behave.
+VERIFIED on Linux-3090 (2026-07-21, first on-device run):
+  - TTSLLM(model_path="Zyphra/ZONOS2") auto-selects CUDA — no device kwarg. OK.
+  - result["audio"] is raw PCM *bytes* (float32 @ 44.1 kHz), NOT a tensor/array
+    (upstream llm.py comment + save_audio np.frombuffer). _audio_len() handles
+    bytes (len//4); the earlier tensor/array assumption undercounted audio_s to
+    ~1 sample (RTFx ~0). FIXED.
+  - TTSLLM DOES spin up an internal sglang-style engine (Gloo rank-0, paged KV
+    cache, CUDA-graph capture). It sizes the KV cache to fill *free* VRAM, so it
+    grabs ~21 GB of the 24 GB card and reports whole-GPU peak_vram_mb (~21.8 GB,
+    process-local VRAM is blind — same convention as orpheus/vLLM). Runs single
+    process here; the --stdin persistent loop reuses the one warm engine. Free
+    the GPU of other large allocations before benching or the KV cache shrinks.
+  - Long prompts: TWO defaults truncate/OOM long-form on the 24 GB 3090, both
+    fixed below. (a) generate_one defaults to max_tokens=1024 frames (~11.9 s at
+    ~86 fps) and does NOT auto-raise to the model limit like the HTTP server —
+    bench prompt 3 (~16 s) cut off at exactly 11.865 s mid-sentence. Fixed by
+    passing the model's real cap via resolve_max_tokens(). (b) With the cap
+    lifted, the default memory_ratio=0.9 leaves only ~2.1 GB free and the DAC
+    vocoder then OOMs decoding the full clip. Fixed with memory_ratio=0.8
+    (~4.5 GB headroom). With both, prompt 3 renders complete at ~14.4 s.
 """
 
 import argparse
@@ -81,13 +94,32 @@ def main() -> int:
         if args.device != "cuda":
             raise RuntimeError(f"zonos2 is CUDA-only; got device={args.device!r}")
 
-        tts = TTSLLM(model_path="Zyphra/ZONOS2")
+        # memory_ratio (vLLM-style gpu-util knob, default 0.9) caps total engine
+        # VRAM at memory_ratio * free_before, leaving (1 - memory_ratio) * free_before
+        # as headroom. At 0.9 on the 24 GB 3090 that headroom is only ~2.1 GB — the
+        # DAC vocoder decoding a long (~16 s) clip then OOMs mid-generation (bench
+        # prompt 3 with the max_tokens cap lifted). Drop to 0.8 (~4.5 GB free); the
+        # KV pool (page_size=1) stays tens of thousands of pages, far above any
+        # bench prompt's frame count, so max_seq_len / capacity is unaffected.
+        tts = TTSLLM(model_path="Zyphra/ZONOS2", memory_ratio=0.8)
 
         repo = Path(__file__).resolve().parent.parent
         ref = args.reference or str(repo / "reference" / "chris_hemsworth_15s.wav")
         if not Path(ref).exists():
             raise FileNotFoundError(f"Voice reference not found: {ref}")
         emb = tts.embed_speaker_file(ref)
+
+        # generate_one defaults to TTSSamplingParams.max_tokens=1024 audio frames
+        # (~11.9 s at the 44.1 kHz DAC's ~86 fps) — the in-process path does NOT
+        # auto-raise it to the model limit the way the HTTP server does. That
+        # truncates any prompt whose speech runs past ~11.9 s: on-device, bench
+        # prompt 3 (the ~16 s Parakeet paragraph) cut off at exactly 11.865 s,
+        # mid-sentence, inflating its WER. Resolve the model's real ceiling
+        # (config.max_seq_len) and pass it explicitly; resolve_max_tokens() clamps
+        # a huge sentinel down to that ceiling, and the scheduler further clamps
+        # per-request to max_seq_len - input_len (server parity). Short prompts
+        # still stop early at EOS, so this only lifts the artificial 1024 cap.
+        MAX_TOKENS = tts.resolve_max_tokens(1 << 30)
 
         # Vendored NeMo normalizer covers en/de/zh (no fr). The harness only feeds
         # this model English (multilingual=False), so en_us is the live path; the
@@ -99,7 +131,16 @@ def main() -> int:
         return 1
 
     def _audio_len(audio) -> int:
-        """Sample count from result['audio'] (torch.Tensor or np.ndarray, any shape)."""
+        """Sample count from result['audio'].
+
+        Confirmed on-device (Linux-3090): generate_one() returns the waveform as
+        raw PCM *bytes* (float32 @ 44.1 kHz), NOT a tensor/array — see upstream
+        llm.py `# r["audio"] is PCM bytes` and save_audio()'s
+        np.frombuffer(audio_bytes, dtype=np.float32). float32 = 4 bytes/sample.
+        """
+        if isinstance(audio, (bytes, bytearray, memoryview)):
+            return len(bytes(audio)) // 4
+        # Defensive fallback if a future upstream returns a tensor/array instead.
         try:
             import torch
             if isinstance(audio, torch.Tensor):
@@ -118,6 +159,7 @@ def main() -> int:
                 TTSSamplingParams(seed=0),   # fixed seed: reproducible across warm runs
                 speaker_embedding=emb,
                 language=LANG,
+                max_tokens=MAX_TOKENS,       # model's real cap, not the 1024 default (see above)
             )
             audio = result["audio"]
             t_end = time.perf_counter()
