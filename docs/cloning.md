@@ -4,7 +4,7 @@ Three flavors of "zero-shot cloning" are supported, with slightly different refe
 
 | Models | Reference needed |
 |---|---|
-| ChatterBox, Coqui XTTS-v2, LuxTTS, VoxCPM, Echo-TTS | wav only — no transcript |
+| ChatterBox, Coqui XTTS-v2, LuxTTS, VoxCPM, Echo-TTS, Zonos2 | wav only — no transcript |
 | NeuTTS Air, NeuTTS Nano, F5-TTS, OmniVoice | wav **+** matching `.txt` transcript (same basename, e.g. `myvoice.wav` + `myvoice.txt`). The transcript MUST be the literal words spoken in the wav. |
 | Pocket-TTS (cloning path) | wav, HF accept-terms gated on [`kyutai/pocket-tts`](https://huggingface.co/kyutai/pocket-tts) + `hf auth login` |
 

@@ -811,6 +811,23 @@ else
     echo "dots_tts: already installed"
 fi
 
+# --- Zonos2 (Zyphra, Apache-2.0, 8B MoE/~900M active, 44.1k, zero-shot cloning, CUDA/Linux only) ---
+echo; cyan "=== Zonos2 (Zyphra, 8B MoE/~900M active, 44.1k, cloning, Linux/CUDA-only) ==="
+if ! want zonos2; then echo "zonos2: skipped (not in install filter)"
+elif [ "$(uname)" != "Linux" ]; then echo "zonos2: skipped (Linux/CUDA only — compiled CUDA kernels)"
+elif [ ! -x venvs/zonos2/bin/python ]; then
+    uv venv venvs/zonos2 --python 3.12 || die "uv venv zonos2"
+    if [ ! -d venvs/zonos2/src ]; then
+        git clone --depth 1 https://github.com/Zyphra/Zonos2 venvs/zonos2/src \
+            || die "git clone Zonos2"
+    fi
+    VIRTUAL_ENV="$(pwd)/venvs/zonos2" uv sync --project venvs/zonos2/src --active \
+        || die "uv sync zonos2"
+    green "zonos2: ok (Zyphra/Zonos2 weights auto-download from HF on first run; Linux/CUDA-only compiled kernels, 44.1k)"
+else
+    echo "zonos2: already installed"
+fi
+
 # --- Miso TTS 8B (Miso Labs, modified-MIT, Sesame-CSM arch 8.2B, 24k Mimi, cloning, CUDA-only) ---
 echo; cyan "=== Miso TTS 8B (Miso Labs, Sesame-CSM arch 8.2B, 24k Mimi, cloning, CUDA-only) ==="
 if ! want miso; then echo "miso: skipped (not in install filter)"

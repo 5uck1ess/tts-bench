@@ -472,6 +472,7 @@ MODEL_DISPLAY_NAMES = {
     "fish_15":       "Fish Speech 1.5",
     "fish_s2":       "Fish Speech S2-Pro",
     "zonos":         "Zonos v0.1",
+    "zonos2":        "Zonos2",
     "openvoice":     "OpenVoice v2",
     "styletts2":     "StyleTTS 2",
     "vibevoice_7b":  "VibeVoice 7B",
@@ -538,6 +539,7 @@ MODEL_SIZE = {
     "fish_15":       "~500M",
     "fish_s2":       "4B",
     "zonos":         "1.6B",
+    "zonos2":        "8B (MoE, ~900M active)",
     "openvoice":     "~100M",
     "styletts2":     "~148M",
     "vibevoice_7b":  "7B",
@@ -604,6 +606,7 @@ MODEL_URL = {
     "fish_s2":       _HF + "fishaudio/s2-pro",
     "echo":          _HF + "jordand/echo-tts-base",
     "zonos":         _HF + "Zyphra/Zonos-v0.1-transformer",
+    "zonos2":        _HF + "Zyphra/Zonos2",
     "openvoice":     _HF + "myshell-ai/OpenVoiceV2",
     "styletts2":     "https://github.com/yl4579/StyleTTS2",
     "metavoice":     _HF + "metavoiceio/metavoice-1B-v0.1",
@@ -665,6 +668,7 @@ MODEL_KIND = {
     "fish_15":       "cloning",
     "fish_s2":       "cloning",
     "zonos":         "cloning",
+    "zonos2":        "cloning",   # no preset voice — zero-shot clones from a reference wav
     "openvoice":     "cloning",
     "styletts2":     "cloning",
     "vibevoice_7b":  "cloning",
@@ -734,6 +738,7 @@ MODEL_RELEASE = {
     "fish_s2":       "2026-03",
     "echo":          "2025-12",
     "zonos":         "2025-02",
+    "zonos2":        "2026-06",
     "openvoice":     "2024-04",
     "styletts2":     "2023-06",
     "metavoice":     "2024-02",
@@ -801,7 +806,7 @@ MODEL_SR = {
     "neutts_air": "24k", "neutts_nano": "24k", "omnivoice": "24k", "openvoice": "22.05k",
     "pocket": "24k", "qwentts": "24k", "qwentts_fast": "24k", "sesame": "24k",
     "step_editx": "24k", "styletts2": "24k", "vibevoice_15b": "24k", "vibevoice_7b": "24k",
-    "voxcpm": "48k", "wavtts": "16k", "zipvoice": "24k", "zonos": "44.1k",
+    "voxcpm": "48k", "wavtts": "16k", "zipvoice": "24k", "zonos": "44.1k", "zonos2": "44.1k",
 }
 
 # Explicit emotion/delivery control offered (tags / desc / knob / emo-ref / —);
@@ -820,7 +825,7 @@ MODEL_EXPRESSIVE = {
     "neutts_nano": "—", "omnivoice": "tags*", "openvoice": "knob", "pocket": "—",
     "qwentts": "—", "qwentts_fast": "—", "sesame": "—", "step_editx": "tags + desc",
     "styletts2": "knob", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "desc",
-    "wavtts": "—", "zipvoice": "—", "zonos": "emo-ref + knob",
+    "wavtts": "—", "zipvoice": "—", "zonos": "emo-ref + knob", "zonos2": "knob",
 }
 
 # License string as shown in the README (the precise truth; the commercial-OK
@@ -845,7 +850,7 @@ MODEL_LICENSE = {
     "openvoice": "MIT", "pocket": "Apache 2.0", "qwentts": "Apache 2.0", "qwentts_fast": "MIT",
     "sesame": "Apache 2.0", "step_editx": "Apache 2.0", "styletts2": "MIT", "vibevoice_15b": "MIT",
     "vibevoice_7b": "MIT", "voxcpm": "Apache 2.0", "wavtts": "MIT code / CC-BY-NC 4.0 weights",
-    "zipvoice": "Apache 2.0", "zonos": "Apache 2.0",
+    "zipvoice": "Apache 2.0", "zonos": "Apache 2.0", "zonos2": "Apache 2.0",
 }
 
 # Language coverage cell from the README: "✓" multilingual, "✓ (N)"/"✓ (zh+en)"
@@ -865,7 +870,7 @@ MODEL_LANGS = {
     "neutts_air": "—", "neutts_nano": "—", "omnivoice": "✓ (600+)", "openvoice": "✓",
     "pocket": "—", "qwentts": "✓", "qwentts_fast": "✓", "sesame": "—", "step_editx": "—",
     "styletts2": "—", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "✓ (30)",
-    "wavtts": "✓ (zh+en)", "zipvoice": "✓ (zh+en)", "zonos": "✓",
+    "wavtts": "✓ (zh+en)", "zipvoice": "✓ (zh+en)", "zonos": "✓", "zonos2": "—",
 }
 
 # --- Registry-drift guard -------------------------------------------------
