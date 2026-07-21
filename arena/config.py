@@ -31,15 +31,21 @@ class Settings:
 
     @property
     def missing_prod_secrets(self) -> list:
-        """Anti-abuse secrets still at their insecure dev defaults. Non-empty in a
-        production (Turso-backed) deploy means: nonces are signed with the PUBLIC
-        _DEV_HMAC committed to the repo (pair tokens forgeable) and/or Turnstile
-        verification is silently disabled (bot gate off)."""
+        """Required settings missing from a production Turso-backed deploy.
+
+        A missing HMAC makes pair tokens forgeable, incomplete Turnstile settings
+        silently exclude every vote from Elo, and a missing Turso token prevents
+        the production datastore connection from authenticating.
+        """
         out = []
         if self.hmac_secret == _DEV_HMAC:
             out.append("HMAC_SECRET")
         if not self.turnstile_secret:
             out.append("TURNSTILE_SECRET")
+        if not self.turnstile_sitekey:
+            out.append("TURNSTILE_SITEKEY")
+        if not self.turso_token:
+            out.append("TURSO_TOKEN")
         return out
 
 

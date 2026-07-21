@@ -30,9 +30,9 @@ import random
 
 SETTINGS = load_settings()
 
-# A Turso-backed deploy is production: refuse to start if the anti-abuse secrets
-# are missing/defaulted. Failing open here means forgeable pair nonces (public
-# dev HMAC) and a silently-disabled bot gate — worse than downtime.
+# A Turso-backed deploy is production: refuse to start if required datastore or
+# anti-abuse settings are missing/defaulted. Failing open here means forgeable
+# pair nonces, a silently-disabled bot gate, or an unauthenticated datastore.
 if SETTINGS.use_turso and SETTINGS.missing_prod_secrets:
     raise RuntimeError(
         f"arena refusing to start: {', '.join(SETTINGS.missing_prod_secrets)} not set "
@@ -235,7 +235,7 @@ async def api_vote(request: Request):
     async with httpx.AsyncClient() as hc:
         ts_ok = await turnstile.verify(SETTINGS.turnstile_secret,
                                        body.get("turnstile_token", ""),
-                                       _ip_hash(request), hc)
+                                       None, hc)
 
     both_played = bool(body.get("both_played"))
     ip_hash = _ip_hash(request)
