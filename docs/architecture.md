@@ -55,10 +55,16 @@ Runners communicate via JSON lines so each model can live in its own conflicting
    - Single-shot mode: `--text TEXT --out PATH --runs N` → one JSON line per run on stdout: `{"ok": true, "run_index": N, "ttfa_ms": ..., "gen_s": ..., "audio_s": ..., "peak_mem_mb": ..., "peak_vram_mb": ...}`
    - REPL mode: `--stdin` → on startup emit `{"ready": true}` after model load, then per stdin line: `{"text": "...", "out": "path.wav"}` → respond with one JSON line per generation
    - Use the shared helper: `import _meminfo` near the top of the runner; call `_meminfo.reset_peak(args.device)` before generation and spread `**_meminfo.sample(args.device)` into the success JSON
-3. Add a row to `MODELS` in `bench.py` and `speak.py`.
-4. Test: `python bench.py --models <name> --prompts 1 --runs 1`
+3. Add one row to the shared `MODELS` registry in `harness.py`.
+4. Add the model's display, size, source, kind, release, sample-rate,
+   expressive-control, license, and language metadata in `report.py`.
+5. Run the registry guardrail and a one-cell smoke benchmark:
+   - `python -m pytest scoring/tests/test_capabilities.py`
+   - `python bench.py --models <name> --prompts 1 --runs 1`
 
-The two existing runners (`pocket_runner.py`, `neutts_runner.py`) are ~150 lines each — short enough to copy and adapt.
+Use the closest existing runner as a protocol template; model APIs differ enough
+that copying a runner with similar reference-audio and device behavior is safer
+than starting from an arbitrary one.
 
 ---
 
