@@ -193,6 +193,28 @@ else
     echo "scyllasband: already installed"
 fi
 
+# --- Inflect v2 (Nano 3.96M + Micro 9.36M share this venv) ---
+echo; cyan "=== Inflect v2 (Nano 3.96M + Micro 9.36M share this venv) ==="
+if ! want inflect; then echo "inflect: skipped (not in install filter)"
+elif [ ! -x venvs/inflect/bin/python ]; then
+    uv venv venvs/inflect --python 3.11 || die "uv venv inflect"
+    # Deps mirror the model repos' requirements.txt. phonemizer + espeakng-loader is
+    # the same frontend stack KittenTTS uses. On Linux the PyPI torch wheel is already
+    # CUDA-enabled (Ampere 3090 — no cu128 swap needed); on Mac the default torch is fine.
+    uv pip install --python venvs/inflect/bin/python "torch>=2.6" "huggingface-hub>=0.36" \
+        "numpy>=1.26,<3" "scipy>=1.13" "soundfile>=0.13" "phonemizer>=3.3" \
+        "espeakng-loader>=0.2.4" "num2words>=0.5.14" "Unidecode>=1.3.8" psutil \
+        || die "uv pip install inflect deps"
+    # Not a PyPI package — each HF repo ships its own inference.py + runtime/.
+    # Pinned to the 2.1.0 release SHAs (the project is young and still patching).
+    # ~54 MB of weights total; evaluation/samples/docs/onnx are skipped.
+    venvs/inflect/bin/python -c "from huggingface_hub import snapshot_download as d; [d(r, revision=v, local_dir=p, ignore_patterns=['evaluation/*','samples/*','assets/*','docs/*','onnx/*']) for r,v,p in [('owensong/Inflect-Nano-v2','e9993b04695c836ce221fb9614cc011523399f7e','venvs/inflect/src/Inflect-Nano-v2'),('owensong/Inflect-Micro-v2','132edf8700da8e0d3fa81cdc0fd8844926fc6582','venvs/inflect/src/Inflect-Micro-v2')]]" \
+        || die "download inflect weights"
+    green "inflect: ok"
+else
+    echo "inflect: already installed"
+fi
+
 # --- ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ---
 echo; cyan "=== ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ==="
 if ! want chatterbox; then echo "chatterbox: skipped (not in install filter)"

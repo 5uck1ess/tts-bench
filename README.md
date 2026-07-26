@@ -59,7 +59,7 @@ python bench.py
 python bench.py
 ```
 
-Pass model names to install only those (names = the `venvs/<name>` slugs, which match the tables below — lowercase, e.g. `kokoro`, `f5tts`, `chatterbox`, `miso`). A few share one install: `neutts` covers NeuTTS Air + Nano, `chatterbox` both ChatterBox variants, `vibevoice` the 0.5B/1.5B, `moss_tts` both MOSS checkpoints, `fish` is Fish Speech 1.5. Add `scoring` (plus `scoring_sim` on Linux) for the objective-metrics venv. `bench.py` only runs models whose venv exists, so a partial install benches cleanly — install more models later by re-running with new names.
+Pass model names to install only those (names = the `venvs/<name>` slugs, which match the tables below — lowercase, e.g. `kokoro`, `f5tts`, `chatterbox`, `miso`). A few share one install: `neutts` covers NeuTTS Air + Nano, `chatterbox` both ChatterBox variants, `vibevoice` the 0.5B/1.5B, `moss_tts` both MOSS checkpoints, `inflect` both Inflect v2 sizes, `fish` is Fish Speech 1.5. Add `scoring` (plus `scoring_sim` on Linux) for the objective-metrics venv. `bench.py` only runs models whose venv exists, so a partial install benches cleanly — install more models later by re-running with new names.
 
 Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `python compare.py "your phrase"`. See [docs/architecture.md](docs/architecture.md) for the runner protocol and how to add a model.
 
@@ -83,12 +83,14 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (58)
+## Models tracked (60)
 
 #### Predefined voices
 
 | Model | Params | Released | Predefined | Cloning | Multilingual | SR | Expressive | License |
 |---|---|---|---|---|---|---|---|---|
+| [Inflect-Micro v2](https://huggingface.co/owensong/Inflect-Micro-v2) | 9.36M | Jul 2026 | ✓ (1) | — | — (en) | 24k | 2 knobs | Apache 2.0 |
+| [Inflect-Nano v2](https://huggingface.co/owensong/Inflect-Nano-v2) | 3.96M | Jul 2026 | ✓ (1) | — | — (en) | 24k | 2 knobs | Apache 2.0 |
 | [KittenTTS Nano 0.1](https://huggingface.co/KittenML/kitten-tts-nano-0.1) | <100M | Aug 2025 | ✓ | — | — | 24k | — | Apache 2.0 |
 | [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) | 82M | Dec 2024 | ✓ | — | ✓ | 24k | — | Apache 2.0 |
 | [LFM2.5-Audio 1.5B](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B) | 1.5B | Dec 2025 | ✓ (4) | — | — (en) | 24k | — | LFM Open v1.0 |
@@ -164,7 +166,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**42 of the 58 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**42 of the 60 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 of 32 cloning models, 397 votes, human-preference A/B): **[docs/cloning.md](docs/cloning.md)**.
 

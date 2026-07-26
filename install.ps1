@@ -130,6 +130,24 @@ if (-not (Want "scyllasband")) { Write-Host "scyllasband: skipped (not in instal
     Write-Host "scyllasband: already installed" -ForegroundColor Gray
 }
 
+Step "Inflect v2 (Nano 3.96M + Micro 9.36M share this venv)"
+if (-not (Want "inflect")) { Write-Host "inflect: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\inflect\Scripts\python.exe")) {
+    Invoke-Checked "uv venv inflect" { uv venv venvs\inflect --python 3.11 }
+    # Deps mirror the model repos' requirements.txt (minus torch, installed below).
+    # phonemizer + espeakng-loader is the same frontend stack KittenTTS uses.
+    Invoke-Checked "uv pip install inflect deps" { uv pip install --python venvs\inflect\Scripts\python.exe "huggingface-hub>=0.36" "numpy>=1.26,<3" "scipy>=1.13" "soundfile>=0.13" "phonemizer>=3.3" "espeakng-loader>=0.2.4" "num2words>=0.5.14" "Unidecode>=1.3.8" psutil }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120). PyPI's Windows torch is CPU-only.
+    Invoke-Checked "torch cu128 for inflect" { uv pip install --python venvs\inflect\Scripts\python.exe torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
+    # Not a PyPI package — each HF repo ships its own inference.py + runtime/.
+    # Pinned to the 2.1.0 release SHAs (the project is young and still patching).
+    # ~54 MB of weights total; evaluation/samples/docs/onnx are skipped.
+    Invoke-Checked "download inflect weights" { & "venvs\inflect\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; [d(r, revision=v, local_dir=p, ignore_patterns=['evaluation/*','samples/*','assets/*','docs/*','onnx/*']) for r,v,p in [('owensong/Inflect-Nano-v2','e9993b04695c836ce221fb9614cc011523399f7e','venvs/inflect/src/Inflect-Nano-v2'),('owensong/Inflect-Micro-v2','132edf8700da8e0d3fa81cdc0fd8844926fc6582','venvs/inflect/src/Inflect-Micro-v2')]]" }
+    Write-Host "inflect: ok" -ForegroundColor Green
+} else {
+    Write-Host "inflect: already installed" -ForegroundColor Gray
+}
+
 Step "ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv)"
 if (-not (Want "chatterbox")) { Write-Host "chatterbox: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\chatterbox\Scripts\python.exe")) {

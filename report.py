@@ -461,6 +461,8 @@ MODEL_DISPLAY_NAMES = {
     "kokoro_mlx":    "Kokoro (MLX)",
     "kittentts":     "KittenTTS Nano 0.1",
     "scyllasband":   "Scylla's Band",
+    "inflect_nano":  "Inflect-Nano v2",
+    "inflect_micro": "Inflect-Micro v2",
     "soprano":       "Soprano 1.1 80M",
     "moss_tts_nano": "MOSS-TTS-Nano",
     "moss_tts":      "MOSS-TTS v1.0",
@@ -529,6 +531,10 @@ MODEL_SIZE = {
     "kittentts":     "<100M",
     "piper":         "~25MB",
     "scyllasband":   "~103M",
+    # Complete text-to-waveform totals from the model cards (the integrated 24 kHz
+    # decoder is inside these numbers, not bolted on as a separate vocoder).
+    "inflect_nano":  "3.96M",
+    "inflect_micro": "9.36M",
     "soprano":       "80M",
     "moss_tts_nano": "100M",
     "moss_tts":      "8B",
@@ -595,6 +601,8 @@ MODEL_URL = {
     "kittentts":     _HF + "KittenML/kitten-tts-nano-0.1",
     "piper":         "https://github.com/OHF-Voice/piper1-gpl",
     "scyllasband":   _HF + "spybyscript/scyllasband",
+    "inflect_nano":  _HF + "owensong/Inflect-Nano-v2",
+    "inflect_micro": _HF + "owensong/Inflect-Micro-v2",
     "soprano":       _HF + "ekwek/Soprano-1.1-80M",
     "moss_tts_nano": _HF + "OpenMOSS-Team/MOSS-TTS-Nano",
     "moss_tts":      _HF + "OpenMOSS-Team/MOSS-TTS",
@@ -633,6 +641,8 @@ MODEL_KIND = {
     "vibevoice":     "predefined",
     "vibevoice_15b": "cloning",   # no preset voice — clones from a reference wav
     "scyllasband":   "predefined",
+    "inflect_nano":  "predefined",   # one fixed synthetic voice, no wav cloning
+    "inflect_micro": "predefined",
     "soprano":       "predefined",
     "supertonic":    "predefined",
     "luxtts":        "predefined",
@@ -727,6 +737,8 @@ MODEL_RELEASE = {
     "kittentts":     "2025-08",
     "piper":         "2023-01",   # original rhasspy/piper engine, not the piper1-gpl re-home
     "scyllasband":   "2026-07",
+    "inflect_nano":  "2026-07",   # v2.0.0 2026-07-24 (v1 was 2026-06)
+    "inflect_micro": "2026-07",
     "soprano":       "2026-01",
     "moss_tts_nano": "2026-04",
     "moss_tts":      "2026-02",
@@ -796,6 +808,7 @@ MODEL_SR = {
     "kittentts": "24k", "kokoro": "24k", "kokoro_mlx": "24k", "lfm2_audio": "24k", "luxtts": "22.05k",
     "magpie": "22.05k", "maya1": "24k", "melotts": "44.1k", "orpheus": "24k",
     "outetts": "44.1k", "parler": "44.1k", "piper": "22.05k", "scyllasband": "24k", "soprano": "32k",
+    "inflect_nano": "24k", "inflect_micro": "24k",
     "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
     "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
     "dots_tts": "48k", "dramabox": "48k", "echo": "44.1k", "f5tts": "24k",
@@ -815,6 +828,8 @@ MODEL_EXPRESSIVE = {
     "kittentts": "—", "kokoro": "—", "kokoro_mlx": "—", "lfm2_audio": "—", "luxtts": "—",
     "magpie": "emotion voices*", "maya1": "tags + desc", "melotts": "—", "orpheus": "tags",
     "outetts": "—", "parler": "desc*", "piper": "—", "scyllasband": "6 knobs",
+    # speed + variation (latent noise scale). No emotion/style control.
+    "inflect_nano": "2 knobs", "inflect_micro": "2 knobs",
     "soprano": "—", "supertonic": "tags",
     "vibevoice": "—", "voxtral": "—", "chatterbox": "knob", "chatterbox_turbo": "tags*",
     "coqui": "—", "cosyvoice": "desc", "dia": "tags", "dots_tts": "—", "dramabox": "desc",
@@ -836,6 +851,7 @@ MODEL_LICENSE = {
     "luxtts": "MIT", "magpie": "NVIDIA OML", "maya1": "Apache 2.0", "melotts": "MIT",
     "orpheus": "Apache 2.0", "outetts": "CC-BY-NC-SA 4.0 + Llama 3.2", "parler": "Apache 2.0",
     "piper": "GPL-3.0", "scyllasband": "Apache 2.0", "soprano": "Apache 2.0",
+    "inflect_nano": "Apache 2.0", "inflect_micro": "Apache 2.0",
     "supertonic": "MIT + OpenRAIL-M",
     "vibevoice": "MIT", "voxtral": "CC-BY-NC 4.0", "chatterbox": "MIT",
     "chatterbox_turbo": "MIT", "coqui": "CPML (non-commercial)", "cosyvoice": "Apache 2.0",
@@ -859,6 +875,7 @@ MODEL_LANGS = {
     "kittentts": "—", "kokoro": "✓", "kokoro_mlx": "✓", "lfm2_audio": "— (en)", "luxtts": "—",
     "magpie": "✓ (9)", "maya1": "—", "melotts": "— (en)", "orpheus": "— (en)",
     "outetts": "✓ (12)", "parler": "—", "piper": "✓", "scyllasband": "✓ (4)",
+    "inflect_nano": "— (en)", "inflect_micro": "— (en)",
     "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
     "chatterbox_turbo": "—", "coqui": "✓ (17)", "cosyvoice": "✓", "dia": "—",

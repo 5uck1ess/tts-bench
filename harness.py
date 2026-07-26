@@ -59,6 +59,13 @@ MODELS = [
     # wav cloning -> can_clone=False, default lens only. en_us/en_gb/es/it, no French
     # -> multilingual=False, FR prompt skipped. ~103M core params + 15M neural G2P, 24 kHz.
     ("scyllasband", "scyllasband","runners/scyllasband_runner.py", False, ["cpu"],                None,   False),
+    # Inflect v2 (Apache-2.0): complete text-to-waveform VITS — the 24 kHz decoder is
+    # inside the parameter count, no external vocoder. One fixed English voice, no wav
+    # cloning -> can_clone=False, default lens only. English-only -> multilingual=False,
+    # FR prompt skipped. Both variants share the venv + runner; variant picks the
+    # checkpoint dir under venvs/inflect/src/.
+    ("inflect_nano",  "inflect", "runners/inflect_runner.py", False, ["cpu", "cuda"], "nano",  False),
+    ("inflect_micro", "inflect", "runners/inflect_runner.py", False, ["cpu", "cuda"], "micro", False),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], "1.5b", False),
     ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  False, ["cuda"],               "7b",   True),
