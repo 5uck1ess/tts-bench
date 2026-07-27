@@ -796,9 +796,14 @@ if (-not (Want "scoring")) { Write-Host "scoring: skipped (not in install filter
 } elseif (-not (Test-Path "venvs\scoring\Scripts\python.exe")) {
     Invoke-Checked "uv venv scoring" { uv venv venvs\scoring --python 3.11 }
     Invoke-Checked "uv pip install scoring deps" {
+        # transformers is PINNED: scoring/wer.py runs Whisper-large-v3 through it, and
+        # every WER value in scoring/scores.csv is ranked against every other. An
+        # unpinned install gives each rig whatever version was current the day its venv
+        # was built, so two machines can silently score the same board on different
+        # decoders. 5.10.2 is what Linux-3090 (the canonical scoring rig) holds.
         uv pip install --python venvs\scoring\Scripts\python.exe `
             torch torchaudio librosa soundfile numpy `
-            transformers jiwer speechmos pytest
+            "transformers==5.10.2" jiwer speechmos pytest
     }
     if (-not (Test-Path "scoring\thirdparty\UniSpeech")) {
         Invoke-Checked "git clone UniSpeech" { git clone https://github.com/microsoft/UniSpeech scoring\thirdparty\UniSpeech }

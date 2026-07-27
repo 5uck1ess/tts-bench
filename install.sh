@@ -1279,9 +1279,14 @@ echo; cyan "=== scoring: objective metrics (UTMOS + WER) — py3.11 ==="
 if ! want scoring; then echo "scoring: skipped (not in install filter)"
 elif [ ! -x venvs/scoring/bin/python ]; then
     uv venv venvs/scoring --python 3.11 || die "uv venv scoring"
+    # transformers is PINNED: scoring/wer.py runs Whisper-large-v3 through it, and every
+    # WER value in scoring/scores.csv is ranked against every other. An unpinned install
+    # gives each rig whatever version was current the day its venv was built, so two
+    # machines can silently score the same board on different decoders. 5.10.2 is what
+    # Linux-3090 (the canonical scoring rig) holds and what the current board was scored on.
     uv pip install --python venvs/scoring/bin/python \
         torch torchaudio librosa soundfile numpy \
-        transformers jiwer speechmos pytest \
+        "transformers==5.10.2" jiwer speechmos pytest \
         || die "uv pip install scoring deps"
     green "scoring: ok"
 else
