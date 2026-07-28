@@ -42,6 +42,8 @@ MODELS = {
     "voxcpm":      ("voxcpm",     "runners/voxcpm_runner.py",     None),
     "magpie":      ("magpie",     "runners/magpie_runner.py",     None),
     "qwentts":     ("qwentts",    "runners/qwentts_runner.py",    "base"),
+    "qwentts_06b": ("qwentts",    "runners/qwentts_runner.py",    "base_06b"),
+    "qwentts_06b_custom": ("qwentts", "runners/qwentts_runner.py", "custom_06b"),
     "indextts":    ("indextts",   "runners/indextts_runner.py",   None),
     "sesame":      ("sesame",     "runners/sesame_runner.py",     None),
     "mars5":       ("mars5",      "runners/mars5_runner.py",      None),

@@ -342,7 +342,7 @@ if (-not (Want "qwentts")) { Write-Host "qwentts: skipped (not in install filter
     # FlashAttention 2 is recommended upstream for best perf but flash-attn has
     # no first-party Windows wheels - skip it; runner falls back to default
     # SDPA implementation. ~20-40% slower inference but works.
-    Write-Host "qwentts: ok (zero-shot cloning, wav+txt, 10 langs; flash-attn skipped on Windows)" -ForegroundColor Green
+    Write-Host "qwentts: ok (covers 1.7B Base + both 0.6B checkpoints; flash-attn skipped on Windows)" -ForegroundColor Green
 } else {
     Write-Host "qwentts: already installed" -ForegroundColor Gray
 }

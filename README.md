@@ -59,7 +59,7 @@ python bench.py
 python bench.py
 ```
 
-Pass model names to install only those (names = the `venvs/<name>` slugs, which match the tables below — lowercase, e.g. `kokoro`, `f5tts`, `chatterbox`, `miso`). A few share one install: `neutts` covers NeuTTS Air + Nano, `chatterbox` both ChatterBox variants, `vibevoice` the 0.5B/1.5B, `moss_tts` both MOSS checkpoints, `inflect` both Inflect v2 sizes, `fish` is Fish Speech 1.5. Add `scoring` (plus `scoring_sim` on Linux) for the objective-metrics venv. `bench.py` only runs models whose venv exists, so a partial install benches cleanly — install more models later by re-running with new names.
+Pass model names to install only those (names = the `venvs/<name>` slugs, which match the tables below — lowercase, e.g. `kokoro`, `f5tts`, `chatterbox`, `miso`). A few share one install: `neutts` covers NeuTTS Air + Nano, `chatterbox` both ChatterBox variants, `vibevoice` the 0.5B/1.5B, `moss_tts` both MOSS checkpoints, `inflect` both Inflect v2 sizes, `qwentts` the 1.7B Base + both 0.6B checkpoints, `fish` is Fish Speech 1.5. Add `scoring` (plus `scoring_sim` on Linux) for the objective-metrics venv. `bench.py` only runs models whose venv exists, so a partial install benches cleanly — install more models later by re-running with new names.
 
 Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `python compare.py "your phrase"`. See [docs/architecture.md](docs/architecture.md) for the runner protocol and how to add a model.
 
@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (60)
+## Models tracked (62)
 
 #### Predefined voices
 
@@ -102,6 +102,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [OuteTTS 1.0 1B](https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B) | ~1B | Apr 2025 | ✓ | ✓ | ✓ (12) | 44.1k | — | CC-BY-NC-SA 4.0 + Llama 3.2 |
 | [Parler-TTS Mini v1](https://huggingface.co/parler-tts/parler-tts-mini-v1) | 878M | Jun 2024 | ✓ (voice desc) | — | — | **44.1k** | desc\* | Apache 2.0 |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) | ~15M | Jan 2023 | ✓ | — | ✓ | 22.05k | — | GPL-3.0 |
+| [Qwen3-TTS 0.6B CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice) | 0.6B | Jan 2026 | ✓ (9) | — | ✓ | 24k | — | Apache 2.0 |
 | [Scylla's Band](https://huggingface.co/spybyscript/scyllasband) | ~103M | Jul 2026 | ✓ (10) | — | ✓ (4) | 24k | 6 knobs | Apache 2.0 |
 | [Soprano 1.1 80M](https://huggingface.co/ekwek/Soprano-1.1-80M) | 80M | Jan 2026 | ✓ | — | — | 32k | — | Apache 2.0 |
 | [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) | 99M | May 2026 | ✓ | — | ✓ (31) | 24k | tags | MIT + OpenRAIL-M |
@@ -141,6 +142,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) | ~1B | Mar 2026 | — | ✓ | ✓ (600+) | 24k | tags\* | Apache 2.0 code / CC-BY-NC weights |
 | [OpenVoice v2](https://huggingface.co/myshell-ai/OpenVoiceV2) | ~100M | Apr 2024 | — | ✓ | ✓ | 22.05k | knob | MIT |
 | [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | 100M | Jan 2026 | — | ✓ | — | 24k | — | Apache 2.0 |
+| [Qwen3-TTS 0.6B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-Base) | 0.6B | Jan 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
 | [Qwen3-TTS 1.7B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
 | [Qwen3-TTS 1.7B (CUDA-graph)](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | MIT |
 | [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) | 1B | Mar 2025 | — | ✓ | — | 24k | — | Apache 2.0 |
@@ -166,7 +168,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**42 of the 60 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**42 of the 62 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 of 32 cloning models, 397 votes, human-preference A/B): **[docs/cloning.md](docs/cloning.md)**.
 
