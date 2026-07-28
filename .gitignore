@@ -52,3 +52,6 @@ arena/.env
 
 # arena vote-DB backups (manual Turso dumps + their CSV exports) — local only.
 arena/backups/
+
+# scratch listen folders (audio auditioned locally, never committed)
+_listen_*/
