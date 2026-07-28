@@ -442,6 +442,8 @@ MODEL_DISPLAY_NAMES = {
     "vibevoice":     "VibeVoice Realtime 0.5B",
     "vibevoice_15b": "VibeVoice 1.5B",
     "qwentts":       "Qwen3-TTS 1.7B Base",
+    "qwentts_06b":   "Qwen3-TTS 0.6B Base",
+    "qwentts_06b_custom": "Qwen3-TTS 0.6B CustomVoice",
     "qwentts_fast":  "Qwen3-TTS 1.7B (CUDA-graph)",
     "neutts_air":    "NeuTTS Air",
     "neutts_nano":   "NeuTTS Nano",
@@ -512,6 +514,8 @@ MODEL_SIZE = {
     "voxcpm":        "2B",
     "magpie":        "357M",
     "qwentts":       "1.7B",
+    "qwentts_06b":   "0.6B",
+    "qwentts_06b_custom": "0.6B",
     "qwentts_fast":  "1.7B",
     "indextts":      "1.5B",
     "sesame":        "1B",
@@ -583,6 +587,8 @@ MODEL_URL = {
     "voxcpm":        _HF + "openbmb/VoxCPM2",
     "magpie":        _HF + "nvidia/magpie_tts_multilingual_357m",
     "qwentts":       _HF + "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+    "qwentts_06b":   _HF + "Qwen/Qwen3-TTS-12Hz-0.6B-Base",
+    "qwentts_06b_custom": _HF + "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
     "qwentts_fast":  _HF + "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
     "indextts":      _HF + "IndexTeam/IndexTTS-2",
     "sesame":        _HF + "sesame/csm-1b",
@@ -656,6 +662,8 @@ MODEL_KIND = {
     "voxcpm":        "cloning",
     "coqui":         "cloning",
     "qwentts":       "cloning",
+    "qwentts_06b":   "cloning",
+    "qwentts_06b_custom": "predefined",
     "qwentts_fast":  "cloning",
     "sesame":        "cloning",
     "miso":          "cloning",
@@ -719,6 +727,8 @@ MODEL_RELEASE = {
     "voxcpm":        "2026-04",
     "magpie":        "2025-12",
     "qwentts":       "2026-01",
+    "qwentts_06b":   "2026-01",
+    "qwentts_06b_custom": "2026-01",
     "qwentts_fast":  "2026-01",
     "indextts":      "2025-06",
     "sesame":        "2025-03",
@@ -817,7 +827,8 @@ MODEL_SR = {
     "miotts_01b": "44.1k", "miotts_06b": "44.1k", "miratts": "48k", "miso": "24k",
     "moss_tts": "24k", "moss_tts_v15": "24k", "moss_tts_nano": "48k",
     "neutts_air": "24k", "neutts_nano": "24k", "omnivoice": "24k", "openvoice": "22.05k",
-    "pocket": "24k", "qwentts": "24k", "qwentts_fast": "24k", "sesame": "24k",
+    "pocket": "24k", "qwentts": "24k", "qwentts_06b": "24k", "qwentts_06b_custom": "24k",
+    "qwentts_fast": "24k", "sesame": "24k",
     "step_editx": "24k", "styletts2": "24k", "vibevoice_15b": "24k", "vibevoice_7b": "24k",
     "voxcpm": "48k", "wavtts": "16k", "zipvoice": "24k", "zonos": "44.1k", "zonos2": "44.1k",
 }
@@ -838,7 +849,9 @@ MODEL_EXPRESSIVE = {
     "metavoice": "—", "miotts_01b": "—", "miotts_06b": "—", "miratts": "knob", "miso": "—",
     "moss_tts": "—", "moss_tts_v15": "tags (pause)", "moss_tts_nano": "—", "neutts_air": "—",
     "neutts_nano": "—", "omnivoice": "tags*", "openvoice": "knob", "pocket": "—",
-    "qwentts": "—", "qwentts_fast": "—", "sesame": "—", "step_editx": "tags + desc",
+    "qwentts": "—", "qwentts_06b": "—",
+    # CustomVoice instruct control is unverified pending a runtime check (card/table conflict).
+    "qwentts_06b_custom": "—", "qwentts_fast": "—", "sesame": "—", "step_editx": "tags + desc",
     "styletts2": "knob", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "desc",
     "wavtts": "—", "zipvoice": "—", "zonos": "emo-ref + knob", "zonos2": "knob",
 }
@@ -863,7 +876,8 @@ MODEL_LICENSE = {
     "moss_tts": "Apache 2.0", "moss_tts_v15": "Apache 2.0", "moss_tts_nano": "Apache 2.0",
     "neutts_air": "Apache 2.0", "neutts_nano": "Apache 2.0",
     "omnivoice": "Apache 2.0 code / CC-BY-NC weights",
-    "openvoice": "MIT", "pocket": "Apache 2.0", "qwentts": "Apache 2.0", "qwentts_fast": "MIT",
+    "openvoice": "MIT", "pocket": "Apache 2.0", "qwentts": "Apache 2.0",
+    "qwentts_06b": "Apache 2.0", "qwentts_06b_custom": "Apache 2.0", "qwentts_fast": "MIT",
     "sesame": "Apache 2.0", "step_editx": "Apache 2.0", "styletts2": "MIT", "vibevoice_15b": "MIT",
     "vibevoice_7b": "MIT", "voxcpm": "Apache 2.0", "wavtts": "MIT code / CC-BY-NC 4.0 weights",
     "zipvoice": "Apache 2.0", "zonos": "Apache 2.0", "zonos2": "Apache 2.0",
@@ -885,7 +899,8 @@ MODEL_LANGS = {
     "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)",
     "moss_tts": "✓ (20)", "moss_tts_v15": "✓ (31)", "moss_tts_nano": "✓ (zh+en)",
     "neutts_air": "—", "neutts_nano": "—", "omnivoice": "✓ (600+)", "openvoice": "✓",
-    "pocket": "—", "qwentts": "✓", "qwentts_fast": "✓", "sesame": "—", "step_editx": "—",
+    "pocket": "—", "qwentts": "✓", "qwentts_06b": "✓", "qwentts_06b_custom": "✓",
+    "qwentts_fast": "✓", "sesame": "—", "step_editx": "—",
     "styletts2": "—", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "✓ (30)",
     "wavtts": "✓ (zh+en)", "zipvoice": "✓ (zh+en)", "zonos": "✓", "zonos2": "—",
 }
@@ -958,8 +973,8 @@ def _sr_hz(model):
 # positive evidence. Everything not listed (incl. all English-only cloners) is False.
 MODEL_CROSSLINGUAL = {
     "coqui", "cosyvoice", "dots_tts", "f5tts", "higgs_v3", "indextts", "moss_tts",
-    "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_fast",
-    "zonos",
+    "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_06b",
+    "qwentts_06b_custom", "qwentts_fast", "zonos",
 }
 
 

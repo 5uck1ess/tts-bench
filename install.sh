@@ -426,7 +426,7 @@ elif [ ! -x venvs/qwentts/bin/python ]; then
     # falls back to default SDPA. We skip the flash-attn install here so the
     # script works on both - users on Linux with CUDA can `pip install flash-attn`
     # after for the perf bump.
-    green "qwentts: ok (zero-shot cloning, wav+txt, 10 langs)"
+    green "qwentts: ok (covers 1.7B Base + both 0.6B checkpoints)"
 else
     echo "qwentts: already installed"
 fi

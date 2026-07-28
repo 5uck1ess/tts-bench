@@ -36,6 +36,13 @@ MODELS = [
     # base qwentts: cloning disabled — long prompts blow the 600s cell timeout on
     # this autoregressive sampler. qwentts_fast (CUDA-graph) handles cloning instead.
     ("qwentts",      "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base", False),
+    # qwentts_06b: cloning disabled for the same reason as the 1.7B row above, but
+    # the cause is not sampler speed — throughput is a steady ~0.5x RTFx either way.
+    # Decode intermittently fails to emit EOS and runs away to max_new_tokens: the
+    # same input produced 12.9s of audio on one call and 655.3s on the next (measured
+    # 4 runs, 1 ran away). non_streaming_mode=True fixes this for qwentts_fast under
+    # CUDA graphs but NOT on this stock qwen-tts path — verified, still 1-in-4.
+    ("qwentts_06b",  "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base_06b", False),
     ("qwentts_fast", "qwentts_fast", "runners/qwentts_fast_runner.py", True,  ["cuda"],         "base", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   False, ["cpu", "cuda"],        None,   True),
     ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    False, ["cuda"],               None,   True),
@@ -46,6 +53,7 @@ MODELS = [
     ("dia",         "dia",        "runners/dia_runner.py",        False, ["cuda"],               None,   True),
     ("fish_15",     "fish",       "runners/fish_runner.py",       True,  ["cpu", "cuda", "mps"], None,   True),
     # Predefined-voice-only (no cloning)
+    ("qwentts_06b_custom", "qwentts", "runners/qwentts_runner.py", True, ["cpu", "cuda"], "custom_06b", False),
     ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     True,  ["cpu", "cuda", "mps"], None,   False),
     # kokoro_mlx: same Kokoro-82M weights + voices, but generation runs on Apple's
     # MLX (mlx-audio) instead of PyTorch-MPS. Apple-Silicon-only (mlx has no
