@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (62)
+## Models tracked (61)
 
 #### Predefined voices
 
@@ -142,7 +142,6 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) | ~1B | Mar 2026 | — | ✓ | ✓ (600+) | 24k | tags\* | Apache 2.0 code / CC-BY-NC weights |
 | [OpenVoice v2](https://huggingface.co/myshell-ai/OpenVoiceV2) | ~100M | Apr 2024 | — | ✓ | ✓ | 22.05k | knob | MIT |
 | [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | 100M | Jan 2026 | — | ✓ | — | 24k | — | Apache 2.0 |
-| [Qwen3-TTS 0.6B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-Base) | 0.6B | Jan 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
 | [Qwen3-TTS 1.7B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
 | [Qwen3-TTS 1.7B (CUDA-graph)](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | MIT |
 | [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) | 1B | Mar 2025 | — | ✓ | — | 24k | — | Apache 2.0 |
@@ -162,7 +161,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 > **Predefined vs Cloning.** *Predefined* models have fixed/selectable speaker voices baked into the weights — they speak with no reference needed. *Cloning* (zero-shot) models have **no voice of their own**: they synthesize whatever voice you hand them as a reference clip at inference. Given no reference, a pure zero-shot model falls back to a bundled sample (this bench uses `chris_hemsworth_15s.wav`), so its "default voice" is just a clone of that clip. A few models do both (e.g. Voxtral has 20 presets *and* cloning).
 
-> **Newly added, not yet benched.** The two Qwen3-TTS 0.6B rows (`qwentts_06b` Base, `qwentts_06b_custom` CustomVoice) are registered and smoke-tested but carry **no speed or objective numbers yet** — the bench + UTMOS/WER/SIM scoring pass runs on the Linux rig. `qwentts_06b` is registered **default-voice only**: its cloning hits the same intermittent decode runaway as the 1.7B row (identical input yielded 12.9 s of audio on one call and 655.3 s on the next), and `non_streaming_mode=True` does not fix it on the stock `qwen-tts` path — see [docs/known-issues.md](docs/known-issues.md).
+> **Newly added, not yet benched.** `qwentts_06b_custom` (Qwen3-TTS 0.6B CustomVoice, 9 preset timbres) is registered and smoke-tested but carries **no speed or objective numbers yet** — the bench + UTMOS/WER/SIM scoring pass runs on the Linux rig. The 0.6B **Base** checkpoint is deliberately not a row: like the 1.7B Base it has no model-native preset voice, and its cloning hits an intermittent decode runaway (identical input yielded 12.9 s of audio on one call and 655.3 s on the next), so it would publish on neither board — see [docs/known-issues.md](docs/known-issues.md).
 
 > Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Higgs Audio v3 / dots.tts / Zonos2 / Orpheus / CosyVoice 3 are Linux-only (CUDA) — Higgs v3 is the one **server-backed** model (it runs via a Docker `sgl-omni` HTTP server, not an in-process load), dots.tts and Zonos2 require Linux-only dependencies/compiled CUDA kernels, and Orpheus (vLLM) + CosyVoice 3 (cu121 / torch 2.3.1) have no Blackwell-compatible Windows path; Echo-TTS and DramaBox are Windows + Linux (CUDA-only, no CPU/MPS; DramaBox needs ~18 GB VRAM). The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
 
@@ -170,7 +169,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**42 of the 62 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**42 of the 61 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

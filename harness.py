@@ -33,16 +33,20 @@ MODELS = [
     ("omnivoice",   "omnivoice",  "runners/omnivoice_runner.py",  True,  ["cpu", "cuda", "mps"], None,   True),
     ("zipvoice",    "zipvoice",   "runners/zipvoice_runner.py",   True,  ["cpu", "cuda", "mps"], None,   True),
     ("voxcpm",      "voxcpm",     "runners/voxcpm_runner.py",     True,  ["cpu", "cuda"],        None,   True),
-    # base qwentts: cloning disabled — long prompts blow the 600s cell timeout on
-    # this autoregressive sampler. qwentts_fast (CUDA-graph) handles cloning instead.
+    # base qwentts: cloning disabled — long prompts blow the 600s cell timeout, but
+    # NOT because the sampler is slow (throughput is a steady ~0.5x RTFx). Decode
+    # intermittently fails to emit EOS and runs away to max_new_tokens; the tell is
+    # audio_s, not gen_s. See docs/known-issues.md. qwentts_fast (CUDA-graph, which
+    # masks it via non_streaming_mode=True) handles cloning instead. Base also has no
+    # model-native preset voice, so it is in NO_PRESET_VOICE → cloning board only.
     ("qwentts",      "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base", False),
-    # qwentts_06b: cloning disabled for the same reason as the 1.7B row above, but
-    # the cause is not sampler speed — throughput is a steady ~0.5x RTFx either way.
-    # Decode intermittently fails to emit EOS and runs away to max_new_tokens: the
-    # same input produced 12.9s of audio on one call and 655.3s on the next (measured
-    # 4 runs, 1 ran away). non_streaming_mode=True fixes this for qwentts_fast under
-    # CUDA graphs but NOT on this stock qwen-tts path — verified, still 1-in-4.
-    ("qwentts_06b",  "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base_06b", False),
+    # Qwen3-TTS 0.6B *Base* is deliberately NOT a row. Like the 1.7B Base it has no
+    # model-native preset voice, so its default lens would just clone the house
+    # reference — and its cloning is unusable (intermittent decode runaway, see
+    # docs/known-issues.md), so it would publish on neither board. The 0.6B reaches
+    # the bench through qwentts_06b_custom, which has real preset timbres. The
+    # runner still supports --variant base_06b, so it is re-testable by invoking
+    # runners/qwentts_runner.py directly if upstream fixes the EOS handling.
     ("qwentts_fast", "qwentts_fast", "runners/qwentts_fast_runner.py", True,  ["cuda"],         "base", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   False, ["cpu", "cuda"],        None,   True),
     ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    False, ["cuda"],               None,   True),

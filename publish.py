@@ -63,6 +63,10 @@ MODEL_MULTILINGUAL = frozenset(m for m in MODEL_LANGS if _is_multilingual(m))
 # → the en-Emma_woman preset, DO have genuine defaults, so they're not here.)
 NO_PRESET_VOICE = {
     "moss_tts", "moss_tts_v15", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
+    # qwentts (Qwen3-TTS 1.7B *Base*): no model-native preset voice -- Base is the
+    # cloning checkpoint, so its no-reference run just clones the bundled jo.wav.
+    # CustomVoice (qwentts_06b_custom) is the Qwen row with real preset timbres.
+    "qwentts",
     "openvoice", "zipvoice", "zonos", "zonos2", "vibevoice_15b", "vibevoice_7b",
     "echo",
     # cosyvoice: pure zero-shot cloning, no model-native preset — its "default"
@@ -83,7 +87,13 @@ NO_PRESET_VOICE = {
 # side by side, but its clips/scores would just duplicate PyTorch Kokoro's.
 # Filtered out in _ok_models (Listen + Scores) and arena/build_manifest.py (Arena);
 # the Speed hub reads CSV rows directly, so the row still shows there.
-SPEED_ONLY = {"kokoro_mlx"}
+# qwentts is the same reason twice over: (1) same weights as qwentts_fast (stock
+# qwen-tts vs the CUDA-graph runtime), so its clips duplicate that row's, and
+# (2) Base has no preset voice, so its "default" clips are just a jo.wav clone —
+# they were on the Default board being voted on as if they were a real voice.
+# Its cloning is disabled (decode runaway), so NO_PRESET_VOICE alone would leave
+# the row publishing nowhere; SPEED_ONLY keeps its legitimate speed numbers.
+SPEED_ONLY = {"kokoro_mlx", "qwentts"}
 
 # Curated per-(model, voice-mode) QA findings, surfaced as a small badge + tooltip on
 # the model's row in the Listen gallery and recorded in docs/known-issues.md.
