@@ -22,7 +22,7 @@ python speak.py chatterbox --reference reference/myvoice.wav
 
 ## Cloning quality ranking
 
-Ranked by a **blind pairwise voting study** — human-preference 2AFC over the cloning-capable models, fit to Bradley-Terry strengths. Each listener hears two anonymized clones of the same reference (`chris_hemsworth_15s.wav`, 5 prompts) and picks the better one; `tie` and `bad` (both-unusable) votes are recorded too. **397 votes** as of June 2026. W-L-T = wins / losses / ties.
+Ranked by a **blind pairwise voting study** — human-preference 2AFC over the cloning-capable models, fit to Bradley-Terry strengths. Each listener hears two anonymized clones of the same reference (`chris_hemsworth_15s.wav`, 5 prompts) and picks the better one; `tie` and `bad` (both-unusable) votes are recorded too. The table below is a frozen snapshot of the first **397 votes** (June 2026). The [live arena](https://5uck1ess-tts-arena.hf.space) has since collected **738 cloning votes** (and 1415 on default voices), and its Elo board — not this table — is the current ranking. W-L-T = wins / losses / ties.
 
 > **What this measures (and doesn't).** Listeners are picking the better **voice match** — timbre/accent fidelity and overall preference. It does **not** measure intelligibility: a clone can top this study while still garbling or dropping words, because a short timbre-focused A/B doesn't penalize that. Pair these standings with the objective **WER** column on the [Scores lens](https://5uck1ess.github.io/tts-bench/scores.html) — see the OmniVoice caveat below.
 
@@ -57,7 +57,7 @@ Ranked by a **blind pairwise voting study** — human-preference 2AFC over the c
 | 27 | NeuTTS Air | 0-12-0 | 12 † |
 | 28 | OpenVoice v2 | 0-10-0 | 10 † |
 
-† fewer than ~12 games — that row's position is still noisy. This ranks **28 of the 30 cloning-capable models**: base Qwen3-TTS isn't here (its cloning is disabled in-harness — the autoregressive sampler blows the 600s timeout on long prompts; the CUDA-graph variant `qwentts_fast` is the benched cloning path), and Voxtral's cloning is Linux-only (vLLM), so neither is in this Windows cloning set.
+† fewer than ~12 games — that row's position is still noisy. This ranks **28 models** — the cloning set available on the Windows rig when the study ran in June 2026 (the bench now tracks 42 cloning-capable models; anything added since is missing from this table). Two models available at the time are absent: base Qwen3-TTS isn't here (its cloning is disabled in-harness — the autoregressive sampler blows the 600s timeout on long prompts; the CUDA-graph variant `qwentts_fast` is the benched cloning path), and Voxtral's cloning is Linux-only (vLLM), so neither is in this Windows cloning set.
 
 **What the votes say:**
 
