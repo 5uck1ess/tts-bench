@@ -22,7 +22,7 @@ python speak.py chatterbox --reference reference/myvoice.wav
 
 ## Cloning quality ranking
 
-Ranked by a **blind pairwise voting study** — human-preference 2AFC over the cloning-capable models, fit to Bradley-Terry strengths. Each listener hears two anonymized clones of the same reference (`chris_hemsworth_15s.wav`, 5 prompts) and picks the better one; `tie` and `bad` (both-unusable) votes are recorded too. **397 votes** as of June 2026. W-L-T = wins / losses / ties.
+Ranked by a **blind pairwise voting study** — human-preference 2AFC over the cloning-capable models, fit to Bradley-Terry strengths. Each listener hears two anonymized clones of the same reference (`chris_hemsworth_15s.wav`, 5 prompts) and picks the better one; `tie` and `bad` (both-unusable) votes are recorded too. The table below is a frozen snapshot of the first **397 votes** (June 2026). The [live arena](https://5uck1ess-tts-arena.hf.space) has since collected **738 cloning votes** (and 1415 on default voices), and its Elo board — not this table — is the current ranking. W-L-T = wins / losses / ties.
 
 > **What this measures (and doesn't).** Listeners are picking the better **voice match** — timbre/accent fidelity and overall preference. It does **not** measure intelligibility: a clone can top this study while still garbling or dropping words, because a short timbre-focused A/B doesn't penalize that. Pair these standings with the objective **WER** column on the [Scores lens](https://5uck1ess.github.io/tts-bench/scores.html) — see the OmniVoice caveat below.
 
