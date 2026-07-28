@@ -57,7 +57,7 @@ Ranked by a **blind pairwise voting study** — human-preference 2AFC over the c
 | 27 | NeuTTS Air | 0-12-0 | 12 † |
 | 28 | OpenVoice v2 | 0-10-0 | 10 † |
 
-† fewer than ~12 games — that row's position is still noisy. This ranks **28 of the 30 cloning-capable models**: base Qwen3-TTS isn't here (its cloning is disabled in-harness — the autoregressive sampler blows the 600s timeout on long prompts; the CUDA-graph variant `qwentts_fast` is the benched cloning path), and Voxtral's cloning is Linux-only (vLLM), so neither is in this Windows cloning set.
+† fewer than ~12 games — that row's position is still noisy. This ranks **28 models** — the cloning set available on the Windows rig when the study ran in June 2026 (the bench now tracks 42 cloning-capable models; anything added since is missing from this table). Two models available at the time are absent: base Qwen3-TTS isn't here (its cloning is disabled in-harness — the autoregressive sampler blows the 600s timeout on long prompts; the CUDA-graph variant `qwentts_fast` is the benched cloning path), and Voxtral's cloning is Linux-only (vLLM), so neither is in this Windows cloning set.
 
 **What the votes say:**
 

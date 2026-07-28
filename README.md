@@ -168,7 +168,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 **42 of the 60 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
-Reference-format docs + the blind-vote cloning ranking (28 of 32 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
+Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 
 ---
 
@@ -187,7 +187,7 @@ If you reproduce on different hardware, file an issue or PR with your results an
 ## Docs
 
 - [Full results tables](docs/results.md) — per-rig, per-prompt, per-model
-- [Cloning ranking](docs/cloning.md) — reference formats + blind-vote ranking (28 of 32 cloning models, human-preference A/B)
+- [Cloning ranking](docs/cloning.md) — reference formats + blind-vote ranking (28 cloning models, human-preference A/B)
 - [Architecture](docs/architecture.md) — bench design, runner protocol, adding a model
 - [Expressive control](docs/expressive-control.md) — which models take emotion tags / style prompts / knobs, with exact syntax
 - [Known issues](docs/known-issues.md) — per-model gotchas + per-license table
