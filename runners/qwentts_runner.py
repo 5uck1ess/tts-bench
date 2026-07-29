@@ -20,9 +20,9 @@ API (qwen-tts==latest):
     )
 
 Cloning flavor: wav + transcript (matches NeuTTS, F5-TTS, OmniVoice).
-Default-voice mode falls back to a bundled reference (jo.wav for EN,
-juliette.wav for FR) the same way F5-TTS does, since the Base model has no
-predefined-voice path.
+Base has no predefined-voice path, so it is REFERENCE-ONLY: the no-reference
+run falls back to the house reference (chris_hemsworth_15s.wav) like every other
+no-preset model, and it is listed in NO_PRESET_VOICE (cloning board only).
 
 10 supported languages: zh, en, ja, ko, de, fr, ru, pt, es, it.
 """
@@ -110,7 +110,7 @@ def main() -> int:
         if args.reference:
             ref_wav = Path(args.reference)
         else:
-            default_ref = {"en": "jo.wav", "fr": "juliette.wav"}.get(args.language, "jo.wav")
+            default_ref = "chris_hemsworth_15s.wav"
             ref_wav = repo / "reference" / default_ref
 
         if not ref_wav.exists():

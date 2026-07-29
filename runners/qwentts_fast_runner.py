@@ -16,7 +16,7 @@ API (faster-qwen3-tts==0.2.6):
         dtype=torch.bfloat16,
     )
     # generate() (default voice) is NotImplementedError — must use cloning.
-    # We borrow the same jo.wav/juliette.wav fallback as qwentts_runner.py.
+    # We borrow the same chris_hemsworth_15s.wav fallback as qwentts_runner.py.
     wavs, sr = model.generate_voice_clone(
         text="...",
         language="English",
@@ -102,7 +102,7 @@ def main() -> int:
     if args.reference:
         ref_wav = Path(args.reference)
     else:
-        default_ref = {"en": "jo.wav", "fr": "juliette.wav"}.get(args.language, "jo.wav")
+        default_ref = "chris_hemsworth_15s.wav"
         ref_wav = repo / "reference" / default_ref
 
     if not ref_wav.exists():

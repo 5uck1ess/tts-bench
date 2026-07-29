@@ -40,13 +40,10 @@ MODELS = [
     # masks it via non_streaming_mode=True) handles cloning instead. Base also has no
     # model-native preset voice, so it is in NO_PRESET_VOICE → cloning board only.
     ("qwentts",      "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base", False),
-    # Qwen3-TTS 0.6B *Base* is deliberately NOT a row. Like the 1.7B Base it has no
-    # model-native preset voice, so its default lens would just clone the house
-    # reference — and its cloning is unusable (intermittent decode runaway, see
-    # docs/known-issues.md), so it would publish on neither board. The 0.6B reaches
-    # the bench through qwentts_06b_custom, which has real preset timbres. The
-    # runner still supports --variant base_06b, so it is re-testable by invoking
-    # runners/qwentts_runner.py directly if upstream fixes the EOS handling.
+    # qwentts_06b: same treatment as the 1.7B Base above — reference-only (no preset
+    # voice → NO_PRESET_VOICE, cloning board) with the cloning LENS disabled by the
+    # decode runaway. Its default-lens run clones the house Chris reference.
+    ("qwentts_06b",  "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base_06b", False),
     ("qwentts_fast", "qwentts_fast", "runners/qwentts_fast_runner.py", True,  ["cuda"],         "base", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   False, ["cpu", "cuda"],        None,   True),
     ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    False, ["cuda"],               None,   True),

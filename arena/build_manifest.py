@@ -23,14 +23,13 @@ DEV_PRIO = {"cuda": 0, "mps": 1, "cpu": 2}
 # no-reference "default" run is actually a Chris clone -> excluded from default lens.
 NO_PRESET_VOICE = {
     "moss_tts", "moss_tts_v15", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
-    # qwentts (Qwen3-TTS 1.7B *Base*): no model-native preset voice -- Base is the
-    # cloning checkpoint, so its no-reference run just clones the bundled jo.wav.
-    # CustomVoice (qwentts_06b_custom) is the Qwen row with real preset timbres.
-    "qwentts",
     "openvoice", "zipvoice", "zonos", "zonos2", "vibevoice_15b", "vibevoice_7b", "echo", "dots_tts",
     "cosyvoice",  # pure zero-shot cloning, no model-native preset (mirrors publish.py)
     "miotts_01b", "miotts_06b",  # MioTTS: pure zero-shot cloner, cloning board only
     "wavtts",  # WavTTS: pure zero-shot cloner (ref wav + .txt), cloning board only
+    # Qwen3-TTS *Base* (both runtimes): reference-only, no model-native preset voice.
+    # CustomVoice (qwentts_06b_custom) is the Qwen row with real preset timbres.
+    "qwentts", "qwentts_06b", "qwentts_fast",
 }
 
 # Held OUT of the manifest entirely (BOTH lenses) — known-bad output that would
@@ -42,8 +41,7 @@ HOLD_FROM_POOL = set()
 
 # Mirrors publish.py SPEED_ONLY: models with a speed row but no place in the vote
 # pool because their audio duplicates another tracked model (kokoro_mlx == kokoro).
-SPEED_ONLY = {"kokoro_mlx", "qwentts"}  # qwentts: same weights as qwentts_fast, and its
-                                        # Base "default voice" is really a jo.wav clone.
+SPEED_ONLY = {"kokoro_mlx"}
 
 _WAV_RE = re.compile(r"(.+)_(cuda|mps|cpu)_p(\d+)\.wav$")
 
