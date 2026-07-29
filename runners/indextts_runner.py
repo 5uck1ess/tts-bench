@@ -23,7 +23,8 @@ API (from indextts.infer_v2):
 Cloning flavor: wav only (matches ChatterBox, Coqui, VoxCPM). Emotion control
 is supported via emo_audio_prompt or emo_text but not exposed by this runner
 yet — we just take a single speaker reference. Default-voice path falls back
-to bundled jo.wav (EN) / juliette.wav (FR) since IndexTTS-2 is clone-only.
+to the house reference (chris_hemsworth_15s.wav) since IndexTTS-2 is clone-only,
+so it is reference-only (NO_PRESET_VOICE -> cloning board).
 
 License: Apache 2.0 (model) + Apache 2.0 (code).
 """
@@ -59,7 +60,7 @@ def main() -> int:
     if args.reference:
         ref_wav = Path(args.reference)
     else:
-        default_ref = {"en": "jo.wav", "fr": "juliette.wav"}.get(args.language, "jo.wav")
+        default_ref = "chris_hemsworth_15s.wav"
         ref_wav = repo / "reference" / default_ref
 
     if not ref_wav.exists():

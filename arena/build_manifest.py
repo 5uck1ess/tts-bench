@@ -23,13 +23,19 @@ DEV_PRIO = {"cuda": 0, "mps": 1, "cpu": 2}
 # no-reference "default" run is actually a Chris clone -> excluded from default lens.
 NO_PRESET_VOICE = {
     "moss_tts", "moss_tts_v15", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
-    "openvoice", "zipvoice", "zonos", "zonos2", "vibevoice_15b", "vibevoice_7b", "echo", "dots_tts",
+    "openvoice", "zipvoice", "zonos", "zonos2", "vibevoice_15b", "vibevoice_7b", "echo",
+    # dots_tts is NOT here: it has a real (if per-prompt varying) default voice and
+    # shows on the Default board with a badge. Mirrors publish.py -- keep in sync.
     "cosyvoice",  # pure zero-shot cloning, no model-native preset (mirrors publish.py)
     "miotts_01b", "miotts_06b",  # MioTTS: pure zero-shot cloner, cloning board only
     "wavtts",  # WavTTS: pure zero-shot cloner (ref wav + .txt), cloning board only
     # Qwen3-TTS *Base* (both runtimes): reference-only, no model-native preset voice.
     # CustomVoice (qwentts_06b_custom) is the Qwen row with real preset timbres.
     "qwentts", "qwentts_06b", "qwentts_fast",
+    # No model-native preset voice: the no-reference run clones the house Chris
+    # reference, so these are reference-only (cloning board). Their fallback was
+    # jo.wav until 2026-07-29 -- see docs/known-issues.md.
+    "f5tts", "indextts", "step_editx",
 }
 
 # Held OUT of the manifest entirely (BOTH lenses) — known-bad output that would

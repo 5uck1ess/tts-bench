@@ -59,7 +59,7 @@ def main() -> int:
     if args.reference:
         ref_wav = Path(args.reference)
     else:
-        default_ref = {"en": "jo.wav", "fr": "juliette.wav"}.get(args.language, "jo.wav")
+        default_ref = "chris_hemsworth_15s.wav"
         ref_wav = repo / "reference" / default_ref
     if not ref_wav.exists():
         print(json.dumps({"ok": False, "run_index": 0,

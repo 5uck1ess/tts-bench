@@ -67,6 +67,10 @@ NO_PRESET_VOICE = {
     # cloning checkpoint, so it is reference-only. CustomVoice (qwentts_06b_custom)
     # is the Qwen row with real preset timbres.
     "qwentts", "qwentts_06b", "qwentts_fast",
+    # No model-native preset voice: the no-reference run clones the house Chris
+    # reference, so these are reference-only (cloning board). Their fallback was
+    # jo.wav until 2026-07-29 -- see docs/known-issues.md.
+    "f5tts", "indextts", "step_editx",
     "openvoice", "zipvoice", "zonos", "zonos2", "vibevoice_15b", "vibevoice_7b",
     "echo",
     # cosyvoice: pure zero-shot cloning, no model-native preset — its "default"
