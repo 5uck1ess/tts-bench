@@ -13,8 +13,8 @@ functions (the click `main()` in the upstream module is just a thin CLI wrapper)
     3. decode_to_audio(codes, codec)       -> waveform @ 44.1 kHz
 
 Cloning flavor: wav + transcript (the reference's text). Bundled refs ship a
-sibling .txt (jo.txt / juliette.txt); a user --reference wav without a sibling
-.txt falls back to voiceless generation (model picks a voice).
+sibling .txt (the house chris_hemsworth_15s.txt); a user --reference wav without
+a sibling .txt falls back to voiceless generation (model picks a voice).
 
 License: CC-BY-NC-SA-4.0 (model). 44.1 kHz output. CUDA-only (bf16 ~21 GB peak).
 """

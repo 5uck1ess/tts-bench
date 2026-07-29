@@ -72,7 +72,8 @@ def main() -> int:
         import numpy as np
         import soundfile as sf
 
-        # Reference handling: default to jo (EN) / juliette (FR) shipped in reference/
+        # Reference handling: no preset voice, so a default-voice run clones the
+        # house reference shipped in reference/ (wav + sibling .txt transcript).
         repo = Path(__file__).resolve().parent.parent
         if args.reference:
             ref_wav = Path(args.reference)

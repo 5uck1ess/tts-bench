@@ -21,10 +21,12 @@ import _meminfo
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 
-# Default reference voice shared with the other cloning runners. LuxTTS clones
-# whatever reference it's given (and auto-transcribes it), so default-voice mode
-# points it at the shared sample: jo (en) / juliette (fr).
-DEFAULT_REFERENCE = {"en": "jo", "fr": "juliette"}
+# LuxTTS clones whatever reference it's given (and auto-transcribes it) and cannot
+# speak without one, so it has no model-native preset voice: a default-voice run is
+# a clone of the house reference (see NO_PRESET_VOICE in publish.py -> cloning board
+# only). Was jo (en) / juliette (fr) until 2026-07-29, which put a stranger's voice
+# on the Default board -- see docs/known-issues.md.
+DEFAULT_REFERENCE_STEM = "chris_hemsworth_15s"
 
 
 def main() -> int:
@@ -42,8 +44,7 @@ def main() -> int:
     if args.reference:
         ref_wav = Path(args.reference)
     else:
-        stem = DEFAULT_REFERENCE.get(args.language, "jo")
-        ref_wav = REPO_ROOT / "reference" / f"{stem}.wav"
+        ref_wav = REPO_ROOT / "reference" / f"{DEFAULT_REFERENCE_STEM}.wav"
     if not ref_wav.exists():
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"reference wav not found: {ref_wav}"}))

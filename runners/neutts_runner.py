@@ -13,7 +13,7 @@ API discovered by inspection (2026-05-22):
 We use non-GGUF backbones (transformers path) so no extra llama-cpp-python
 dependency is needed. Air is English-only; Nano has en/fr/de/es variants.
 
-Pass 1 default voices: ./reference/jo.{wav,txt} (en) and ./reference/juliette.{wav,txt} (fr).
+No preset voice: a default-voice run clones ./reference/chris_hemsworth_15s.{wav,txt}.
 Both shipped by upstream as samples — same voice across Air + Nano = apples-to-apples.
 """
 
@@ -40,11 +40,12 @@ REPO_MAP = {
 }
 
 
-# Pass 1 default reference voices (downloaded once into ./reference/ from neutts upstream samples)
-DEFAULT_REFERENCE = {
-    "en": "jo",
-    "fr": "juliette",
-}
+# NeuTTS has no model-native preset voice, so a no-`--reference` run is a clone of
+# the house reference (see NO_PRESET_VOICE in publish.py -> cloning board only).
+# Used for every language: the bundled per-language samples (jo/juliette) were the
+# old fallback, which put a stranger's voice on the Default board and left de/es
+# with no default at all. NeuTTS needs a wav + sibling transcript; both ship.
+DEFAULT_REFERENCE_STEM = "chris_hemsworth_15s"
 
 
 def main() -> int:
@@ -82,15 +83,8 @@ def main() -> int:
             ref_wav = Path(args.reference)
             ref_txt = ref_wav.with_suffix(".txt")
         else:
-            stem = DEFAULT_REFERENCE.get(args.language)
-            if not stem:
-                print(json.dumps({
-                    "ok": False, "run_index": 0,
-                    "error": f"no default reference for language={args.language!r}",
-                }))
-                return 1
-            ref_wav = REPO_ROOT / "reference" / f"{stem}.wav"
-            ref_txt = REPO_ROOT / "reference" / f"{stem}.txt"
+            ref_wav = REPO_ROOT / "reference" / f"{DEFAULT_REFERENCE_STEM}.wav"
+            ref_txt = REPO_ROOT / "reference" / f"{DEFAULT_REFERENCE_STEM}.txt"
         if not ref_wav.exists() or not ref_txt.exists():
             print(json.dumps({
                 "ok": False, "run_index": 0,
