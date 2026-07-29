@@ -94,7 +94,21 @@ NO_PRESET_VOICE = {
 # side by side, but its clips/scores would just duplicate PyTorch Kokoro's.
 # Filtered out in _ok_models (Listen + Scores) and arena/build_manifest.py (Arena);
 # the Speed hub reads CSV rows directly, so the row still shows there.
-SPEED_ONLY = {"kokoro_mlx"}
+SPEED_ONLY = {
+    "kokoro_mlx",
+    # qwentts (1.7B Base, stock qwen-tts runtime) has no publishable clip set. Its
+    # default lens is a clone of the house reference, and that decode path runs away
+    # on the longer prompts: a 2026-07-29 re-bench completed p1 on both devices, then
+    # p2 hit the 600s cell timeout on cpu AND cuda (p3-p5 skipped). A runaway emits
+    # ~655s of audio for a ~13s line, so a longer timeout buys garbage, not a clip.
+    # Its only complete clip set is the pre-fix jo clone -- wrong voice -- so it is
+    # held out of Listen/Scores/Arena and keeps its speed row. This is also literally
+    # true in the SPEED_ONLY sense: qwentts_fast is the SAME checkpoint on the
+    # CUDA-graph runtime, so the audio duplicates an already-tracked model.
+    # It stays in NO_PRESET_VOICE above -- that describes what it IS (reference-only);
+    # this describes what we can publish. Remove once the runaway is fixed.
+    "qwentts",
+}
 
 # Curated per-(model, voice-mode) QA findings, surfaced as a small badge + tooltip on
 # the model's row in the Listen gallery and recorded in docs/known-issues.md.

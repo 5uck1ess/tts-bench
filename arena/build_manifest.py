@@ -50,7 +50,14 @@ HOLD_FROM_POOL = set()
 
 # Mirrors publish.py SPEED_ONLY: models with a speed row but no place in the vote
 # pool because their audio duplicates another tracked model (kokoro_mlx == kokoro).
-SPEED_ONLY = {"kokoro_mlx"}
+SPEED_ONLY = {
+    "kokoro_mlx",
+    # qwentts: no publishable clip set -- the stock-runtime decode runs away on the
+    # longer prompts, so only the pre-fix jo clone exists (wrong voice). Held out of
+    # the vote pool; qwentts_fast is the same checkpoint and stays votable.
+    # Mirrors publish.py -- keep in sync. See docs/known-issues.md.
+    "qwentts",
+}
 
 _WAV_RE = re.compile(r"(.+)_(cuda|mps|cpu)_p(\d+)\.wav$")
 
