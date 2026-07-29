@@ -112,6 +112,31 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/dia_cuda_p4.wav"
         },
         {
+          "model": "dots_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/dots_tts_cuda_p1.wav"
+        },
+        {
+          "model": "dots_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/dots_tts_cuda_p2.wav"
+        },
+        {
+          "model": "dots_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/dots_tts_cuda_p3.wav"
+        },
+        {
+          "model": "dots_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/dots_tts_cuda_p4.wav"
+        },
+        {
+          "model": "dots_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/dots_tts_cuda_p5.wav"
+        },
+        {
           "model": "dramabox",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/dramabox_cuda_p1.wav"
@@ -130,26 +155,6 @@
           "model": "dramabox",
           "prompt": 4,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/dramabox_cuda_p4.wav"
-        },
-        {
-          "model": "f5tts",
-          "prompt": 1,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/f5tts_cuda_p1.wav"
-        },
-        {
-          "model": "f5tts",
-          "prompt": 2,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/f5tts_cuda_p2.wav"
-        },
-        {
-          "model": "f5tts",
-          "prompt": 3,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/f5tts_cuda_p3.wav"
-        },
-        {
-          "model": "f5tts",
-          "prompt": 4,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/f5tts_cuda_p4.wav"
         },
         {
           "model": "higgs_v3",
@@ -177,24 +182,44 @@
           "url": "https://5uck1ess.github.io/tts-bench/linux-default/higgs_v3_cuda_p5.wav"
         },
         {
-          "model": "indextts",
+          "model": "inflect_micro",
           "prompt": 1,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/indextts_cuda_p1.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/inflect_micro_cuda_p1.wav"
         },
         {
-          "model": "indextts",
+          "model": "inflect_micro",
           "prompt": 2,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/indextts_cuda_p2.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/inflect_micro_cuda_p2.wav"
         },
         {
-          "model": "indextts",
+          "model": "inflect_micro",
           "prompt": 3,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/indextts_cuda_p3.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/inflect_micro_cuda_p3.wav"
         },
         {
-          "model": "indextts",
+          "model": "inflect_micro",
           "prompt": 4,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/indextts_cuda_p4.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/inflect_micro_cuda_p4.wav"
+        },
+        {
+          "model": "inflect_nano",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/inflect_nano_cuda_p1.wav"
+        },
+        {
+          "model": "inflect_nano",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/inflect_nano_cuda_p2.wav"
+        },
+        {
+          "model": "inflect_nano",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/inflect_nano_cuda_p3.wav"
+        },
+        {
+          "model": "inflect_nano",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/inflect_nano_cuda_p4.wav"
         },
         {
           "model": "kittentts",
@@ -300,26 +325,6 @@
           "model": "longcat_3p5b",
           "prompt": 4,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_3p5b_cuda_p4.wav"
-        },
-        {
-          "model": "luxtts",
-          "prompt": 1,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-default/luxtts_cuda_p1.wav"
-        },
-        {
-          "model": "luxtts",
-          "prompt": 2,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-default/luxtts_cuda_p2.wav"
-        },
-        {
-          "model": "luxtts",
-          "prompt": 3,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-default/luxtts_cuda_p3.wav"
-        },
-        {
-          "model": "luxtts",
-          "prompt": 4,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-default/luxtts_cuda_p4.wav"
         },
         {
           "model": "magpie",
@@ -450,51 +455,6 @@
           "model": "miso",
           "prompt": 4,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/miso_cuda_p4.wav"
-        },
-        {
-          "model": "neutts_air",
-          "prompt": 1,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/neutts_air_cuda_p1.wav"
-        },
-        {
-          "model": "neutts_air",
-          "prompt": 2,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/neutts_air_cuda_p2.wav"
-        },
-        {
-          "model": "neutts_air",
-          "prompt": 3,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/neutts_air_cuda_p3.wav"
-        },
-        {
-          "model": "neutts_air",
-          "prompt": 4,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/neutts_air_cuda_p4.wav"
-        },
-        {
-          "model": "neutts_nano",
-          "prompt": 1,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/neutts_nano_cuda_p1.wav"
-        },
-        {
-          "model": "neutts_nano",
-          "prompt": 2,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/neutts_nano_cuda_p2.wav"
-        },
-        {
-          "model": "neutts_nano",
-          "prompt": 3,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/neutts_nano_cuda_p3.wav"
-        },
-        {
-          "model": "neutts_nano",
-          "prompt": 4,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/neutts_nano_cuda_p4.wav"
-        },
-        {
-          "model": "neutts_nano",
-          "prompt": 5,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/neutts_nano_cuda_p5.wav"
         },
         {
           "model": "omnivoice",
@@ -637,54 +597,24 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/pocket_cpu_p5.wav"
         },
         {
-          "model": "qwentts",
+          "model": "scyllasband",
           "prompt": 1,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_cuda_p1.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/scyllasband_cpu_p1.wav"
         },
         {
-          "model": "qwentts",
+          "model": "scyllasband",
           "prompt": 2,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_cuda_p2.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/scyllasband_cpu_p2.wav"
         },
         {
-          "model": "qwentts",
+          "model": "scyllasband",
           "prompt": 3,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_cuda_p3.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/scyllasband_cpu_p3.wav"
         },
         {
-          "model": "qwentts",
+          "model": "scyllasband",
           "prompt": 4,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_cuda_p4.wav"
-        },
-        {
-          "model": "qwentts",
-          "prompt": 5,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_cuda_p5.wav"
-        },
-        {
-          "model": "qwentts_fast",
-          "prompt": 1,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_fast_cuda_p1.wav"
-        },
-        {
-          "model": "qwentts_fast",
-          "prompt": 2,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_fast_cuda_p2.wav"
-        },
-        {
-          "model": "qwentts_fast",
-          "prompt": 3,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_fast_cuda_p3.wav"
-        },
-        {
-          "model": "qwentts_fast",
-          "prompt": 4,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_fast_cuda_p4.wav"
-        },
-        {
-          "model": "qwentts_fast",
-          "prompt": 5,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_fast_cuda_p5.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/scyllasband_cpu_p4.wav"
         },
         {
           "model": "sesame",
@@ -725,26 +655,6 @@
           "model": "soprano",
           "prompt": 4,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/soprano_cuda_p4.wav"
-        },
-        {
-          "model": "step_editx",
-          "prompt": 1,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-default/step_editx_cuda_p1.wav"
-        },
-        {
-          "model": "step_editx",
-          "prompt": 2,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-default/step_editx_cuda_p2.wav"
-        },
-        {
-          "model": "step_editx",
-          "prompt": 3,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-default/step_editx_cuda_p3.wav"
-        },
-        {
-          "model": "step_editx",
-          "prompt": 4,
-          "url": "https://5uck1ess.github.io/tts-bench/linux-default/step_editx_cuda_p4.wav"
         },
         {
           "model": "styletts2",
@@ -1552,6 +1462,31 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/pocket_cpu_p5.wav"
         },
         {
+          "model": "qwentts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_cuda_p1.wav"
+        },
+        {
+          "model": "qwentts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_cuda_p2.wav"
+        },
+        {
+          "model": "qwentts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_cuda_p3.wav"
+        },
+        {
+          "model": "qwentts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_cuda_p4.wav"
+        },
+        {
+          "model": "qwentts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_cuda_p5.wav"
+        },
+        {
           "model": "qwentts_fast",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/qwentts_fast_cuda_p1.wav"
@@ -1702,6 +1637,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/voxcpm_cuda_p5.wav"
         },
         {
+          "model": "wavtts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/wavtts_cuda_p1.wav"
+        },
+        {
+          "model": "wavtts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/wavtts_cuda_p2.wav"
+        },
+        {
+          "model": "wavtts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/wavtts_cuda_p3.wav"
+        },
+        {
+          "model": "wavtts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/wavtts_cuda_p4.wav"
+        },
+        {
           "model": "zipvoice",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/zipvoice_cuda_p1.wav"
@@ -1750,6 +1705,26 @@
           "model": "zonos",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/zonos_cuda_p5.wav"
+        },
+        {
+          "model": "zonos2",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/zonos2_cuda_p1.wav"
+        },
+        {
+          "model": "zonos2",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/zonos2_cuda_p2.wav"
+        },
+        {
+          "model": "zonos2",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/zonos2_cuda_p3.wav"
+        },
+        {
+          "model": "zonos2",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/zonos2_cuda_p4.wav"
         }
       ]
     }
@@ -1806,6 +1781,14 @@
     "indextts": {
       "name": "IndexTTS-2",
       "url": "https://huggingface.co/IndexTeam/IndexTTS-2"
+    },
+    "inflect_micro": {
+      "name": "Inflect-Micro v2",
+      "url": "https://huggingface.co/owensong/Inflect-Micro-v2"
+    },
+    "inflect_nano": {
+      "name": "Inflect-Nano v2",
+      "url": "https://huggingface.co/owensong/Inflect-Nano-v2"
     },
     "kittentts": {
       "name": "KittenTTS Nano 0.1",
@@ -1923,6 +1906,10 @@
       "name": "Qwen3-TTS 1.7B (CUDA-graph)",
       "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base"
     },
+    "scyllasband": {
+      "name": "Scylla's Band",
+      "url": "https://huggingface.co/spybyscript/scyllasband"
+    },
     "sesame": {
       "name": "Sesame CSM-1B",
       "url": "https://huggingface.co/sesame/csm-1b"
@@ -1963,6 +1950,10 @@
       "name": "Voxtral 4B TTS",
       "url": "https://huggingface.co/mistralai/Voxtral-4B-TTS-2603"
     },
+    "wavtts": {
+      "name": "WavTTS 0.67B",
+      "url": "https://github.com/cwx-worst-one/WavTTS"
+    },
     "zipvoice": {
       "name": "ZipVoice 123M",
       "url": "https://huggingface.co/k2-fsa/ZipVoice"
@@ -1970,6 +1961,10 @@
     "zonos": {
       "name": "Zonos v0.1",
       "url": "https://huggingface.co/Zyphra/Zonos-v0.1-transformer"
+    },
+    "zonos2": {
+      "name": "Zonos2",
+      "url": "https://huggingface.co/Zyphra/Zonos2"
     }
   }
 }
