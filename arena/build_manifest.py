@@ -57,6 +57,9 @@ SPEED_ONLY = {
     # the vote pool; qwentts_fast is the same checkpoint and stays votable.
     # Mirrors publish.py -- keep in sync. See docs/known-issues.md.
     "qwentts",
+    # qwentts_06b (0.6B Base): same runaway, plus truncated audio on the runs that
+    # did finish. Never benched into a canonical. Mirrors publish.py.
+    "qwentts_06b",
 }
 
 _WAV_RE = re.compile(r"(.+)_(cuda|mps|cpu)_p(\d+)\.wav$")

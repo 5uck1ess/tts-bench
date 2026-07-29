@@ -108,6 +108,13 @@ SPEED_ONLY = {
     # It stays in NO_PRESET_VOICE above -- that describes what it IS (reference-only);
     # this describes what we can publish. Remove once the runaway is fixed.
     "qwentts",
+    # qwentts_06b (0.6B Base) fails the same way, confirmed by bench on 2026-07-29:
+    # cpu timed out on p1 (no cpu data at all); cuda cleared p1+p2 then timed out on
+    # p3. Worse, its "successful" clips are junk -- p1 emitted 0.96s / 0.48s / 5.84s
+    # of audio across three runs of the SAME sentence, so the stock path is broken
+    # here, not merely slow. Never merged into a canonical; held so the row cannot
+    # surface partial cuda-only timings or truncated audio.
+    "qwentts_06b",
 }
 
 # Curated per-(model, voice-mode) QA findings, surfaced as a small badge + tooltip on
