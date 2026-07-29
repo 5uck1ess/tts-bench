@@ -597,6 +597,31 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/pocket_cpu_p5.wav"
         },
         {
+          "model": "qwentts_06b_custom",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_06b_custom_cuda_p1.wav"
+        },
+        {
+          "model": "qwentts_06b_custom",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_06b_custom_cuda_p2.wav"
+        },
+        {
+          "model": "qwentts_06b_custom",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_06b_custom_cuda_p3.wav"
+        },
+        {
+          "model": "qwentts_06b_custom",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_06b_custom_cuda_p4.wav"
+        },
+        {
+          "model": "qwentts_06b_custom",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_06b_custom_cuda_p5.wav"
+        },
+        {
           "model": "scyllasband",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/scyllasband_cpu_p1.wav"
@@ -1872,6 +1897,10 @@
     "pocket": {
       "name": "Pocket-TTS",
       "url": "https://github.com/kyutai-labs/pocket-tts"
+    },
+    "qwentts_06b_custom": {
+      "name": "Qwen3-TTS 0.6B CustomVoice",
+      "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice"
     },
     "qwentts_fast": {
       "name": "Qwen3-TTS 1.7B (CUDA-graph)",
