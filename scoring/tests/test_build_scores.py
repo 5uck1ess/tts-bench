@@ -78,3 +78,8 @@ def test_build_scores_renders_both_lenses(tmp_path, monkeypatch):
     assert 'data-sort="4.10' in html  # default utmos cell carries a numeric data-sort
     assert 'data-sort="0.88' in html  # cloning sim cell present
     assert 'class="flagged"' in html  # the high-WER mars5 row is flagged
+    assert 'data-metric="utmos"' in html and 'data-metric="sim"' in html
+    assert html.count('class="score-chart"') == 2
+    assert 'data-chart-metric="wer"' in html and "var limit = 15" in html
+    assert '.score-bar-fill{display:block' in html
+    assert "longer is better" in html
