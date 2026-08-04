@@ -80,6 +80,18 @@ def test_build_scores_renders_both_lenses(tmp_path, monkeypatch):
     assert 'class="flagged"' in html  # the high-WER mars5 row is flagged
     assert 'data-metric="utmos"' in html and 'data-metric="sim"' in html
     assert html.count('class="score-chart"') == 2
-    assert 'data-chart-metric="wer"' in html and "var limit = 15" in html
-    assert '.score-bar-fill{display:block' in html
-    assert "longer is better" in html
+    assert 'data-chart-metric="utmos"' in html and 'data-chart-metric="sim"' in html
+    assert 'data-chart-metric="wer"' not in html
+
+
+def test_build_scores_omits_charts_without_scored_models(tmp_path, monkeypatch):
+    monkeypatch.setattr(publish, "WORKTREE", tmp_path)
+    monkeypatch.setattr(publish, "LISTEN_DEFAULT_DIRS", ())
+    monkeypatch.setattr(publish, "LISTEN_CLONING_DIRS", ())
+    monkeypatch.setattr(publish, "SCORES_CSV", tmp_path / "scores.csv")
+
+    publish.build_scores()
+
+    html = (tmp_path / "scores.html").read_text(encoding="utf-8")
+    assert html.count("No scored models yet.") == 2
+    assert 'class="score-chart"' not in html
