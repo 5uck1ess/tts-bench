@@ -45,6 +45,21 @@ MODELS = [
     # decode runaway. Its default-lens run clones the house Chris reference.
     ("qwentts_06b",  "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base_06b", False),
     ("qwentts_fast", "qwentts_fast", "runners/qwentts_fast_runner.py", True,  ["cuda"],         "base", True),
+    # Audio8 TTS Preview 0.6B (Apache-2.0): DualAR, credited to Fish Audio S2 Pro — a
+    # 24-layer slow AR emits one semantic token per frame, a 4-layer fast AR fills that
+    # frame's 10 codebooks. Bundled 44.1 kHz codec (no second checkpoint). 11 languages
+    # incl. French, so the FR prompt runs. Does BOTH `<|speaker:N|>` preset voices AND
+    # zero-shot wav cloning -> both slugs are in publish.py _PRESET_AND_CLONE and fill
+    # both lenses. Same venv + runner; --variant picks the ENGINE, not the weights:
+    #   base      = stock transformers eager       (~0.7x RTFx on the 5090)
+    #   audio8_fast = ScrappyLabs fast_arktts static-shape rewrite + torch.compile
+    #                 max-autotune on the SAME checkpoint (~15x RTFx — a ~21x engine
+    #                 win, not a model difference; that's the point of the pairing).
+    # fastpath is CUDA-only: it needs Triton, which on Windows means the
+    # `triton-windows` wheel (PyPI `triton` is Linux-only). First compile is ~370s but
+    # inductor caches to disk, so later runs load in ~50s. See docs/known-issues.md.
+    ("audio8",      "audio8", "runners/audio8_runner.py", True,  ["cpu", "cuda"], "base",     True),
+    ("audio8_fast", "audio8", "runners/audio8_runner.py", True,  ["cuda"],        "fastpath", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   False, ["cpu", "cuda"],        None,   True),
     ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    False, ["cuda"],               None,   True),
     ("metavoice",   "metavoice",  "runners/metavoice_runner.py",  False, ["cuda"],               None,   True),

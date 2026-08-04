@@ -148,6 +148,31 @@ if (-not (Want "inflect")) { Write-Host "inflect: skipped (not in install filter
     Write-Host "inflect: already installed" -ForegroundColor Gray
 }
 
+Step "Audio8 TTS Preview 0.6B (base eager + ScrappyLabs compiled fastpath share this venv)"
+if (-not (Want "audio8")) { Write-Host "audio8: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\audio8\Scripts\python.exe")) {
+    Invoke-Checked "uv venv audio8" { uv venv venvs\audio8 --python 3.11 }
+    # transformers is PINNED, not floored: the checkpoint ships its modeling code via
+    # trust_remote_code written against the 4.57.x generate/cache API, and a free
+    # resolve picks transformers 5.x, which loads the weights but breaks the custom
+    # arktts generate path far from the error site. Upstream flags this too.
+    Invoke-Checked "uv pip install audio8 deps" { uv pip install --python venvs\audio8\Scripts\python.exe "transformers==4.57.5" "tokenizers>=0.20" "soundfile>=0.12" "safetensors>=0.4" "numpy<3" huggingface_hub psutil }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120). PyPI's Windows torch is CPU-only.
+    Invoke-Checked "torch cu128 for audio8" { uv pip install --python venvs\audio8\Scripts\python.exe torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    # The compiled fastpath variant needs Triton, which torch.compile/inductor drives.
+    # PyPI `triton` is Linux-only; `triton-windows` is the community Windows wheel.
+    # Without it, compile_mode dies with TritonMissing and the fastpath row is just
+    # eager speed (~0.7x RTFx) wearing the compiled label.
+    Invoke-Checked "triton-windows (torch.compile backend)" { uv pip install --python venvs\audio8\Scripts\python.exe triton-windows }
+    # Base weights (~1.1 GB) + the fastpath repo, which is inference CODE ONLY
+    # (fast_arktts.py + example/benchmark) -- no weights of its own. The runner points
+    # it at the base checkpoint so both rows are the same weights, different engine.
+    Invoke-Checked "download audio8 weights + fastpath" { & "venvs\audio8\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.6b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.6b', ignore_patterns=['*.jpeg','*.png','samples/*']); d('scrappylabsai/audio8-tts-fastpath', local_dir='venvs/audio8/src/fastpath')" }
+    Write-Host "audio8: ok (base + fastpath via --variant; first fastpath run compiles ~370s, then inductor-cached)" -ForegroundColor Green
+} else {
+    Write-Host "audio8: already installed" -ForegroundColor Gray
+}
+
 Step "ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv)"
 if (-not (Want "chatterbox")) { Write-Host "chatterbox: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\chatterbox\Scripts\python.exe")) {

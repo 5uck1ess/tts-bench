@@ -215,6 +215,31 @@ else
     echo "inflect: already installed"
 fi
 
+# --- Audio8 TTS Preview 0.6B (base eager + ScrappyLabs compiled fastpath share this venv) ---
+echo; cyan "=== Audio8 TTS Preview 0.6B (base eager + compiled fastpath share this venv) ==="
+if ! want audio8; then echo "audio8: skipped (not in install filter)"
+elif [ ! -x venvs/audio8/bin/python ]; then
+    uv venv venvs/audio8 --python 3.11 || die "uv venv audio8"
+    # transformers is PINNED, not floored: the checkpoint ships its modeling code via
+    # trust_remote_code written against the 4.57.x generate/cache API, and a free
+    # resolve picks transformers 5.x, which loads the weights but breaks the custom
+    # arktts generate path far from the error site. Upstream flags this too.
+    # On Linux the PyPI torch wheel is already CUDA-enabled (Ampere 3090 — no cu128
+    # swap needed); PyPI `triton` is the real Linux wheel, so no triton-windows here.
+    uv pip install --python venvs/audio8/bin/python "torch>=2.5" "torchaudio>=2.5" \
+        "transformers==4.57.5" "tokenizers>=0.20" "soundfile>=0.12" "safetensors>=0.4" \
+        "numpy<3" huggingface_hub psutil \
+        || die "uv pip install audio8 deps"
+    # Base weights (~1.1 GB) + the fastpath repo, which is inference CODE ONLY
+    # (fast_arktts.py + example/benchmark) — no weights of its own. The runner points
+    # it at the base checkpoint so both rows are the same weights, different engine.
+    venvs/audio8/bin/python -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.6b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.6b', ignore_patterns=['*.jpeg','*.png','samples/*']); d('scrappylabsai/audio8-tts-fastpath', local_dir='venvs/audio8/src/fastpath')" \
+        || die "download audio8 weights + fastpath"
+    green "audio8: ok (base + fastpath via --variant; first fastpath run compiles ~370s, then inductor-cached)"
+else
+    echo "audio8: already installed"
+fi
+
 # --- ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ---
 echo; cyan "=== ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ==="
 if ! want chatterbox; then echo "chatterbox: skipped (not in install filter)"
