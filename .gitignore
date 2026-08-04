@@ -6,7 +6,10 @@ outputs/
 models/
 scratch_fish_ab/
 scratch_*/
-.claude/
+# .claude/ is local-only (settings.local.json, worktrees) EXCEPT skills/, which are
+# repo workflow docs that need to reach the Linux + Mac rigs like any other source.
+.claude/*
+!.claude/skills/
 _gh-pages/
 reference/*.wav
 reference/*.mp3
