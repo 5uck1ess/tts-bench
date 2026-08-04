@@ -1008,7 +1008,10 @@ def build_scores():
     chart_script = '''<script>
 (function(){
   var limit = 15;
-  var metricDomains = {utmos: 5, sim: 1};
+    var metricDomains = {
+        utmos: {min: 0, max: 5},
+        sim: {min: -1, max: 1}
+    };
   document.querySelectorAll('.score-chart').forEach(function(chart){
         var section = chart.closest('.subsection');
         var table = section.querySelector('table');
@@ -1040,8 +1043,8 @@ def build_scores():
                 scale.textContent = '';
                 return;
             }
-            var domainMax = metricDomains[metric];
-            scale.textContent = metric.toUpperCase() + ' scale: 0–' + domainMax;
+            var domain = metricDomains[metric];
+            scale.textContent = metric.toUpperCase() + ' scale: ' + domain.min + '–' + domain.max;
             rows.forEach(function(row){
                 var item = document.createElement('div');
                 item.className = 'score-bar-row' + (row.flagged ? ' flagged' : '');
@@ -1056,7 +1059,8 @@ def build_scores():
                 track.className = 'score-bar-track';
                 var fill = document.createElement('span');
                 fill.className = 'score-bar-fill';
-                fill.style.width = Math.max(0, Math.min(100, row.value / domainMax * 100)) + '%';
+                fill.style.width = Math.max(0, Math.min(100,
+                    (row.value - domain.min) / (domain.max - domain.min) * 100)) + '%';
                 track.appendChild(fill);
                 var value = document.createElement('span');
                 value.className = 'score-bar-value';

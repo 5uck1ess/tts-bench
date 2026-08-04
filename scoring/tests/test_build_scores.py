@@ -63,7 +63,7 @@ def test_build_scores_renders_both_lenses(tmp_path, monkeypatch):
     scores.write_text(
         "dir,wav,model,mode,prompt_id,utmos,wer,sim\n"
         "windows-default,kokoro_cuda_p1.wav,kokoro,default,1,4.10,0.00,\n"
-        "windows-cloning,kokoro_cuda_p1.wav,kokoro,cloning,1,4.00,0.00,0.88\n"
+        "windows-cloning,kokoro_cuda_p1.wav,kokoro,cloning,1,4.00,0.00,-0.05\n"
         "windows-default,mars5_cuda_p1.wav,mars5,default,1,3.50,0.97,\n",
         encoding="utf-8")
 
@@ -76,12 +76,13 @@ def test_build_scores_renders_both_lenses(tmp_path, monkeypatch):
     assert 'data-mode="default"' in html and 'data-mode="cloning"' in html
     assert "UTMOS" in html and "WER" in html and "SIM" in html
     assert 'data-sort="4.10' in html  # default utmos cell carries a numeric data-sort
-    assert 'data-sort="0.88' in html  # cloning sim cell present
+    assert 'data-sort="-0.05' in html  # valid negative cosine SIM is preserved
     assert 'class="flagged"' in html  # the high-WER mars5 row is flagged
     assert 'data-metric="utmos"' in html and 'data-metric="sim"' in html
     assert html.count('class="score-chart"') == 2
     assert 'data-chart-metric="utmos"' in html and 'data-chart-metric="sim"' in html
     assert 'data-chart-metric="wer"' not in html
+    assert 'sim: {min: -1, max: 1}' in html
 
 
 def test_build_scores_omits_charts_without_scored_models(tmp_path, monkeypatch):
