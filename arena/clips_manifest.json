@@ -777,6 +777,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/supertonic_cpu_p5.wav"
         },
         {
+          "model": "vaniq",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/vaniq_cuda_p1.wav"
+        },
+        {
+          "model": "vaniq",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/vaniq_cuda_p2.wav"
+        },
+        {
+          "model": "vaniq",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/vaniq_cuda_p3.wav"
+        },
+        {
+          "model": "vaniq",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/vaniq_cuda_p4.wav"
+        },
+        {
           "model": "vibevoice",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/vibevoice_cuda_p1.wav"
@@ -2037,6 +2057,10 @@
     "supertonic": {
       "name": "Supertonic 3",
       "url": "https://huggingface.co/Supertone/supertonic-3"
+    },
+    "vaniq": {
+      "name": "Vaniq-Edge",
+      "url": "https://huggingface.co/Abiray/Vaniq-Edge"
     },
     "vibevoice": {
       "name": "VibeVoice Realtime 0.5B",
