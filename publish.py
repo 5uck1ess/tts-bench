@@ -940,22 +940,25 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
         for (k, _h, _up) in columns:
             v = agg.get(k)
             if v is None:
-                cells.append('<td class="num muted" data-sort="">—</td>')
+                cells.append(f'<td class="num muted" data-metric="{escape(k)}" '
+                             'data-sort="">—</td>')
             else:
-                cells.append(f'<td class="num" data-sort="{v:.4f}">{v:.3f}</td>')
+                cells.append(f'<td class="num" data-metric="{escape(k)}" '
+                             f'data-sort="{v:.4f}">{v:.3f}</td>')
         if show_health:
             cells.append(_health_cell(agg.get("health_flags", [])))
         body.append(f'<tr{cls}>' + "".join(cells) + '</tr>')
     if not body:
         return '<p class="mode-empty muted">No scored models yet.</p>'
-    return (f'<table><thead><tr>{head}</tr></thead><tbody>'
-            + "".join(body) + '</tbody></table>')
+    return (f'<div class="scores-table-scroll"><table><thead><tr>{head}</tr></thead><tbody>'
+            + "".join(body) + '</tbody></table></div>')
 
 
 def build_scores():
     """Build scores.html — objective metric leaderboard with a Default/Cloning
-    toggle. Default = UTMOS+WER; Cloning = SIM+UTMOS+WER. Reuses _pick_clip so each
-    score matches the clip shown on Listen."""
+    toggle. Charts show UTMOS for Default and SIM+UTMOS for Cloning; WER remains
+    a failure detector in the tables. Reuses _pick_clip so each score matches the
+    clip shown on Listen."""
     look = _read_scores_csv()
     raw_default = set().union(*(_ok_models(n) for n in LISTEN_DEFAULT_DIRS)) if LISTEN_DEFAULT_DIRS else set()
     raw_cloning = set().union(*(_ok_models(n) for n in LISTEN_CLONING_DIRS)) if LISTEN_CLONING_DIRS else set()
@@ -972,13 +975,137 @@ def build_scores():
     cloning_tbl = _scores_table(cloning_models, LISTEN_CLONING_DIRS, look, cloning_cols,
                                 fallback_dirs=LISTEN_DEFAULT_DIRS, fallback_models=NO_PRESET_VOICE)
 
-    flagged_style = (
+    scores_style = (
         '<style>tr.flagged>td{opacity:.55;}'
         'tr.flagged>td:first-child::after{content:" \\26A0";color:var(--fail);}'
         '.health-flag{color:var(--fail);white-space:nowrap;}'
+        '.score-chart{margin:.8rem 0 1.4rem;padding:.9rem 1rem;background:var(--panel);'
+        'border:1px solid var(--border);border-radius:8px;}'
+        '.score-chart-head{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;'
+        'margin-bottom:.8rem;}'
+        '.score-chart-label{color:var(--muted);font-size:.9em;}'
+        '.score-metrics{display:inline-flex;gap:.35rem;}'
+        '.score-metrics button{background:var(--input-bg);color:var(--text);'
+        'border:1px solid var(--input-border);border-radius:6px;padding:5px 11px;'
+        'font:inherit;cursor:pointer;}'
+        '.score-metrics button.active{background:var(--accent);color:var(--bg);'
+        'border-color:var(--accent);}'
+        '.score-bars{display:grid;gap:.45rem;}'
+        '.score-bar-row{display:grid;grid-template-columns:minmax(9rem,13rem) 1fr 4.5rem;'
+        'align-items:center;gap:.65rem;font-size:.9em;}'
+        '.score-bar-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+        '.score-bar-track{height:1rem;background:var(--input-bg);border-radius:3px;overflow:hidden;}'
+        '.score-bar-fill{display:block;height:100%;background:var(--accent);}'
+        '.score-bar-row.flagged{opacity:.55;}'
+        '.score-bar-row.flagged .score-bar-name::after{content:" \\26A0";color:var(--fail);}'
+        '.score-bar-value{text-align:right;color:var(--num);font-variant-numeric:tabular-nums;}'
+        '.score-chart-scale{color:var(--muted);font-size:.78em;margin-top:.7rem;text-align:right;}'
+        '.score-chart-empty{color:var(--muted);font-size:.9em;}'
+        '.scores-table-scroll{max-width:100%;overflow-x:auto;}'
+        '@media(max-width:600px){.score-bar-row{grid-template-columns:minmax(0,1fr) 3.5rem;'
+        'gap:.3rem .6rem;}.score-bar-name{white-space:normal}.score-bar-track{grid-column:1/-1;'
+        'grid-row:2}.score-bar-value{grid-column:2;grid-row:1}}'
         '.scores-foot{color:var(--muted);font-size:.85em;margin-top:1.4rem;'
         'border-top:1px solid var(--border);padding-top:.8rem;line-height:1.5;}'
         '.scores-foot a{color:var(--accent);}</style>')
+    chart_script = '''<script>
+(function(){
+  var limit = 15;
+    var metricDomains = {
+        utmos: {min: 0, max: 5},
+        sim: {min: -1, max: 1}
+    };
+  document.querySelectorAll('.score-chart').forEach(function(chart){
+        var section = chart.closest('.subsection');
+        var table = section.querySelector('table');
+      if (!table) { chart.remove(); return; }
+        var bars = chart.querySelector('.score-bars');
+        var scale = chart.querySelector('.score-chart-scale');
+        var buttons = chart.querySelectorAll('[data-chart-metric]');
+
+        function render(metric){
+            var rows = [];
+            table.querySelectorAll('tbody tr').forEach(function(row){
+                if(row.style.display === 'none') return;
+                var cell = row.querySelector('[data-metric="' + metric + '"]');
+                if(!cell || !cell.dataset.sort) return;
+                rows.push({
+                    name: row.cells[0].textContent.trim(),
+                    value: Number(cell.dataset.sort),
+                    flagged: row.classList.contains('flagged')
+                });
+            });
+            rows.sort(function(a, b){ return b.value - a.value; });
+            rows = rows.slice(0, limit);
+            bars.replaceChildren();
+            if(!rows.length){
+                var empty = document.createElement('div');
+                empty.className = 'score-chart-empty';
+                empty.textContent = 'No scored models match the current filter.';
+                bars.appendChild(empty);
+                scale.textContent = '';
+                return;
+            }
+            var domain = metricDomains[metric];
+            scale.textContent = metric.toUpperCase() + ' scale: ' + domain.min + '–' + domain.max;
+            rows.forEach(function(row){
+                var item = document.createElement('div');
+                item.className = 'score-bar-row' + (row.flagged ? ' flagged' : '');
+                item.setAttribute('role', 'img');
+                item.setAttribute('aria-label', row.name + ': ' + metric.toUpperCase() + ' '
+                    + row.value.toFixed(3) + (row.flagged ? '; high WER warning' : ''));
+                var name = document.createElement('span');
+                name.className = 'score-bar-name';
+                name.title = row.name;
+                name.textContent = row.name;
+                var track = document.createElement('span');
+                track.className = 'score-bar-track';
+                var fill = document.createElement('span');
+                fill.className = 'score-bar-fill';
+                fill.style.width = Math.max(0, Math.min(100,
+                    (row.value - domain.min) / (domain.max - domain.min) * 100)) + '%';
+                track.appendChild(fill);
+                var value = document.createElement('span');
+                value.className = 'score-bar-value';
+                value.textContent = row.value.toFixed(3);
+                item.append(name, track, value);
+                bars.appendChild(item);
+            });
+        }
+
+        buttons.forEach(function(button){
+            button.addEventListener('click', function(){
+                buttons.forEach(function(other){ other.classList.toggle('active', other === button); });
+                render(button.dataset.chartMetric);
+            });
+        });
+        var active = chart.querySelector('[data-chart-metric].active');
+        render(active.dataset.chartMetric);
+        var filter = document.getElementById('filter');
+        if(filter) filter.addEventListener('input', function(){ render(activeMetric()); });
+        var reset = document.getElementById('reset-sort');
+        if(reset) reset.addEventListener('click', function(){
+            setTimeout(function(){ render(activeMetric()); }, 0);
+        });
+        function activeMetric(){ return chart.querySelector('[data-chart-metric].active').dataset.chartMetric; }
+      });
+})();
+</script>'''
+
+    def _chart(metrics):
+        buttons = "".join(
+            f'<button type="button" data-chart-metric="{escape(metric)}"'
+            f'{" class=active" if i == 0 else ""}>{escape(label)}</button>'
+            for i, (metric, label) in enumerate(metrics)
+        )
+        return ('<div class="score-chart"><div class="score-chart-head">'
+                '<span class="score-chart-label">Top 15 · metric:</span>'
+                f'<div class="score-metrics">{buttons}</div></div>'
+            '<div class="score-bars"></div>'
+            '<div class="score-chart-scale"></div></div>')
+
+    default_chart = _chart([("utmos", "UTMOS ↑")]) if "<table" in default_tbl else ""
+    cloning_chart = _chart([("sim", "SIM ↑"), ("utmos", "UTMOS ↑")]) if "<table" in cloning_tbl else ""
     foot = (
         '<div class="scores-foot">Scored over the 5 bench prompts (thin — WER is a '
         'failure-detector, not a fine ranking). Checkpoints: UTMOS '
@@ -992,7 +1119,7 @@ def build_scores():
            '<meta name="viewport" content="width=device-width, initial-scale=1">',
            '<title>tts-bench — Scores</title>',
            FAVICON_LINK, STYLE, LOGO_STYLE, _SUBSECTION_STYLE, _SPEED_HUB_STYLE,
-           flagged_style,
+           scores_style,
            '</head><body>', _top_controls("scores"), LOGO_HEADER,
            '<h1>Scores</h1>', _SCORES_GUIDE,
            '<div class="mode-select"><span class="rig-select-label">Voice:</span>'
@@ -1001,15 +1128,16 @@ def build_scores():
            '<a class="lens-tab" data-mode="cloning" href="#">Cloning</a>'
            '</div></div>',
            f'<div class="subsection" data-mode="default"><h3 class="sub-head">Default voice '
-           f'<span class="muted">· naturalness + intelligibility</span></h3>{default_tbl}</div>',
+           f'<span class="muted">· naturalness + intelligibility</span></h3>'
+           f'{default_chart}{default_tbl}</div>',
            f'<div class="subsection cloning" data-mode="cloning" style="display:none">'
            f'<h3 class="sub-head">Cloning <span class="muted">· fidelity + naturalness + '
-           f'intelligibility</span></h3>{cloning_tbl}</div>',
+           f'intelligibility</span></h3>{cloning_chart}{cloning_tbl}</div>',
            foot,
            # colIdx 3 = first metric column (after Model/Size/Released): UTMOS on
            # the default board, SIM on the cloning board — keep the metric-led sort.
            '<script>window.__defaultSort = {colIdx: 3, dir: -1};</script>',
-           SCRIPT, _MODE_TAB_SCRIPT, '</body></html>']
+           SCRIPT, _MODE_TAB_SCRIPT, chart_script, '</body></html>']
     (WORKTREE / "scores.html").write_text("\n".join(out), encoding="utf-8")
 
 
