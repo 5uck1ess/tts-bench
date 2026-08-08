@@ -194,11 +194,26 @@ redeployed:
 ```
 venvs/arena/Scripts/python.exe -m arena.build_manifest
 python -m pytest arena/tests/      # use the arena venv; system python lacks fastapi
-hf upload <owner>/<space> arena/clips_manifest.json clips_manifest.json --repo-type space
 ```
 
+Then upload via the Python API, **not** `hf upload`:
+
+```python
+from huggingface_hub import HfApi
+HfApi().upload_file(path_or_fileobj="arena/clips_manifest.json",
+                    path_in_repo="clips_manifest.json",
+                    repo_id="<owner>/<space>", repo_type="space",
+                    commit_message="arena: ...")
+```
+
+`hf upload` calls `/api/repos/create` (exist_ok) before uploading, and **creating a Docker
+Space now requires HF PRO** — so the CLI dies with `402 Payment Required` even when the
+Space already exists and is RUNNING. It reads like a billing wall; it isn't. `upload_file`
+never touches that endpoint. (Hit on 2026-08-08 publishing vaniq.) Run it from any venv
+that has `huggingface_hub` — the arena venv does not.
+
 `git push` to a HuggingFace remote will hang on a credential dialog in a non-interactive
-shell; the `hf` CLI uses the cached token instead.
+shell; both the `hf` CLI and the API use the cached token instead.
 
 **Diff the manifest against the deployed one before uploading, and back up the live
 copy first.** The manifest reflects every bench change since the last deploy, not just
