@@ -90,6 +90,11 @@ MODELS = [
     # checkpoint dir under venvs/inflect/src/.
     ("inflect_nano",  "inflect", "runners/inflect_runner.py", False, ["cpu", "cuda"], "nano",  False),
     ("inflect_micro", "inflect", "runners/inflect_runner.py", False, ["cpu", "cuda"], "micro", False),
+    # Vaniq-Edge (MIT): the same compressed-VITS class as Inflect but an independent
+    # training (128/128/384, 4 enc layers, and a STOCHASTIC duration predictor where
+    # Inflect's is deterministic). One fixed English voice, no wav cloning ->
+    # can_clone=False, default lens only. English-only -> multilingual=False.
+    ("vaniq",         "vaniq",   "runners/vaniq_runner.py",   False, ["cpu", "cuda"], None,    False),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], "1.5b", False),
     ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  False, ["cuda"],               "7b",   True),

@@ -148,6 +148,28 @@ if (-not (Want "inflect")) { Write-Host "inflect: skipped (not in install filter
     Write-Host "inflect: already installed" -ForegroundColor Gray
 }
 
+Step "Vaniq-Edge (8.5M VITS, one fixed voice)"
+if (-not (Want "vaniq")) { Write-Host "vaniq: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\vaniq\Scripts\python.exe")) {
+    Invoke-Checked "uv venv vaniq" { uv venv venvs\vaniq --python 3.11 }
+    # Deps mirror the repo's requirements.txt (minus torch, installed below). Same
+    # phonemizer + espeakng-loader frontend as inflect/kittentts, so no new risk.
+    Invoke-Checked "uv pip install vaniq deps" { uv pip install --python venvs\vaniq\Scripts\python.exe "huggingface-hub>=0.36" "numpy>=1.26,<3" "scipy>=1.13" "soundfile>=0.13" "phonemizer>=3.3" "espeakng-loader>=0.2.4" "num2words>=0.5.14" "Unidecode>=1.3.8" psutil }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120). PyPI's Windows torch is CPU-only.
+    Invoke-Checked "torch cu128 for vaniq" { uv pip install --python venvs\vaniq\Scripts\python.exe torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
+    # Not a PyPI package — the HF repo ships inference.py plus a vendored copy of the
+    # original jaywalnut310/vits tree under vits_core/. Pinned to the v1.0.1 SHA (young
+    # repo, still patching). ~36 MB of weights; assets/samples/onnx/filelists skipped.
+    # monotonic_align/build is skipped deliberately: it holds a prebuilt Cython .so for
+    # linux-x86_64 + cp312 ONLY, which is unimportable on Windows, on Mac, and on any
+    # Python that isn't 3.12. It is training-only code (models.py uses maximum_path in
+    # the training forward, never in infer()), so the runner stubs the module out.
+    Invoke-Checked "download vaniq weights" { & "venvs\vaniq\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Abiray/Vaniq-Edge', revision='b44ba2107983b7bc0704ffe52f4a3c3ef2a7ca86', local_dir='venvs/vaniq/src/Vaniq-Edge', ignore_patterns=['assets/*','samples/*','onnx/*','vits_core/filelists/*','vits_core/resources/*','vits_core/monotonic_align/build/*','vits_core/*.ipynb'])" }
+    Write-Host "vaniq: ok" -ForegroundColor Green
+} else {
+    Write-Host "vaniq: already installed" -ForegroundColor Gray
+}
+
 Step "Audio8 TTS Preview 0.6B (base eager + ScrappyLabs compiled fastpath share this venv)"
 if (-not (Want "audio8")) { Write-Host "audio8: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\audio8\Scripts\python.exe")) {

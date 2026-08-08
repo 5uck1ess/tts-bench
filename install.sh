@@ -215,6 +215,32 @@ else
     echo "inflect: already installed"
 fi
 
+# --- Vaniq-Edge (8.5M VITS, one fixed voice) ---
+echo; cyan "=== Vaniq-Edge (8.5M VITS, one fixed voice) ==="
+if ! want vaniq; then echo "vaniq: skipped (not in install filter)"
+elif [ ! -x venvs/vaniq/bin/python ]; then
+    uv venv venvs/vaniq --python 3.11 || die "uv venv vaniq"
+    # Deps mirror the repo's requirements.txt. Same phonemizer + espeakng-loader
+    # frontend as inflect/kittentts. On Linux the PyPI torch wheel is already
+    # CUDA-enabled (Ampere 3090 — no cu128 swap); on Mac the default torch is fine.
+    uv pip install --python venvs/vaniq/bin/python "torch>=2.6" "huggingface-hub>=0.36" \
+        "numpy>=1.26,<3" "scipy>=1.13" "soundfile>=0.13" "phonemizer>=3.3" \
+        "espeakng-loader>=0.2.4" "num2words>=0.5.14" "Unidecode>=1.3.8" psutil \
+        || die "uv pip install vaniq deps"
+    # Not a PyPI package — the HF repo ships inference.py plus a vendored copy of the
+    # original jaywalnut310/vits tree under vits_core/. Pinned to the v1.0.1 SHA (young
+    # repo, still patching). ~36 MB of weights; assets/samples/onnx/filelists skipped.
+    # monotonic_align/build is skipped deliberately: it holds a prebuilt Cython .so for
+    # linux-x86_64 + cp312 ONLY, so it is unimportable even here on the 3.11 venv. It is
+    # training-only code (models.py uses maximum_path in the training forward, never in
+    # infer()), so the runner stubs the module out instead of building it.
+    venvs/vaniq/bin/python -c "from huggingface_hub import snapshot_download as d; d('Abiray/Vaniq-Edge', revision='b44ba2107983b7bc0704ffe52f4a3c3ef2a7ca86', local_dir='venvs/vaniq/src/Vaniq-Edge', ignore_patterns=['assets/*','samples/*','onnx/*','vits_core/filelists/*','vits_core/resources/*','vits_core/monotonic_align/build/*','vits_core/*.ipynb'])" \
+        || die "download vaniq weights"
+    green "vaniq: ok"
+else
+    echo "vaniq: already installed"
+fi
+
 # --- Audio8 TTS Preview 0.6B (base eager + ScrappyLabs compiled fastpath share this venv) ---
 echo; cyan "=== Audio8 TTS Preview 0.6B (base eager + compiled fastpath share this venv) ==="
 if ! want audio8; then echo "audio8: skipped (not in install filter)"
