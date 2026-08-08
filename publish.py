@@ -137,6 +137,14 @@ KNOWN_ISSUES = {
         "Default voice is sampled fresh per generation (no fixed preset) — each prompt's "
         "clip is a different speaker. Cloning stays consistent with the reference."
     ),
+    ("vaniq", "default"): (
+        "note", "⚠ onset words",
+        "Swallows the leading consonant at the very start of an utterance — worst on /r/ "
+        "(\"Run the browser…\" renders as \"When the browser…\", 3/3 seeds); a filler word "
+        "in front fixes it. Also mis-phonemizes unusual tokens (\"pytest\" → \"piteous\"). "
+        "Ordinary prose is clean: prompts 1-2 score 0.00 WER and prompt 3 beats the board "
+        "median — nearly all of this model's WER comes from prompt 4."
+    ),
     ("miso", "default"): (
         "warn", "⚠ artifacts",
         "Audible artifacts/glitches across generations (by-ear QA, 2026-06-10) — the "
