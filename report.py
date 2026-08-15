@@ -914,19 +914,19 @@ MODEL_LICENSE = {
 # with detail, "—"/"— (en)" English-only. _is_multilingual keys off the leading ✓.
 MODEL_LANGS = {
     "kittentts": "—", "kokoro": "✓", "kokoro_mlx": "✓", "lfm2_audio": "— (en)", "luxtts": "—",
-    "magpie": "✓ (9)", "maya1": "—", "melotts": "— (en)", "orpheus": "— (en)",
+    "magpie": "✓ (9)", "maya1": "—", "melotts": "✓ (4)", "orpheus": "— (en)",
     "outetts": "✓ (12)", "parler": "—", "piper": "✓", "scyllasband": "✓ (4)",
     "inflect_nano": "— (en)", "inflect_micro": "— (en)", "vaniq": "— (en)",
     "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
     "chatterbox_turbo": "—", "coqui": "✓ (17)", "cosyvoice": "✓", "dia": "—",
     "dots_tts": "✓ (24)", "dramabox": "— (en)", "echo": "—", "f5tts": "✓",
-    "fish_15": "✓", "fish_s2": "—", "higgs_v3": "✓ (100)", "indextts": "✓",
+    "fish_15": "✓", "fish_s2": "✓ (80+)", "higgs_v3": "✓ (100)", "indextts": "✓",
     "longcat_1b": "✓ (zh+en)", "longcat_3p5b": "✓ (zh+en)", "mars5": "—", "metavoice": "—",
     "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)",
     "moss_tts": "✓ (20)", "moss_tts_v15": "✓ (31)", "moss_tts_nano": "✓ (zh+en)",
-    "neutts_air": "—", "neutts_nano": "—", "omnivoice": "✓ (600+)", "openvoice": "✓",
-    "pocket": "—", "qwentts": "✓", "qwentts_06b": "✓", "qwentts_06b_custom": "✓",
+    "neutts_air": "—", "neutts_nano": "✓ (4)", "omnivoice": "✓ (600+)", "openvoice": "✓",
+    "pocket": "✓ (6)", "qwentts": "✓", "qwentts_06b": "✓", "qwentts_06b_custom": "✓",
     "qwentts_fast": "✓", "audio8": "✓ (11)", "audio8_fast": "✓ (11)",
     "sesame": "—", "step_editx": "—",
     "styletts2": "—", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "✓ (30)",
@@ -964,6 +964,26 @@ if _REGISTRY_DRIFT:
         "harness.MODELS must appear in ALL registries, or it renders on the "
         f"board as a raw slug with empty capability cells: {_REGISTRY_DRIFT}")
 
+# --- Language-cell / FR-prompt consistency guard --------------------------
+# harness.MODELS' `multilingual` field means "run canonical prompt 5 (French)";
+# MODEL_LANGS is the README cell. They are NOT the same predicate, and the
+# implication only runs one way: a model that SYNTHESIZES FRENCH ON THIS BENCH
+# is necessarily multilingual, so multilingual=True REQUIRES a ✓ cell. The
+# converse is legitimately false — longcat/miotts/wavtts/indextts/f5tts are
+# multilingual (zh+en, en+ja) with no French, so they are ✓ with the flag False.
+# Caught three rows on 2026-08-15 (melotts, neutts_nano, pocket): all three load
+# a real per-language checkpoint for FR and had already benched the French
+# prompt, while the board advertised them as English-only.
+_LANG_CELL_DRIFT = sorted(
+    _m for _m, _multi in ((_e[0], _e[3]) for _e in _harness.MODELS)
+    if _multi and not MODEL_LANGS.get(_m, "").startswith("✓"))
+if _LANG_CELL_DRIFT:
+    raise AssertionError(
+        "language-cell drift — these models run the French canonical prompt "
+        "(harness multilingual=True) but their MODEL_LANGS cell claims "
+        "English-only, so the board understates them: "
+        f"{_LANG_CELL_DRIFT}")
+
 
 # Tokens in a license string that signal NON-commercial / research-only use.
 _NONCOMMERCIAL_TOKENS = ("NC", "non-commercial", "Non-commercial", "CPML", "Research")
@@ -997,8 +1017,8 @@ def _sr_hz(model):
 # automatically cross-lingual: longcat (1B/3.5B), miotts (0.1B/0.6B), and voxtral are
 # multilingual cloners documented to clone only within a single language, so they are
 # omitted. Multilingual cloners with no documented cross-lingual transfer are also
-# left out (fish_15, moss_tts_nano, voxcpm, wavtts, zipvoice) — flagged only on
-# positive evidence. Everything not listed (incl. all English-only cloners) is False.
+# left out (fish_15, fish_s2, moss_tts_nano, voxcpm, wavtts, zipvoice) — flagged only
+# on positive evidence. Everything not listed (incl. all English-only cloners) is False.
 MODEL_CROSSLINGUAL = {
     "coqui", "cosyvoice", "dots_tts", "f5tts", "higgs_v3", "indextts", "moss_tts",
     "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_06b",

@@ -99,7 +99,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [LuxTTS](https://github.com/ysharma3501/LuxTTS) | 123M | Jan 2026 | ✓ | — | — | 22.05k | — | MIT |
 | [Magpie-TTS](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) | 357M | Dec 2025 | ✓ | — | ✓ (9) | 22.05k | emotion voices\* | NVIDIA OML |
 | [Maya1](https://huggingface.co/maya-research/maya1) | 3B | Oct 2025 | ✓ (voice desc) | — | — | 24k | tags + desc | Apache 2.0 |
-| [MeloTTS](https://huggingface.co/myshell-ai/MeloTTS-English) | ~52M | Feb 2024 | ✓ | — | — (en) | **44.1k** | — | MIT |
+| [MeloTTS](https://huggingface.co/myshell-ai/MeloTTS-English) | ~52M | Feb 2024 | ✓ | — | ✓ (4) | **44.1k** | — | MIT |
 | [Orpheus TTS](https://huggingface.co/canopylabs/orpheus-3b-0.1-ft) | 3B | Mar 2025 | ✓ (8) | — | — (en) | 24k | tags | Apache 2.0 |
 | [OuteTTS 1.0 1B](https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B) | ~1B | Apr 2025 | ✓ | ✓ | ✓ (12) | 44.1k | — | CC-BY-NC-SA 4.0 + Llama 3.2 |
 | [Parler-TTS Mini v1](https://huggingface.co/parler-tts/parler-tts-mini-v1) | 878M | Jun 2024 | ✓ (voice desc) | — | — | **44.1k** | desc\* | Apache 2.0 |
@@ -126,7 +126,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [Echo-TTS](https://huggingface.co/jordand/echo-tts-base) | ~2.8B | Dec 2025 | — | ✓ | — | **44.1k** | tags | CC-BY-NC-SA 4.0 |
 | [F5-TTS v1](https://huggingface.co/SWivid/F5-TTS) | 330M | Oct 2024 | — | ✓ | ✓ | 24k | — | CC-BY-NC |
 | [Fish Speech 1.5](https://huggingface.co/fishaudio/fish-speech-1.5) | ~500M | Nov 2024 | — | ✓ | ✓ | **44.1k** | — | CC-BY-NC-SA 4.0 |
-| [Fish Speech S2-Pro](https://huggingface.co/fishaudio/s2-pro) | 4B | Mar 2026 | — | ✓ | — | **44.1k** | tags | Research (non-commercial) |
+| [Fish Speech S2-Pro](https://huggingface.co/fishaudio/s2-pro) | 4B | Mar 2026 | — | ✓ | ✓ (80+) | **44.1k** | tags | Research (non-commercial) |
 | [Higgs Audio v3 TTS](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) | 4B | Jun 2026 | — | ✓ | ✓ (100) | 24k | tags | Research (NC) |
 | [IndexTTS-2](https://huggingface.co/IndexTeam/IndexTTS-2) | 1.5B | Jun 2025 | — | ✓ | ✓ | 24k | emo-ref + desc + knob | Apache 2.0 |
 | [LongCat-AudioDiT 1B](https://huggingface.co/meituan-longcat/LongCat-AudioDiT-1B) | 1.42B | Mar 2026 | — | ✓ | ✓ (zh+en) | 24k | — | MIT |
@@ -141,10 +141,10 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [MOSS-TTS v1.5](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-v1.5) | 8B (Qwen3) | May 2026 | — | ✓ | ✓ (31) | 24k | tags (pause) | Apache 2.0 |
 | [MOSS-TTS-Nano](https://huggingface.co/OpenMOSS-Team/MOSS-TTS-Nano) | 100M | Apr 2026 | — | ✓ | ✓ (zh+en) | **48k** | — | Apache 2.0 |
 | [NeuTTS Air](https://huggingface.co/neuphonic/neutts-air) | 748M | Sep 2025 | — | ✓ | — | 24k | — | Apache 2.0 |
-| [NeuTTS Nano](https://huggingface.co/neuphonic/neutts-nano-q4-gguf) | 229M | Dec 2025 | — | ✓ | — | 24k | — | Apache 2.0 |
+| [NeuTTS Nano](https://huggingface.co/neuphonic/neutts-nano-q4-gguf) | 229M | Dec 2025 | — | ✓ | ✓ (4) | 24k | — | Apache 2.0 |
 | [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) | ~1B | Mar 2026 | — | ✓ | ✓ (600+) | 24k | tags\* | Apache 2.0 code / CC-BY-NC weights |
 | [OpenVoice v2](https://huggingface.co/myshell-ai/OpenVoiceV2) | ~100M | Apr 2024 | — | ✓ | ✓ | 22.05k | knob | MIT |
-| [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | 100M | Jan 2026 | — | ✓ | — | 24k | — | Apache 2.0 |
+| [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | 100M | Jan 2026 | — | ✓ | ✓ (6) | 24k | — | Apache 2.0 |
 | [Qwen3-TTS 0.6B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-Base) | 0.6B | Jan 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
 | [Qwen3-TTS 1.7B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
 | [Qwen3-TTS 1.7B (CUDA-graph)](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | MIT |

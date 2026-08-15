@@ -61,7 +61,11 @@ MODELS = [
     ("audio8",      "audio8", "runners/audio8_runner.py", True,  ["cpu", "cuda"], "base",     True),
     ("audio8_fast", "audio8", "runners/audio8_runner.py", True,  ["cuda"],        "fastpath", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   False, ["cpu", "cuda"],        None,   True),
-    ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    False, ["cuda"],               None,   True),
+    # S2-Pro is 80+ languages (card: tier-1 ja/en/zh, tier-2 incl. fr) and the runner
+    # is text-driven — it ignores --language and detects from the text — so the FR
+    # canonical prompt just works. Was wrongly False until 2026-08-15 (issue #8), which
+    # skipped prompt 5 entirely; its FR clip needs a Linux-3090 bench.
+    ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    True,  ["cuda"],               None,   True),
     ("metavoice",   "metavoice",  "runners/metavoice_runner.py",  False, ["cuda"],               None,   True),
     ("step_editx",  "step_editx", "runners/step_editx_runner.py", False, ["cuda"],               None,   True),
     ("sesame",      "sesame",     "runners/sesame_runner.py",     False, ["cpu", "cuda"],        None,   "gated"),
