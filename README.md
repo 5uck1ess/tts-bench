@@ -22,7 +22,7 @@ An objective quality score (NAQ) was prototyped but isn't part of the bench — 
 
 - **Listen** — one consolidated gallery with an inline `<audio>` player for every model on every prompt, in **default voice** and **voice cloning** (each clone sits next to the reference it's imitating). Browse **by prompt** (compare all models on one sentence) or **by model** (audition one model across prompts); only one clip plays at a time. Audio is rig-independent, so each sample is sourced once from the highest-fidelity rig and tagged with where it came from. Quality, prosody, and artifacts are obvious in 5 seconds — benchmark tables can't show that.
 - **Speed** — per-rig leaderboards (Ryzen 9 9950X3D + RTX 5090, Apple M4, Ryzen + RTX 3090) with cold/warm TTFA, RTFx, and memory, sortable. Pick the box you actually own.
-- **Scores** — objective metrics per model (UTMOS naturalness, WER intelligibility, SIM cloning fidelity), sortable, with a Default/Cloning toggle. Human votes remain the preference ground truth; these are objective backstops.
+- **Scores** — objective metrics per model (UTMOS naturalness, WER intelligibility, SIM cloning fidelity), with an interactive top-15 chart, sortable tables, and a Default/Cloning toggle. Human votes remain the preference ground truth; these are objective backstops.
 
 Full per-rig reports (every model × prompt × device, plus by-prompt samples) are linked from the **Archive**.
 
