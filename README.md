@@ -124,11 +124,11 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [dots.tts (soar)](https://huggingface.co/rednote-hilab/dots.tts-soar) | 2B | Jun 2026 | — | ✓ | ✓ (24) | **48k** | — | Apache 2.0 |
 | [DramaBox](https://github.com/resemble-ai/DramaBox) | 3.3B | Apr 2026 | — | ✓ | — (en) | **48k** | desc | LTX-2 Community (NC) |
 | [Echo-TTS](https://huggingface.co/jordand/echo-tts-base) | ~2.8B | Dec 2025 | — | ✓ | — | **44.1k** | tags | CC-BY-NC-SA 4.0 |
-| [F5-TTS v1](https://huggingface.co/SWivid/F5-TTS) | 330M | Oct 2024 | — | ✓ | ✓ | 24k | — | CC-BY-NC |
+| [F5-TTS v1](https://huggingface.co/SWivid/F5-TTS) | 330M | Oct 2024 | — | ✓ | ✓ (zh+en) | 24k | — | CC-BY-NC |
 | [Fish Speech 1.5](https://huggingface.co/fishaudio/fish-speech-1.5) | ~500M | Nov 2024 | — | ✓ | ✓ | **44.1k** | — | CC-BY-NC-SA 4.0 |
 | [Fish Speech S2-Pro](https://huggingface.co/fishaudio/s2-pro) | 4B | Mar 2026 | — | ✓ | ✓ (80+) | **44.1k** | tags | Research (non-commercial) |
 | [Higgs Audio v3 TTS](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) | 4B | Jun 2026 | — | ✓ | ✓ (100) | 24k | tags | Research (NC) |
-| [IndexTTS-2](https://huggingface.co/IndexTeam/IndexTTS-2) | 1.5B | Jun 2025 | — | ✓ | ✓ | 24k | emo-ref + desc + knob | Apache 2.0 |
+| [IndexTTS-2](https://huggingface.co/IndexTeam/IndexTTS-2) | 1.5B | Jun 2025 | — | ✓ | ✓ (zh+en) | 24k | emo-ref + desc + knob | Apache 2.0 |
 | [LongCat-AudioDiT 1B](https://huggingface.co/meituan-longcat/LongCat-AudioDiT-1B) | 1.42B | Mar 2026 | — | ✓ | ✓ (zh+en) | 24k | — | MIT |
 | [LongCat-AudioDiT 3.5B](https://huggingface.co/meituan-longcat/LongCat-AudioDiT-3.5B) | 3.83B | Mar 2026 | — | ✓ | ✓ (zh+en) | 24k | — | MIT |
 | [Mars5-TTS](https://huggingface.co/Camb-ai/mars5-tts) | 1.2B | Jun 2024 | — | ✓ | — | 24k | — | AGPL-3.0 |
