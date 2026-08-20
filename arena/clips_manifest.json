@@ -1162,6 +1162,11 @@
           "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/fish_s2_cuda_p4.wav"
         },
         {
+          "model": "fish_s2",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/fish_s2_cuda_p5.wav"
+        },
+        {
           "model": "higgs_v3",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/higgs_v3_cuda_p1.wav"
