@@ -1201,3 +1201,6 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 4,vaniq,cuda,,False,0,True,599.4,0.5994,6.944,11.59,1534.3,130.1,2.553,True,
 4,vaniq,cuda,,False,1,False,28.7,0.0287,6.944,242.07,1534.3,130.1,0,True,
 4,vaniq,cuda,,False,2,False,28.4,0.0284,6.944,244.57,1534.3,130.1,0,True,
+5,fish_s2,cuda,,True,0,True,32297.3,32.2973,5.573,0.17,3907.5,20409.4,140.954,True,
+5,fish_s2,cuda,,True,1,False,31823.7,31.8237,5.573,0.18,3907.5,20409.4,0,True,
+5,fish_s2,cuda,,True,2,False,31889.5,31.8895,5.573,0.17,3907.6,20409.4,0,True,

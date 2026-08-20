@@ -818,3 +818,6 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 5,audio8_fast,cuda,fastpath,True,0,True,825.3,0.8253,4.226,5.12,3033.8,2408.8,16.936,True,
 5,audio8_fast,cuda,fastpath,True,1,False,652.3,0.6523,4.737,7.26,3033.9,2416.2,0,True,
 5,audio8_fast,cuda,fastpath,True,2,False,644.3,0.6443,4.737,7.35,3033.9,2416.2,0,True,
+5,fish_s2,cuda,,True,0,True,32388.3,32.3883,5.573,0.17,3906.6,20409.4,143.131,True,
+5,fish_s2,cuda,,True,1,False,31909.7,31.9097,5.573,0.17,3906.6,20409.4,0,True,
+5,fish_s2,cuda,,True,2,False,32221.5,32.2215,5.573,0.17,3906.6,20409.4,0,True,
