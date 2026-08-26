@@ -486,6 +486,7 @@ MODEL_DISPLAY_NAMES = {
     "metavoice":     "MetaVoice-1B",
     "step_editx":    "Step-Audio-EditX",
     "echo":          "Echo-TTS",
+    "breeze_tts2":   "Breeze TTS 2",
     "miratts":       "MiraTTS",
     "outetts":       "OuteTTS 1.0 1B",
     "parler":        "Parler-TTS Mini v1",
@@ -565,6 +566,7 @@ MODEL_SIZE = {
     "metavoice":     "1.2B",
     "step_editx":    "3B",
     "echo":          "2.8B",   # DiT generative model (safetensors count); +695M S1-DAC codec not counted (matches fish_15 convention)
+    "breeze_tts2":   "3.47B",  # backbone + depth decoder, summed over model.parameters(); mimi codec not counted
     "miratts":       "0.5B",   # HF card "Model size 0.5B params" (BF16); FastBiCodec + FlashSR not counted
     "outetts":       "1B",     # Llama-3.2-1B backbone
     "parler":        "878M",   # parler-tts-mini-v1 safetensors total; large variant = 2.33B
@@ -632,6 +634,7 @@ MODEL_URL = {
     "fish_15":       _HF + "fishaudio/fish-speech-1.5",
     "fish_s2":       _HF + "fishaudio/s2-pro",
     "echo":          _HF + "jordand/echo-tts-base",
+    "breeze_tts2":   _HF + "BreezeBlue/Breeze-TTS-2",
     "zonos":         _HF + "Zyphra/Zonos-v0.1-transformer",
     "zonos2":        _HF + "Zyphra/Zonos2",
     "openvoice":     _HF + "myshell-ai/OpenVoiceV2",
@@ -711,6 +714,7 @@ MODEL_KIND = {
     "metavoice":     "cloning",
     "step_editx":    "cloning",
     "echo":          "cloning",   # no preset voice — zero-shot clones from a reference wav
+    "breeze_tts2":   "cloning",   # voice-design path exists but holds no stable speaker (37.7 Hz F0 drift pinned) — see runner docstring
     "miratts":       "cloning",   # no preset voice — zero-shot clones from a reference wav
     "outetts":       "cloning",   # clones from a reference wav; ALSO has preset voices (default lens)
     "parler":        "predefined",   # voice set by a text description, no wav cloning
@@ -780,6 +784,7 @@ MODEL_RELEASE = {
     "fish_15":       "2024-11",
     "fish_s2":       "2026-03",
     "echo":          "2025-12",
+    "breeze_tts2":   "2026-08",
     "zonos":         "2025-02",
     "zonos2":        "2026-06",
     "openvoice":     "2024-04",
@@ -842,6 +847,7 @@ MODEL_SR = {
     "inflect_nano": "24k", "inflect_micro": "24k", "vaniq": "24k",
     "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
     "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
+    "breeze_tts2": "24k",
     "dots_tts": "48k", "dramabox": "48k", "echo": "44.1k", "f5tts": "24k",
     "fish_15": "44.1k", "fish_s2": "44.1k", "higgs_v3": "24k", "indextts": "24k",
     "longcat_1b": "24k", "longcat_3p5b": "24k", "mars5": "24k", "metavoice": "48k",
@@ -867,6 +873,8 @@ MODEL_EXPRESSIVE = {
     "soprano": "—", "supertonic": "tags",
     "vibevoice": "—", "voxtral": "—", "chatterbox": "knob", "chatterbox_turbo": "tags*",
     "coqui": "—", "cosyvoice": "desc", "dia": "tags", "dots_tts": "—", "dramabox": "desc",
+    # inline (laugh)/[笑] vocal events + a free-text instruction that steers delivery.
+    "breeze_tts2": "tags + desc",
     "echo": "tags", "f5tts": "—", "fish_15": "—", "fish_s2": "tags", "higgs_v3": "tags",
     "indextts": "emo-ref + desc + knob", "longcat_1b": "—", "longcat_3p5b": "—", "mars5": "—",
     "metavoice": "—", "miotts_01b": "—", "miotts_06b": "—", "miratts": "knob", "miso": "—",
@@ -895,6 +903,7 @@ MODEL_LICENSE = {
     "vibevoice": "MIT", "voxtral": "CC-BY-NC 4.0", "chatterbox": "MIT",
     "chatterbox_turbo": "MIT", "coqui": "CPML (non-commercial)", "cosyvoice": "Apache 2.0",
     "dia": "Apache 2.0", "dots_tts": "Apache 2.0", "dramabox": "LTX-2 Community (NC)",
+    "breeze_tts2": "BreezeBlue Research (NC)",
     "echo": "CC-BY-NC-SA 4.0", "f5tts": "CC-BY-NC", "fish_15": "CC-BY-NC-SA 4.0",
     "fish_s2": "Research (non-commercial)", "higgs_v3": "Research (NC)", "indextts": "Apache 2.0",
     "longcat_1b": "MIT", "longcat_3p5b": "MIT", "mars5": "AGPL-3.0", "metavoice": "Apache 2.0",
@@ -920,6 +929,7 @@ MODEL_LANGS = {
     "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
     "chatterbox_turbo": "—", "coqui": "✓ (17)", "cosyvoice": "✓", "dia": "—",
+    "breeze_tts2": "✓ (zh+en)",
     "dots_tts": "✓ (24)", "dramabox": "— (en)", "echo": "—", "f5tts": "✓ (zh+en)",
     "fish_15": "✓", "fish_s2": "✓ (80+)", "higgs_v3": "✓ (100)", "indextts": "✓ (zh+en)",
     "longcat_1b": "✓ (zh+en)", "longcat_3p5b": "✓ (zh+en)", "mars5": "—", "metavoice": "—",

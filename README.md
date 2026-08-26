@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (65)
+## Models tracked (66)
 
 #### Predefined voices
 
@@ -116,6 +116,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 | Model | Params | Released | Predefined | Cloning | Multilingual | SR | Expressive | License |
 |---|---|---|---|---|---|---|---|---|
+| [Breeze TTS 2](https://huggingface.co/BreezeBlue/Breeze-TTS-2) | 3.47B | Aug 2026 | — | ✓ | ✓ (zh+en) | 24k | tags + desc | BreezeBlue Research (NC) |
 | [ChatterBox](https://huggingface.co/ResembleAI/chatterbox) | 1.2B | Apr 2025 | — | ✓ | — | 24k | knob | MIT |
 | [ChatterBox Turbo](https://huggingface.co/ResembleAI/chatterbox-turbo) | 744M | Dec 2025 | — | ✓ | — | 24k | tags\* | MIT |
 | [Coqui XTTS-v2](https://huggingface.co/coqui/XTTS-v2) | 750M | Oct 2023 | — | ✓ | ✓ (17) | 24k | — | CPML (non-commercial) |
@@ -173,7 +174,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**44 of the 65 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**45 of the 66 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

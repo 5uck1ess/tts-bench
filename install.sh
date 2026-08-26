@@ -686,6 +686,40 @@ else
     echo "echo: already installed"
 fi
 
+# --- Breeze TTS 2 (RESONIA, BreezeBlue Research NC, 3.47B CSM-style + mimi, 24k, cloning) ---
+echo; cyan "=== Breeze TTS 2 (RESONIA, 3.47B CSM-style + kyutai/mimi, 24k, cloning, CUDA-only) ==="
+if ! want breeze_tts2; then echo "breeze_tts2: skipped (not in install filter)"
+elif [ ! -x venvs/breeze_tts2/bin/python ]; then
+    # Source-clone install: models/ + breeze_infer/ are imported from the tree.
+    # NO vLLM and NO flash-attn. Upstream's optional fast path wants both; the eager
+    # path this bench runs needs neither, and skipping them keeps the install identical
+    # across Linux and Windows. The checkpoint ships trust_remote_code modeling code,
+    # so transformers is pinned EXACTLY -- a free resolve loads the weights and then
+    # breaks inside generation, far from the error site.
+    uv venv venvs/breeze_tts2 --python 3.11 || die "uv venv breeze_tts2"
+    if [ ! -d venvs/breeze_tts2/src/breeze-tts ]; then
+        git clone https://github.com/breezeblue-ai/breeze-tts venvs/breeze_tts2/src/breeze-tts \
+            || die "git clone breeze-tts"
+        git -C venvs/breeze_tts2/src/breeze-tts checkout ca632ce || die "pin breeze-tts"
+    fi
+    # PyPI torch is already CUDA-enabled on Linux, and triton is a real wheel here
+    # (Windows needs triton-windows), so this is one resolve rather than a torch-last pass.
+    uv pip install --python venvs/breeze_tts2/bin/python \
+        --extra-index-url https://download.pytorch.org/whl/cu128 \
+        --index-strategy unsafe-best-match \
+        torch "transformers==4.57.3" "qwen-tts==0.1.1" \
+        huggingface-hub numpy safetensors soundfile librosa accelerate \
+        || die "uv pip install breeze-tts deps"
+    # ~6.97 GB to a local dir (not the HF cache) -- the runner loads from this path.
+    if [ ! -f venvs/breeze_tts2/src/Breeze-TTS-2/config.json ]; then
+        venvs/breeze_tts2/bin/python -c "from huggingface_hub import snapshot_download; snapshot_download('BreezeBlue/Breeze-TTS-2', local_dir='venvs/breeze_tts2/src/Breeze-TTS-2')" \
+            || die "download Breeze-TTS-2 weights"
+    fi
+    green "breeze_tts2: ok (CUDA-only, bf16; the runner rewrites the checkpoint's pinned flash_attention_2 to sdpa -- see runners/breeze_tts2_runner.py)"
+else
+    echo "breeze_tts2: already installed"
+fi
+
 # --- MiraTTS (Yatharth Sharma, MIT, 0.5B LLM-TTS + FastBiCodec, 48k, zero-shot cloning) ---
 echo; cyan "=== MiraTTS (Yatharth Sharma, 0.5B LLM-TTS + FastBiCodec, 48k, cloning, CUDA-only) ==="
 if ! want miratts; then echo "miratts: skipped (not in install filter)"

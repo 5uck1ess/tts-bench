@@ -79,6 +79,9 @@ NO_PRESET_VOICE = {
     "neutts_air", "neutts_nano", "luxtts",
     "openvoice", "zipvoice", "zonos", "zonos2", "vibevoice_15b", "vibevoice_7b",
     "echo",
+    # Voice design exists but holds no stable speaker across prompts (37.7 Hz median-F0
+    # drift even with a pinned description, vs maya1 8.8) -> no honest preset voice.
+    "breeze_tts2",
     # cosyvoice: pure zero-shot cloning, no model-native preset — its "default"
     # lens just clones the house ref (chris_hemsworth), like moss_tts.
     "cosyvoice",

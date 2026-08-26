@@ -688,6 +688,32 @@ if (-not (Want "echo")) { Write-Host "echo: skipped (not in install filter)" -Fo
     Write-Host "echo: ok (echo-tts-base + fish-s1-dac-min weights auto-download from HF on first run; CUDA-only, bf16 DiT ~12GB)" -ForegroundColor Green
 } else { Write-Host "echo: already installed" -ForegroundColor Gray }
 
+Step "Breeze TTS 2 (RESONIA, BreezeBlue Research NC, 3.47B CSM-style + mimi, 24k, cloning, CUDA-only)"
+if (-not (Want "breeze_tts2")) { Write-Host "breeze_tts2: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\breeze_tts2\Scripts\python.exe")) {
+    # Source-clone install: models/ + breeze_infer/ are imported from the cloned tree.
+    # NO vLLM and NO flash-attn -- upstream's optional fast path wants both, but the
+    # eager path needs neither and flash_attn has no Windows wheel. The checkpoint
+    # ships trust_remote_code modeling code, so transformers is pinned EXACTLY;
+    # a free resolve loads the weights and then breaks inside generation.
+    # qwen-tts is a pure-python wheel (Apache 2.0) and installs fine on Windows;
+    # its `sox` import works without the SoX binary present.
+    Invoke-Checked "uv venv breeze_tts2" { uv venv venvs\breeze_tts2 --python 3.11 }
+    if (-not (Test-Path "venvs\breeze_tts2\src\breeze-tts")) {
+        Invoke-Checked "git clone breeze-tts" { git clone https://github.com/breezeblue-ai/breeze-tts venvs\breeze_tts2\src\breeze-tts }
+        Invoke-Checked "pin breeze-tts ca632ce" { git -C venvs\breeze_tts2\src\breeze-tts checkout ca632ce }
+    }
+    Invoke-Checked "uv pip install breeze-tts deps" { uv pip install --python venvs\breeze_tts2\Scripts\python.exe "transformers==4.57.3" "qwen-tts==0.1.1" huggingface-hub numpy safetensors soundfile librosa accelerate }
+    # ~6.97 GB to a local dir (not the HF cache) -- the runner loads from this path.
+    if (-not (Test-Path "venvs\breeze_tts2\src\Breeze-TTS-2\config.json")) {
+        Invoke-Checked "download Breeze-TTS-2 weights" { venvs\breeze_tts2\Scripts\python.exe -c "from huggingface_hub import snapshot_download; snapshot_download('BreezeBlue/Breeze-TTS-2', local_dir='venvs/breeze_tts2/src/Breeze-TTS-2')" }
+    }
+    # torch cu128 LAST (Blackwell sm_120); PyPI's Windows torch is CPU-only.
+    # triton-windows is what the upstream --fast-all path would need; harmless here.
+    Invoke-Checked "torch cu128 for breeze_tts2 (LAST)" { uv pip install --python venvs\breeze_tts2\Scripts\python.exe --reinstall-package torch "torch>=2.11.0" triton-windows --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "breeze_tts2: ok (CUDA-only, bf16; the runner rewrites the checkpoint's pinned flash_attention_2 to sdpa -- see runners/breeze_tts2_runner.py)" -ForegroundColor Green
+} else { Write-Host "breeze_tts2: already installed" -ForegroundColor Gray }
+
 Step "MiraTTS (Yatharth Sharma, MIT, 0.5B LLM-TTS + FastBiCodec, 48k, cloning, CUDA-only)"
 if (-not (Want "miratts")) { Write-Host "miratts: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\miratts\Scripts\python.exe")) {

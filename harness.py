@@ -130,6 +130,9 @@ MODELS = [
     # zero-shot cloning. CUDA-only (40-step diffusion over a 2B-class DiT; torchcodec
     # decode path). English. Weights+outputs CC-BY-NC-SA-4.0 (same NC class as fish_*).
     ("echo",        "echo",       "runners/echo_runner.py",       False, ["cuda"],               None,   True),
+    # en+zh only -> multilingual=False (no French prompt). CUDA-only: fast_streaming.py
+    # hard-gates on torch.cuda.is_available(), so there is no cpu path to claim.
+    ("breeze_tts2", "breeze_tts2", "runners/breeze_tts2_runner.py", False, ["cuda"],             None,   True),
     # MiraTTS (Yatharth Sharma, MIT): 0.5B LLM-TTS + FastBiCodec, 48kHz (FlashSR upsample),
     # ~6GB VRAM, zero-shot cloning from a reference wav. CUDA-only: the model hard-imports
     # lmdeploy and builds a TurboMind engine (no transformers fallback). lmdeploy's listed
