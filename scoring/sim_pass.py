@@ -39,6 +39,31 @@ def _sibling_cloning_dir(default_dir):
     return default_dir[: -len("-default")] + "-cloning"
 
 
+# Models whose SIM is NOT MEANINGFUL and must never be auto-filled. Blanking the cell
+# is not enough: this pass is missing-only, so a blank reads as "not yet scored" and
+# refills on the very next run. That is the qwentts bug in docs/known-issues.md, which
+# has been costing a manual re-blank after every pass; this set is the actual fix.
+#
+#   (model, mode) -> why
+SIM_NOT_APPLICABLE = {
+    # Qwen3-TTS Base clones its OWN bundled jo.wav on the no-reference path, not the
+    # house Chris reference, so scoring it against Chris compares two different
+    # speakers. The values come out as noise around zero, some negative.
+    ("qwentts", "default"),
+    ("qwentts_06b", "default"),
+    ("qwentts_06b_custom", "default"),
+    ("qwentts_fast", "default"),
+    # breeze_tts2 clones a consent-clean reference (licence §5(c) forbids pointing it
+    # at the house one — see docs/known-issues.md), so its clips target a DIFFERENT
+    # speaker than every other row in the cloning dir. Scored against that dir's
+    # _reference.wav it would post a near-zero SIM that reads as a catastrophically
+    # bad cloner rather than a reference mismatch. Remove this only when the board
+    # can carry a per-model reference.
+    ("breeze_tts2", "cloning"),
+    ("breeze_tts2", "default"),
+}
+
+
 def select_todo(clips, existing, ref_for_dir=ref_for_dir, no_preset=frozenset(),
                 rescore=False):
     """Return [(clip, ref_path)] for clips needing SIM. Two reference-clone sources:
@@ -60,6 +85,8 @@ def select_todo(clips, existing, ref_for_dir=ref_for_dir, no_preset=frozenset(),
             continue  # score_all owns row creation (utmos/wer); skip un-scored clips
         if row.get("sim", "").strip() and not rescore:
             continue
+        if (c.model, c.mode) in SIM_NOT_APPLICABLE:
+            continue  # reference mismatch — see SIM_NOT_APPLICABLE
         if c.mode == "cloning":
             ref = ref_for_dir(c.dir)
         elif c.model in no_preset and c.model not in has_cloning:

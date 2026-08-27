@@ -58,6 +58,10 @@ SPEED_ONLY = {
     # the vote pool; qwentts_fast is the same checkpoint and stays votable.
     # Mirrors publish.py -- keep in sync. See docs/known-issues.md.
     "qwentts",
+    # breeze_tts2: clones a consent-clean reference, not the house one, so a cloning
+    # pairing would ask voters to match it against a voice it never targeted.
+    # Mirrors publish.py -- keep in sync. See docs/known-issues.md.
+    "breeze_tts2",
     # qwentts_06b (0.6B Base): same runaway, plus truncated audio on the runs that
     # did finish. Never benched into a canonical. Mirrors publish.py.
     "qwentts_06b",

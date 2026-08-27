@@ -114,6 +114,15 @@ SPEED_ONLY = {
     # It stays in NO_PRESET_VOICE above -- that describes what it IS (reference-only);
     # this describes what we can publish. Remove once the runaway is fixed.
     "qwentts",
+    # breeze_tts2 clones a consent-clean reference instead of the house one (licence
+    # §5(c) — see docs/known-issues.md), so its clip is a DIFFERENT speaker to every
+    # other row in the cloning dir. The Listen lens publishes one _reference.wav per
+    # dir and hardcodes the section label "Cloning — chris_hemsworth", so the clip
+    # would show under the wrong reference; an arena pairing would ask voters to match
+    # it against a voice it was never cloning. Its SPEED numbers don't depend on the
+    # reference, so the speed row is honest and publishes. Remove this once the board
+    # can carry a per-model reference.
+    "breeze_tts2",
     # qwentts_06b (0.6B Base) fails the same way, confirmed by bench on 2026-07-29:
     # cpu timed out on p1 (no cpu data at all); cuda cleared p1+p2 then timed out on
     # p3. Worse, its "successful" clips are junk -- p1 emitted 0.96s / 0.48s / 5.84s
