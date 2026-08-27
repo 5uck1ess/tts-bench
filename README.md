@@ -83,13 +83,14 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (66)
+## Models tracked (67)
 
 #### Predefined voices
 
 | Model | Params | Released | Predefined | Cloning | Multilingual | SR | Expressive | License |
 |---|---|---|---|---|---|---|---|---|
 | [Audio8 TTS 0.6B (compiled)](https://huggingface.co/scrappylabsai/audio8-tts-fastpath) | 601M | Aug 2026 | ✓ | ✓ | ✓ (11) | 44.1k | — | Apache 2.0 |
+| [Audio8 TTS Preview 0.1B](https://huggingface.co/Audio8/Audio8-TTS-Preview-0.1b) | 170M | Aug 2026 | ✓ | ✓ | ✓ (11) | 44.1k | — | Audio8 Community v1.0 |
 | [Audio8 TTS Preview 0.6B](https://huggingface.co/Audio8/Audio8-TTS-Preview-0.6b) | 601M | Jul 2026 | ✓ | ✓ | ✓ (11) | 44.1k | — | Apache 2.0 |
 | [Inflect-Micro v2](https://huggingface.co/owensong/Inflect-Micro-v2) | 9.36M | Jul 2026 | ✓ (1) | — | — (en) | 24k | 2 knobs | Apache 2.0 |
 | [Inflect-Nano v2](https://huggingface.co/owensong/Inflect-Nano-v2) | 3.96M | Jul 2026 | ✓ (1) | — | — (en) | 24k | 2 knobs | Apache 2.0 |
@@ -174,7 +175,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**45 of the 66 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**46 of the 67 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

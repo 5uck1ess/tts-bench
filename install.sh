@@ -241,10 +241,11 @@ else
     echo "vaniq: already installed"
 fi
 
-# --- Audio8 TTS Preview 0.6B (base eager + ScrappyLabs compiled fastpath share this venv) ---
-echo; cyan "=== Audio8 TTS Preview 0.6B (base eager + compiled fastpath share this venv) ==="
+# --- Audio8 TTS Preview (0.6B base eager + ScrappyLabs compiled fastpath + 0.1B share this venv) ---
+echo; cyan "=== Audio8 TTS Preview (0.6B base eager + compiled fastpath + 0.1B share this venv) ==="
 if ! want audio8; then echo "audio8: skipped (not in install filter)"
-elif [ ! -x venvs/audio8/bin/python ]; then
+else
+if [ ! -x venvs/audio8/bin/python ]; then
     uv venv venvs/audio8 --python 3.11 || die "uv venv audio8"
     # transformers is PINNED, not floored: the checkpoint ships its modeling code via
     # trust_remote_code written against the 4.57.x generate/cache API, and a free
@@ -256,14 +257,35 @@ elif [ ! -x venvs/audio8/bin/python ]; then
         "transformers==4.57.5" "tokenizers>=0.20" "soundfile>=0.12" "safetensors>=0.4" \
         "numpy<3" huggingface_hub psutil \
         || die "uv pip install audio8 deps"
-    # Base weights (~1.1 GB) + the fastpath repo, which is inference CODE ONLY
-    # (fast_arktts.py + example/benchmark) — no weights of its own. The runner points
-    # it at the base checkpoint so both rows are the same weights, different engine.
-    venvs/audio8/bin/python -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.6b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.6b', ignore_patterns=['*.jpeg','*.png','samples/*']); d('scrappylabsai/audio8-tts-fastpath', local_dir='venvs/audio8/src/fastpath')" \
-        || die "download audio8 weights + fastpath"
-    green "audio8: ok (base + fastpath via --variant; first fastpath run compiles ~370s, then inductor-cached)"
+    green "audio8: venv ok"
 else
-    echo "audio8: already installed"
+    echo "audio8: venv already installed"
+fi
+# Per-CHECKPOINT guards, deliberately outside the venv check. The venv-existence
+# guard alone means a rig that installed audio8 before a checkpoint was added would
+# silently never download it, and the missing-dir error only surfaces at bench time.
+# 0.6B base weights (~1.1 GB); the fastpath repo is inference CODE ONLY
+# (fast_arktts.py + example/benchmark) — no weights of its own, so the runner points
+# it at the 0.6B checkpoint and both rows are the same weights, different engine.
+if [ ! -d venvs/audio8/src/Audio8-TTS-Preview-0.6b ]; then
+    venvs/audio8/bin/python -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.6b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.6b', ignore_patterns=['*.jpeg','*.png','samples/*'])" \
+        || die "download audio8 0.6B weights"
+fi
+if [ ! -d venvs/audio8/src/fastpath ]; then
+    venvs/audio8/bin/python -c "from huggingface_hub import snapshot_download as d; d('scrappylabsai/audio8-tts-fastpath', local_dir='venvs/audio8/src/fastpath')" \
+        || die "download audio8 fastpath code"
+fi
+# 0.1B (~1.7 GB): a DIFFERENT, smaller checkpoint — Falcon-H1 hybrid slow AR
+# (attention + Mamba) where the 0.6B's is plain attention. Falcon-H1 itself ships in the
+# pinned transformers 4.57.5, so the checkpoint loads with no extra install. It does NOT
+# run at full speed: without mamba-ssm + causal-conv1d (neither has a Windows wheel)
+# transformers falls back to a naive Python loop over Mamba timesteps. Correct output,
+# ~0.35x RTFx on a 5090. Install those two on Linux to get the real number.
+if [ ! -d venvs/audio8/src/Audio8-TTS-Preview-0.1b ]; then
+    venvs/audio8/bin/python -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.1b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.1b', ignore_patterns=['*.jpeg','*.png','samples/*'])" \
+        || die "download audio8 0.1B weights"
+fi
+green "audio8: ok (0.6B base + fastpath + 0.1B via --variant; first fastpath run compiles ~370s, then inductor-cached)"
 fi
 
 # --- ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ---

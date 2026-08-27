@@ -81,3 +81,36 @@ These aren't models to add; they're native **C++/ggml runtimes** (a "llama.cpp f
 
 - **[audio.cpp](https://github.com/0xShug0/audio.cpp)** (0xShug0) — **TTS-first**. 12 of 25 model families released, overlapping our `pocket`, `chatterbox`, `omnivoice`, `voxcpm`, `qwentts`, `miotts`. Claims 3–5× vs the Python reference path on CUDA (no-quant fp16/fp32; warm-session RTFx up to ~48× real time on PocketTTS long-form). Caveats: no framework-wide streaming (offline only), self-described "naive" server, GGUF support pending, CPU barely optimized (author is CUDA-focused), and Windows French PocketTTS is broken (24-layer flow mismatch). Built clean-slate around a uniform module abstraction (every op, even ADD, is a metadata-carrying module) for a planned future feature.
 - **[CrispASR](https://github.com/CrispStrobe/CrispASR)** (CrispStrobe, 349★) — **ASR-first** (Parakeet TDT, Canary 1B v2, Voxtral, Cohere Transcribe + universal forced alignment) but also does TTS (Qwen3-TTS, Orpheus, **IndexTTS**). **GGUF-native** and far more mature: WASM/iOS/Android/Flutter/Go/Python bindings, HF Space demo, Docker CUDA+Vulkan, AMD/HIP, ~71 runtimes. Overlaps our `indextts` (the by-ear cloning pick) + `qwentts`. The more deployment-ready of the two; the audio.cpp author started fresh rather than contribute here specifically to avoid retrofitting his module abstraction onto CrispASR's pragmatic structure.
+
+> **Surfaced 2026-08-27 (Tym sent a Reddit link, "is this another model we skipped?").** It was not a
+> skip — it was a model that did not exist at our last Audio8 triage. Added as `audio8_01b`.
+
+- **[Audio8 TTS Preview 0.1B](https://huggingface.co/Audio8/Audio8-TTS-Preview-0.1b)** (Audio8,
+  ~170M excluding the ~120M codec decoder, 44.1 kHz, 11 languages incl. French, zero-shot cloning
+  **and** real `<|speaker:N|>` presets). **Added 2026-08-27.** The link came in via
+  [r/LovingOpenSourceAI](https://www.reddit.com/r/LovingOpenSourceAI/comments/1vzw0hw/) pointing at
+  the [ONNX INT8 build](https://huggingface.co/Audio8/audio8-TTS-0.1B-ONNX-INT8); the row we added is
+  the **PyTorch base checkpoint behind it**. Timeline is why this was never triaged before: we added
+  the 0.6B pair on 2026-08-04, the 0.1B base landed **2026-08-19**, the ONNX build **2026-08-25**.
+  **It is not a shrunk 0.6B.** Its slow AR is a **Falcon-H1 hybrid (attention + Mamba)** where the
+  0.6B's is plain attention, so `audio8` vs `audio8_01b` is a size+architecture pairing, distinct
+  from the `audio8` vs `audio8_fast` engine pairing already on the board. Shares the venv and runner
+  (`--variant base_01b`); Falcon-H1 ships inside the pinned transformers 4.57.5, so no extra install.
+  **Smoke findings (Win-5090, 2026-08-27):** canonical prompt 3 completes at 16.95 s (~365 frames,
+  well inside the 1024-frame cap); four speaker tags produce genuinely distinct voices (F0 144.6 /
+  148.5 / 159.8 / 173.6 Hz, 29 Hz spread, differing spectral centroids) so it is
+  `_PRESET_AND_CLONE`, **not** `NO_PRESET_VOICE`, and fills both lenses; generation is deterministic
+  under a pinned seed; cloning tracks the reference (clone 132.4 Hz vs reference 137.8 Hz).
+  **Two traps recorded in `docs/known-issues.md`:** (1) the licence **diverges from its 0.6B
+  sibling** — the 0.6B is Apache-2.0, the 0.1B is the revenue-capped `Audio8 Community License
+  v1.0`, so do not copy the sibling's registry row; (2) without `mamba-ssm` + `causal-conv1d`
+  (no Windows wheels) transformers runs the naive Mamba path, making the 0.1B **slower than the
+  3.5x larger 0.6B** on this rig — a floor, not the model's ceiling.
+  **Note for the ONNX follow-up:** the ONNX repo self-tags `apache-2.0` while its declared
+  `base_model` is the community-licensed 0.1B. That inconsistency is upstream's, and it should be
+  resolved (or the stricter licence assumed) before an `audio8_01b_onnx` row is added. That row is
+  otherwise attractive — it would be the board's only **torch-free CPU zero-shot cloner**, where
+  every current CPU-only row (`kittentts`, `scyllasband`, `supertonic`, `piper`) is preset-only —
+  but its inference code lives in the
+  [GitHub repo](https://github.com/Audio8-AI/Audio8_TTS/tree/master/onnx_runtime), not the HF repo,
+  so it needs its own venv and runner rather than a variant flag.

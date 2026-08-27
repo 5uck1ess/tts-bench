@@ -170,9 +170,10 @@ if (-not (Want "vaniq")) { Write-Host "vaniq: skipped (not in install filter)" -
     Write-Host "vaniq: already installed" -ForegroundColor Gray
 }
 
-Step "Audio8 TTS Preview 0.6B (base eager + ScrappyLabs compiled fastpath share this venv)"
+Step "Audio8 TTS Preview (0.6B base eager + ScrappyLabs compiled fastpath + 0.1B share this venv)"
 if (-not (Want "audio8")) { Write-Host "audio8: skipped (not in install filter)" -ForegroundColor DarkGray
-} elseif (-not (Test-Path "venvs\audio8\Scripts\python.exe")) {
+} else {
+if (-not (Test-Path "venvs\audio8\Scripts\python.exe")) {
     Invoke-Checked "uv venv audio8" { uv venv venvs\audio8 --python 3.11 }
     # transformers is PINNED, not floored: the checkpoint ships its modeling code via
     # trust_remote_code written against the 4.57.x generate/cache API, and a free
@@ -186,13 +187,32 @@ if (-not (Want "audio8")) { Write-Host "audio8: skipped (not in install filter)"
     # Without it, compile_mode dies with TritonMissing and the fastpath row is just
     # eager speed (~0.7x RTFx) wearing the compiled label.
     Invoke-Checked "triton-windows (torch.compile backend)" { uv pip install --python venvs\audio8\Scripts\python.exe triton-windows }
-    # Base weights (~1.1 GB) + the fastpath repo, which is inference CODE ONLY
-    # (fast_arktts.py + example/benchmark) -- no weights of its own. The runner points
-    # it at the base checkpoint so both rows are the same weights, different engine.
-    Invoke-Checked "download audio8 weights + fastpath" { & "venvs\audio8\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.6b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.6b', ignore_patterns=['*.jpeg','*.png','samples/*']); d('scrappylabsai/audio8-tts-fastpath', local_dir='venvs/audio8/src/fastpath')" }
-    Write-Host "audio8: ok (base + fastpath via --variant; first fastpath run compiles ~370s, then inductor-cached)" -ForegroundColor Green
+    Write-Host "audio8: venv ok" -ForegroundColor Green
 } else {
-    Write-Host "audio8: already installed" -ForegroundColor Gray
+    Write-Host "audio8: venv already installed" -ForegroundColor Gray
+}
+# Per-CHECKPOINT guards, deliberately outside the venv check. The venv-existence
+# guard alone means a rig that installed audio8 before a checkpoint was added would
+# silently never download it, and the missing-dir error only surfaces at bench time.
+# 0.6B base weights (~1.1 GB); the fastpath repo is inference CODE ONLY
+# (fast_arktts.py + example/benchmark) -- no weights of its own, so the runner points
+# it at the 0.6B checkpoint and both rows are the same weights, different engine.
+if (-not (Test-Path "venvs\audio8\src\Audio8-TTS-Preview-0.6b")) {
+    Invoke-Checked "download audio8 0.6B weights" { & "venvs\audio8\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.6b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.6b', ignore_patterns=['*.jpeg','*.png','samples/*'])" }
+}
+if (-not (Test-Path "venvs\audio8\src\fastpath")) {
+    Invoke-Checked "download audio8 fastpath code" { & "venvs\audio8\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('scrappylabsai/audio8-tts-fastpath', local_dir='venvs/audio8/src/fastpath')" }
+}
+# 0.1B (~1.7 GB): a DIFFERENT, smaller checkpoint -- Falcon-H1 hybrid slow AR
+# (attention + Mamba) where the 0.6B's is plain attention. Falcon-H1 itself ships in the
+# pinned transformers 4.57.5, so the checkpoint loads with no extra install. It does NOT
+# run at full speed: without mamba-ssm + causal-conv1d (neither has a Windows wheel)
+# transformers falls back to a naive Python loop over Mamba timesteps. Correct output,
+# ~0.35x RTFx on a 5090. Install those two on Linux to get the real number.
+if (-not (Test-Path "venvs\audio8\src\Audio8-TTS-Preview-0.1b")) {
+    Invoke-Checked "download audio8 0.1B weights" { & "venvs\audio8\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.1b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.1b', ignore_patterns=['*.jpeg','*.png','samples/*'])" }
+}
+Write-Host "audio8: ok (0.6B base + fastpath + 0.1B via --variant; first fastpath run compiles ~370s, then inductor-cached)" -ForegroundColor Green
 }
 
 Step "ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv)"

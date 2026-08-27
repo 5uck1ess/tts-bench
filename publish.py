@@ -51,7 +51,7 @@ _CPU_OK = frozenset(row[0] for row in _HARNESS_MODELS if "cpu" in row[4])
 # audio8/audio8_fast: `<|speaker:N|>` selects a real built-in voice on the base
 # checkpoint (verified on Win-5090), so their no-reference run is a genuine default
 # voice, not a Chris-clone fallback — they belong here, NOT in NO_PRESET_VOICE.
-_PRESET_AND_CLONE = {"outetts", "voxtral", "audio8", "audio8_fast"}
+_PRESET_AND_CLONE = {"outetts", "voxtral", "audio8", "audio8_fast", "audio8_01b"}
 
 # Models that synthesize more than English — derived from report.MODEL_LANGS (the
 # single source of truth) so the Listen badge can never disagree with the
