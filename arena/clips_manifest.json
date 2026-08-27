@@ -1657,6 +1657,56 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sesame_cuda_p4.wav"
         },
         {
+          "model": "sopro",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_cuda_p1.wav"
+        },
+        {
+          "model": "sopro",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_cuda_p2.wav"
+        },
+        {
+          "model": "sopro",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_cuda_p3.wav"
+        },
+        {
+          "model": "sopro",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_cuda_p4.wav"
+        },
+        {
+          "model": "sopro",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_cuda_p5.wav"
+        },
+        {
+          "model": "sopro_streaming",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_streaming_cuda_p1.wav"
+        },
+        {
+          "model": "sopro_streaming",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_streaming_cuda_p2.wav"
+        },
+        {
+          "model": "sopro_streaming",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_streaming_cuda_p3.wav"
+        },
+        {
+          "model": "sopro_streaming",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_streaming_cuda_p4.wav"
+        },
+        {
+          "model": "sopro_streaming",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_streaming_cuda_p5.wav"
+        },
+        {
           "model": "step_editx",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/step_editx_cuda_p1.wav"
@@ -2050,6 +2100,14 @@
     "soprano": {
       "name": "Soprano 1.1 80M",
       "url": "https://huggingface.co/ekwek/Soprano-1.1-80M"
+    },
+    "sopro": {
+      "name": "Sopro V2 Turbo",
+      "url": "https://huggingface.co/samuel-vitorino/sopro-v2-turbo"
+    },
+    "sopro_streaming": {
+      "name": "Sopro V2 Turbo (streaming)",
+      "url": "https://huggingface.co/samuel-vitorino/sopro-v2-turbo"
     },
     "step_editx": {
       "name": "Step-Audio-EditX",
