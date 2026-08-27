@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (66)
+## Models tracked (68)
 
 #### Predefined voices
 
@@ -150,6 +150,8 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [Qwen3-TTS 1.7B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
 | [Qwen3-TTS 1.7B (CUDA-graph)](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | MIT |
 | [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) | 1B | Mar 2025 | — | ✓ | — | 24k | — | Apache 2.0 |
+| [Sopro V2 Turbo](https://huggingface.co/samuel-vitorino/sopro-v2-turbo) | 120M | Aug 2026 | — | ✓ | ✓ (4) | 24k | — | Apache 2.0 |
+| [Sopro V2 Turbo (streaming)](https://huggingface.co/samuel-vitorino/sopro-v2-turbo) | 120M | Aug 2026 | — | ✓ | ✓ (4) | 24k | — | Apache 2.0 |
 | [Step-Audio-EditX](https://huggingface.co/stepfun-ai/Step-Audio-EditX) | 3B | Oct 2025 | — | ✓ | — | 24k | tags + desc | Apache 2.0 |
 | [StyleTTS 2](https://github.com/yl4579/StyleTTS2) | ~148M | Jun 2023 | — | ✓ | — | 24k | knob | MIT |
 | [VibeVoice 1.5B](https://huggingface.co/microsoft/VibeVoice-1.5B) | 1.5B | Aug 2025 | — | ✓ | — | 24k | — | MIT |
@@ -174,7 +176,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**45 of the 66 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**47 of the 68 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 
