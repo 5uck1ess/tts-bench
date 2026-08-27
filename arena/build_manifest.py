@@ -33,6 +33,9 @@ NO_PRESET_VOICE = {
     # Qwen3-TTS *Base* (both runtimes): reference-only, no model-native preset voice.
     # CustomVoice (qwentts_06b_custom) is the Qwen row with real preset timbres.
     "qwentts", "qwentts_06b", "qwentts_fast",
+    # Sopro V2 Turbo has no model-native preset voice; both vocoder engines
+    # require a reference wav and belong on the cloning board only.
+    "sopro", "sopro_streaming",
     # No model-native preset voice: the no-reference run clones the house Chris
     # reference, so these are reference-only (cloning board). Their fallback was
     # jo.wav until 2026-07-29 -- see docs/known-issues.md.

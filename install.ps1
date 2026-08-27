@@ -495,6 +495,25 @@ if (-not (Want "soprano")) { Write-Host "soprano: skipped (not in install filter
     Write-Host "soprano: already installed" -ForegroundColor Gray
 }
 
+Step "Sopro V2 Turbo 120M (Apache-2.0, zero-shot cloning, offline + streaming)"
+if (-not (Want "sopro")) { Write-Host "sopro: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\sopro\Scripts\python.exe")) {
+    Invoke-Checked "uv venv sopro" { uv venv venvs\sopro --python 3.11 }
+    # Pin exactly: v2 shipped five patch releases in its first 11 hours.
+    Invoke-Checked "uv pip install sopro" { uv pip install --python venvs\sopro\Scripts\python.exe "sopro==2.0.5" }
+    # PyPI's Windows torch wheel is CPU-only. A plain `uv pip install torch
+    # --index-url ...` sees that wheel as already satisfied and no-ops, so force
+    # both torch packages from cu128 LAST (required for RTX 5090 / sm_120).
+    Invoke-Checked "torch cu128 for sopro" {
+        uv pip install --python venvs\sopro\Scripts\python.exe `
+            --reinstall-package torch --reinstall-package torchaudio `
+            torch torchaudio --index-url https://download.pytorch.org/whl/cu128
+    }
+    Write-Host "sopro: ok (120M, 24kHz, wav-only cloning; offline + streaming weights auto-download on first use)" -ForegroundColor Green
+} else {
+    Write-Host "sopro: already installed" -ForegroundColor Gray
+}
+
 Step "MOSS-TTS-Nano 100M (OpenMOSS/MOSI.AI, Apache 2.0, zero-shot cloning, 48kHz)"
 if (-not (Want "moss_tts_nano")) { Write-Host "moss_tts_nano: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\moss_tts_nano\Scripts\python.exe")) {

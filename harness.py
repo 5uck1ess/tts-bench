@@ -45,6 +45,11 @@ MODELS = [
     # decode runaway. Its default-lens run clones the house Chris reference.
     ("qwentts_06b",  "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base_06b", False),
     ("qwentts_fast", "qwentts_fast", "runners/qwentts_fast_runner.py", True,  ["cuda"],         "base", True),
+    # Sopro V2 Turbo: one checkpoint with separate offline and causal-streaming
+    # vocoders. Pure zero-shot cloning (wav only, no transcript), so both rows are
+    # reference-only and must stay in publish.py / arena NO_PRESET_VOICE.
+    ("sopro",           "sopro", "runners/sopro_runner.py", True, ["cpu", "cuda"], "offline",   True),
+    ("sopro_streaming", "sopro", "runners/sopro_runner.py", True, ["cpu", "cuda"], "streaming", True),
     # Audio8 TTS Preview 0.6B (Apache-2.0): DualAR, credited to Fish Audio S2 Pro — a
     # 24-layer slow AR emits one semantic token per frame, a 4-layer fast AR fills that
     # frame's 10 codebooks. Bundled 44.1 kHz codec (no second checkpoint). 11 languages

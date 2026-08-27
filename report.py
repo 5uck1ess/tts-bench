@@ -445,6 +445,8 @@ MODEL_DISPLAY_NAMES = {
     "qwentts_06b":   "Qwen3-TTS 0.6B Base",
     "qwentts_06b_custom": "Qwen3-TTS 0.6B CustomVoice",
     "qwentts_fast":  "Qwen3-TTS 1.7B (CUDA-graph)",
+    "sopro":          "Sopro V2 Turbo",
+    "sopro_streaming": "Sopro V2 Turbo (streaming)",
     "audio8":        "Audio8 TTS Preview 0.6B",
     "audio8_fast":   "Audio8 TTS 0.6B (compiled)",
     "neutts_air":    "NeuTTS Air",
@@ -521,6 +523,8 @@ MODEL_SIZE = {
     "qwentts_06b":   "0.6B",
     "qwentts_06b_custom": "0.6B",
     "qwentts_fast":  "1.7B",
+    "sopro":          "120M",
+    "sopro_streaming": "120M",
     # 601,159,424 params excluding the codec, per the model card's own table.
     "audio8":        "601M",
     "audio8_fast":   "601M",
@@ -601,6 +605,8 @@ MODEL_URL = {
     "qwentts_06b":   _HF + "Qwen/Qwen3-TTS-12Hz-0.6B-Base",
     "qwentts_06b_custom": _HF + "Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice",
     "qwentts_fast":  _HF + "Qwen/Qwen3-TTS-12Hz-1.7B-Base",
+    "sopro":          _HF + "samuel-vitorino/sopro-v2-turbo",
+    "sopro_streaming": _HF + "samuel-vitorino/sopro-v2-turbo",
     "audio8":        _HF + "Audio8/Audio8-TTS-Preview-0.6b",
     # Same weights as `audio8` — the fastpath repo ships only the inference code.
     "audio8_fast":   _HF + "scrappylabsai/audio8-tts-fastpath",
@@ -682,6 +688,8 @@ MODEL_KIND = {
     "qwentts_06b":   "cloning",
     "qwentts_06b_custom": "predefined",
     "qwentts_fast":  "cloning",
+    "sopro":          "cloning",
+    "sopro_streaming": "cloning",
     # Both: `<|speaker:N|>` built-in voices AND zero-shot wav cloning, so both
     # slugs are in publish.py _PRESET_AND_CLONE and fill both lenses.
     "audio8":        "cloning",
@@ -752,6 +760,8 @@ MODEL_RELEASE = {
     "qwentts_06b":   "2026-01",
     "qwentts_06b_custom": "2026-01",
     "qwentts_fast":  "2026-01",
+    "sopro":          "2026-08",
+    "sopro_streaming": "2026-08",
     "audio8":        "2026-07",   # HF repo created 2026-07-28
     "audio8_fast":   "2026-08",   # fastpath repo created 2026-08-02
     "indextts":      "2025-06",
@@ -855,7 +865,8 @@ MODEL_SR = {
     "moss_tts": "24k", "moss_tts_v15": "24k", "moss_tts_nano": "48k",
     "neutts_air": "24k", "neutts_nano": "24k", "omnivoice": "24k", "openvoice": "22.05k",
     "pocket": "24k", "qwentts": "24k", "qwentts_06b": "24k", "qwentts_06b_custom": "24k",
-    "qwentts_fast": "24k", "audio8": "44.1k", "audio8_fast": "44.1k", "sesame": "24k",
+    "qwentts_fast": "24k", "sopro": "24k", "sopro_streaming": "24k",
+    "audio8": "44.1k", "audio8_fast": "44.1k", "sesame": "24k",
     "step_editx": "24k", "styletts2": "24k", "vibevoice_15b": "24k", "vibevoice_7b": "24k",
     "voxcpm": "48k", "wavtts": "16k", "zipvoice": "24k", "zonos": "44.1k", "zonos2": "44.1k",
 }
@@ -883,6 +894,7 @@ MODEL_EXPRESSIVE = {
     "qwentts": "—", "qwentts_06b": "—",
     # CustomVoice instruct control is unverified pending a runtime check (card/table conflict).
     "qwentts_06b_custom": "—", "qwentts_fast": "—",
+    "sopro": "—", "sopro_streaming": "—",
     # `<|speaker:N|>` selects a built-in voice; no emotion/style control documented.
     "audio8": "—", "audio8_fast": "—",
     "sesame": "—", "step_editx": "tags + desc",
@@ -913,6 +925,7 @@ MODEL_LICENSE = {
     "omnivoice": "Apache 2.0 code / CC-BY-NC weights",
     "openvoice": "MIT", "pocket": "Apache 2.0", "qwentts": "Apache 2.0",
     "qwentts_06b": "Apache 2.0", "qwentts_06b_custom": "Apache 2.0", "qwentts_fast": "MIT",
+    "sopro": "Apache 2.0", "sopro_streaming": "Apache 2.0",
     "audio8": "Apache 2.0", "audio8_fast": "Apache 2.0",
     "sesame": "Apache 2.0", "step_editx": "Apache 2.0", "styletts2": "MIT", "vibevoice_15b": "MIT",
     "vibevoice_7b": "MIT", "voxcpm": "Apache 2.0", "wavtts": "MIT code / CC-BY-NC 4.0 weights",
@@ -937,7 +950,8 @@ MODEL_LANGS = {
     "moss_tts": "✓ (20)", "moss_tts_v15": "✓ (31)", "moss_tts_nano": "✓ (zh+en)",
     "neutts_air": "—", "neutts_nano": "✓ (4)", "omnivoice": "✓ (600+)", "openvoice": "✓",
     "pocket": "✓ (6)", "qwentts": "✓", "qwentts_06b": "✓", "qwentts_06b_custom": "✓",
-    "qwentts_fast": "✓", "audio8": "✓ (11)", "audio8_fast": "✓ (11)",
+    "qwentts_fast": "✓", "sopro": "✓ (4)", "sopro_streaming": "✓ (4)",
+    "audio8": "✓ (11)", "audio8_fast": "✓ (11)",
     "sesame": "—", "step_editx": "—",
     "styletts2": "—", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "✓ (30)",
     "wavtts": "✓ (zh+en)", "zipvoice": "✓ (zh+en)", "zonos": "✓", "zonos2": "—",

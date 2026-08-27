@@ -590,6 +590,20 @@ else
     echo "soprano: already installed"
 fi
 
+# --- Sopro V2 Turbo 120M (Apache-2.0, zero-shot cloning, offline + streaming) ---
+echo; cyan "=== Sopro V2 Turbo 120M (Apache-2.0, zero-shot cloning, offline + streaming) ==="
+if ! want sopro; then echo "sopro: skipped (not in install filter)"
+elif [ ! -x venvs/sopro/bin/python ]; then
+    uv venv venvs/sopro --python 3.11 || die "uv venv sopro"
+    # Pin exactly: v2 shipped five patch releases in its first 11 hours. On Linux,
+    # PyPI torch is already CUDA-enabled, so no Windows-style reinstall is needed.
+    uv pip install --python venvs/sopro/bin/python "sopro==2.0.5" \
+        || die "uv pip install sopro"
+    green "sopro: ok (120M, 24kHz, wav-only cloning; offline + streaming weights auto-download on first use)"
+else
+    echo "sopro: already installed"
+fi
+
 # --- MOSS-TTS-Nano 100M (OpenMOSS/MOSI.AI, Apache 2.0, zero-shot cloning, 48kHz) ---
 echo; cyan "=== MOSS-TTS-Nano 100M (OpenMOSS/MOSI.AI, Apache 2.0, zero-shot cloning, 48kHz) ==="
 if ! want moss_tts_nano; then echo "moss_tts_nano: skipped (not in install filter)"
