@@ -718,10 +718,17 @@ elif [ ! -x venvs/breeze_tts2/bin/python ]; then
     fi
     # PyPI torch is already CUDA-enabled on Linux, and triton is a real wheel here
     # (Windows needs triton-windows), so this is one resolve rather than a torch-last pass.
+    # PIN torch AND torchaudio to the SAME version, both from the cu128 index. torchaudio
+    # arrives transitively (qwen-tts), and with a bare `torch` + unsafe-best-match the
+    # resolver takes torch from PyPI (2.13.0, cu130) while torchaudio comes off the cu128
+    # extra index at 2.11.0 -- an ABI mismatch that does NOT fail at install time. It fails
+    # at load with `OSError: Could not load this library: .../_torchaudio.abi3.so`, which
+    # reads like a corrupt wheel rather than a version skew. Hit on the Linux-3090
+    # 2026-08-27. 2.11.0 is also what install.ps1 floors Windows at (`torch>=2.11.0`).
     uv pip install --python venvs/breeze_tts2/bin/python \
         --extra-index-url https://download.pytorch.org/whl/cu128 \
         --index-strategy unsafe-best-match \
-        torch "transformers==4.57.3" "qwen-tts==0.1.1" \
+        "torch==2.11.0" "torchaudio==2.11.0" "transformers==4.57.3" "qwen-tts==0.1.1" \
         huggingface-hub numpy safetensors soundfile librosa accelerate \
         || die "uv pip install breeze-tts deps"
     # ~6.97 GB to a local dir (not the HF cache) -- the runner loads from this path.
