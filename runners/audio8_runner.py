@@ -1,21 +1,44 @@
-"""Audio8 TTS Preview 0.6B (Apache-2.0, 11 languages, zero-shot cloning).
+"""Audio8 TTS Preview -- 0.6B and 0.1B (11 languages, zero-shot cloning).
 
 DualAR architecture (explicitly credited to Fish Audio S2 Pro): a 24-layer slow
 AR transformer emits one semantic token per audio frame, a 4-layer fast AR
-transformer fills that frame's 10 codec codebooks. 601,159,424 params excluding
-the codec; the bundled 44.1 kHz codec handles both reference encoding and
-waveform decode, so there is no second checkpoint to install.
+transformer fills that frame's codec codebooks. The bundled 44.1 kHz codec
+handles both reference encoding and waveform decode, so there is no second
+checkpoint to install.
 
-Two variants share this venv and runner. --variant picks the INFERENCE ENGINE,
-not the weights -- both run the same Audio8/Audio8-TTS-Preview-0.6b checkpoint,
-which is the whole point: it makes the speed delta attributable to the engine.
+THREE variants share this venv and runner, and --variant means two different
+things depending on which you pick:
 
-    base      -> stock transformers AutoModel.generate (eager reference path)
-    fastpath  -> ScrappyLabs `fast_arktts` static-shape rewrite + torch.compile
-                 (https://huggingface.co/scrappylabsai/audio8-tts-fastpath)
+    base      -> 0.6B weights, stock transformers AutoModel.generate (eager)
+    fastpath  -> 0.6B weights, ScrappyLabs `fast_arktts` static-shape rewrite
+                 + torch.compile (https://huggingface.co/scrappylabsai/audio8-tts-fastpath)
+    base_01b  -> 0.1B weights, stock transformers AutoModel.generate (eager)
+
+`base` vs `fastpath` is an ENGINE pairing -- same Audio8-TTS-Preview-0.6b
+weights, so the speed delta is attributable to the engine. `base_01b` is a
+different CHECKPOINT: 169,779,904 params excluding the ~120M codec decoder, vs
+601,159,424 for the 0.6B. It is not a pruned 0.6B -- its slow AR is a Falcon-H1
+hybrid (attention + Mamba) where the 0.6B's is plain attention, so `base` vs
+`base_01b` is a size+architecture pairing, not an engine one.
 
 `fastpath` upstream defaults to their own `scrappylabsai/warble` fine-tune; we
 override model_id to the base checkpoint so the two rows are the same weights.
+
+LICENCE DIVERGENCE, easy to get wrong: the 0.6B is Apache-2.0, the 0.1B is the
+`Audio8 Community License v1.0` -- a revenue-capped custom licence (commercial
+use permitted only under US$2M annual revenue; evaluation/research granted
+outright by 2.1). Its 3 "Responsible Use" clause also forbids using the model to
+impersonate individuals without consent, which is why the cloning reference for
+this row is a deliberate choice rather than the house default. Do not copy the
+0.6B's Apache row into the 0.1B registries.
+
+MAMBA KERNELS: the 0.1B's Falcon-H1 layers look for `selective_state_update` /
+`causal_conv1d_fn` from mamba-ssm + causal-conv1d. Neither ships a Windows wheel,
+so transformers logs "falling back to the naive implementation" and runs a Python
+loop over timesteps. The model is CORRECT this way, just slow -- measured 0.35x
+RTFx on a 5090, i.e. SLOWER than the 0.6B's ~0.7x despite being 3.5x smaller.
+Read that row as a floor, not the model's ceiling; a Linux rig with the kernels
+installed should invert it.
 
 API (base):
     processor = AutoProcessor.from_pretrained(model_dir, trust_remote_code=True)
@@ -60,17 +83,27 @@ import _meminfo
 
 
 REPO = Path(__file__).resolve().parents[1]
-MODEL_DIR = REPO / "venvs" / "audio8" / "src" / "Audio8-TTS-Preview-0.6b"
-FASTPATH_DIR = REPO / "venvs" / "audio8" / "src" / "fastpath"
+_SRC = REPO / "venvs" / "audio8" / "src"
+FASTPATH_DIR = _SRC / "fastpath"
 
-VARIANTS = ("base", "fastpath")
+# --variant -> checkpoint dir. `base` and `fastpath` are the SAME 0.6B weights on
+# two engines; `base_01b` is a genuinely different, smaller checkpoint.
+MODEL_DIRS = {
+    "base":      _SRC / "Audio8-TTS-Preview-0.6b",
+    "fastpath":  _SRC / "Audio8-TTS-Preview-0.6b",
+    "base_01b":  _SRC / "Audio8-TTS-Preview-0.1b",
+}
+
+VARIANTS = tuple(MODEL_DIRS)
 DEFAULT_VARIANT = "base"
 
 # Cantonese, Chinese, Dutch, English, French, German, Italian, Japanese,
 # Korean, Polish, Spanish (the Preview checkpoint's stated coverage).
 SUPPORTED_LANGS = {"yue", "zh", "nl", "en", "fr", "de", "it", "ja", "ko", "pl", "es"}
 
-# ~21.5 frames/s -> 1024 frames is ~47 s. See module docstring for why not 400.
+# ~21.5 frames/s (44100 / codec_frame_size 2048) -> 1024 frames is ~47 s. See the
+# module docstring for why not 400. Both checkpoints share that frame rate; the
+# 0.1B's canonical prompt 3 measured 16.95 s (~365 frames), so the headroom holds.
 MAX_NEW_TOKENS = 1024
 
 # Built-in voice selector. Upstream's documented example tag; pinned with SEED
@@ -144,9 +177,10 @@ def main() -> int:
         import torch
         import soundfile as sf
 
-        if not MODEL_DIR.exists():
+        model_dir = MODEL_DIRS[variant]
+        if not model_dir.exists():
             raise FileNotFoundError(
-                f"{MODEL_DIR} is missing — run install.ps1/install.sh for `audio8`")
+                f"{model_dir} is missing — run install.ps1/install.sh for `audio8`")
 
         dtype = torch.bfloat16 if args.device == "cuda" else torch.float32
 
@@ -158,15 +192,15 @@ def main() -> int:
             from fast_arktts import FastTTS
             # Point the fast path at the BASE weights (upstream defaults to
             # their own `warble` fine-tune) so this row is engine-vs-engine.
-            engine = FastTTS(model_id=str(MODEL_DIR), compile_mode=COMPILE_MODE,
+            engine = FastTTS(model_id=str(model_dir), compile_mode=COMPILE_MODE,
                              max_new_tokens=MAX_NEW_TOKENS, device=args.device,
                              dtype=dtype, warmup=True)
             sample_rate = int(engine.model.config.codec_sample_rate)
         else:
             from transformers import AutoModel, AutoProcessor
-            processor = AutoProcessor.from_pretrained(str(MODEL_DIR), trust_remote_code=True)
+            processor = AutoProcessor.from_pretrained(str(model_dir), trust_remote_code=True)
             model = AutoModel.from_pretrained(
-                str(MODEL_DIR), trust_remote_code=True, dtype=dtype,
+                str(model_dir), trust_remote_code=True, dtype=dtype,
             ).eval().to(args.device)
             sample_rate = int(model.config.codec_sample_rate)
     except Exception as e:

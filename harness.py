@@ -65,6 +65,14 @@ MODELS = [
     # inductor caches to disk, so later runs load in ~50s. See docs/known-issues.md.
     ("audio8",      "audio8", "runners/audio8_runner.py", True,  ["cpu", "cuda"], "base",     True),
     ("audio8_fast", "audio8", "runners/audio8_runner.py", True,  ["cuda"],        "fastpath", True),
+    # Audio8 TTS Preview 0.1B: a genuinely DIFFERENT, smaller checkpoint sharing the
+    # venv + runner -- not another engine over the 0.6B weights. Its slow AR is a
+    # Falcon-H1 hybrid (attention + Mamba) where the 0.6B's is plain attention, so the
+    # pairing is size+architecture, not engine. Real <|speaker:N|> presets AND wav
+    # cloning -> _PRESET_AND_CLONE, both lenses. 11 languages incl. French.
+    # NOTE: without mamba-ssm/causal-conv1d (no Windows wheels) transformers runs the
+    # naive Mamba path, so the speed row understates the model -- see known-issues.
+    ("audio8_01b",  "audio8", "runners/audio8_runner.py", True,  ["cpu", "cuda"], "base_01b", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   False, ["cpu", "cuda"],        None,   True),
     # S2-Pro is 80+ languages (card: tier-1 ja/en/zh, tier-2 incl. fr) and the runner
     # is text-driven — it ignores --language and detects from the text — so the FR
