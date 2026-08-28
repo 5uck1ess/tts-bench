@@ -285,6 +285,23 @@ if [ ! -d venvs/audio8/src/Audio8-TTS-Preview-0.1b ]; then
     venvs/audio8/bin/python -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.1b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.1b', ignore_patterns=['*.jpeg','*.png','samples/*'])" \
         || die "download audio8 0.1B weights"
 fi
+# Mamba fast-path kernels for the 0.1B's Falcon-H1 hybrid AR. Linux-only: both build
+# CUDA kernels from source and neither ships a Windows wheel, which is why the Windows
+# row is a floor. Without them transformers logs "The fast path is not available ...
+# Falling back to the naive implementation" and runs a Python loop over Mamba timesteps
+# -- correct output, roughly half speed. MEASURED on the 3090 (warm cuda, mean over the
+# 5 canonical prompts): 0.44x RTFx naive -> 0.87x with the kernels. The source build is
+# ~11 min; MAX_JOBS caps the nvcc fan-out so it does not exhaust RAM.
+if ! venvs/audio8/bin/python -c "import mamba_ssm, causal_conv1d" 2>/dev/null; then
+    uv pip install --python venvs/audio8/bin/python setuptools wheel packaging ninja \
+        || die "uv pip install audio8 mamba build deps"
+    MAX_JOBS=${MAX_JOBS:-8} uv pip install --python venvs/audio8/bin/python \
+        --no-build-isolation causal-conv1d mamba-ssm \
+        || die "uv pip install mamba-ssm/causal-conv1d (audio8 0.1B fast path)"
+    green "audio8: mamba fast-path kernels built"
+else
+    echo "audio8: mamba fast-path kernels already present"
+fi
 green "audio8: ok (0.6B base + fastpath + 0.1B via --variant; first fastpath run compiles ~370s, then inductor-cached)"
 fi
 
