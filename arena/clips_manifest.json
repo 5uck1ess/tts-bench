@@ -52,6 +52,31 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_cuda_p5.wav"
         },
         {
+          "model": "audio8_01b",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_01b_cuda_p1.wav"
+        },
+        {
+          "model": "audio8_01b",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_01b_cuda_p2.wav"
+        },
+        {
+          "model": "audio8_01b",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_01b_cuda_p3.wav"
+        },
+        {
+          "model": "audio8_01b",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_01b_cuda_p4.wav"
+        },
+        {
+          "model": "audio8_01b",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_01b_cuda_p5.wav"
+        },
+        {
           "model": "audio8_fast",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_fast_cuda_p1.wav"
@@ -895,6 +920,31 @@
           "model": "audio8",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_cuda_p5.wav"
+        },
+        {
+          "model": "audio8_01b",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_01b_cuda_p1.wav"
+        },
+        {
+          "model": "audio8_01b",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_01b_cuda_p2.wav"
+        },
+        {
+          "model": "audio8_01b",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_01b_cuda_p3.wav"
+        },
+        {
+          "model": "audio8_01b",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_01b_cuda_p4.wav"
+        },
+        {
+          "model": "audio8_01b",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_01b_cuda_p5.wav"
         },
         {
           "model": "audio8_fast",
@@ -1908,6 +1958,10 @@
     "audio8": {
       "name": "Audio8 TTS Preview 0.6B",
       "url": "https://huggingface.co/Audio8/Audio8-TTS-Preview-0.6b"
+    },
+    "audio8_01b": {
+      "name": "Audio8 TTS Preview 0.1B",
+      "url": "https://huggingface.co/Audio8/Audio8-TTS-Preview-0.1b"
     },
     "audio8_fast": {
       "name": "Audio8 TTS 0.6B (compiled)",
