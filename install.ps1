@@ -115,6 +115,17 @@ if (-not (Want "piper")) { Write-Host "piper: skipped (not in install filter)" -
     Write-Host "piper: already installed" -ForegroundColor Gray
 }
 
+Step "sanoTTS"
+if (-not (Want "sanotts")) { Write-Host "sanotts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\sanotts\Scripts\python.exe")) {
+    Invoke-Checked "uv venv sanotts" { uv venv venvs\sanotts --python 3.11 }
+    # Voice packs download on first use into ~/.cache/sanotts/.
+    Invoke-Checked "uv pip install sanotts" { uv pip install --python venvs\sanotts\Scripts\python.exe "sanotts[espeak]==0.5.0" soundfile numpy psutil }
+    Write-Host "sanotts: ok" -ForegroundColor Green
+} else {
+    Write-Host "sanotts: already installed" -ForegroundColor Gray
+}
+
 Step "Scylla's Band"
 if (-not (Want "scyllasband")) { Write-Host "scyllasband: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\scyllasband\Scripts\python.exe")) {

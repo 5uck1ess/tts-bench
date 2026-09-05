@@ -176,6 +176,19 @@ else
     echo "piper: already installed"
 fi
 
+# --- sanoTTS ---
+echo; cyan "=== sanoTTS ==="
+if ! want sanotts; then echo "sanotts: skipped (not in install filter)"
+elif [ ! -x venvs/sanotts/bin/python ]; then
+    uv venv venvs/sanotts --python 3.11 || die "uv venv sanotts"
+    # Voice packs download on first use into ~/.cache/sanotts/.
+    uv pip install --python venvs/sanotts/bin/python "sanotts[espeak]==0.5.0" soundfile numpy psutil \
+        || die "uv pip install sanotts"
+    green "sanotts: ok"
+else
+    echo "sanotts: already installed"
+fi
+
 # --- Scylla's Band ---
 echo; cyan "=== Scylla's Band ==="
 if ! want scyllasband; then echo "scyllasband: skipped (not in install filter)"
