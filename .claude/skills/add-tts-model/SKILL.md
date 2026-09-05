@@ -234,3 +234,42 @@ manifest-only upload after confirming the schema is unchanged.
 
 Write predictions into the task where you have them (expected RTFx on other hardware,
 and why). A prediction that can be checked later is worth more than a summary.
+
+## Re-benching a row that is already live
+
+A model whose upstream shipped a fix is **not** a fresh add. The phases above still
+apply, but four things differ, and three of them fail silently.
+
+**Preserve the old rows before touching the venv.** Copy the model's rows + wavs out of
+both canonical dirs into `results/_preserved_<model>_<version>/` (the repo already has
+`_preserved_moss_tts_v1.0` for this). Without it the by-ear gate has nothing to compare
+against — and the honest question is not "is this good", it's "is this better than what
+we already published". Stage the A/B on **prompt 3**, old vs new, and gate on it.
+
+**Confirm the weights actually moved.** Record
+`~/.cache/huggingface/hub/models--<org>--<repo>/refs/main` before the first load and
+after. Upstream ships weight changes without a package version bump, so a stale cache
+means you benched new code on old audio and every number downstream is wrong. Write the
+resolved SHA into the runner docstring — no runner here pins `revision=`, so that
+recorded SHA is the only record of which checkpoint a row was measured on.
+
+**`scoring/scores.csv` is keyed by wav FILENAME, not by content.** A re-bench writes new
+audio to the same filenames, so the old UTMOS/WER/SIM cells silently re-attach to it and
+the row renders new speed + new audio + **old scores**. Drop the model's rows from
+`scores.csv` at publish time; empty Scores cells are honest, and the next Linux pass
+refills them. Whatever conclusion those scores supported (an engine-pair quality gap, a
+crosslingual claim) may also no longer hold — re-read the known-issues entry that cites
+them.
+
+**Arena clip URLs never change, so votes silently transfer.** The manifest holds URLs
+only, with no hash or duration, so a re-bench needs no manifest redeploy — the live arena
+just starts serving new audio under an identity that already carries votes earned by the
+old audio. That is a decision for the repo owner (reset the model's votes, or let them
+blend), not a mechanical step. It stays reversible after publishing, so it should never
+block the publish.
+
+Mechanics: `merge.py --replace` is the flag for this (plain merge has a duplicate guard
+and `--force` *appends*, giving you 120 rows where you wanted 60). And a re-bench usually
+invalidates the other rigs' rows too — the Linux speed rows and all six score cells are
+measured on the old version the moment you publish, so queue that re-run with predictions
+rather than leaving the board mixed-version and unmarked.
