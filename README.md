@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (69)
+## Models tracked (71)
 
 #### Predefined voices
 
@@ -106,6 +106,8 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [Parler-TTS Mini v1](https://huggingface.co/parler-tts/parler-tts-mini-v1) | 878M | Jun 2024 | ✓ (voice desc) | — | — | **44.1k** | desc\* | Apache 2.0 |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) | ~15M | Jan 2023 | ✓ | — | ✓ | 22.05k | — | GPL-3.0 |
 | [Qwen3-TTS 0.6B CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice) | 0.6B | Jan 2026 | ✓ (9) | — | ✓ | 24k | — | Apache 2.0 |
+| [sanoTTS Amy](https://huggingface.co/ampixa/sanoTTS) | 1.46M | Jul 2026 | ✓ (1) | — | — (en) | 22.05k | knob | GPL-3.0 |
+| [sanoTTS Heart-Nano](https://huggingface.co/ampixa/sanoTTS) | 294K | Sep 2026 | ✓ (1) | — | — (en) | 24k | knob | GPL-3.0 |
 | [Scylla's Band](https://huggingface.co/spybyscript/scyllasband) | ~103M | Jul 2026 | ✓ (10) | — | ✓ (4) | 24k | 6 knobs | Apache 2.0 |
 | [Soprano 1.1 80M](https://huggingface.co/ekwek/Soprano-1.1-80M) | 80M | Jan 2026 | ✓ | — | — | 32k | — | Apache 2.0 |
 | [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) | 99M | May 2026 | ✓ | — | ✓ (31) | 24k | tags | MIT + OpenRAIL-M |
@@ -177,7 +179,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**48 of the 69 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**48 of the 71 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 
