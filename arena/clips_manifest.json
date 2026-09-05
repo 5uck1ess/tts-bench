@@ -697,6 +697,41 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_06b_custom_cuda_p5.wav"
         },
         {
+          "model": "sanotts_amy",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/sanotts_amy_cpu_p1.wav"
+        },
+        {
+          "model": "sanotts_amy",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/sanotts_amy_cpu_p2.wav"
+        },
+        {
+          "model": "sanotts_amy",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/sanotts_amy_cpu_p3.wav"
+        },
+        {
+          "model": "sanotts_amy",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/sanotts_amy_cpu_p4.wav"
+        },
+        {
+          "model": "sanotts_heart_nano",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/sanotts_heart_nano_cpu_p1.wav"
+        },
+        {
+          "model": "sanotts_heart_nano",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/sanotts_heart_nano_cpu_p2.wav"
+        },
+        {
+          "model": "sanotts_heart_nano",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/sanotts_heart_nano_cpu_p4.wav"
+        },
+        {
           "model": "scyllasband",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/scyllasband_cpu_p1.wav"
@@ -2142,6 +2177,14 @@
     "qwentts_fast": {
       "name": "Qwen3-TTS 1.7B (CUDA-graph)",
       "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base"
+    },
+    "sanotts_amy": {
+      "name": "sanoTTS Amy",
+      "url": "https://huggingface.co/ampixa/sanoTTS"
+    },
+    "sanotts_heart_nano": {
+      "name": "sanoTTS Heart-Nano",
+      "url": "https://huggingface.co/ampixa/sanoTTS"
     },
     "scyllasband": {
       "name": "Scylla's Band",
