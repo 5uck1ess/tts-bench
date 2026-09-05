@@ -634,9 +634,11 @@ echo; cyan "=== Sopro V2 Turbo 120M (Apache-2.0, zero-shot cloning, offline + st
 if ! want sopro; then echo "sopro: skipped (not in install filter)"
 elif [ ! -x venvs/sopro/bin/python ]; then
     uv venv venvs/sopro --python 3.11 || die "uv venv sopro"
-    # Pin exactly: v2 shipped five patch releases in its first 11 hours. On Linux,
+    # Pin exactly: v2 shipped five patch releases in its first 11 hours. 2.2.0 is a
+    # HARD floor, not just a pin -- the current HF artifacts (unified Vocos) fail to
+    # load on <=2.1.1, which still expects vocoder_streaming.safetensors. On Linux,
     # PyPI torch is already CUDA-enabled, so no Windows-style reinstall is needed.
-    uv pip install --python venvs/sopro/bin/python "sopro==2.0.5" \
+    uv pip install --python venvs/sopro/bin/python "sopro==2.2.0" \
         || die "uv pip install sopro"
     green "sopro: ok (120M, 24kHz, wav-only cloning; offline + streaming weights auto-download on first use)"
 else

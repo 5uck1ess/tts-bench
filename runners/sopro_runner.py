@@ -8,16 +8,25 @@ convention of the other cloning-only runners, so the default lens still yields a
 comparable speed row rather than a failure cell. Reference is wav only -- no
 sibling transcript is needed.
 
-Two engine variants share one checkpoint but select different vocoders:
+Two engine variants share one checkpoint:
 
-    offline   -> tts.synthesize(), vocoder.safetensors
-    streaming -> tts.stream(), vocoder_streaming.safetensors
-                 (causal Vocos with three frames of lookahead)
+    offline   -> tts.synthesize(), full waveform returned in one call
+    streaming -> tts.stream(), audio yielded in 64-frame chunks
 
-The paths are not bit-exact. Streaming TTFA is measured when the first yielded
-audio chunk is ready. Offline generation returns the complete waveform, so its
-reported TTFA equals gen_s (expressed in milliseconds), not genuine streaming
-latency.
+Since sopro 2.2.0 both paths run the *same* unified causal Vocos (8 layers,
+3 frames of lookahead); the separate 14-layer non-causal ``vocoder_streaming``
+was removed upstream. The variants therefore differ only in generation
+granularity, not in vocoder -- which is what makes the TTFA delta attributable.
+The paths are still not bit-exact (chunked synthesis carries state across
+chunks). Streaming TTFA is measured when the first yielded audio chunk is ready.
+Offline generation returns the complete waveform, so its reported TTFA equals
+gen_s (expressed in milliseconds), not genuine streaming latency.
+
+Pinned surfaces, re-verified 2026-09-04: package ``sopro==2.2.0`` (a hard floor
+-- the current artifacts do not load on earlier releases) against HF revision
+``f747f9edfb7b0233a3b7105af3a75603a7213d26``. Upstream ships weight changes
+without a package bump, so `from_pretrained` takes whatever ``main`` holds; that
+SHA is the checkpoint these bench rows were measured on.
 
 The true output sample rate is ``tts.sample_rate == 24000``. Sampling is
 stochastic at the upstream defaults, so torch's CPU seed and, on CUDA, all CUDA

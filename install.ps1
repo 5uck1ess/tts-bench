@@ -519,8 +519,10 @@ Step "Sopro V2 Turbo 120M (Apache-2.0, zero-shot cloning, offline + streaming)"
 if (-not (Want "sopro")) { Write-Host "sopro: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\sopro\Scripts\python.exe")) {
     Invoke-Checked "uv venv sopro" { uv venv venvs\sopro --python 3.11 }
-    # Pin exactly: v2 shipped five patch releases in its first 11 hours.
-    Invoke-Checked "uv pip install sopro" { uv pip install --python venvs\sopro\Scripts\python.exe "sopro==2.0.5" }
+    # Pin exactly: v2 shipped five patch releases in its first 11 hours. 2.2.0 is a
+    # HARD floor, not just a pin -- the current HF artifacts (unified Vocos) fail to
+    # load on <=2.1.1, which still expects vocoder_streaming.safetensors.
+    Invoke-Checked "uv pip install sopro" { uv pip install --python venvs\sopro\Scripts\python.exe "sopro==2.2.0" }
     # PyPI's Windows torch wheel is CPU-only. A plain `uv pip install torch
     # --index-url ...` sees that wheel as already satisfied and no-ops, so force
     # both torch packages from cu128 LAST (required for RTX 5090 / sm_120).
