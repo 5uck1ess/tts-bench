@@ -1,9 +1,28 @@
 """Pocket-TTS runner.
 
-API discovered by inspection (2026-05-22):
+Benched on **pocket-tts v3.1.0** (re-benched 2026-09-05 from v2.1.0; install.sh /
+install.ps1 now clone `--branch v3.1.0` so this cannot drift silently again).
+
+Resolved checkpoints — nothing here passes `revision=`, so these SHAs are the only
+record of what a row was actually measured on:
+    pocket (live)  english             @39592ff23c9ef80098bb74895d104c26275fe2c9
+    --variant 24l  english_2026-04_24l @492522650173a0653b7575cdc25ae09810e5d741
+
+`--variant 24l` has NO harness row: the 24-layer variant was benched 2026-09-05 and
+skipped (336M for 1.62x RTFx against the base row's 4.90x — see docs/considered.md).
+The mapping is kept so revisiting it is one harness row, not a re-implementation.
+
+**The v2.1.0 -> v3.1.0 delta is sampling temperature, not weights.** `english`'s
+weights are byte-identical across the two releases (same @39592ff2), but v3.1.0
+added `default_temperature: 0.3` to the config; v2.1.0 had no such key and fell
+back to the global DEFAULT_TEMPERATURE = 0.7. This runner deliberately does NOT
+pass `temp`, so a row always reflects upstream's own default — which is why the
+re-benched audio differs from the published v2.1.0 clips.
+
+API discovered by inspection (2026-05-22, re-verified against v3.1.0 2026-09-05):
     from pocket_tts import TTSModel
     from pocket_tts.utils.utils import _ORIGINS_OF_PREDEFINED_VOICES
-    model = TTSModel.load_model(language="english_2026-04")
+    model = TTSModel.load_model(language="english")   # see LANGUAGE_CONFIG
     state = model.get_state_for_audio_prompt("hf://kyutai/tts-voices/...")
     for chunk in model.generate_audio_stream(state, text):
         ...
@@ -22,12 +41,28 @@ import _meminfo
 
 
 LANGUAGE_CONFIG = {
-    "en": "english_2026-04",
+    # "english", NOT "english_2026-04". They are different checkpoints despite
+    # upstream's load_model docstring calling them "the same model":
+    #   english          -> languages/english/model.safetensors@39592ff2
+    #   english_2026-04  -> languages/english_2026-04/model.safetensors@19f95fe2
+    # Every published `pocket` row was measured on "english" (the old code path
+    # called load_model() with no argument, which resolves here), so this stays
+    # "english" to keep the v2.1.0 -> v3.1.0 re-bench a clean version comparison
+    # rather than a silent checkpoint swap.
+    "en": "english",
     "fr": "french_24l",
     "de": "german_24l",
     "it": "italian_24l",
     "pt": "portuguese_24l",
     "es": "spanish_24l",
+}
+
+# Harness variant -> English model config. Only English ships a size variant;
+# the non-English entries above are already upstream's 24-layer builds, so the
+# variant is meaningful for English only.
+VARIANT_EN_CONFIG = {
+    None:  "english",
+    "24l": "english_2026-04_24l",
 }
 
 
@@ -47,7 +82,7 @@ def main() -> int:
     p.add_argument("--out", default=None)
     p.add_argument("--device", default="cpu")        # pocket-tts is CPU-only
     p.add_argument("--reference", default=None)
-    p.add_argument("--variant", default=None)        # unused
+    p.add_argument("--variant", default=None)        # None = 16-layer; "24l" = 24-layer English
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--language", default="en")
     p.add_argument("--stdin", action="store_true",
@@ -64,10 +99,10 @@ def main() -> int:
         import soundfile as sf
 
         if args.language == "en":
-            model = TTSModel.load_model()
+            lang_cfg = VARIANT_EN_CONFIG.get(args.variant, VARIANT_EN_CONFIG[None])
         else:
             lang_cfg = LANGUAGE_CONFIG.get(args.language, LANGUAGE_CONFIG["en"])
-            model = TTSModel.load_model(language=lang_cfg)
+        model = TTSModel.load_model(language=lang_cfg)
         samplerate = int(model.sample_rate)
 
         # Pocket-TTS accepts either a predefined voice name ("anna") or a path/url to

@@ -56,7 +56,10 @@ if ! want pocket; then echo "pocket: skipped (not in install filter)"
 elif [ ! -x venvs/pocket/bin/python ]; then
     uv venv venvs/pocket --python 3.11 || die "uv venv pocket"
     if [ ! -d venvs/pocket/src ]; then
-        git clone https://github.com/kyutai-labs/pocket-tts venvs/pocket/src \
+        # Pinned: an unpinned clone silently drifted the live row from v2.1.0 to
+        # whatever HEAD was on install day. v3.1.0 sets default_temperature 0.3
+        # (v2.1.0 fell back to 0.7), which changes the audio.
+        git clone --branch v3.1.0 --depth 1 https://github.com/kyutai-labs/pocket-tts venvs/pocket/src \
             || die "git clone pocket-tts"
     fi
     uv pip install --python venvs/pocket/bin/python -e venvs/pocket/src \

@@ -32,7 +32,10 @@ if (-not (Want "pocket")) { Write-Host "pocket: skipped (not in install filter)"
 } elseif (-not (Test-Path "venvs\pocket\Scripts\python.exe")) {
     Invoke-Checked "uv venv pocket" { uv venv venvs\pocket --python 3.11 }
     if (-not (Test-Path "venvs\pocket\src")) {
-        Invoke-Checked "git clone pocket-tts" { git clone https://github.com/kyutai-labs/pocket-tts venvs\pocket\src }
+        # Pinned: an unpinned clone silently drifted the live row from v2.1.0 to
+        # whatever HEAD was on install day. v3.1.0 sets default_temperature 0.3
+        # (v2.1.0 fell back to 0.7), which changes the audio.
+        Invoke-Checked "git clone pocket-tts" { git clone --branch v3.1.0 --depth 1 https://github.com/kyutai-labs/pocket-tts venvs\pocket\src }
     }
     Invoke-Checked "uv pip install pocket-tts" { uv pip install --python venvs\pocket\Scripts\python.exe -e venvs\pocket\src }
     Invoke-Checked "uv pip install pocket deps" { uv pip install --python venvs\pocket\Scripts\python.exe soundfile numpy }
