@@ -56,6 +56,41 @@ def test_crosslingual_implies_multilingual():
     assert not bad, f"cross-lingual but not multilingual: {bad}"
 
 
+def test_langs_is_a_set_of_bench_languages():
+    """harness.MODELS `langs` must be a real set drawn from BENCH_LANGS.
+
+    A bare string passes every truthiness check but silently mis-gates every
+    prompt (`"fr" in "en"` is False), so the type is part of the invariant.
+    """
+    bad = {row[0]: row[3] for row in harness.MODELS
+           if not isinstance(row[3], (set, frozenset))
+           or not set(row[3]) <= harness.BENCH_LANGS}
+    assert not bad, f"langs not a set drawn from {sorted(harness.BENCH_LANGS)}: {bad}"
+
+
+def test_every_model_speaks_english():
+    """Every canonical prompt language must be runnable by someone, and every
+    model runs the English ones — that's what makes the board comparable."""
+    bad = [row[0] for row in harness.MODELS if "en" not in row[3]]
+    assert not bad, f"models missing 'en' in langs: {bad}"
+
+
+def test_bench_prompt_languages_are_declared():
+    """A prompt in a language no model declares would silently never run."""
+    from scoring.prompts import PROMPTS
+    spoken = set().union(*(set(row[3]) for row in harness.MODELS))
+    orphans = sorted({lang for _pid, lang, _t in PROMPTS} - spoken)
+    assert not orphans, f"bench prompts in languages no model declares: {orphans}"
+
+
+def test_non_english_langs_require_a_multilingual_cell():
+    """The one-way invariant report.py enforces at import, pinned as a test:
+    running a non-English canonical prompt implies a ✓ Languages cell."""
+    bad = [row[0] for row in harness.MODELS
+           if set(row[3]) - {"en"} and not report._is_multilingual(row[0])]
+    assert not bad, f"runs a non-English prompt but Languages cell says en-only: {bad}"
+
+
 def test_commercial_heuristic_flags_known_licenses():
     assert report._is_commercial("kokoro") is True    # Apache 2.0
     assert report._is_commercial("coqui") is False     # CPML (non-commercial)

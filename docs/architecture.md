@@ -14,6 +14,11 @@ Five prompts, English + one French, mixing conversational and technical content:
 4. Shell command read aloud — punctuation / symbol density stress
 5. `"Bonjour, je m'appelle Cicero..."` — French / multilingual (skipped on EN-only models)
 
+Which models run a non-English prompt is declared per model by the `langs` **set** in
+`harness.MODELS` (`{"en"}`, `{"en", "fr"}`, …), gated by `lang in cell["langs"]`. Adding a
+prompt in a new language means widening that set on the models whose *installed runner*
+demonstrably speaks it — `harness.BENCH_LANGS` is the allowed vocabulary.
+
 Per `(model, device, prompt)` cell:
 - One subprocess loads the model once
 - Generates the prompt **N times** (default 3 = 1 cold + 2 warm)

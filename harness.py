@@ -16,40 +16,49 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent
 
 
-# (name, venv_dir, runner_relpath, multilingual?, devices, variant, can_clone)
+# (name, venv_dir, runner_relpath, langs, devices, variant, can_clone)
+# langs: the set of BENCH PROMPT languages this model actually synthesizes, i.e.
+#        which canonical prompts it runs. Every model speaks English, so the set
+#        always contains "en"; anything beyond that must be backed by the
+#        installed runner (a real per-language checkpoint / voice / lang code),
+#        not by the model card's marketing copy. This is NOT report.MODEL_LANGS
+#        — that's the human-facing README coverage cell, and a model can be
+#        genuinely multilingual (zh+en, en+ja) while speaking no bench language
+#        but English. Replaced a `multilingual: bool` that could only ever mean
+#        "runs prompt 5 (French)"; see docs/known-issues.md.
 # can_clone: True  = accepts user-supplied reference wav at inference (zero-shot)
 #            False = predefined voice list only (Kokoro, KittenTTS, Piper)
 #            "gated" = cloning works but requires HF accept-terms login
 MODELS = [
     # Zero-shot voice cloning candidates
-    ("pocket",      "pocket",     "runners/pocket_runner.py",     True,  ["cpu"],                None,   "gated"),
-    ("neutts_air",  "neutts",     "runners/neutts_runner.py",     False, ["cpu", "cuda", "mps"], "air",  True),
-    ("neutts_nano", "neutts",     "runners/neutts_runner.py",     True,  ["cpu", "cuda", "mps"], "nano", True),
-    ("luxtts",      "luxtts",     "runners/luxtts_runner.py",     False, ["cpu", "cuda", "mps"], None,   True),
-    ("chatterbox",       "chatterbox", "runners/chatterbox_runner.py", False, ["cpu", "cuda", "mps"], None,    True),
-    ("chatterbox_turbo", "chatterbox", "runners/chatterbox_runner.py", False, ["cpu", "cuda", "mps"], "turbo", True),
-    ("f5tts",       "f5tts",      "runners/f5tts_runner.py",      False, ["cpu", "cuda", "mps"], None,   True),
-    ("coqui",       "coqui",      "runners/coqui_runner.py",      True,  ["cpu", "cuda", "mps"], None,   True),
-    ("omnivoice",   "omnivoice",  "runners/omnivoice_runner.py",  True,  ["cpu", "cuda", "mps"], None,   True),
-    ("zipvoice",    "zipvoice",   "runners/zipvoice_runner.py",   True,  ["cpu", "cuda", "mps"], None,   True),
-    ("voxcpm",      "voxcpm",     "runners/voxcpm_runner.py",     True,  ["cpu", "cuda"],        None,   True),
+    ("pocket",      "pocket",     "runners/pocket_runner.py",     {"en", "fr"},  ["cpu"],                None,   "gated"),
+    ("neutts_air",  "neutts",     "runners/neutts_runner.py",     {"en"},        ["cpu", "cuda", "mps"], "air",  True),
+    ("neutts_nano", "neutts",     "runners/neutts_runner.py",     {"en", "fr"},  ["cpu", "cuda", "mps"], "nano", True),
+    ("luxtts",      "luxtts",     "runners/luxtts_runner.py",     {"en"},        ["cpu", "cuda", "mps"], None,   True),
+    ("chatterbox",       "chatterbox", "runners/chatterbox_runner.py", {"en"},        ["cpu", "cuda", "mps"], None,    True),
+    ("chatterbox_turbo", "chatterbox", "runners/chatterbox_runner.py", {"en"},        ["cpu", "cuda", "mps"], "turbo", True),
+    ("f5tts",       "f5tts",      "runners/f5tts_runner.py",      {"en"},        ["cpu", "cuda", "mps"], None,   True),
+    ("coqui",       "coqui",      "runners/coqui_runner.py",      {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
+    ("omnivoice",   "omnivoice",  "runners/omnivoice_runner.py",  {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
+    ("zipvoice",    "zipvoice",   "runners/zipvoice_runner.py",   {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
+    ("voxcpm",      "voxcpm",     "runners/voxcpm_runner.py",     {"en", "fr"},  ["cpu", "cuda"],        None,   True),
     # base qwentts: cloning disabled — long prompts blow the 600s cell timeout, but
     # NOT because the sampler is slow (throughput is a steady ~0.5x RTFx). Decode
     # intermittently fails to emit EOS and runs away to max_new_tokens; the tell is
     # audio_s, not gen_s. See docs/known-issues.md. qwentts_fast (CUDA-graph, which
     # masks it via non_streaming_mode=True) handles cloning instead. Base also has no
     # model-native preset voice, so it is in NO_PRESET_VOICE → cloning board only.
-    ("qwentts",      "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base", False),
+    ("qwentts",      "qwentts",      "runners/qwentts_runner.py",      {"en", "fr"},  ["cpu", "cuda"],  "base", False),
     # qwentts_06b: same treatment as the 1.7B Base above — reference-only (no preset
     # voice → NO_PRESET_VOICE, cloning board) with the cloning LENS disabled by the
     # decode runaway. Its default-lens run clones the house Chris reference.
-    ("qwentts_06b",  "qwentts",      "runners/qwentts_runner.py",      True,  ["cpu", "cuda"],  "base_06b", False),
-    ("qwentts_fast", "qwentts_fast", "runners/qwentts_fast_runner.py", True,  ["cuda"],         "base", True),
+    ("qwentts_06b",  "qwentts",      "runners/qwentts_runner.py",      {"en", "fr"},  ["cpu", "cuda"],  "base_06b", False),
+    ("qwentts_fast", "qwentts_fast", "runners/qwentts_fast_runner.py", {"en", "fr"},  ["cuda"],         "base", True),
     # Sopro V2 Turbo: one checkpoint with separate offline and causal-streaming
     # vocoders. Pure zero-shot cloning (wav only, no transcript), so both rows are
     # reference-only and must stay in publish.py / arena NO_PRESET_VOICE.
-    ("sopro",           "sopro", "runners/sopro_runner.py", True, ["cpu", "cuda"], "offline",   True),
-    ("sopro_streaming", "sopro", "runners/sopro_runner.py", True, ["cpu", "cuda"], "streaming", True),
+    ("sopro",           "sopro", "runners/sopro_runner.py", {"en", "fr"}, ["cpu", "cuda"], "offline",   True),
+    ("sopro_streaming", "sopro", "runners/sopro_runner.py", {"en", "fr"}, ["cpu", "cuda"], "streaming", True),
     # Audio8 TTS Preview 0.6B (Apache-2.0): DualAR, credited to Fish Audio S2 Pro — a
     # 24-layer slow AR emits one semantic token per frame, a 4-layer fast AR fills that
     # frame's 10 codebooks. Bundled 44.1 kHz codec (no second checkpoint). 11 languages
@@ -63,8 +72,8 @@ MODELS = [
     # fastpath is CUDA-only: it needs Triton, which on Windows means the
     # `triton-windows` wheel (PyPI `triton` is Linux-only). First compile is ~370s but
     # inductor caches to disk, so later runs load in ~50s. See docs/known-issues.md.
-    ("audio8",      "audio8", "runners/audio8_runner.py", True,  ["cpu", "cuda"], "base",     True),
-    ("audio8_fast", "audio8", "runners/audio8_runner.py", True,  ["cuda"],        "fastpath", True),
+    ("audio8",      "audio8", "runners/audio8_runner.py", {"en", "fr"},  ["cpu", "cuda"], "base",     True),
+    ("audio8_fast", "audio8", "runners/audio8_runner.py", {"en", "fr"},  ["cuda"],        "fastpath", True),
     # Audio8 TTS Preview 0.1B: a genuinely DIFFERENT, smaller checkpoint sharing the
     # venv + runner -- not another engine over the 0.6B weights. Its slow AR is a
     # Falcon-H1 hybrid (attention + Mamba) where the 0.6B's is plain attention, so the
@@ -72,106 +81,106 @@ MODELS = [
     # cloning -> _PRESET_AND_CLONE, both lenses. 11 languages incl. French.
     # NOTE: without mamba-ssm/causal-conv1d (no Windows wheels) transformers runs the
     # naive Mamba path, so the speed row understates the model -- see known-issues.
-    ("audio8_01b",  "audio8", "runners/audio8_runner.py", True,  ["cpu", "cuda"], "base_01b", True),
-    ("indextts",    "indextts",   "runners/indextts_runner.py",   False, ["cpu", "cuda"],        None,   True),
+    ("audio8_01b",  "audio8", "runners/audio8_runner.py", {"en", "fr"},  ["cpu", "cuda"], "base_01b", True),
+    ("indextts",    "indextts",   "runners/indextts_runner.py",   {"en"},        ["cpu", "cuda"],        None,   True),
     # S2-Pro is 80+ languages (card: tier-1 ja/en/zh, tier-2 incl. fr) and the runner
     # is text-driven — it ignores --language and detects from the text — so the FR
     # canonical prompt just works. Was wrongly False until 2026-08-15 (issue #8), which
     # skipped prompt 5 entirely; its FR clip needs a Linux-3090 bench.
-    ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    True,  ["cuda"],               None,   True),
-    ("metavoice",   "metavoice",  "runners/metavoice_runner.py",  False, ["cuda"],               None,   True),
-    ("step_editx",  "step_editx", "runners/step_editx_runner.py", False, ["cuda"],               None,   True),
-    ("sesame",      "sesame",     "runners/sesame_runner.py",     False, ["cpu", "cuda"],        None,   "gated"),
-    ("mars5",       "mars5",      "runners/mars5_runner.py",      False, ["cpu", "cuda"],        None,   True),
-    ("dia",         "dia",        "runners/dia_runner.py",        False, ["cuda"],               None,   True),
-    ("fish_15",     "fish",       "runners/fish_runner.py",       True,  ["cpu", "cuda", "mps"], None,   True),
+    ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    {"en", "fr"},  ["cuda"],               None,   True),
+    ("metavoice",   "metavoice",  "runners/metavoice_runner.py",  {"en"},        ["cuda"],               None,   True),
+    ("step_editx",  "step_editx", "runners/step_editx_runner.py", {"en"},        ["cuda"],               None,   True),
+    ("sesame",      "sesame",     "runners/sesame_runner.py",     {"en"},        ["cpu", "cuda"],        None,   "gated"),
+    ("mars5",       "mars5",      "runners/mars5_runner.py",      {"en"},        ["cpu", "cuda"],        None,   True),
+    ("dia",         "dia",        "runners/dia_runner.py",        {"en"},        ["cuda"],               None,   True),
+    ("fish_15",     "fish",       "runners/fish_runner.py",       {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
     # Predefined-voice-only (no cloning)
-    ("qwentts_06b_custom", "qwentts", "runners/qwentts_runner.py", True, ["cpu", "cuda"], "custom_06b", False),
-    ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     True,  ["cpu", "cuda", "mps"], None,   False),
+    ("qwentts_06b_custom", "qwentts", "runners/qwentts_runner.py", {"en", "fr"}, ["cpu", "cuda"], "custom_06b", False),
+    ("kokoro",      "kokoro",     "runners/kokoro_runner.py",     {"en", "fr"},  ["cpu", "cuda", "mps"], None,   False),
     # kokoro_mlx: same Kokoro-82M weights + voices, but generation runs on Apple's
     # MLX (mlx-audio) instead of PyTorch-MPS. Apple-Silicon-only (mlx has no
     # CUDA/CPU-rig wheel) -> devices=["mps"]; the torch-free venv passes detect_mps
     # via MLX's Metal probe. Speed-only twin of `kokoro` (identical audio) — see
     # SPEED_ONLY in publish.py. MPS still wins; docs/known-issues.md has the numbers.
-    ("kokoro_mlx",  "kokoro_mlx", "runners/kokoro_mlx_runner.py", True,  ["mps"],                None,   False),
-    ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  False, ["cpu"],                None,   False),
-    ("piper",       "piper",      "runners/piper_runner.py",      True,  ["cpu", "cuda"],        None,   False),
-    ("sanotts_amy",        "sanotts", "runners/sanotts_runner.py", False, ["cpu"], "amy",        False),
-    ("sanotts_heart_nano", "sanotts", "runners/sanotts_runner.py", False, ["cpu"], "heart-nano", False),
+    ("kokoro_mlx",  "kokoro_mlx", "runners/kokoro_mlx_runner.py", {"en", "fr"},  ["mps"],                None,   False),
+    ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  {"en"},        ["cpu"],                None,   False),
+    ("piper",       "piper",      "runners/piper_runner.py",      {"en", "fr"},  ["cpu", "cuda"],        None,   False),
+    ("sanotts_amy",        "sanotts", "runners/sanotts_runner.py", {"en"},        ["cpu"], "amy",        False),
+    ("sanotts_heart_nano", "sanotts", "runners/sanotts_runner.py", {"en"},        ["cpu"], "heart-nano", False),
     # Scylla's Band: pure ONNX Runtime on CPU (no torch); ten predefined voices, no
     # wav cloning -> can_clone=False, default lens only. en_us/en_gb/es/it, no French
-    # -> multilingual=False, FR prompt skipped. ~103M core params + 15M neural G2P, 24 kHz.
-    ("scyllasband", "scyllasband","runners/scyllasband_runner.py", False, ["cpu"],                None,   False),
+    # -> langs={"en"}, FR prompt skipped. ~103M core params + 15M neural G2P, 24 kHz.
+    ("scyllasband", "scyllasband","runners/scyllasband_runner.py", {"en"},        ["cpu"],                None,   False),
     # Inflect v2 (Apache-2.0): complete text-to-waveform VITS — the 24 kHz decoder is
     # inside the parameter count, no external vocoder. One fixed English voice, no wav
-    # cloning -> can_clone=False, default lens only. English-only -> multilingual=False,
+    # cloning -> can_clone=False, default lens only. English-only -> langs={"en"},
     # FR prompt skipped. Both variants share the venv + runner; variant picks the
     # checkpoint dir under venvs/inflect/src/.
-    ("inflect_nano",  "inflect", "runners/inflect_runner.py", False, ["cpu", "cuda"], "nano",  False),
-    ("inflect_micro", "inflect", "runners/inflect_runner.py", False, ["cpu", "cuda"], "micro", False),
+    ("inflect_nano",  "inflect", "runners/inflect_runner.py", {"en"},        ["cpu", "cuda"], "nano",  False),
+    ("inflect_micro", "inflect", "runners/inflect_runner.py", {"en"},        ["cpu", "cuda"], "micro", False),
     # Vaniq-Edge (MIT): the same compressed-VITS class as Inflect but an independent
     # training (128/128/384, 4 enc layers, and a STOCHASTIC duration predictor where
     # Inflect's is deterministic). One fixed English voice, no wav cloning ->
-    # can_clone=False, default lens only. English-only -> multilingual=False.
-    ("vaniq",         "vaniq",   "runners/vaniq_runner.py",   False, ["cpu", "cuda"], None,    False),
-    ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], None,    False),
-    ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  False, ["cpu", "cuda", "mps"], "1.5b", False),
-    ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  False, ["cuda"],               "7b",   True),
-    ("magpie",      "magpie",     "runners/magpie_runner.py",     True,  ["cpu", "cuda"],        None,   False),
-    ("soprano",     "soprano",    "runners/soprano_runner.py",    False, ["cpu", "cuda", "mps"], None,   False),
-    ("moss_tts_nano", "moss_tts_nano", "runners/moss_tts_nano_runner.py", True,  ["cpu", "cuda", "mps"], None, True),
+    # can_clone=False, default lens only. English-only -> langs={"en"}.
+    ("vaniq",         "vaniq",   "runners/vaniq_runner.py",   {"en"},        ["cpu", "cuda"], None,    False),
+    ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], None,    False),
+    ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], "1.5b", False),
+    ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cuda"],               "7b",   True),
+    ("magpie",      "magpie",     "runners/magpie_runner.py",     {"en", "fr"},  ["cpu", "cuda"],        None,   False),
+    ("soprano",     "soprano",    "runners/soprano_runner.py",    {"en"},        ["cpu", "cuda", "mps"], None,   False),
+    ("moss_tts_nano", "moss_tts_nano", "runners/moss_tts_nano_runner.py", {"en", "fr"},  ["cpu", "cuda", "mps"], None, True),
     # MOSS-TTS: both checkpoints kept (1.0 still wins on some material by ear).
     # Same venv + runner; variant picks the HF checkpoint. v1.5 also gets a
     # per-prompt language tag (see the runner). Both are pure-cloning (no preset
     # voice) → both must be in publish.py / vote.py NO_PRESET_VOICE.
-    ("moss_tts",      "moss_tts",      "runners/moss_tts_runner.py",      True,  ["cuda"],               "v1.0", True),
-    ("moss_tts_v15",  "moss_tts",      "runners/moss_tts_runner.py",      True,  ["cuda"],               "v1.5", True),
-    ("supertonic",  "supertonic", "runners/supertonic_runner.py", True,  ["cpu"],                None,   False),
-    ("maya1",       "maya1",      "runners/maya1_runner.py",      False, ["cpu", "cuda", "mps"], None,   False),
-    ("styletts2",   "styletts2",  "runners/styletts2_runner.py",  False, ["cpu", "cuda", "mps"], None,   True),
-    ("zonos",       "zonos",      "runners/zonos_runner.py",      True,  ["cpu", "cuda"],        None,   True),
+    ("moss_tts",      "moss_tts",      "runners/moss_tts_runner.py",      {"en", "fr"},  ["cuda"],               "v1.0", True),
+    ("moss_tts_v15",  "moss_tts",      "runners/moss_tts_runner.py",      {"en", "fr"},  ["cuda"],               "v1.5", True),
+    ("supertonic",  "supertonic", "runners/supertonic_runner.py", {"en", "fr"},  ["cpu"],                None,   False),
+    ("maya1",       "maya1",      "runners/maya1_runner.py",      {"en"},        ["cpu", "cuda", "mps"], None,   False),
+    ("styletts2",   "styletts2",  "runners/styletts2_runner.py",  {"en"},        ["cpu", "cuda", "mps"], None,   True),
+    ("zonos",       "zonos",      "runners/zonos_runner.py",      {"en", "fr"},  ["cpu", "cuda"],        None,   True),
     # Zonos2 (Zyphra, Apache-2.0): successor to zonos v0.1 — sparse MoE (~900M active /
     # 8B total), byte-level text -> 9-codebook AR transformer -> DAC @ 44.1 kHz, zero-shot
     # cloning. CUDA-only (compiled CUDA kernels in python/zonos2/kernel/csrc; no CPU/MPS),
-    # so Linux-3090 only. Vendored NeMo normalizer covers en/de/zh but no fr -> multilingual
+    # so Linux-3090 only. Vendored NeMo normalizer covers en/de/zh but no fr -> langs
     # =False (FR prompt skipped, like scyllasband). Pure cloner -> NO_PRESET_VOICE.
-    ("zonos2",      "zonos2",     "runners/zonos2_runner.py",     False, ["cuda"],               None,   True),
-    ("openvoice",   "openvoice",  "runners/openvoice_runner.py",  True,  ["cpu", "cuda", "mps"], None,   True),
+    ("zonos2",      "zonos2",     "runners/zonos2_runner.py",     {"en"},        ["cuda"],               None,   True),
+    ("openvoice",   "openvoice",  "runners/openvoice_runner.py",  {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
     # Voxtral: mps/cpu -> MLX (preset-voice only on Apple Silicon); cuda -> vllm-omni.
     # can_clone=True is for the cross-rig cuda path; the MLX runner fails a
     # --reference cell cleanly rather than mislabeling default-voice audio.
-    ("voxtral",     "voxtral",    "runners/voxtral_runner.py",    True,  ["cpu", "cuda", "mps"], None,   True),
+    ("voxtral",     "voxtral",    "runners/voxtral_runner.py",    {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
     # Echo-TTS (Jordan Darefsky): DiT flow-matching + Fish S1-DAC autoencoder, 44.1kHz,
     # zero-shot cloning. CUDA-only (40-step diffusion over a 2B-class DiT; torchcodec
     # decode path). English. Weights+outputs CC-BY-NC-SA-4.0 (same NC class as fish_*).
-    ("echo",        "echo",       "runners/echo_runner.py",       False, ["cuda"],               None,   True),
-    # en+zh only -> multilingual=False (no French prompt). CUDA-only: fast_streaming.py
+    ("echo",        "echo",       "runners/echo_runner.py",       {"en"},        ["cuda"],               None,   True),
+    # en+zh only -> langs={"en"} (no French prompt). CUDA-only: fast_streaming.py
     # hard-gates on torch.cuda.is_available(), so there is no cpu path to claim.
-    ("breeze_tts2", "breeze_tts2", "runners/breeze_tts2_runner.py", False, ["cuda"],             None,   True),
+    ("breeze_tts2", "breeze_tts2", "runners/breeze_tts2_runner.py", {"en"},        ["cuda"],             None,   True),
     # MiraTTS (Yatharth Sharma, MIT): 0.5B LLM-TTS + FastBiCodec, 48kHz (FlashSR upsample),
     # ~6GB VRAM, zero-shot cloning from a reference wav. CUDA-only: the model hard-imports
     # lmdeploy and builds a TurboMind engine (no transformers fallback). lmdeploy's listed
     # GPU support stops at Ada (sm89) — Linux-3090 (Ampere) is the clean rig; Win-5090
     # (Blackwell sm120) is a stretch (prebuilt TurboMind wheel may lack sm120 kernels).
-    ("miratts",     "miratts",    "runners/miratts_runner.py",    False, ["cuda"],               None,   True),
+    ("miratts",     "miratts",    "runners/miratts_runner.py",    {"en"},        ["cuda"],               None,   True),
     # OuteTTS 1.0 (edwko/OuteAI, CC-BY-NC-SA-4.0 + Llama-3.2): ~1B Llama-3.2-1B LLM-TTS,
     # DAC codec. Does BOTH preset voices (default lens) and wav cloning (cloning lens).
     # HF/transformers backend (no llama.cpp compile); also has CPU/Metal backends, so
     # cross-rig incl. Mac. Multilingual (12 high-data langs incl. English).
-    ("outetts",     "outetts",    "runners/outetts_runner.py",    True,  ["cpu", "cuda", "mps"], None,   True),
+    ("outetts",     "outetts",    "runners/outetts_runner.py",    {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
     # Parler-TTS (parler-tts/*, Apache-2.0): description-controlled TTS — the voice is
     # set by a natural-language prompt (gender/pitch/pace/quality), NOT a wav, so it's a
     # DEFAULT-VOICE model (can_clone=False; default lens only). T5 text encoder + decoder
-    # LM -> DAC 44.1 kHz. English mini-v1 (multilingual=False). cpu/cuda (mps via DAC
+    # LM -> DAC 44.1 kHz. English mini-v1 (langs={"en"}). cpu/cuda (mps via DAC
     # untested). variant "large" = parler-tts-large-v1 (2.33B) — one-line add once the
     # mini's speed/disk cost is known.
-    ("parler",      "parler",     "runners/parler_runner.py",     False, ["cpu", "cuda"],        None,   False),
+    ("parler",      "parler",     "runners/parler_runner.py",     {"en"},        ["cpu", "cuda"],        None,   False),
     # MeloTTS (myshell-ai/MeloTTS, MIT): VITS multi-speaker predefined-voice TTS, EN-US
     # speaker, 44.1 kHz. The base speaker engine OpenVoice v2 wraps — here benched
-    # standalone as a fast CPU baseline. No cloning. Multilingual=True: MeloTTS ships a
+    # standalone as a fast CPU baseline. No cloning. langs includes "fr": MeloTTS ships a
     # per-language checkpoint, so the runner loads the FR model (-> runs the FR prompt);
     # EN/ES/FR/ZH only — JP/KR need extra g2p deps (mecab/unidic, g2pkk) not installed.
-    ("melotts",     "melotts",    "runners/melotts_runner.py",    True,  ["cpu", "cuda", "mps"], None,   False),
+    ("melotts",     "melotts",    "runners/melotts_runner.py",    {"en", "fr"},  ["cpu", "cuda", "mps"], None,   False),
     # Higgs Audio v3 TTS (Boson AI, Research/Non-Commercial, ~4B) — SERVER-BACKED, Linux-only.
     # First server-backed model in the bench: v3 ships no modeling_*.py / auto_map and the
     # higgs_multimodal_qwen3 class isn't in stock transformers, so there's no single-process
@@ -179,7 +188,7 @@ MODELS = [
     # serve` (OpenAI-style HTTP /v1/audio/speech). higgs_v3_runner.py is a thin HTTP client
     # (no torch/model in its venv); stand the server up manually first (see install.sh
     # header + the runner docstring). 24 kHz, 100 langs, zero-shot in-context cloning.
-    ("higgs_v3",    "higgs_v3",   "runners/higgs_v3_runner.py",   True,  ["cuda"],  None,   True),
+    ("higgs_v3",    "higgs_v3",   "runners/higgs_v3_runner.py",   {"en", "fr"},  ["cuda"],  None,   True),
     # Higgs Audio v2 (Boson AI, Apache-2.0) — still NOT registered: the installable
     # boson_multimodal (latest main) ships only the v1 HiggsAudioModel architecture, but
     # the v2 checkpoint (bosonai/higgs-audio-v2-generation-3B-base) is a different, larger
@@ -193,8 +202,8 @@ MODELS = [
     # description) AND optional 10s+ wav cloning -> can_clone=True, populates both lenses.
     # 48 kHz out. Source-clone install (venvs/dramabox/src) + a bnb-4bit Gemma-3-12B text
     # encoder; ~18 GB VRAM peak (audio-only mode frees LTX's video stack) -> fits 5090 +
-    # 3090. English (multilingual=False -> FR prompt skipped). CUDA-only.
-    ("dramabox",    "dramabox",   "runners/dramabox_runner.py",   False, ["cuda"],  None,   True),
+    # 3090. English (langs={"en"} -> FR prompt skipped). CUDA-only.
+    ("dramabox",    "dramabox",   "runners/dramabox_runner.py",   {"en"},        ["cuda"],  None,   True),
     # dots.tts (rednote-hilab, Apache-2.0, 2B) — fully-continuous AR TTS: semantic encoder
     # + LLM + flow-matching acoustic head over a 48 kHz AudioVAE (no codec tokens). Zero-shot
     # cloning from a reference wav (+ sibling .txt transcript for continuation cloning); pure
@@ -203,7 +212,7 @@ MODELS = [
     # Multilingual (24 langs incl. en/fr -> runs the FR prompt). pip package `dots_tts`,
     # source-clone editable install (venvs/dots_tts/src); weights snapshot-download from HF
     # on first run. CUDA-only here (bf16 backbone, ~2B; Ampere/3090 ok). Best on Seed-TTS-Eval.
-    ("dots_tts",    "dots_tts",   "runners/dots_tts_runner.py",   True,  ["cuda"],  None,   True),
+    ("dots_tts",    "dots_tts",   "runners/dots_tts_runner.py",   {"en", "fr"},  ["cuda"],  None,   True),
     # Miso TTS 8B (Miso Labs, modified-MIT) — Sesame-CSM architecture scaled to 8B:
     # Llama-8B backbone + Llama-300M audio decoder over 32 Mimi codebooks, 24 kHz.
     # Same conversational cloning paradigm as sesame (reference text+audio as a
@@ -212,38 +221,38 @@ MODELS = [
     # 2.7.1 + torchtune 0.6.1; the runner stubs the silentcipher watermark and swaps
     # the gated llama tokenizer for the unsloth mirror (see runner docstring).
     # English. CUDA-only: 8B bf16 ~16 GB VRAM (fits 5090 + 3090).
-    ("miso",        "miso",       "runners/miso_runner.py",       False, ["cuda"],  None,   True),
+    ("miso",        "miso",       "runners/miso_runner.py",       {"en"},        ["cuda"],  None,   True),
     # LongCat-AudioDiT (Meituan, MIT) — non-autoregressive diffusion TTS that generates
     # directly in a Wav-VAE waveform latent space (no mel, no codec tokens): Wav-VAE + DiT
     # backbone, ODE-sampled over NFE steps, adaptive projection guidance (APG). SOTA-ish
     # zero-shot cloning on Seed (3.5B: EN SIM 0.786 / ZH SIM 0.818). Does BOTH zero-shot
     # default voice (no prompt) and reference-wav cloning (reference text prepended, like
     # sesame/miso -> sibling .txt required) -> can_clone=True, both lenses. ZH + EN only
-    # (multilingual=False -> FR prompt skipped). Source-clone import (venvs/longcat/src;
+    # (langs={"en"} -> FR prompt skipped). Source-clone import (venvs/longcat/src;
     # `import audiodit` auto-registers the model with transformers>=5.3). Two sizes share
     # the venv+runner; --variant picks the HF checkpoint. CUDA-only (DiT + fp16 VAE), 24 kHz.
-    ("longcat_1b",   "longcat",   "runners/longcat_runner.py",    False, ["cuda"],  "1b",   True),
-    ("longcat_3p5b", "longcat",   "runners/longcat_runner.py",    False, ["cuda"],  "3.5b", True),
+    ("longcat_1b",   "longcat",   "runners/longcat_runner.py",    {"en"},        ["cuda"],  "1b",   True),
+    ("longcat_3p5b", "longcat",   "runners/longcat_runner.py",    {"en"},        ["cuda"],  "3.5b", True),
     # Orpheus-TTS (Canopy Labs, Apache-2.0): 3B Llama speech-LM -> SNAC codec, 24 kHz,
     # streaming (~200 ms TTFA). Served via vLLM (orpheus-speech pkg, AsyncLLMEngine) ->
     # CUDA-only. PRESET-VOICE only (named voices, no wav cloning) -> can_clone=False,
-    # default lens only. English -> multilingual=False, FR prompt skipped. Gated HF
+    # default lens only. English -> langs={"en"}, FR prompt skipped. Gated HF
     # repo (accept the license once). Re-queued from the Windows-blocked list: the only
     # blocker was vLLM's no-Blackwell-wheel wall, native on the Ampere 3090.
-    ("orpheus",     "orpheus",    "runners/orpheus_runner.py",    False, ["cuda"],  None,   False),
+    ("orpheus",     "orpheus",    "runners/orpheus_runner.py",    {"en"},        ["cuda"],  None,   False),
     # CosyVoice 3 (FunAudioLLM, Apache-2.0): 0.5B Qwen LLM-TTS + flow-matching, 24 kHz,
     # zero-shot multilingual cloning. Source-clone import (venvs/cosyvoice/src + its
     # third_party/Matcha-TTS). PURE CLONING (no preset voice -> NO_PRESET_VOICE in
     # publish.py/vote.py): default lens uses the house ref (chris_hemsworth_15s), cloning
     # lens uses the supplied wav; both need the reference's literal transcript (sibling
-    # .txt). Multilingual=True (ZH/EN/JA/KO/yue+) -> FR prompt runs. CUDA-only (fp16).
-    ("cosyvoice",   "cosyvoice",  "runners/cosyvoice_runner.py",  True,  ["cuda"],  None,   True),
+    # .txt). langs includes "fr" (ZH/EN/JA/KO/yue+) -> FR prompt runs. CUDA-only (fp16).
+    ("cosyvoice",   "cosyvoice",  "runners/cosyvoice_runner.py",  {"en", "fr"},  ["cuda"],  None,   True),
     # LFM2.5-Audio-1.5B (Liquid AI, LFM Open License v1.0) — end-to-end omni speech<->text
     # model; we bench its TTS mode (sequential generation) only. PREDEFINED-VOICE (4 voices
     # via system prompt, no wav cloning -> can_clone=False, default lens). Single-process
     # `pip install liquid-audio` (py>=3.12), in-process torch model, 24 kHz, English-only.
     # cpu+cuda (cross-rig). NOT in NO_PRESET_VOICE.
-    ("lfm2_audio",  "lfm2_audio", "runners/lfm2_audio_runner.py", False, ["cpu", "cuda"], None,  False),
+    ("lfm2_audio",  "lfm2_audio", "runners/lfm2_audio_runner.py", {"en"},        ["cpu", "cuda"], None,  False),
     # MioTTS (Aratako) — LLM-codec TTS, SERVER-BACKED, runs on Linux-3090 (reuses its
     # llama.cpp). A llama.cpp/Ollama OpenAI server (emits MioCodec tokens) + the
     # MioTTS-Inference run_server.py REST orchestrator (decodes via MioCodec torch -> 44.1 kHz
@@ -252,20 +261,39 @@ MODELS = [
     # NO_PRESET_VOICE (cloning board only, like cosyvoice). The two sizes share runner+venv+
     # servers; --variant is labeling only (the LLM server hosts one GGUF at a time, so each
     # size benches in its own server session). 0.6B = Apache-2.0, 0.1B = Falcon-LLM. EN/JA.
-    ("miotts_01b",  "miotts",     "runners/miotts_runner.py",     False, ["cuda"],  "0.1b", True),
-    ("miotts_06b",  "miotts",     "runners/miotts_runner.py",     False, ["cuda"],  "0.6b", True),
+    ("miotts_01b",  "miotts",     "runners/miotts_runner.py",     {"en"},        ["cuda"],  "0.1b", True),
+    ("miotts_06b",  "miotts",     "runners/miotts_runner.py",     {"en"},        ["cuda"],  "0.6b", True),
     # WavTTS (cwx-worst-one / worstchan, MIT code / CC-BY-NC-4.0 weights) — zero-shot TTS
     # that generates DIRECTLY in the raw waveform space (no mel, no VAE latent, no codec
     # tokens): a flow-matching DiT (WavTTS_Large, 1152x28, ~673M) built on the F5-TTS
     # codebase, 16 kHz. PURE CLONING (reference wav + sibling .txt transcript, like
     # cosyvoice/longcat) -> NO_PRESET_VOICE in publish.py / arena/build_manifest.py
     # (cloning board only; default lens clones the house chris_hemsworth ref). ZH/EN only
-    # (Emilia ZH_EN, pinyin tokenizer) -> multilingual=False, FR prompt skipped. The
+    # (Emilia ZH_EN, pinyin tokenizer) -> langs={"en"}, FR prompt skipped. The
     # `wavtts` package is an editable clone in venvs/wavtts/src; the checkpoint
     # cached_path-downloads from HF on first run. CUDA-only (NFE-50 DiT diffusion);
     # torchaudio.load is monkey-patched to soundfile so torchcodec stays dormant (f5tts trick).
-    ("wavtts",      "wavtts",     "runners/wavtts_runner.py",     False, ["cuda"],  None,   True),
+    ("wavtts",      "wavtts",     "runners/wavtts_runner.py",     {"en"},        ["cuda"],  None,   True),
 ]
+
+
+# Every language the bench has a canonical prompt in (bench.PROMPTS /
+# scoring.prompts.PROMPTS). A model's `langs` must be a subset: declaring a
+# language with no prompt is dead weight, and a typo ("sp", or the bare string
+# "en" instead of {"en"}) would otherwise fail silently — `"fr" in "en"` is
+# False, so a stringly-typed entry just quietly skips every non-English prompt.
+BENCH_LANGS = frozenset({"en", "fr", "es"})
+
+_BAD_LANGS = {
+    _e[0]: _e[3] for _e in MODELS
+    if not isinstance(_e[3], (set, frozenset))
+    or "en" not in _e[3]
+    or not set(_e[3]) <= BENCH_LANGS
+}
+if _BAD_LANGS:
+    raise AssertionError(
+        "harness.MODELS `langs` must be a set containing 'en' and drawn from "
+        f"BENCH_LANGS {sorted(BENCH_LANGS)} — offending entries: {_BAD_LANGS}")
 
 
 # GPU-class models: measured sub-realtime (<0.5x RTF) on the best available
@@ -387,7 +415,7 @@ def build_cells(reference=None, requested_models=None, requested_devices=None,
     their output instead of dropping them silently.
     """
     cells = []
-    for (model_name, venv_dir, runner_rel, multilingual,
+    for (model_name, venv_dir, runner_rel, langs,
          model_devices, variant, can_clone) in MODELS:
         if requested_models and model_name not in requested_models:
             continue
@@ -417,7 +445,7 @@ def build_cells(reference=None, requested_models=None, requested_devices=None,
                     skipped_out.append({
                         "model": model_name, "device": device,
                         "variant": variant, "can_clone": can_clone,
-                        "multilingual": multilingual,
+                        "langs": frozenset(langs),
                         "reason": "gpu-class: sub-realtime without CUDA (--all to include)",
                     })
             continue
@@ -430,7 +458,7 @@ def build_cells(reference=None, requested_models=None, requested_devices=None,
                 continue
             cells.append({
                 "model": model_name, "device": device, "variant": variant,
-                "multilingual": multilingual, "can_clone": can_clone,
+                "langs": frozenset(langs), "can_clone": can_clone,
                 "venv_python": py, "runner": REPO / runner_rel,
             })
     return cells

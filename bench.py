@@ -319,7 +319,7 @@ def main() -> int:
         # have run, mirroring how an executed cell appears.
         for s in gpu_skipped:
             for prompt_id, lang, text in selected_prompts:
-                if lang != "en" and not s.get("multilingual"):
+                if lang not in s.get("langs", frozenset()):
                     continue
                 skip_row = {fn: "" for fn in fieldnames}
                 skip_row.update({
@@ -336,7 +336,7 @@ def main() -> int:
         for prompt_id, lang, text in selected_prompts:
             print(f"===== Prompt {prompt_id} ({lang}): {text[:60]}{'...' if len(text) > 60 else ''} =====")
             for cell in cells:
-                if lang != "en" and not cell["multilingual"]:
+                if lang not in cell["langs"]:
                     continue
 
                 key = (cell["model"], cell["device"])

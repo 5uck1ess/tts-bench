@@ -1011,23 +1011,24 @@ if _REGISTRY_DRIFT:
         "harness.MODELS must appear in ALL registries, or it renders on the "
         f"board as a raw slug with empty capability cells: {_REGISTRY_DRIFT}")
 
-# --- Language-cell / FR-prompt consistency guard --------------------------
-# harness.MODELS' `multilingual` field means "run canonical prompt 5 (French)";
-# MODEL_LANGS is the README cell. They are NOT the same predicate, and the
-# implication only runs one way: a model that SYNTHESIZES FRENCH ON THIS BENCH
-# is necessarily multilingual, so multilingual=True REQUIRES a ✓ cell. The
-# converse is legitimately false — longcat/miotts/wavtts/indextts/f5tts are
-# multilingual (zh+en, en+ja) with no French, so they are ✓ with the flag False.
+# --- Language-cell / canonical-prompt consistency guard --------------------
+# harness.MODELS' `langs` field is the set of BENCH PROMPT languages a model
+# actually runs; MODEL_LANGS is the README cell. They are NOT the same
+# predicate, and the implication only runs one way: a model that synthesizes a
+# NON-ENGLISH canonical prompt is necessarily multilingual, so any langs beyond
+# {"en"} REQUIRE a ✓ cell. The converse is legitimately false — longcat/miotts/
+# wavtts/indextts/f5tts are multilingual (zh+en, en+ja) in languages this bench
+# has no prompt for, so they are ✓ with langs == {"en"}.
 # Caught three rows on 2026-08-15 (melotts, neutts_nano, pocket): all three load
 # a real per-language checkpoint for FR and had already benched the French
 # prompt, while the board advertised them as English-only.
 _LANG_CELL_DRIFT = sorted(
-    _m for _m, _multi in ((_e[0], _e[3]) for _e in _harness.MODELS)
-    if _multi and not MODEL_LANGS.get(_m, "").startswith("✓"))
+    _m for _m, _langs in ((_e[0], _e[3]) for _e in _harness.MODELS)
+    if set(_langs) - {"en"} and not MODEL_LANGS.get(_m, "").startswith("✓"))
 if _LANG_CELL_DRIFT:
     raise AssertionError(
-        "language-cell drift — these models run the French canonical prompt "
-        "(harness multilingual=True) but their MODEL_LANGS cell claims "
+        "language-cell drift — these models run a non-English canonical prompt "
+        "(harness.MODELS langs beyond {'en'}) but their MODEL_LANGS cell claims "
         "English-only, so the board understates them: "
         f"{_LANG_CELL_DRIFT}")
 

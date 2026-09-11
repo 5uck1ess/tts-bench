@@ -62,12 +62,11 @@ def main() -> int:
         print("No cells to run. Check --models / --devices and that venvs are installed.")
         return 2
 
-    # Filter out non-multilingual models when language isn't English.
-    if args.language != "en":
-        cells = [c for c in cells if c["multilingual"]]
-        if not cells:
-            print(f"No multilingual models match language={args.language!r}.")
-            return 2
+    # Drop models that don't speak the requested language (every model speaks "en").
+    cells = [c for c in cells if args.language in c["langs"]]
+    if not cells:
+        print(f"No installed model speaks language={args.language!r}.")
+        return 2
 
     out_dir = REPO / "results" / "compare" / datetime.now().strftime("%Y-%m-%d_%H%M%S")
     out_dir.mkdir(parents=True, exist_ok=True)
