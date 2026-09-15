@@ -1007,6 +1007,56 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_fast_cuda_p5.wav"
         },
         {
+          "model": "auk_base",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_base_cuda_p1.wav"
+        },
+        {
+          "model": "auk_base",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_base_cuda_p2.wav"
+        },
+        {
+          "model": "auk_base",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_base_cuda_p3.wav"
+        },
+        {
+          "model": "auk_base",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_base_cuda_p4.wav"
+        },
+        {
+          "model": "auk_base",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_base_cuda_p5.wav"
+        },
+        {
+          "model": "auk_flash",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_flash_cuda_p1.wav"
+        },
+        {
+          "model": "auk_flash",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_flash_cuda_p2.wav"
+        },
+        {
+          "model": "auk_flash",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_flash_cuda_p3.wav"
+        },
+        {
+          "model": "auk_flash",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_flash_cuda_p4.wav"
+        },
+        {
+          "model": "auk_flash",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_flash_cuda_p5.wav"
+        },
+        {
           "model": "chatterbox",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/chatterbox_cuda_p1.wav"
@@ -1200,6 +1250,26 @@
           "model": "f5tts",
           "prompt": 4,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/f5tts_cuda_p4.wav"
+        },
+        {
+          "model": "firered3",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/firered3_cuda_p1.wav"
+        },
+        {
+          "model": "firered3",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/firered3_cuda_p2.wav"
+        },
+        {
+          "model": "firered3",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/firered3_cuda_p3.wav"
+        },
+        {
+          "model": "firered3",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/firered3_cuda_p4.wav"
         },
         {
           "model": "fish_15",
@@ -2002,6 +2072,14 @@
       "name": "Audio8 TTS 0.6B (compiled)",
       "url": "https://huggingface.co/scrappylabsai/audio8-tts-fastpath"
     },
+    "auk_base": {
+      "name": "AuK",
+      "url": "https://huggingface.co/tencent/AuK"
+    },
+    "auk_flash": {
+      "name": "AuK-Flash",
+      "url": "https://huggingface.co/tencent/AuK-Flash"
+    },
     "chatterbox": {
       "name": "Chatterbox",
       "url": "https://huggingface.co/ResembleAI/chatterbox"
@@ -2037,6 +2115,10 @@
     "f5tts": {
       "name": "F5-TTS v1",
       "url": "https://huggingface.co/SWivid/F5-TTS"
+    },
+    "firered3": {
+      "name": "FireRedTTS3",
+      "url": "https://huggingface.co/FireRedTeam/FireRedTTS3"
     },
     "fish_15": {
       "name": "Fish Speech 1.5",
