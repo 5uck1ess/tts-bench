@@ -916,6 +916,60 @@ if (-not (Want "longcat")) { Write-Host "longcat: skipped (not in install filter
     Write-Host "longcat: ok (meituan-longcat/LongCat-AudioDiT-1B + -3.5B weights + google/umt5-base tokenizer auto-download from HF on first run; CUDA-only, DiT + fp16 Wav-VAE, 24k; --variant 1b|3.5b)" -ForegroundColor Green
 } else { Write-Host "longcat: already installed" -ForegroundColor Gray }
 
+# --- FireRedTTS3 (Base, CUDA-only) ---
+Step "FireRedTTS3 (Base, CUDA-only)"
+if (-not (Want "firered3")) { Write-Host "firered3: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\firered3\Scripts\python.exe")) {
+    Invoke-Checked "uv venv firered3" { uv venv venvs\firered3 --python 3.11 }
+    # Upstream ships no tags, so pin the commit these rows were measured on.
+    if (-not (Test-Path "venvs\firered3\src")) {
+        Invoke-Checked "git clone FireRedTTS3" { git clone https://github.com/FireRedTeam/FireRedTTS3 venvs\firered3\src }
+        Invoke-Checked "pin FireRedTTS3 commit" { git -C venvs\firered3\src checkout 7a1f3a7282ff184cc1c7f070556baaf5f08b5216 }
+    }
+    # Mirror requirements.txt; use the community fasttext wheel on Windows,
+    # following the triton-windows precedent instead of requiring a compiler.
+    Invoke-Checked "uv pip install firered3 deps" { uv pip install --python venvs\firered3\Scripts\python.exe torch==2.8.0 torchaudio==2.8.0 torchcodec==0.7.0 transformers==5.6.2 einops==0.8.2 dotenv regex wetext fasttext-wheel faster-whisper huggingface_hub }
+    # Hard runtime requirement: upstream hardcodes flash_attention_2. Use the
+    # release wheel matching this venv's interpreter, never the PyPI source build.
+    Invoke-Checked "detect firered3 Python wheel tag" { $script:firered3PyTag = & "venvs\firered3\Scripts\python.exe" -c "import sys; print(f'cp{sys.version_info.major}{sys.version_info.minor}')" }
+    if ($firered3PyTag -notin @('cp310', 'cp311', 'cp312', 'cp313')) { throw "Unsupported FireRedTTS3 flash-attn Python tag: $firered3PyTag" }
+    Invoke-Checked "flash-attn 2.8.3 Windows wheel" {
+        uv pip install --python venvs\firered3\Scripts\python.exe `
+            "https://github.com/kingbri1/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu128torch2.8.0cxx11abiFALSE-${firered3PyTag}-${firered3PyTag}-win_amd64.whl"
+    }
+    # cu128 torch LAST: force replacement of PyPI's Windows CPU wheels.
+    Invoke-Checked "torch cu128 for firered3 (LAST)" { uv pip install --python venvs\firered3\Scripts\python.exe --reinstall-package torch --reinstall-package torchaudio torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
+    # Base only: deliberately omit the 8.5 GB fireredtts3_instruct checkpoint.
+    Invoke-Checked "download firered3 weights" { uv run --python venvs\firered3\Scripts\python.exe -- hf download FireRedTeam/FireRedTTS3 --revision dcf1bdcd1b8b25b382fa84c3e34eb82e3054a610 --include 'fireredtts3_base/*' 'redae/*' 'campp/*' 'text_tokenizer/*' --local-dir venvs\firered3\src\checkpoints }
+    Write-Host "firered3: ok" -ForegroundColor Green
+} else {
+    Write-Host "firered3: already installed" -ForegroundColor Gray
+}
+
+# --- Tencent AuK (Base + Flash share this venv) ---
+Step "Tencent AuK (Base + Flash share this venv)"
+if (-not (Want "auk")) { Write-Host "auk: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\auk\Scripts\python.exe")) {
+    Invoke-Checked "uv venv auk" { uv venv venvs\auk --python 3.11 }
+    # No tags upstream and main moves fast (24 commits, last 2026-09-15) — pin the commit.
+    if (-not (Test-Path "venvs\auk\src")) {
+        Invoke-Checked "git clone AuK" { git clone https://github.com/Tencent-Hunyuan/AuK venvs\auk\src }
+        Invoke-Checked "pin AuK commit" { git -C venvs\auk\src checkout e1c935e81e356c87419d9509d7f8a4091457bdca }
+    }
+    # Core inference only, no extras. attn_backend="torch": no flash-attn.
+    Invoke-Checked "uv pip install auk" { uv pip install --python venvs\auk\Scripts\python.exe -e venvs\auk\src huggingface_hub }
+    # pyproject.toml requires torch>=2.7,<2.8. cu128 torch LAST, as for miso.
+    Invoke-Checked "torch cu128 for auk (LAST)" { uv pip install --python venvs\auk\Scripts\python.exe --reinstall-package torch --reinstall-package torchaudio torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 }
+    Invoke-Checked "download AuK weights" { uv run --python venvs\auk\Scripts\python.exe -- hf download tencent/AuK --revision 790742b71a4430120daf2b2099192abae449eb9f --local-dir venvs\auk\src\ckpts\AuK }
+    Invoke-Checked "download AuK-Flash weights" { uv run --python venvs\auk\Scripts\python.exe -- hf download tencent/AuK-Flash --revision 575b92f0895f75180bf2cbd35f2e176c5732b8ed --local-dir venvs\auk\src\ckpts\AuK-Flash }
+    # Mandatory text encoder. Licence is `qwen-research` (non-commercial) — it, not AuK's
+    # MIT, is what the board's licence cell must report for the auk rows.
+    Invoke-Checked "download AuK text encoder" { uv run --python venvs\auk\Scripts\python.exe -- hf download Qwen/Qwen2.5-Omni-3B --revision f75b40e3da2003cdd6e1829b1f420ca70797c34e --local-dir venvs\auk\src\ckpts\Qwen2.5-Omni-3B }
+    Write-Host "auk: ok" -ForegroundColor Green
+} else {
+    Write-Host "auk: already installed" -ForegroundColor Gray
+}
+
 # --- scoring: objective metrics (UTMOS + WER + SIM) ---------------------------
 # Central scorer venv. SIM's UniSpeech-SAT stack (s3prl/fairseq) may fail on
 # Windows MSVC; if so, score on Linux (scoring is central). UTMOS+WER work here.
