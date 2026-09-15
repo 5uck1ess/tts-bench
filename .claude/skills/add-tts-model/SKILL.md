@@ -91,8 +91,17 @@ thing in the file, and the next person is usually you.
 `report.py` has a registry-drift guard that fails at import, which covers most of this.
 It does not cover the README.
 
-1. `harness.py` `MODELS` — `(name, venv, runner, multilingual, devices, variant, can_clone)`.
-   `multilingual=True` makes the French prompt run; only claim devices you have actually run.
+1. `harness.py` `MODELS` — `(name, venv, runner, langs, devices, variant, can_clone)`.
+   `langs` is a **set** of the bench-prompt languages the model actually runs, always
+   including `"en"` — `{"en"}` for an English-only model, `{"en", "fr"}` to run the French
+   prompt, and so on (`harness.BENCH_LANGS` is the allowed vocabulary; a load-time guard
+   rejects a bare string, a missing `"en"`, or an unknown code). Claim a non-English
+   language only on evidence from the **installed runner** — a real per-language
+   checkpoint, voice, or lang code you have run — not the model card's language list; a
+   runner whose lang map falls back to English on an unknown code will otherwise emit
+   English audio labelled as that language, with no failed cell. Adding a language beyond
+   `"en"` also requires a `✓` `MODEL_LANGS` cell (`report.py` enforces that at import).
+   Only claim devices you have actually run.
 2. **All nine registries in `report.py`**: `MODEL_DISPLAY_NAMES`, `MODEL_SIZE`, `MODEL_URL`,
    `MODEL_KIND`, `MODEL_RELEASE`, `MODEL_SR`, `MODEL_EXPRESSIVE`, `MODEL_LICENSE`, `MODEL_LANGS`.
    `MODEL_CROSSLINGUAL` is curated — add only on positive evidence of cloning in one
