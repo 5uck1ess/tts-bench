@@ -1441,8 +1441,13 @@ elif [ ! -x venvs/firered3/bin/python ]; then
         git -C venvs/firered3/src checkout 7a1f3a7282ff184cc1c7f070556baaf5f08b5216 || die "pin FireRedTTS3 commit"
     fi
     # Mirror requirements.txt; seed the build tools for flash-attn's source build.
+    # soundfile is NOT in upstream's requirements, but torchaudio needs *some* backend and
+    # torchcodec 0.7.0 only binds FFmpeg 4-7 (libavutil.so.56-59). A box whose ffmpeg is
+    # newer (linuxbrew ships 9 -> libavutil.so.61) gets zero torchaudio backends, and the
+    # runner dies loading the reference wav with "Couldn't find appropriate backend to
+    # handle uri". soundfile reads the house wavs directly and sidesteps the FFmpeg ABI.
     uv pip install --python venvs/firered3/bin/python torchcodec==0.7.0 transformers==5.6.2 einops==0.8.2 \
-        dotenv regex wetext fasttext faster-whisper huggingface_hub setuptools wheel packaging ninja \
+        soundfile dotenv regex wetext fasttext faster-whisper huggingface_hub setuptools wheel packaging ninja \
         || die "uv pip install firered3 deps"
     # flash-attn's non-isolated build must see the target torch stack first.
     uv pip install --python venvs/firered3/bin/python --reinstall-package torch --reinstall-package torchaudio \
