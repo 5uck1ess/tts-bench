@@ -58,3 +58,6 @@ arena/backups/
 
 # scratch listen folders (audio auditioned locally, never committed)
 _listen_*/
+
+# Stray editor/script backups (a scores.csv.bak was swept in by `add -A` 2026-09-05)
+*.bak
