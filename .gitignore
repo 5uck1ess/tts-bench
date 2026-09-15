@@ -27,6 +27,7 @@ __pycache__/
 .numba_cache/
 smoke_*.py
 smoke_*.wav
+smoke_out/
 test_*.wav
 docs/superpowers/
 

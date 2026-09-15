@@ -990,7 +990,7 @@ MODEL_LANGS = {
     "breeze_tts2": "✓ (zh+en)",
     "dots_tts": "✓ (24)", "dramabox": "— (en)", "echo": "—", "f5tts": "✓ (zh+en)",
     "fish_15": "✓", "fish_s2": "✓ (80+)", "higgs_v3": "✓ (100)", "indextts": "✓ (zh+en)",
-    "firered3": "✓ (24 langs)", "auk_base": "✓", "auk_flash": "✓",
+    "firered3": "✓ (24)", "auk_base": "✓", "auk_flash": "✓",
     "longcat_1b": "✓ (zh+en)", "longcat_3p5b": "✓ (zh+en)", "mars5": "—", "metavoice": "—",
     "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)",
     "moss_tts": "✓ (20)", "moss_tts_v15": "✓ (31)", "moss_tts_nano": "✓ (zh+en)",
