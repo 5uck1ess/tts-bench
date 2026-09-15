@@ -1,0 +1,56 @@
+{
+  "tag": "bf16",
+  "load_s": 17.89,
+  "peak_gib_after_load": 13.966,
+  "text_encoder": {
+    "dtype": "torch.bfloat16",
+    "params": 4034780160,
+    "gib": 7.515
+  },
+  "transformer": {
+    "dtype": "torch.float32",
+    "params": 1530538560,
+    "gib": 5.702
+  },
+  "vae": {
+    "dtype": "torch.float32",
+    "params": 159297053,
+    "gib": 0.593
+  },
+  "root_param_dtype": "torch.float32",
+  "runs": [
+    {
+      "prompt_id": 1,
+      "gen_s": 21.08,
+      "audio_s": 2.52,
+      "rtfx": 0.12,
+      "peak_gib": 17.354,
+      "wav": "C:\\Users\\tymra\\.claude\\jobs\\6d011064\\tmp\\aukvram\\bf16_p1.wav"
+    },
+    {
+      "prompt_id": 2,
+      "gen_s": 3.21,
+      "audio_s": 5.92,
+      "rtfx": 1.84,
+      "peak_gib": 17.879,
+      "wav": "C:\\Users\\tymra\\.claude\\jobs\\6d011064\\tmp\\aukvram\\bf16_p2.wav"
+    },
+    {
+      "prompt_id": 3,
+      "gen_s": 5.59,
+      "audio_s": 23.4,
+      "rtfx": 4.19,
+      "peak_gib": 18.582,
+      "wav": "C:\\Users\\tymra\\.claude\\jobs\\6d011064\\tmp\\aukvram\\bf16_p3.wav"
+    },
+    {
+      "prompt_id": 4,
+      "gen_s": 3.3,
+      "audio_s": 7.0,
+      "rtfx": 2.12,
+      "peak_gib": 17.911,
+      "wav": "C:\\Users\\tymra\\.claude\\jobs\\6d011064\\tmp\\aukvram\\bf16_p4.wav"
+    }
+  ],
+  "peak_gib_overall": 18.582
+}
