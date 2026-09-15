@@ -1,0 +1,40 @@
+prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,peak_vram_mb,wall_s,ok,error
+6,pocket,cpu,,gated,0,True,487.3,6.5751,6.16,0.94,2355.4,,25.632,True,
+6,pocket,cpu,,gated,1,False,561.5,6.8977,7.6,1.1,2359.2,,0,True,
+6,pocket,cpu,,gated,2,False,365.8,4.822,5.68,1.18,2361.9,,0,True,
+6,neutts_nano,cpu,nano,True,0,True,,,,,,,7.37,False,"load failed: GatedRepoError: 403 Client Error. (Request ID: Root=1-6aa9a1f5-5ec73ad5003bafbc7562ce2f;abeda3d8-7a65-4ad2-968e-0886d02f426e)
+
+Cannot access gated repo for url https://huggingface.co/neup"
+6,neutts_nano,cuda,nano,True,0,True,,,,,,,7.038,False,"load failed: GatedRepoError: 403 Client Error. (Request ID: Root=1-6aa9a1fc-48573cd46434b7b555e466d6;f38c9c65-335c-49ff-8eb3-7f980d098f38)
+
+Cannot access gated repo for url https://huggingface.co/neup"
+6,coqui,cpu,,True,0,True,10050.6,10.0506,6.721,0.67,3056.9,,60.185,True,
+6,coqui,cpu,,True,1,False,10270.9,10.2709,7.041,0.69,3070.5,,0,True,
+6,coqui,cpu,,True,2,False,24155.5,24.1555,15.585,0.65,3290.9,,0,True,
+6,coqui,cuda,,True,0,True,17961.5,17.9615,7.841,0.44,2357.1,1950.1,37.449,True,
+6,coqui,cuda,,True,1,False,1713.7,1.7137,7.137,4.16,2359.4,1931.5,0,True,
+6,coqui,cuda,,True,2,False,1760.2,1.7602,7.415,4.21,2333.4,1940.3,0,True,
+6,qwentts_fast,cuda,base,True,0,True,22939.9,22.9399,6.48,0.28,2620.1,4952.5,36.508,True,
+6,qwentts_fast,cuda,base,True,1,False,2035.2,2.0352,7.2,3.54,2622.0,4973.1,0,True,
+6,qwentts_fast,cuda,base,True,2,False,2029.2,2.0292,7.2,3.55,2622.0,4973.1,0,True,
+6,audio8,cpu,base,True,0,True,48164.4,48.1644,7.198,0.15,5454.4,,142.909,True,
+6,audio8,cpu,base,True,1,False,45605.7,45.6057,6.827,0.15,5999.8,,0,True,
+6,audio8,cpu,base,True,2,False,44153.3,44.1533,6.827,0.15,5996.1,,0,True,
+6,audio8,cuda,base,True,0,True,27511.8,27.5118,7.105,0.26,3072.5,2376.1,53.329,True,
+6,audio8,cuda,base,True,1,False,10513.5,10.5135,7.709,0.73,2290.2,2408.6,0,True,
+6,audio8,cuda,base,True,2,False,10271.4,10.2714,7.709,0.75,2290.2,2408.6,0,True,
+6,audio8_fast,cuda,fastpath,True,0,True,1504.8,1.5048,7.895,5.25,2626.1,2407.8,71.71,True,
+6,audio8_fast,cuda,fastpath,True,1,False,674.8,0.6748,7.291,10.81,2628.3,2416.2,0,True,
+6,audio8_fast,cuda,fastpath,True,2,False,630.1,0.6301,7.291,11.57,2628.4,2416.2,0,True,
+6,audio8_01b,cpu,base_01b,True,0,True,30936.1,30.9361,7.755,0.25,4005.6,,91.632,True,
+6,audio8_01b,cpu,base_01b,True,1,False,27799.4,27.7994,7.245,0.26,4327.4,,0,True,
+6,audio8_01b,cpu,base_01b,True,2,False,28333.2,28.3332,7.245,0.26,4337.4,,0,True,
+6,audio8_01b,cuda,base_01b,True,0,True,28013.0,28.013,7.616,0.27,2296.1,1609.7,56.665,True,
+6,audio8_01b,cuda,base_01b,True,1,False,12231.7,12.2317,6.966,0.57,2297.8,1609.7,0,True,
+6,audio8_01b,cuda,base_01b,True,2,False,11818.0,11.818,6.966,0.59,2297.9,1609.7,0,True,
+6,openvoice,cpu,,True,0,True,2167.4,2.1674,7.43,3.43,2012.1,,14.982,True,
+6,openvoice,cpu,,True,1,False,1585.9,1.5859,7.361,4.64,2033.0,,0,True,
+6,openvoice,cpu,,True,2,False,1562.8,1.5628,7.303,4.67,2046.1,,0,True,
+6,openvoice,cuda,,True,0,True,8058.1,8.0581,7.396,0.92,2680.1,704.7,26.757,True,
+6,openvoice,cuda,,True,1,False,304.5,0.3045,7.349,24.14,2677.0,708.0,0,True,
+6,openvoice,cuda,,True,2,False,244.5,0.2445,7.396,30.25,2678.4,708.6,0,True,
