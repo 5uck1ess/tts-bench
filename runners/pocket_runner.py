@@ -1,7 +1,14 @@
 """Pocket-TTS runner.
 
 Benched on **pocket-tts v3.1.0** (re-benched 2026-09-05 from v2.1.0; install.sh /
-install.ps1 now clone `--branch v3.1.0` so this cannot drift silently again).
+install.ps1 now clone `--branch v3.1.0`).
+
+⚠ The pin only protects a **fresh** install. Both installers short-circuit on an
+existing `venvs/pocket/` ("pocket: already installed") and never re-clone, and even
+inside that branch the clone is guarded by `[ ! -d venvs/pocket/src ]`. A rig that
+already has the venv therefore stays on whatever commit it installed — it must be
+updated by hand. Verify with `git -C venvs/pocket/src describe --tags` before
+trusting a row's version.
 
 Resolved checkpoints — nothing here passes `revision=`, so these SHAs are the only
 record of what a row was actually measured on:
@@ -9,7 +16,9 @@ record of what a row was actually measured on:
     --variant 24l  english_2026-04_24l @492522650173a0653b7575cdc25ae09810e5d741
 
 `--variant 24l` has NO harness row: the 24-layer variant was benched 2026-09-05 and
-skipped (336M for 1.62x RTFx against the base row's 4.90x — see docs/considered.md).
+skipped (336M for 1.62x RTFx against the base row's 4.90x — both are same-basis
+medians from that scratch run, NOT the board's published 4.40x; see
+docs/considered.md).
 The mapping is kept so revisiting it is one harness row, not a re-implementation.
 
 **The v2.1.0 -> v3.1.0 delta is sampling temperature, not weights.** `english`'s
@@ -98,10 +107,21 @@ def main() -> int:
         import numpy as np
         import soundfile as sf
 
+        # Fail loudly rather than silently substituting English: a bench row
+        # that runs fine under the wrong config is mislabeled data, which is
+        # worse on a public board than a visibly failed cell.
         if args.language == "en":
-            lang_cfg = VARIANT_EN_CONFIG.get(args.variant, VARIANT_EN_CONFIG[None])
+            if args.variant not in VARIANT_EN_CONFIG:
+                raise ValueError(
+                    f"unknown --variant {args.variant!r}; expected "
+                    f"{sorted(k for k in VARIANT_EN_CONFIG if k)} or omitted")
+            lang_cfg = VARIANT_EN_CONFIG[args.variant]
         else:
-            lang_cfg = LANGUAGE_CONFIG.get(args.language, LANGUAGE_CONFIG["en"])
+            if args.language not in LANGUAGE_CONFIG:
+                raise ValueError(
+                    f"unsupported --language {args.language!r}; expected "
+                    f"{sorted(LANGUAGE_CONFIG)}")
+            lang_cfg = LANGUAGE_CONFIG[args.language]
         model = TTSModel.load_model(language=lang_cfg)
         samplerate = int(model.sample_rate)
 
