@@ -129,3 +129,28 @@ These aren't models to add; they're native **C++/ggml runtimes** (a "llama.cpp f
   but its inference code lives in the
   [GitHub repo](https://github.com/Audio8-AI/Audio8_TTS/tree/master/onnx_runtime), not the HF repo,
   so it needs its own venv and runner rather than a variant flag.
+
+> **Surfaced 2026-09-15 (Tym sent two bare HF links, "how are these models for our bench?").**
+> Both parents were **accepted** and are being added; what is recorded below is the *variant-level*
+> scope decision, which is the part that would otherwise be re-litigated.
+
+- **[FireRedTTS3-Instruct](https://huggingface.co/FireRedTeam/FireRedTTS3)** (FireRedTeam, 2.119B,
+  the second checkpoint inside the same repo as the accepted `FireRedTTS3-Base`) — *skipped*. Its
+  headline capability is **voice design**: describe a voice in natural language, get speech, no
+  reference audio. That task shape was already deferred on this board when **MOSS-VoiceGenerator**
+  was skipped ("orthogonal to either predefined or cloning TTS") — there is no lens for it. Its
+  remaining path is zero-shot cloning, which duplicates the Base row it shares an architecture with
+  (identical `dit_depth 11 / hidden 1024 / patch_size 4` config), so it would add a row without
+  adding information. Skipping it also saves **8.5 GB** of download —
+  `hf download --include 'fireredtts3_base/*' 'redae/*' 'campp/*' 'text_tokenizer/*'`.
+  **Revisit if** a voice-design lens exists, or if a pinned instruction + seed is accepted as a
+  legitimate "preset voice" — that would make it `_PRESET_AND_CLONE` and fill the default lens,
+  where the Base row is cloning-only.
+
+- **AuK Instruct-TTS** (the reference-free mode of the accepted [`tencent/AuK`](https://huggingface.co/tencent/AuK))
+  — *skipped*, same reasoning: voice-design task shape, no lens, MOSS-VoiceGenerator precedent.
+  Unlike FireRed's it is a *mode* of the same checkpoint rather than a separate one, so nothing is
+  saved by skipping it; it simply is not benched. **Revisit** on the same condition.
+  AuK's non-TTS tasks (speech enhancement, source separation, lyric and paralinguistic editing) are
+  out of scope for a TTS bench and must not be counted toward its case — the Gepard rule about
+  non-independent headline wins applies to non-independent *capabilities* too.
