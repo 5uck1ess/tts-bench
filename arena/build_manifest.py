@@ -53,6 +53,17 @@ NO_PRESET_VOICE = {
 #   reflect its real, sometimes-bad quality.
 HOLD_FROM_POOL = set()
 
+# Held out by (model, prompt_id) rather than whole-model — for a model that renders
+# most prompts fine but has one clip that is not a fair thing to vote on. The board
+# still carries the row and its real score; only the pairwise pool skips the clip.
+#   firered3 p1: 0.96 s of audio whose Whisper transcript is the single word
+#   "female." (WER 1.000) instead of "Open the browser and read my email." It is a
+#   speaker-descriptor leaking into the output, reproduces on both rigs in every run
+#   with do_tn on and off, and is language-independent (the same 0.96 s signature
+#   appears on French). Its other prompts are clean, so a whole-model hold would
+#   throw away three good clips to suppress one defect. See docs/known-issues.md.
+HOLD_CLIPS = {("firered3", 1)}
+
 # Mirrors publish.py SPEED_ONLY: models with a speed row but no place in the vote
 # pool because their audio duplicates another tracked model (kokoro_mlx == kokoro).
 SPEED_ONLY = {
@@ -112,6 +123,8 @@ def scan_dirs(gh_root, mode: str, base_url: str):
                     continue
                 model, dev, p = m.group(1), m.group(2), int(m.group(3))
                 if model in drop or (only is not None and model not in only):
+                    continue
+                if (model, p) in HOLD_CLIPS:
                     continue
                 rank = (RIG_PRIO[rig], DEV_PRIO.get(dev, 9))
                 key = (model, p)

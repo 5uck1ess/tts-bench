@@ -20,6 +20,10 @@
     "5": [
       "fr",
       "Bonjour, je m'appelle Cicero et je vais vous aider avec votre code aujourd'hui."
+    ],
+    "6": [
+      "es",
+      "¿Este modelo es bilingüe? Añade el español, corrige la pronunciación automática y reinicia el servidor."
     ]
   },
   "modes": {
@@ -52,6 +56,11 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_cuda_p5.wav"
         },
         {
+          "model": "audio8",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/audio8_cuda_p6.wav"
+        },
+        {
           "model": "audio8_01b",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_01b_cuda_p1.wav"
@@ -77,6 +86,11 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_01b_cuda_p5.wav"
         },
         {
+          "model": "audio8_01b",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/audio8_01b_cuda_p6.wav"
+        },
+        {
           "model": "audio8_fast",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_fast_cuda_p1.wav"
@@ -100,6 +114,11 @@
           "model": "audio8_fast",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/audio8_fast_cuda_p5.wav"
+        },
+        {
+          "model": "audio8_fast",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/audio8_fast_cuda_p6.wav"
         },
         {
           "model": "chatterbox",
@@ -165,6 +184,11 @@
           "model": "coqui",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/coqui_cuda_p5.wav"
+        },
+        {
+          "model": "coqui",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/coqui_cuda_p6.wav"
         },
         {
           "model": "dia",
@@ -342,6 +366,11 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/kokoro_cuda_p5.wav"
         },
         {
+          "model": "kokoro",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/kokoro_cuda_p6.wav"
+        },
+        {
           "model": "lfm2_audio",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm2_audio_cuda_p1.wav"
@@ -490,6 +519,11 @@
           "model": "melotts",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/melotts_cuda_p5.wav"
+        },
+        {
+          "model": "melotts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/melotts_cuda_p6.wav"
         },
         {
           "model": "miratts",
@@ -647,6 +681,11 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/piper_cpu_p5.wav"
         },
         {
+          "model": "piper",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/piper_cpu_p6.wav"
+        },
+        {
           "model": "pocket",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/pocket_cpu_p1.wav"
@@ -670,6 +709,11 @@
           "model": "pocket",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/pocket_cpu_p5.wav"
+        },
+        {
+          "model": "pocket",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/pocket_cpu_p6.wav"
         },
         {
           "model": "qwentts_06b_custom",
@@ -750,6 +794,11 @@
           "model": "scyllasband",
           "prompt": 4,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/scyllasband_cpu_p4.wav"
+        },
+        {
+          "model": "scyllasband",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/scyllasband_cpu_p6.wav"
         },
         {
           "model": "sesame",
@@ -835,6 +884,11 @@
           "model": "supertonic",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/supertonic_cpu_p5.wav"
+        },
+        {
+          "model": "supertonic",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/supertonic_cpu_p6.wav"
         },
         {
           "model": "vaniq",
@@ -1250,11 +1304,6 @@
           "model": "f5tts",
           "prompt": 4,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/f5tts_cuda_p4.wav"
-        },
-        {
-          "model": "firered3",
-          "prompt": 1,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/firered3_cuda_p1.wav"
         },
         {
           "model": "firered3",
