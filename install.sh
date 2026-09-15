@@ -1429,6 +1429,74 @@ else
     echo "cosyvoice: already installed"
 fi
 
+# --- FireRedTTS3 (Base, CUDA-only) ---
+echo; cyan "=== FireRedTTS3 (Base, CUDA-only) ==="
+if ! want firered3; then echo "firered3: skipped (not in install filter)"
+elif [ "$(uname)" != "Linux" ]; then echo "firered3: skipped (Linux/CUDA only — flash-attn is required)"
+elif [ ! -x venvs/firered3/bin/python ]; then
+    uv venv venvs/firered3 --python 3.11 || die "uv venv firered3"
+    # Upstream ships no tags, so pin the commit these rows were measured on.
+    if [ ! -d venvs/firered3/src ]; then
+        git clone https://github.com/FireRedTeam/FireRedTTS3 venvs/firered3/src || die "clone FireRedTTS3"
+        git -C venvs/firered3/src checkout 7a1f3a7282ff184cc1c7f070556baaf5f08b5216 || die "pin FireRedTTS3 commit"
+    fi
+    # Mirror requirements.txt; seed the build tools for flash-attn's source build.
+    uv pip install --python venvs/firered3/bin/python torchcodec==0.7.0 transformers==5.6.2 einops==0.8.2 \
+        dotenv regex wetext fasttext faster-whisper huggingface_hub setuptools wheel packaging ninja \
+        || die "uv pip install firered3 deps"
+    # flash-attn's non-isolated build must see the target torch stack first.
+    uv pip install --python venvs/firered3/bin/python --reinstall-package torch --reinstall-package torchaudio \
+        torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128 \
+        || die "torch cu128 for firered3"
+    uv pip install --python venvs/firered3/bin/python flash-attn==2.8.3 --no-build-isolation \
+        || die "uv pip install flash-attn for firered3"
+    # Base only: deliberately omit the 8.5 GB fireredtts3_instruct checkpoint.
+    uv run --python venvs/firered3/bin/python -- hf download FireRedTeam/FireRedTTS3 \
+        --revision dcf1bdcd1b8b25b382fa84c3e34eb82e3054a610 \
+        --include 'fireredtts3_base/*' 'redae/*' 'campp/*' 'text_tokenizer/*' \
+        --local-dir venvs/firered3/src/checkpoints || die "download firered3 weights"
+    green "firered3: ok"
+else
+    echo "firered3: already installed"
+fi
+
+# --- Tencent AuK (Base + Flash share this venv) ---
+echo; cyan "=== Tencent AuK (Base + Flash share this venv) ==="
+if ! want auk; then echo "auk: skipped (not in install filter)"
+elif [ ! -x venvs/auk/bin/python ]; then
+    uv venv venvs/auk --python 3.11 || die "uv venv auk"
+    # No tags upstream and main moves fast (24 commits, last 2026-09-15) — pin the commit.
+    if [ ! -d venvs/auk/src ]; then
+        git clone https://github.com/Tencent-Hunyuan/AuK venvs/auk/src || die "clone AuK"
+        git -C venvs/auk/src checkout e1c935e81e356c87419d9509d7f8a4091457bdca || die "pin AuK commit"
+    fi
+    # Core inference only, no extras. attn_backend="torch": no flash-attn.
+    uv pip install --python venvs/auk/bin/python -e venvs/auk/src huggingface_hub \
+        || die "uv pip install auk"
+    # pyproject.toml requires torch>=2.7,<2.8. Keep default wheels on Mac.
+    if [ "$(uname)" = "Darwin" ]; then
+        uv pip install --python venvs/auk/bin/python torch==2.7.1 torchaudio==2.7.1 \
+            || die "torch for auk (Mac)"
+    else
+        uv pip install --python venvs/auk/bin/python --reinstall-package torch --reinstall-package torchaudio \
+            torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 \
+            || die "torch cu128 for auk (LAST)"
+    fi
+    uv run --python venvs/auk/bin/python -- hf download tencent/AuK \
+        --revision 790742b71a4430120daf2b2099192abae449eb9f --local-dir venvs/auk/src/ckpts/AuK \
+        || die "download AuK weights"
+    uv run --python venvs/auk/bin/python -- hf download tencent/AuK-Flash \
+        --revision 575b92f0895f75180bf2cbd35f2e176c5732b8ed --local-dir venvs/auk/src/ckpts/AuK-Flash \
+        || die "download AuK-Flash weights"
+    # Mandatory text encoder. Licence is `qwen-research` (non-commercial) — it, not AuK's
+    # MIT, is what the board's licence cell must report for the auk rows.
+    uv run --python venvs/auk/bin/python -- hf download Qwen/Qwen2.5-Omni-3B \
+        --revision f75b40e3da2003cdd6e1829b1f420ca70797c34e --local-dir venvs/auk/src/ckpts/Qwen2.5-Omni-3B || die "download AuK text encoder"
+    green "auk: ok"
+else
+    echo "auk: already installed"
+fi
+
 # --- scoring: objective metrics (UTMOS + WER + SIM) ----------------------------
 # Central scorer (one rig scores all published clips). TWO venvs, by necessity:
 #   venvs/scoring     (py3.11) — UTMOS + WER. Run: scoring.score_all
