@@ -40,6 +40,7 @@ NO_PRESET_VOICE = {
     # reference, so these are reference-only (cloning board). Their fallback was
     # jo.wav until 2026-07-29 -- see docs/known-issues.md.
     "f5tts", "indextts", "step_editx",
+    "firered3", "auk_base", "auk_flash",
     # Same defect, caught in the follow-up pass: these stored the fallback as a bare
     # stem ("jo") rather than "jo.wav", so the first sweep's grep missed them.
     "neutts_air", "neutts_nano", "luxtts",
