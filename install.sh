@@ -1484,16 +1484,16 @@ elif [ ! -x venvs/auk/bin/python ]; then
             torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 \
             || die "torch cu128 for auk (LAST)"
     fi
-    uv run --python venvs/auk/bin/python -- hf download tencent/AuK \
-        --revision 790742b71a4430120daf2b2099192abae449eb9f --local-dir venvs/auk/src/ckpts/AuK \
+    # snapshot_download, not `uv run -- hf`: the latter resolves `hf` from the system
+    # interpreter and leaves a stray .venv + uv.lock in the repo root.
+    venvs/auk/bin/python -c "from huggingface_hub import snapshot_download; snapshot_download('tencent/AuK', revision='790742b71a4430120daf2b2099192abae449eb9f', local_dir='venvs/auk/src/ckpts/AuK')" \
         || die "download AuK weights"
-    uv run --python venvs/auk/bin/python -- hf download tencent/AuK-Flash \
-        --revision 575b92f0895f75180bf2cbd35f2e176c5732b8ed --local-dir venvs/auk/src/ckpts/AuK-Flash \
+    venvs/auk/bin/python -c "from huggingface_hub import snapshot_download; snapshot_download('tencent/AuK-Flash', revision='575b92f0895f75180bf2cbd35f2e176c5732b8ed', local_dir='venvs/auk/src/ckpts/AuK-Flash')" \
         || die "download AuK-Flash weights"
     # Mandatory text encoder. Licence is `qwen-research` (non-commercial) — it, not AuK's
     # MIT, is what the board's licence cell must report for the auk rows.
-    uv run --python venvs/auk/bin/python -- hf download Qwen/Qwen2.5-Omni-3B \
-        --revision f75b40e3da2003cdd6e1829b1f420ca70797c34e --local-dir venvs/auk/src/ckpts/Qwen2.5-Omni-3B || die "download AuK text encoder"
+    venvs/auk/bin/python -c "from huggingface_hub import snapshot_download; snapshot_download('Qwen/Qwen2.5-Omni-3B', revision='f75b40e3da2003cdd6e1829b1f420ca70797c34e', local_dir='venvs/auk/src/ckpts/Qwen2.5-Omni-3B')" \
+        || die "download AuK text encoder"
     green "auk: ok"
 else
     echo "auk: already installed"

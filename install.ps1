@@ -964,11 +964,13 @@ if (-not (Want "auk")) { Write-Host "auk: skipped (not in install filter)" -Fore
     Invoke-Checked "uv pip install auk" { uv pip install --python venvs\auk\Scripts\python.exe -e venvs\auk\src huggingface_hub }
     # pyproject.toml requires torch>=2.7,<2.8. cu128 torch LAST, as for miso.
     Invoke-Checked "torch cu128 for auk (LAST)" { uv pip install --python venvs\auk\Scripts\python.exe --reinstall-package torch --reinstall-package torchaudio torch==2.7.1 torchaudio==2.7.1 --index-url https://download.pytorch.org/whl/cu128 }
-    Invoke-Checked "download AuK weights" { uv run --python venvs\auk\Scripts\python.exe -- hf download tencent/AuK --revision 790742b71a4430120daf2b2099192abae449eb9f --local-dir venvs\auk\src\ckpts\AuK }
-    Invoke-Checked "download AuK-Flash weights" { uv run --python venvs\auk\Scripts\python.exe -- hf download tencent/AuK-Flash --revision 575b92f0895f75180bf2cbd35f2e176c5732b8ed --local-dir venvs\auk\src\ckpts\AuK-Flash }
+    # snapshot_download, not `uv run -- hf`: the latter resolves `hf` from the system
+    # interpreter and leaves a stray .venv + uv.lock in the repo root.
+    Invoke-Checked "download AuK weights" { & "venvs\auk\Scripts\python.exe" -c "from huggingface_hub import snapshot_download; snapshot_download('tencent/AuK', revision='790742b71a4430120daf2b2099192abae449eb9f', local_dir=r'venvs\auk\src\ckpts\AuK')" }
+    Invoke-Checked "download AuK-Flash weights" { & "venvs\auk\Scripts\python.exe" -c "from huggingface_hub import snapshot_download; snapshot_download('tencent/AuK-Flash', revision='575b92f0895f75180bf2cbd35f2e176c5732b8ed', local_dir=r'venvs\auk\src\ckpts\AuK-Flash')" }
     # Mandatory text encoder. Licence is `qwen-research` (non-commercial) — it, not AuK's
     # MIT, is what the board's licence cell must report for the auk rows.
-    Invoke-Checked "download AuK text encoder" { uv run --python venvs\auk\Scripts\python.exe -- hf download Qwen/Qwen2.5-Omni-3B --revision f75b40e3da2003cdd6e1829b1f420ca70797c34e --local-dir venvs\auk\src\ckpts\Qwen2.5-Omni-3B }
+    Invoke-Checked "download AuK text encoder" { & "venvs\auk\Scripts\python.exe" -c "from huggingface_hub import snapshot_download; snapshot_download('Qwen/Qwen2.5-Omni-3B', revision='f75b40e3da2003cdd6e1829b1f420ca70797c34e', local_dir=r'venvs\auk\src\ckpts\Qwen2.5-Omni-3B')" }
     Write-Host "auk: ok" -ForegroundColor Green
 } else {
     Write-Host "auk: already installed" -ForegroundColor Gray
