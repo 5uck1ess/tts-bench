@@ -34,7 +34,7 @@ DEFAULT_VOICE = {
     "en": "en_US-lessac-medium",
     "fr": "fr_FR-siwis-medium",
     "de": "de_DE-thorsten-medium",
-    "es": "es_ES-mls_9972-low",
+    "es": "es_ES-sharvard-medium",
     "it": "it_IT-paola-medium",
     "pt": "pt_PT-tugão-medium",
 }
