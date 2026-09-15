@@ -236,11 +236,15 @@ MODELS = [
     # FireRedTTS3 documents 24 languages; its French is genuinely excellent:
     # the canonical FR prompt cloned from reference/juliette.wav scores WER 0.000.
     # CROSS-LINGUAL cloning fails: French text with the English house reference
-    # produced an unrelated sentence (WER 0.867); a second French sentence collapsed
-    # to "Admin." in 0.96 s (WER 1.000). The harness passes one --reference to every
-    # prompt, so its only FR condition is cross-lingual. Thus langs={"en"} is a
-    # harness-condition limit, NOT a model limit; do not "fix" it from the model card
-    # (see docs/known-issues.md, issue #8). CUDA-only: hard-coded flash-attn.
+    # produced an unrelated sentence (WER 0.867). The harness passes one --reference
+    # to every prompt, so its only FR condition is cross-lingual. Thus langs={"en"}
+    # is a harness-condition limit, NOT a model limit; do not "fix" it from the model
+    # card (see docs/known-issues.md, issue #8).
+    # Note the SEPARATE 0.96 s / one-spurious-word collapse is NOT cross-lingual --
+    # English prompt 1 on the English house reference has the identical signature
+    # (WER 1.000, transcript "female."), so it is language-independent and hits the
+    # published English row too. See docs/known-issues.md § Per-model.
+    # CUDA-only: hard-coded flash-attn.
     ("firered3",    "firered3",   "runners/firered3_runner.py",   {"en"},        ["cuda"],  None,   True),
     # AuK: pure cloners, one venv + runner; --variant picks Base or Flash.
     # Cross-lingual FR from the English reference measured WER 0.267 (first 11/15
