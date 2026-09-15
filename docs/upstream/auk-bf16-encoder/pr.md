@@ -27,7 +27,7 @@ handling elsewhere needed changing.
 
 ## Validation
 
-Measurements from `baseline.json` and `bf16.json` were taken on an RTX 5090 with 32 GB. The original OOM was observed on a separate RTX 3090 with 24 GB; that GPU was not re-tested post-fix. The measured peak after this change is below its capacity, but this is not a verified post-fix run on that hardware.
+Measurements in `baseline.json` and `bf16.json` were taken on an RTX 5090 with 32 GB. The fix was then verified on the RTX 3090 with 24 GB where the OOM was originally observed: that card failed at 23.48 GiB of 23.56 usable on canonical prompt 1 before the change, and after it completes prompt 1 at a **17.36 GiB** peak and a 23-second prompt at **17.91 GiB**, with `text_encoder` confirmed `torch.bfloat16`. WER on that card is 0.0 for prompt 1 and 0.1212/0.0606 across two seeds for prompt 3, straddling the 0.0889 measured on the 32 GB card. Figures in `linux3090.json`.
 
 | Measurement | Baseline | Fix |
 | --- | --- | --- |

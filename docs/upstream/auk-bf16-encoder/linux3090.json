@@ -1,0 +1,20 @@
+{
+  "rig": "linux-3090",
+  "gpu": "NVIDIA GeForce RTX 3090",
+  "vram_gib_total": 24,
+  "vram_gib_usable": 23.56,
+  "before_fix": {
+    "result": "OOM",
+    "failed_on_prompt": 1,
+    "in_use_gib_at_failure": 23.48,
+    "note": "OOM on the SHORTEST canonical prompt, with the GPU otherwise empty; expandable_segments did not rescue it"
+  },
+  "after_fix": {
+    "text_encoder_dtype": "torch.bfloat16",
+    "runs": [
+      {"prompt_id": 1, "peak_gib": 17.36, "completed": true, "wer": 0.0},
+      {"prompt_id": 3, "peak_gib": 17.91, "completed": true, "wer_seed_a": 0.1212, "wer_seed_b": 0.0606}
+    ],
+    "note": "prompt 3's two seeds straddle the Win-5090 value of 0.0889; the residual errors are Whisper spacing artifacts ('whisperlarge', 'real time'), not AuK output"
+  }
+}

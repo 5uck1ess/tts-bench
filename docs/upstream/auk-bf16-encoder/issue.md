@@ -32,7 +32,7 @@ All measurements below come from `baseline.json` and `bf16.json`, taken on an RT
 | Peak after load, GiB | 21.443 | 13.966 |
 | Overall peak, GiB | 26.054 | 18.582 |
 
-Restoring only the encoder dtype brings the measured workload below the affected GPU's capacity. This identifies the encoder upcast as the cause of the capacity overrun for this workload; a successful post-fix run on the OOM GPU remains unverified.
+**Confirmed on the affected GPU.** The same RTX 3090 that OOM'd at 23.48 GiB of 23.56 usable — on canonical prompt 1, the shortest in the set, with the GPU otherwise empty — completes after the change at a peak of **17.36 GiB** on that prompt and **17.91 GiB** on a 23-second one, with `text_encoder` confirmed `torch.bfloat16`. WER is 0.0 on prompt 1; prompt 3 measured 0.1212 and 0.0606 across two seeds, straddling the 0.0889 seen on the 32 GB card, and its residual errors are ASR spacing artifacts rather than synthesis errors. Figures in `linux3090.json`.
 
 ## Proposed fix
 

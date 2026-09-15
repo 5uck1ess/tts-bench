@@ -1,15 +1,17 @@
 # AuK: the fp32 encoder cast that costs 7.5 GiB
 
-Prepared 2026-09-15, **not filed**. Target: https://github.com/Tencent-Hunyuan/AuK
+Prepared 2026-09-15, verified on the affected GPU, **not filed**. Target: https://github.com/Tencent-Hunyuan/AuK
 
 `infer_auk.py` loads the frozen Qwen text encoder in bf16, then `model.to(torch.float32)`
 re-casts it, doubling a 4.03B-param module from 7.52 to 15.03 GiB. That is the whole reason
 AuK does not fit on a 24 GB card. One line after the cast, while the model is still on CPU,
-drops peak VRAM 26.05 -> 18.58 GiB with no measurable quality change.
+drops peak VRAM 26.05 -> 18.58 GiB with no measurable quality change. Confirmed on the
+3090 that was OOMing: 23.48 GiB failure -> 17.36 GiB peak, completes, WER intact.
 
 - `issue.md` — bug report body (title is the H1)
 - `pr.md` — pull request body (title is the H1)
 - `baseline.json` / `bf16.json` — the Win-5090 VRAM + RTFx measurements behind every number
+- `linux3090.json` — the Linux-3090 confirmation: the before-fix OOM and the after-fix peaks
 - `wer_all.json` — WER for fp32 seeds 0/1/2 and bf16 seed 0, the control that shows prompt 4's
   delta is take-to-take variance and not a dtype regression
 

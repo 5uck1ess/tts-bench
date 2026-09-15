@@ -141,7 +141,13 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
   the published numbers are the fp32 path. Nothing in the tracker reports this (issues #1-17, PRs
   #1-15 checked 2026-09-15); the merged **PR #9 `cpu_offload to save memory`** is the community
   working around the symptom, at the cost of PCIe transfers mid-generation, when a dtype line
-  removes the cause. **Not filed** — prepared, awaiting Tym's go.
+  removes the cause. **Confirmed on the 3090 itself (2026-09-15):** the card that failed at 23.48 GiB of 23.56 usable on
+  canonical prompt 1 now completes it at a **17.36 GiB** peak (17.91 on prompt 3), encoder verified
+  `torch.bfloat16`, WER 0.000 on p1 and 0.1212/0.0606 across two seeds on p3 — straddling the
+  Win-5090's 0.0889, with the residue being Whisper spacing artifacts rather than AuK output. So the
+  absent `linux-3090` AuK rows are now a *choice*, not a hardware limit: they could be benched on a
+  patched venv, but that would measure a config upstream does not ship. Leave them absent until
+  upstream takes the fix. Drafts in `docs/upstream/auk-bf16-encoder/`. **Not filed** — awaiting Tym.
 
 
 ## Skipped on Apple Silicon (Apple M4, 16 GB)
