@@ -138,10 +138,19 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
 
   **Upstream context:** the README's VRAM table is captioned "with bf16 inference" and reports
   24.78-25.00 GiB, which matches our *fp32* measurement — so the caption and the code disagree, and
-  the published numbers are the fp32 path. Nothing in the tracker reports this (issues #1-17, PRs
-  #1-15 checked 2026-09-15); the merged **PR #9 `cpu_offload to save memory`** is the community
-  working around the symptom, at the cost of PCIe transfers mid-generation, when a dtype line
-  removes the cause. **Confirmed on the 3090 itself (2026-09-15):** the card that failed at 23.48 GiB of 23.56 usable on
+  the published numbers are the fp32 path. The merged **PR #9 `cpu_offload to save memory`** is the
+  community working around the symptom, at the cost of PCIe transfers mid-generation, when a dtype
+  line removes the cause.
+  ⚠️ **Our PR #18 turned out to DUPLICATE open PR #12.** That PR (multi-GPU placement + split
+  deployment, ~1900 lines, open since 2026-09-12) carries the same fix, implemented better: it
+  replaces the cast with `model.transformer.to(torch.float32)`, preserving whatever dtype the encoder
+  was loaded in instead of hardcoding bf16. **The pre-filing check read PR TITLES, not diffs**, and
+  the note recording it claimed more than was done -- "PRs #1-15 checked" meant *listed*, not read.
+  #18 stays open as the 4-line standalone subset carrying the two-rig measurements #12 lacks, with
+  the overlap cross-referenced in a comment. **Lesson: to check for a duplicate, grep the diffs of
+  open PRs for the symbol you are changing. A feature PR's title will not mention the one-line fix
+  buried inside it -- and never write down a check you only half-performed, because the next reader
+  is you.** **Confirmed on the 3090 itself (2026-09-15):** the card that failed at 23.48 GiB of 23.56 usable on
   canonical prompt 1 now completes it at a **17.36 GiB** peak (17.91 on prompt 3), encoder verified
   `torch.bfloat16`, WER 0.000 on p1 and 0.1212/0.0606 across two seeds on p3 — straddling the
   Win-5090's 0.0889, with the residue being Whisper spacing artifacts rather than AuK output. So the
