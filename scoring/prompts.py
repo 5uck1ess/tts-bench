@@ -1,4 +1,4 @@
-"""The 5 canonical bench prompts, mirrored from bench.PROMPTS.
+"""The 6 canonical bench prompts, mirrored from bench.PROMPTS.
 
 Kept in sync by hand (they change rarely). Mirrored rather than imported so the
 lightweight scoring venv never pulls bench.py's heavy transitive deps.
@@ -15,6 +15,7 @@ PROMPTS = [
      "over two thousand times realtime on a single GPU."),
     (4, "en", "Run pytest tests slash test underscore voice dot py with verbose flag and capture flag set to no."),
     (5, "fr", "Bonjour, je m'appelle Cicero et je vais vous aider avec votre code aujourd'hui."),
+    (6, "es", "¿Este modelo es bilingüe? Añade el español, corrige la pronunciación automática y reinicia el servidor."),
 ]
 
 # prompt_id (str) -> (lang, text)

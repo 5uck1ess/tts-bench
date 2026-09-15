@@ -1,4 +1,4 @@
-"""Quick TTS bench: cold + warm timings for all installed models on 5 prompts.
+"""Quick TTS bench: cold + warm timings for all installed models on 6 prompts.
 
 Loop order is prompt-outer so for each prompt you see all models back-to-back
 (easier to grab side-by-side clips for video).
@@ -186,6 +186,14 @@ PROMPTS = [
      "over two thousand times realtime on a single GPU."),
     (4, "en", "Run pytest tests slash test underscore voice dot py with verbose flag and capture flag set to no."),
     (5, "fr", "Bonjour, je m'appelle Cicero et je vais vous aider avec votre code aujourd'hui."),
+    # Spanish (issue #9). Short, but every element earns its place: the inverted
+    # ¿ demands question intonation from the START of the clause (an English
+    # frontend can't fake it), "bilingüe" carries the ü diaeresis that naive G2P
+    # silently drops, "Añade"/"español" the ñ, "reinicia" a word-initial trilled
+    # r (English models produce a tap), "corrige" the jota /x/, "pronunciación"
+    # the c-before-i that also reveals which dialect the model picked, and
+    # "automática" an esdrújula whose written accent models love to ignore.
+    (6, "es", "¿Este modelo es bilingüe? Añade el español, corrige la pronunciación automática y reinicia el servidor."),
 ]
 
 
@@ -193,7 +201,7 @@ def main() -> int:
     p = argparse.ArgumentParser(description="Quick TTS bench (cold + warm).")
     p.add_argument("--reference", default=None,
                    help="Reference wav for voice cloning (omit for each model's default voice).")
-    p.add_argument("--prompts", default=None, help="Comma-sep prompt ids; default: all 5.")
+    p.add_argument("--prompts", default=None, help="Comma-sep prompt ids; default: all 6.")
     p.add_argument("--models", default=None, help="Comma-sep model names; default: all.")
     p.add_argument("--devices", default=None,
                    help="Comma-sep devices to attempt; default: cpu + cuda + mps (auto-detect).")

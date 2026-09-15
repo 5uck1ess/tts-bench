@@ -10,7 +10,7 @@ this venv ("Could not load libtorchcodec"). The feature extractor consumes a
 librosa-decoded numpy array, bypassing the codec. (POC-confirmed.)
 
 Import note: `librosa` and `numpy` are imported lazily inside `transcribe()`
-so that the pure helpers (`normalize_fr`, `wer_value`) remain importable in
+so that the pure helpers (`normalize_intl`, `wer_value`) remain importable in
 environments where only `jiwer` is installed (e.g. test runners without the
 full ML stack).
 """
@@ -19,14 +19,26 @@ import re
 
 import jiwer
 
-_LANG_FULL = {"en": "english", "fr": "french"}
+_LANG_FULL = {"en": "english", "fr": "french", "es": "spanish"}
 
 
-def normalize_fr(text):
-    """Light FR normalize: lowercase, drop punctuation, keep accents, squeeze spaces."""
+def normalize_intl(text):
+    """Light non-English normalize: lowercase, drop punctuation, keep accented
+    letters, squeeze spaces.
+
+    Language-agnostic despite the FR-looking character class: `\\w` is Unicode-aware
+    in Python 3, so every accented letter already survives (ñ, á, í, ó, ú, ü for
+    Spanish included) and the explicit list is belt-and-braces. What it does strip
+    is punctuation — which for Spanish means the inverted ¿ and ¡, dropped from
+    the reference and the hypothesis alike, so they never move the WER.
+    """
     s = text.lower()
     s = re.sub(r"[^\w\sàâäéèêëïîôöùûüÿçœæ]", " ", s, flags=re.UNICODE)
     return re.sub(r"\s+", " ", s).strip()
+
+
+# Pre-2026-09 name, kept so external callers/notebooks don't break.
+normalize_fr = normalize_intl
 
 
 def wer_value(ref, hyp):
@@ -61,7 +73,7 @@ class WerScorer:
         if lang == "en":
             # Whisper's bundled EnglishTextNormalizer (numbers, casing, punctuation).
             return proc.tokenizer.normalize(text)
-        return normalize_fr(text)
+        return normalize_intl(text)
 
     def transcribe(self, wav_path, lang):
         import librosa

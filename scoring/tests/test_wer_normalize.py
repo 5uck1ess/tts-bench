@@ -1,8 +1,28 @@
-from scoring.wer import normalize_fr, wer_value
+from scoring.prompts import PROMPT_BY_ID
+from scoring.wer import normalize_fr, normalize_intl, wer_value
 
 
 def test_normalize_fr_lowercases_strips_punct_keeps_accents():
     assert normalize_fr("Bonjour, je m'appelle Cicéro!") == "bonjour je m appelle cicéro"
+
+
+def test_normalize_fr_is_the_old_name_for_normalize_intl():
+    assert normalize_fr is normalize_intl
+
+
+def test_normalize_intl_keeps_spanish_letters_and_drops_inverted_punctuation():
+    """ñ/ü/accents must survive or WER counts correct words as errors; ¿ and ¡
+    must not, or they attach to a word and every Spanish clip scores a miss."""
+    got = normalize_intl("¿Está bilingüe el señor? ¡Sí!")
+    assert got == "está bilingüe el señor sí"
+
+
+def test_spanish_prompt_normalizes_to_plain_words():
+    """The real prompt 6 round-trips to bare words — no stray punctuation tokens."""
+    _lang, text = PROMPT_BY_ID["6"]
+    words = normalize_intl(text).split()
+    assert all(w.isalpha() for w in words), words
+    assert "bilingüe" in words and "añade" in words and "español" in words
 
 
 def test_wer_value_identical_is_zero():
