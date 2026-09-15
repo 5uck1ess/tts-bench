@@ -295,7 +295,7 @@ def _model_scores(model, prompt_ids, dirs, look):
 # (jo.wav, not chris_hemsworth_15s), so its clips aren't comparable here.
 LISTEN_DEFAULT_DIRS = ("windows-default", "linux-default", "mac-default",
                        "windows-es-default")
-LISTEN_CLONING_DIRS = ("windows-cloning", "linux-cloning")
+LISTEN_CLONING_DIRS = ("windows-cloning", "linux-cloning", "windows-es-cloning")
 LISTEN_DEVICE_PRIORITY = ("cuda", "mps", "cpu")  # prefer the GPU (fp16) path
 SPEED_RIGS = (  # (rig slug, default dir, cloning dir)
     ("windows-5090", "windows-default", "windows-cloning"),
