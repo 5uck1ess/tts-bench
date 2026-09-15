@@ -1451,10 +1451,12 @@ elif [ ! -x venvs/firered3/bin/python ]; then
     uv pip install --python venvs/firered3/bin/python flash-attn==2.8.3 --no-build-isolation \
         || die "uv pip install flash-attn for firered3"
     # Base only: deliberately omit the 8.5 GB fireredtts3_instruct checkpoint.
-    uv run --python venvs/firered3/bin/python -- hf download FireRedTeam/FireRedTTS3 \
-        --revision dcf1bdcd1b8b25b382fa84c3e34eb82e3054a610 \
-        --include 'fireredtts3_base/*' 'redae/*' 'campp/*' 'text_tokenizer/*' \
-        --local-dir venvs/firered3/src/checkpoints || die "download firered3 weights"
+    # NOT `hf download ... --include A B C`: argparse takes B and C as positional
+    # FILENAMES, drops --include with only a UserWarning, exits 0, and the base model
+    # never lands (hit for real 2026-09-15 — 3.6 GB of 12 GB, no error). The Python API
+    # takes the patterns unambiguously, and uses the venv's own huggingface_hub.
+    venvs/firered3/bin/python -c "from huggingface_hub import snapshot_download; snapshot_download('FireRedTeam/FireRedTTS3', revision='dcf1bdcd1b8b25b382fa84c3e34eb82e3054a610', allow_patterns=['fireredtts3_base/*','redae/*','campp/*','text_tokenizer/*'], local_dir='venvs/firered3/src/checkpoints')" \
+        || die "download firered3 weights"
     green "firered3: ok"
 else
     echo "firered3: already installed"

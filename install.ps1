@@ -940,7 +940,11 @@ if (-not (Want "firered3")) { Write-Host "firered3: skipped (not in install filt
     # cu128 torch LAST: force replacement of PyPI's Windows CPU wheels.
     Invoke-Checked "torch cu128 for firered3 (LAST)" { uv pip install --python venvs\firered3\Scripts\python.exe --reinstall-package torch --reinstall-package torchaudio torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
     # Base only: deliberately omit the 8.5 GB fireredtts3_instruct checkpoint.
-    Invoke-Checked "download firered3 weights" { uv run --python venvs\firered3\Scripts\python.exe -- hf download FireRedTeam/FireRedTTS3 --revision dcf1bdcd1b8b25b382fa84c3e34eb82e3054a610 --include 'fireredtts3_base/*' 'redae/*' 'campp/*' 'text_tokenizer/*' --local-dir venvs\firered3\src\checkpoints }
+    # NOT `hf download ... --include A B C`: argparse takes B and C as positional
+    # FILENAMES, drops --include with only a UserWarning, exits 0, and the base model
+    # never lands (hit for real 2026-09-15 — 3.6 GB of 12 GB, no error). The Python API
+    # takes the patterns unambiguously, and uses the venv's own huggingface_hub.
+    Invoke-Checked "download firered3 weights" { & "venvs\firered3\Scripts\python.exe" -c "from huggingface_hub import snapshot_download; snapshot_download('FireRedTeam/FireRedTTS3', revision='dcf1bdcd1b8b25b382fa84c3e34eb82e3054a610', allow_patterns=['fireredtts3_base/*','redae/*','campp/*','text_tokenizer/*'], local_dir=r'venvs\firered3\src\checkpoints')" }
     Write-Host "firered3: ok" -ForegroundColor Green
 } else {
     Write-Host "firered3: already installed" -ForegroundColor Gray
