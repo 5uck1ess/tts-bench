@@ -293,7 +293,8 @@ def _model_scores(model, prompt_ids, dirs, look):
 # so we source a single sample from the highest-fidelity GREEN rig and tag it.
 # Cloning sources skip Mac — the Mac cloning run used a different reference voice
 # (jo.wav, not chris_hemsworth_15s), so its clips aren't comparable here.
-LISTEN_DEFAULT_DIRS = ("windows-default", "linux-default", "mac-default")
+LISTEN_DEFAULT_DIRS = ("windows-default", "linux-default", "mac-default",
+                       "windows-es-default")
 LISTEN_CLONING_DIRS = ("windows-cloning", "linux-cloning")
 LISTEN_DEVICE_PRIORITY = ("cuda", "mps", "cpu")  # prefer the GPU (fp16) path
 SPEED_RIGS = (  # (rig slug, default dir, cloning dir)
