@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (71)
+## Models tracked (74)
 
 #### Predefined voices
 
@@ -119,6 +119,8 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 | Model | Params | Released | Predefined | Cloning | Multilingual | SR | Expressive | License |
 |---|---|---|---|---|---|---|---|---|
+| [AuK](https://huggingface.co/tencent/AuK) | 1.53B | Sep 2026 | — | ✓ | ✓ | 24k | — | MIT code / Qwen Research (NC) encoder |
+| [AuK-Flash](https://huggingface.co/tencent/AuK-Flash) | 1.53B | Sep 2026 | — | ✓ | ✓ | 24k | — | MIT code / Qwen Research (NC) encoder |
 | [Breeze TTS 2](https://huggingface.co/BreezeBlue/Breeze-TTS-2) | 3.47B | Aug 2026 | — | ✓ | ✓ (zh+en) | 24k | tags + desc | BreezeBlue Research (NC) |
 | [ChatterBox](https://huggingface.co/ResembleAI/chatterbox) | 1.2B | Apr 2025 | — | ✓ | — | 24k | knob | MIT |
 | [ChatterBox Turbo](https://huggingface.co/ResembleAI/chatterbox-turbo) | 744M | Dec 2025 | — | ✓ | — | 24k | tags\* | MIT |
@@ -129,6 +131,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [DramaBox](https://github.com/resemble-ai/DramaBox) | 3.3B | Apr 2026 | — | ✓ | — (en) | **48k** | desc | LTX-2 Community (NC) |
 | [Echo-TTS](https://huggingface.co/jordand/echo-tts-base) | ~2.8B | Dec 2025 | — | ✓ | — | **44.1k** | tags | CC-BY-NC-SA 4.0 |
 | [F5-TTS v1](https://huggingface.co/SWivid/F5-TTS) | 330M | Oct 2024 | — | ✓ | ✓ (zh+en) | 24k | — | CC-BY-NC |
+| [FireRedTTS3](https://huggingface.co/FireRedTeam/FireRedTTS3) | 2.12B | Aug 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
 | [Fish Speech 1.5](https://huggingface.co/fishaudio/fish-speech-1.5) | ~500M | Nov 2024 | — | ✓ | ✓ | **44.1k** | — | CC-BY-NC-SA 4.0 |
 | [Fish Speech S2-Pro](https://huggingface.co/fishaudio/s2-pro) | 4B | Mar 2026 | — | ✓ | ✓ (80+) | **44.1k** | tags | Research (non-commercial) |
 | [Higgs Audio v3 TTS](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) | 4B | Jun 2026 | — | ✓ | ✓ (100) | 24k | tags | Research (NC) |
@@ -179,7 +182,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**48 of the 71 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**51 of the 74 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

@@ -432,6 +432,9 @@ MODEL_DISPLAY_NAMES = {
     "miso":          "Miso TTS 8B",
     "longcat_1b":    "LongCat-AudioDiT 1B",
     "longcat_3p5b":  "LongCat-AudioDiT 3.5B",
+    "firered3":      "FireRedTTS3",
+    "auk_base":      "AuK",
+    "auk_flash":     "AuK-Flash",
     "orpheus":       "Orpheus-TTS 3B",
     "cosyvoice":     "CosyVoice 3 0.5B",
     "lfm2_audio":    "LFM2.5-Audio 1.5B",
@@ -537,6 +540,10 @@ MODEL_SIZE = {
     "miso":          "8.2B",
     "longcat_1b":    "1.42B",
     "longcat_3p5b":  "3.83B",
+    # Measured safetensors header sums; frozen text encoder excluded, like LongCat.
+    "firered3":      "2.12B",
+    "auk_base":      "1.53B",
+    "auk_flash":     "1.53B",
     "orpheus":       "3.3B",   # Llama-3.2-3B backbone + SNAC decoder
     "cosyvoice":     "0.5B",   # Fun-CosyVoice3-0.5B-2512
     "lfm2_audio":    "1.5B",   # 1.2B LFM2.5 LM + 115M FastConformer encoder
@@ -622,6 +629,9 @@ MODEL_URL = {
     "miso":          _HF + "MisoLabs/MisoTTS",
     "longcat_1b":    _HF + "meituan-longcat/LongCat-AudioDiT-1B",
     "longcat_3p5b":  _HF + "meituan-longcat/LongCat-AudioDiT-3.5B",
+    "firered3":      _HF + "FireRedTeam/FireRedTTS3",
+    "auk_base":      _HF + "tencent/AuK",
+    "auk_flash":     _HF + "tencent/AuK-Flash",
     "orpheus":       _HF + "canopylabs/orpheus-3b-0.1-ft",
     "cosyvoice":     _HF + "FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
     "lfm2_audio":    _HF + "LiquidAI/LFM2.5-Audio-1.5B",
@@ -710,6 +720,9 @@ MODEL_KIND = {
     "miso":          "cloning",
     "longcat_1b":    "cloning",
     "longcat_3p5b":  "cloning",
+    "firered3":      "cloning",
+    "auk_base":      "cloning",
+    "auk_flash":     "cloning",
     "orpheus":       "predefined",   # named preset voices (tara, ...), no wav cloning
     "cosyvoice":     "cloning",
     "lfm2_audio":    "predefined",   # 4 preset voices (US/UK x m/f) via system prompt; no wav cloning
@@ -782,6 +795,9 @@ MODEL_RELEASE = {
     "miso":          "2026-05",
     "longcat_1b":    "2026-03",
     "longcat_3p5b":  "2026-03",
+    "firered3":      "2026-08",
+    "auk_base":      "2026-09",
+    "auk_flash":     "2026-09",
     "orpheus":       "2025-03",
     "cosyvoice":     "2025-12",
     "lfm2_audio":    "2025-12",
@@ -876,6 +892,7 @@ MODEL_SR = {
     "breeze_tts2": "24k",
     "dots_tts": "48k", "dramabox": "48k", "echo": "44.1k", "f5tts": "24k",
     "fish_15": "44.1k", "fish_s2": "44.1k", "higgs_v3": "24k", "indextts": "24k",
+    "firered3": "24k", "auk_base": "24k", "auk_flash": "24k",
     "longcat_1b": "24k", "longcat_3p5b": "24k", "mars5": "24k", "metavoice": "48k",
     "miotts_01b": "44.1k", "miotts_06b": "44.1k", "miratts": "48k", "miso": "24k",
     "moss_tts": "24k", "moss_tts_v15": "24k", "moss_tts_nano": "48k",
@@ -905,6 +922,7 @@ MODEL_EXPRESSIVE = {
     "breeze_tts2": "tags + desc",
     "echo": "tags", "f5tts": "—", "fish_15": "—", "fish_s2": "tags", "higgs_v3": "tags",
     "indextts": "emo-ref + desc + knob", "longcat_1b": "—", "longcat_3p5b": "—", "mars5": "—",
+    "firered3": "—", "auk_base": "—", "auk_flash": "—",
     "metavoice": "—", "miotts_01b": "—", "miotts_06b": "—", "miratts": "knob", "miso": "—",
     "moss_tts": "—", "moss_tts_v15": "tags (pause)", "moss_tts_nano": "—", "neutts_air": "—",
     "neutts_nano": "—", "omnivoice": "tags*", "openvoice": "knob", "pocket": "—",
@@ -936,6 +954,10 @@ MODEL_LICENSE = {
     "breeze_tts2": "BreezeBlue Research (NC)",
     "echo": "CC-BY-NC-SA 4.0", "f5tts": "CC-BY-NC", "fish_15": "CC-BY-NC-SA 4.0",
     "fish_s2": "Research (non-commercial)", "higgs_v3": "Research (NC)", "indextts": "Apache 2.0",
+    # AuK weights are MIT; mandatory Qwen2.5-Omni-3B is qwen-research (NC).
+    "firered3": "Apache 2.0",
+    "auk_base": "MIT code / Qwen Research (NC) encoder",
+    "auk_flash": "MIT code / Qwen Research (NC) encoder",
     "longcat_1b": "MIT", "longcat_3p5b": "MIT", "mars5": "AGPL-3.0", "metavoice": "Apache 2.0",
     "miotts_01b": "Falcon-LLM", "miotts_06b": "Apache 2.0", "miratts": "MIT", "miso": "Modified MIT",
     "moss_tts": "Apache 2.0", "moss_tts_v15": "Apache 2.0", "moss_tts_nano": "Apache 2.0",
@@ -968,6 +990,7 @@ MODEL_LANGS = {
     "breeze_tts2": "✓ (zh+en)",
     "dots_tts": "✓ (24)", "dramabox": "— (en)", "echo": "—", "f5tts": "✓ (zh+en)",
     "fish_15": "✓", "fish_s2": "✓ (80+)", "higgs_v3": "✓ (100)", "indextts": "✓ (zh+en)",
+    "firered3": "✓ (24 langs)", "auk_base": "✓", "auk_flash": "✓",
     "longcat_1b": "✓ (zh+en)", "longcat_3p5b": "✓ (zh+en)", "mars5": "—", "metavoice": "—",
     "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)",
     "moss_tts": "✓ (20)", "moss_tts_v15": "✓ (31)", "moss_tts_nano": "✓ (zh+en)",
@@ -1068,6 +1091,7 @@ def _sr_hz(model):
 # left out (fish_15, fish_s2, moss_tts_nano, voxcpm, wavtts, zipvoice) — flagged only
 # on positive evidence. Everything not listed (incl. all English-only cloners) is False.
 MODEL_CROSSLINGUAL = {
+    "auk_base", "auk_flash",
     "coqui", "cosyvoice", "dots_tts", "f5tts", "higgs_v3", "indextts", "moss_tts",
     "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_06b",
     "qwentts_fast", "zonos",

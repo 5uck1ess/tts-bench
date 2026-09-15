@@ -233,6 +233,21 @@ MODELS = [
     # the venv+runner; --variant picks the HF checkpoint. CUDA-only (DiT + fp16 VAE), 24 kHz.
     ("longcat_1b",   "longcat",   "runners/longcat_runner.py",    {"en"},        ["cuda"],  "1b",   True),
     ("longcat_3p5b", "longcat",   "runners/longcat_runner.py",    {"en"},        ["cuda"],  "3.5b", True),
+    # FireRedTTS3 documents 24 languages; its French is genuinely excellent:
+    # the canonical FR prompt cloned from reference/juliette.wav scores WER 0.000.
+    # CROSS-LINGUAL cloning fails: French text with the English house reference
+    # produced an unrelated sentence (WER 0.867); a second French sentence collapsed
+    # to "Admin." in 0.96 s (WER 1.000). The harness passes one --reference to every
+    # prompt, so its only FR condition is cross-lingual. Thus langs={"en"} is a
+    # harness-condition limit, NOT a model limit; do not "fix" it from the model card
+    # (see docs/known-issues.md, issue #8). CUDA-only: hard-coded flash-attn.
+    ("firered3",    "firered3",   "runners/firered3_runner.py",   {"en"},        ["cuda"],  None,   True),
+    # AuK: pure cloners, one venv + runner; --variant picks Base or Flash.
+    # Cross-lingual FR from the English reference measured WER 0.267 (first 11/15
+    # words verbatim). CUDA-only, torch attention (no flash-attn needed). Duration
+    # is caller-supplied; see the runner's RTFx comparability caveat.
+    ("auk_base",    "auk",        "runners/auk_runner.py",        {"en", "fr"},  ["cuda"],  "base", True),
+    ("auk_flash",   "auk",        "runners/auk_runner.py",        {"en", "fr"},  ["cuda"],  "flash", True),
     # Orpheus-TTS (Canopy Labs, Apache-2.0): 3B Llama speech-LM -> SNAC codec, 24 kHz,
     # streaming (~200 ms TTFA). Served via vLLM (orpheus-speech pkg, AsyncLLMEngine) ->
     # CUDA-only. PRESET-VOICE only (named voices, no wav cloning) -> can_clone=False,
