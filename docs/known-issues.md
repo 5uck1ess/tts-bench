@@ -117,6 +117,33 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
 
 - **AuK Base and Flash do not fit on a 24 GB GPU at upstream's own default config — no `linux-3090` rows exist for either, by hardware limit.** Measured 2026-09-15 with the GPU **completely empty** (33 MiB used of 24576; `mesh bench on` freed llama-server and `~/.cicero/ops/cicerod stop` + killing `audiocpp_server` freed Cicero's 3.12 GB). Load alone takes >20.4 GB; generation then dies at **23.48 GiB in use of 23.56 GiB usable**, wanting another 154-414 MiB. It OOMs on **canonical prompt 1**, the shortest in the set — this is not a long-prompt ceiling, the model simply does not fit. `PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True` does not rescue it (tried; still 32 MiB short), so it is genuine footprint, not fragmentation. **Cause is upstream and deliberate-looking:** `infer_auk.py` loads the Qwen2.5-Omni-3B text encoder in **bf16** (line 69), then `model = model.to(torch.float32)` at **line 111** casts the whole `CFMEdit` — which holds that encoder as a submodule — back to **fp32**, roughly doubling the 3B encoder. The Windows 5090's 32 GB absorbs it; the 3090's 24 GB does not. **Do not "fix" this to get rows.** Upstream exposes `cpu_offload=True` (`AukInfer.__init__`), and forcing bf16 or offloading would both change what is being measured — offload moves Qwen/DiT across PCIe mid-generation, so the resulting RTFx would not be comparable to the Windows rows or to any other cell on the board. An absent row is the honest result; a non-comparable row is not. Revisit if this box gets a >24 GB card or upstream stops the fp32 cast.
 
+  **Measured fix (Win-5090, 2026-09-15) — one line, and it is upstream's own bug.** Keeping the
+  frozen Qwen encoder in the bf16 it was *already loaded in* (`model.text_encoder.to(torch.bfloat16)`
+  immediately after the `model.to(torch.float32)` at `infer_auk.py:111`, while the model is still on
+  CPU so the fp32 copy never reaches the GPU) drops peak VRAM **26.05 -> 18.58 GiB (-7.47, -28.7%)**
+  and after-load **21.44 -> 13.97 GiB**. The encoder is **4.03B params** — 15.03 GiB at fp32, 7.52 at
+  bf16 — against the DiT's 1.53B/5.70 GiB and the VAE's 0.16B/0.59 GiB, so the encoder alone is the
+  whole overage. 18.58 GiB fits a 3090 with ~5.4 GiB spare. The EMA checkpoint carries **no**
+  `text_encoder.*` keys (`_load_ema_weights` reports them as expected-missing), so nothing reloads
+  the encoder afterwards and the cast is safe where it sits.
+
+  **Quality is unaffected, and the control is what proves it.** WER over canonical prompts 1-4:
+  p1/p2 **0.000** and p3 **0.0889** identical across fp32 and bf16; waveform correlation
+  0.9995/0.9996/0.9717. p4 read 0.1176 (fp32 seed 0) vs 0.1765 (bf16) — but running **fp32 itself at
+  seeds 1 and 2 gives 0.1765 both times**, so seed 0 is the outlier and bf16 matches fp32's majority.
+  The delta is take-to-take variance, not a dtype regression. RTFx is unchanged to ~3% *better*
+  (p3 4.06 -> 4.19). **Never read a single-seed WER delta as a quality change without the
+  same-config seed spread beside it** — that control is the only reason this reads as neutral
+  instead of a 50% regression.
+
+  **Upstream context:** the README's VRAM table is captioned "with bf16 inference" and reports
+  24.78-25.00 GiB, which matches our *fp32* measurement — so the caption and the code disagree, and
+  the published numbers are the fp32 path. Nothing in the tracker reports this (issues #1-17, PRs
+  #1-15 checked 2026-09-15); the merged **PR #9 `cpu_offload to save memory`** is the community
+  working around the symptom, at the cost of PCIe transfers mid-generation, when a dtype line
+  removes the cause. **Not filed** — prepared, awaiting Tym's go.
+
+
 ## Skipped on Apple Silicon (Apple M4, 16 GB)
 
 These models produced no usable output on the Mac M4 bench pass, so they are marked **skipped** on this rig. They stay in the registry — most run on the Windows/Linux CUDA rigs; the gap is Apple-Silicon-specific (no arm64 wheel, MPS memory limits, or no MPS/CPU path at all).
