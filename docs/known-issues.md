@@ -155,7 +155,16 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux â€
   was loaded in instead of hardcoding bf16. **The pre-filing check read PR TITLES, not diffs**, and
   the note recording it claimed more than was done -- "PRs #1-15 checked" meant *listed*, not read.
   #18 stays open as the 4-line standalone subset carrying the two-rig measurements #12 lacks, with
-  the overlap cross-referenced in a comment. **Lesson: to check for a duplicate, grep the diffs of
+  the overlap cross-referenced in a comment. **RESOLVED UPSTREAM 2026-09-16:** a maintainer closed #18 and merged
+  [#19](https://github.com/Tencent-Hunyuan/AuK/pull/19) (+1/-1) the same day, taking #12's cleaner
+  `model.transformer.to(torch.float32)` over our bf16 hardcode and crediting #18 for the standalone
+  fix and the memory measurements -- our 7.515/15.031 GiB encoder figures are quoted in its body, and
+  an H20 run reproduced the ~7.5 GiB saving. **So the cross-reference comment, not the PR, is what
+  paid off**: naming the better implementation and handing over the numbers let them isolate the fix
+  from a 1900-line feature PR in hours. **Consequence for this bench: AuK now fits 24 GB upstream.**
+  Once a release or pinnable commit carries #19, bump the `auk` stanza's pin and the absent
+  `linux-3090` AuK rows become benchable on stock code -- comparable numbers, no patched venv.
+  **Lesson: to check for a duplicate, grep the diffs of
   open PRs for the symbol you are changing. A feature PR's title will not mention the one-line fix
   buried inside it -- and never write down a check you only half-performed, because the next reader
   is you.** **Confirmed on the 3090 itself (2026-09-15):** the card that failed at 23.48 GiB of 23.56 usable on
