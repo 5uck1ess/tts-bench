@@ -1475,7 +1475,11 @@ elif [ ! -x venvs/auk/bin/python ]; then
     # No tags upstream and main moves fast (24 commits, last 2026-09-15) — pin the commit.
     if [ ! -d venvs/auk/src ]; then
         git clone https://github.com/Tencent-Hunyuan/AuK venvs/auk/src || die "clone AuK"
-        git -C venvs/auk/src checkout e1c935e81e356c87419d9509d7f8a4091457bdca || die "pin AuK commit"
+        # Pinned past upstream PR #19 (merged 2026-09-16), which replaced the model-wide
+        # `model.to(torch.float32)` with `model.transformer.to(torch.float32)`. The old pin
+        # upcast the bf16 Qwen encoder to fp32, costing 7.5 GiB and putting peak VRAM over
+        # 24 GB -- AuK would not run on a 3090 at all. See docs/known-issues.md.
+        git -C venvs/auk/src checkout 871bf3d4635c5ca0ecb6b85f3c4e29c4682a88c7 || die "pin AuK commit"
     fi
     # Core inference only, no extras. attn_backend="torch": no flash-attn.
     uv pip install --python venvs/auk/bin/python -e venvs/auk/src huggingface_hub \

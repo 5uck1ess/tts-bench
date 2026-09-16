@@ -162,8 +162,15 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
   an H20 run reproduced the ~7.5 GiB saving. **So the cross-reference comment, not the PR, is what
   paid off**: naming the better implementation and handing over the numbers let them isolate the fix
   from a 1900-line feature PR in hours. **Consequence for this bench: AuK now fits 24 GB upstream.**
-  Once a release or pinnable commit carries #19, bump the `auk` stanza's pin and the absent
-  `linux-3090` AuK rows become benchable on stock code -- comparable numbers, no patched venv.
+  **Pin bumped 2026-09-16** to `871bf3d` in both installers, so a FRESH install gets the fix and the
+  absent `linux-3090` AuK rows are benchable on stock code. ⚠️ **Existing venvs do NOT pick this up** --
+  both stanzas short-circuit on an existing `venvs/auk/`, and the clone is additionally guarded by
+  `[ ! -d venvs/auk/src ]`, the same trap that left pocket on v2.1.0. To bench the Linux rows, update
+  that checkout by hand (`git -C venvs/auk/src fetch && git -C venvs/auk/src checkout 871bf3d`) and
+  verify with `grep -n 'model.transformer.to(torch.float32)' venvs/auk/src/src/auk/infer/infer_auk.py`
+  before trusting a run. Note the published **Windows** rows were measured on the old pin; the fix is
+  memory-only for output (WER identical) but RTFx moved ~3% (p3 4.06 -> 4.19), so a Windows venv
+  updated to `871bf3d` should be re-benched rather than mixed with the existing rows.
   **Lesson: to check for a duplicate, grep the diffs of
   open PRs for the symbol you are changing. A feature PR's title will not mention the one-line fix
   buried inside it -- and never write down a check you only half-performed, because the next reader

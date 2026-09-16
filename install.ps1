@@ -958,7 +958,9 @@ if (-not (Want "auk")) { Write-Host "auk: skipped (not in install filter)" -Fore
     # No tags upstream and main moves fast (24 commits, last 2026-09-15) — pin the commit.
     if (-not (Test-Path "venvs\auk\src")) {
         Invoke-Checked "git clone AuK" { git clone https://github.com/Tencent-Hunyuan/AuK venvs\auk\src }
-        Invoke-Checked "pin AuK commit" { git -C venvs\auk\src checkout e1c935e81e356c87419d9509d7f8a4091457bdca }
+        # Pinned past upstream PR #19 (merged 2026-09-16): the old pin upcast the bf16 Qwen
+        # encoder to fp32, costing 7.5 GiB. See docs/known-issues.md.
+        Invoke-Checked "pin AuK commit" { git -C venvs\auk\src checkout 871bf3d4635c5ca0ecb6b85f3c4e29c4682a88c7 }
     }
     # Core inference only, no extras. attn_backend="torch": no flash-attn.
     Invoke-Checked "uv pip install auk" { uv pip install --python venvs\auk\Scripts\python.exe -e venvs\auk\src huggingface_hub }
