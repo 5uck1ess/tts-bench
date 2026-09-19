@@ -230,8 +230,8 @@ function render(data){
 async function load(){ const r=await fetch('/api/next?mode='+mode); render(await r.json()); }
 const PRAISE=['Nice','Got it','Logged','Thanks','Recorded','Keep going','Onward'];
 let toastTimer=null;
-function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),1000); }
+function toast(msg, duration=1000){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),duration); }
 function bumpCount(){ const n=document.getElementById('n');
   n.classList.remove('bump'); void n.offsetWidth; n.classList.add('bump'); }
 
@@ -260,11 +260,19 @@ async function vote(choice){
       prompt_id:cur.prompt_id, left_id:cur.left_id, right_id:cur.right_id,
       pair_nonce:cur.pair_nonce, dwell_ms, both_played:(playedA&&playedB),
       turnstile_token:turnstileToken})});
-  let rev=null; try{ rev=(await r.json()).reveal; }catch(e){}
+  let result={}; try{ result=(await r.json())||{}; }catch(e){}
   if(window.turnstile){ try{turnstile.reset();}catch(e){} turnstileToken=""; }
   stopAll(); await load(); refreshRank();
-  showReveal(rev, choice);
-  toast('✓ '+PRAISE[Math.floor(Math.random()*PRAISE.length)]+' · '+cur.votes); bumpCount();
+  showReveal(r.ok ? result.reveal : null, choice);
+  if(!r.ok){
+    toast('Vote failed (HTTP '+r.status+'): '+(result.error||r.statusText||'Request failed'),5000);
+  }else if(result.clean === true){
+    toast('✓ '+PRAISE[Math.floor(Math.random()*PRAISE.length)]+' · '+cur.votes); bumpCount();
+  }else if(result.clean === false){
+    toast('Vote recorded, but did not count toward the board.',5000);
+  }else{
+    toast('Vote outcome could not be confirmed.',5000);
+  }
 }
 async function refreshRank(){
   const open=document.querySelector('#rankwrap details').open; if(!open) return;

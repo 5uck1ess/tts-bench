@@ -36,3 +36,20 @@ def test_page_drops_v1_excluded_controls(monkeypatch, tmp_path):
     html = _render(monkeypatch, tmp_path)
     assert "switch rater" not in html.lower()     # no rater prompt
     assert "undo last" not in html.lower()        # no undo in public v1
+
+
+def test_vote_reports_outcomes_and_only_bumps_clean_votes(monkeypatch, tmp_path):
+    html = _render(monkeypatch, tmp_path)
+    vote = html.split("async function vote(choice){", 1)[1].split("async function refreshRank", 1)[0]
+    failure, rest = vote.split("if(!r.ok){", 1)[1].split("}else if(result.clean === true){", 1)
+    success, rest = rest.split("}else if(result.clean === false){", 1)
+    excluded, unknown = rest.split("}else{", 1)
+    assert "Vote failed (HTTP " in failure
+    assert "r.status" in failure and "result.error||r.statusText||'Request failed'" in failure
+    assert "toast('✓ '+PRAISE[Math.floor(Math.random()*PRAISE.length)]+' · '+cur.votes); bumpCount();" in success
+    assert "Vote recorded, but did not count toward the board." in excluded
+    assert "Vote outcome could not be confirmed." in unknown
+    assert vote.count("bumpCount()") == 1
+    for branch in (failure, excluded, unknown):
+        assert "cur.votes" not in branch
+        assert "✓" not in branch
