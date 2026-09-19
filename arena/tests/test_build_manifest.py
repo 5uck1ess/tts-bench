@@ -1,5 +1,13 @@
 from pathlib import Path
-from arena.build_manifest import RIG_PRIO, DEV_PRIO, NO_PRESET_VOICE, scan_dirs
+from arena.build_manifest import (RIG_PRIO, DEV_PRIO, HOLD_FROM_POOL, NO_PRESET_VOICE,
+                                  SPEED_ONLY, scan_dirs)
+
+# `NO_PRESET_VOICE` is a set, so `next(iter(...))` picks a DIFFERENT member each
+# process (hash randomization). Three of its members (`qwentts`, `qwentts_06b`,
+# `breeze_tts2`) are also in SPEED_ONLY and therefore dropped from BOTH lenses, so
+# a test that expects the sample to survive failed on ~9% of runs. Pick the sample
+# deterministically from the members that are actually votable.
+SAMPLE_NO_PRESET = sorted(NO_PRESET_VOICE - SPEED_ONLY - HOLD_FROM_POOL)[0]
 
 
 def _touch(p: Path):
@@ -20,7 +28,7 @@ def test_scan_picks_best_rig_and_device(tmp_path):
 
 def test_scan_default_drops_no_preset_models(tmp_path):
     base = "https://x.test/tts-bench/"
-    sample = next(iter(NO_PRESET_VOICE))
+    sample = SAMPLE_NO_PRESET
     _touch(tmp_path / "windows-default" / f"{sample}_cuda_p1.wav")
     _touch(tmp_path / "windows-default" / "kokoro_cuda_p1.wav")
     clips, _ = scan_dirs(tmp_path, "default", base)
@@ -42,7 +50,7 @@ def test_scan_cloning_excludes_mac_and_finds_reference(tmp_path):
 
 def test_scan_cloning_fallback_uses_default_dir_for_no_preset(tmp_path):
     base = "https://x.test/tts-bench/"
-    sample = next(iter(NO_PRESET_VOICE))
+    sample = SAMPLE_NO_PRESET
     # no cloning clip for `sample`, but it has a default-dir clip -> fallback includes it
     _touch(tmp_path / "windows-default" / f"{sample}_cuda_p1.wav")
     _touch(tmp_path / "windows-cloning" / "echo_cuda_p1.wav")
