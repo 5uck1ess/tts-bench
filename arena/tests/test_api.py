@@ -134,6 +134,30 @@ def _vote_body(d, voter="rev-voter", mode="default", choice="left"):
             "pair_nonce": d["pair_nonce"]}
 
 
+@pytest.mark.parametrize("state,stored,clean", [
+    ("ok", 1, True), ("failed", 0, False), ("unreachable", 2, True),
+])
+def test_turnstile_state_controls_clean_vote_and_storage(client, monkeypatch, state, stored, clean):
+    import arena.app as appmod
+
+    async def verify_state(secret, token, remoteip, http_client):
+        assert token == "x"
+        assert http_client is not None
+        return state
+
+    monkeypatch.setattr(appmod.turnstile, "verify_state", verify_state)
+    d = client.get("/api/next?mode=default").json()
+    response = client.post("/api/vote", json=_vote_body(d))
+    assert response.status_code == 200
+    assert response.json()["clean"] is clean
+    row = appmod._conn.execute("SELECT turnstile_ok, elo_clean FROM votes").fetchone()
+    assert row["turnstile_ok"] == stored
+    assert row["elo_clean"] == int(clean)
+    ranking = client.get("/api/ranking?mode=default").json()
+    assert ranking["votes"] == int(clean)
+    assert all(r["games"] == int(clean) for r in ranking["ranking"])
+
+
 def test_vote_response_reveals_names_and_urls(client):
     # pre-vote payload stays blind...
     d = client.get("/api/next?mode=default").json()

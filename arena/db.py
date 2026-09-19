@@ -6,6 +6,7 @@ production (see arena/turso.py). stdlib sqlite3 backs local dev and tests.
 
 import sqlite3
 
+# votes.turnstile_ok encoding: 0 = failed, 1 = ok, 2 = verifier unreachable.
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS votes (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,

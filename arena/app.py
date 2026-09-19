@@ -232,10 +232,14 @@ async def api_vote(request: Request):
         return JSONResponse({"ok": False, "error": "unknown clip"}, status_code=400)
 
     # Turnstile (network) BEFORE taking the DB lock — never await under the lock.
-    async with httpx.AsyncClient() as hc:
-        ts_ok = await turnstile.verify(SETTINGS.turnstile_secret,
-                                       body.get("turnstile_token", ""),
-                                       None, hc)
+    async with httpx.AsyncClient(
+            transport=httpx.AsyncHTTPTransport(local_address="0.0.0.0")) as hc:
+        ts_state = await turnstile.verify_state(SETTINGS.turnstile_secret,
+                                               body.get("turnstile_token", ""),
+                                               None, hc)
+    # A verifier outage must not void honest votes; only a failed verdict blocks.
+    turnstile_gate_passes = ts_state != "failed"
+    turnstile_recorded_state = {"ok": 1, "failed": 0, "unreachable": 2}[ts_state]
 
     both_played = bool(body.get("both_played"))
     ip_hash = _ip_hash(request)
@@ -254,14 +258,14 @@ async def api_vote(request: Request):
             ip_tokens_last_hour=dbmod.ip_distinct_tokens(_conn, ip_hash, hour_ago))
         token_flagged = dbmod.is_token_flagged(_conn, token)
         clean = gates.passes_clean_gate(
-            both_played=both_played, dwell_ms=dwell_ms, turnstile_ok=ts_ok,
+            both_played=both_played, dwell_ms=dwell_ms, turnstile_ok=turnstile_gate_passes,
             nonce_ok=nonce_ok, token_flagged=token_flagged) and rate_ok
         row = {
             "ts": now, "token": token, "session_id": body.get("session_id", ""),
             "mode": mode, "prompt_id": prompt_id, "left_model": left, "right_model": right,
             "left_clip": left_id, "right_clip": right_id, "choice": choice,
             "dwell_ms": dwell_ms, "both_played": int(both_played),
-            "turnstile_ok": int(ts_ok), "pair_nonce": pair_nonce, "gold_pair_id": None,
+            "turnstile_ok": turnstile_recorded_state, "pair_nonce": pair_nonce, "gold_pair_id": None,
             "ua": request.headers.get("user-agent", "")[:300], "ip_hash": ip_hash,
             "elo_clean": int(clean), "rate_ok": int(rate_ok),
         }
