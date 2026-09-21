@@ -200,6 +200,49 @@ These aren't models to add; they're native **C++/ggml runtimes** (a "llama.cpp f
   `confuciustts/utils/text_utils.py` rather than the card, and note that `pytorch-lightning` in
   `requirements.txt` triggers the documented Windows cu128-torch-last downgrade trap.
 
+> **Surfaced 2026-09-21 (Tym sent the GitHub link, "what about this one we need it?", then the
+> arXiv link).** The paper confirms the README rather than changing it. Skipped — and the skip is
+> a re-run of one already on this page, which is why it is worth the words.
+
+- **[FreyaTTS-small](https://github.com/freyavoiceai/FreyaTTS)** (Freya Voice, 183.2M, Apache-2.0,
+  48 kHz, [arXiv 2607.09530](https://arxiv.org/abs/2607.09530) v2) — *skipped 2026-09-21,
+  **Turkish-only**.* Same call as [Trendyol-TTS](https://huggingface.co/Trendyol/Trendyol-TTS)
+  (skipped 2026-06-09) and the same trap named in the VieNeu-TTS entry above.
+  **It passes bars 1–4 cleanly** — clone + `pip install -r requirements.txt`, a clean
+  `FreyaTTS.from_pretrained("freyavoice/freya-tts").synthesize(text)` → np.float32 @ 48 kHz API,
+  genuinely real-time on a laptop CPU (RTF 0.70 fp32 on an M3, 0.10–0.11 on a 4090 in 1.5 GB), and
+  Apache-2.0 weights *and* code. On every axis the bench measures except one, it is a good add.
+  **It fails before the bars: the harness cannot represent it.** `harness.py:304–314` asserts every
+  model's `langs` is a set containing `"en"` and drawn from `BENCH_LANGS = {en, fr, es}`. There is
+  no legal entry for a Turkish model. That is not an oversight to patch — it is the bench's design,
+  and this is the grep that should kill the next Turkish/Chinese/Vietnamese-only candidate in one
+  step.
+  **And it is Turkish all the way down, not Turkish-first-with-English-behind-it.** It is
+  tokenizer-free over `freyatts/char_vocab.json` — 92 symbols of *Turkish orthography*, trained from
+  scratch on Turkish speech with no phonemizer. Lowercase **`q` is not in the vocabulary at all**
+  (uppercase `Q`/`W`/`X` and lowercase `w`/`x` are), so "quick" and "question" hit `<UNK>` before
+  anything else goes wrong; and the rest of English would be read with Turkish letter-to-sound
+  regardless. An English row here is WER ≈ 1.0 **for language reasons, not quality reasons** — the
+  exact thing the Trendyol bullet was written to prevent. The paper's headline (beats XTTS-v2 and
+  F5-TTS — both live rows here — at 40–55% of their params) is band-matched on its own
+  **Freya-TR-Eval**; it says nothing about the board.
+  **Even if Turkish were in scope it would be a thin row.** There is no speaker conditioning of any
+  kind — no embedding, no speaker id, no reference prefix: the flow-matching noise `x0` *is* the
+  voice, pinned to one canonical `LEYLA_SEED` (the card is honest that other seeds are "not Leyla
+  at all"). So: **default lens only, no cloning row**, single voice. And its 48 kHz is not its own —
+  AudioVAE2 is frozen and downloaded from [`openbmb/VoxCPM2`](https://huggingface.co/openbmb/VoxCPM2)
+  at load time via the `voxcpm` package, and we already bench VoxCPM2. Both Turkish candidates to
+  date ride VoxCPM2 components (Trendyol was a LoRA *on* it; Freya rents its VAE). Sizing up is not
+  an option either: **FreyaTTS-large is explicitly not under the Apache licence** — commercial
+  access by email only.
+  **Revisit only if Turkish becomes a bench prompt language** — i.e. a canonical `tr` prompt plus a
+  `tr` path through `scoring/wer.py`, the same condition Trendyol was parked on. Note that
+  condition is *not* met by fr (2026-06) and es (2026-09-15): those are en-anchored prompt
+  languages, and `BENCH_LANGS` still requires `"en"`.
+  If it is ever added: normalization spells digit runs out in Turkish and **numbers left as digits
+  come out truncated** (the duration predictor sizes the utterance from the character sequence) —
+  canonical prompt 3 would need watching.
+
 ## Wrong modality (not a bench row at any size)
 
 - **[Confucius4-R2T2](https://github.com/netease-youdao/Confucius4-R2T2)** (NetEase Youdao, 2B,
