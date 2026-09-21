@@ -235,6 +235,13 @@ These aren't models to add; they're native **C++/ggml runtimes** (a "llama.cpp f
   date ride VoxCPM2 components (Trendyol was a LoRA *on* it; Freya rents its VAE). Sizing up is not
   an option either: **FreyaTTS-large is explicitly not under the Apache licence** — commercial
   access by email only.
+  **The English on the project page is subtitles, not samples** — checked 2026-09-21 after exactly
+  that objection. Every clip on [freyatts.freyavoice.ai](https://freyatts.freyavoice.ai) is Turkish
+  audio with an italic English *translation gloss* printed under it ("Kimlik doğrulaması için…" →
+  "For identity verification, please key in your customer number and phone PIN"), across all five
+  sections including the pretraining-progression table. The only other English on the site is the
+  3D architecture walkthrough, offered "in English and Turkish" — that is UI copy, not synthesis.
+  There is no English audio anywhere on the page.
   **Revisit only if Turkish becomes a bench prompt language** — i.e. a canonical `tr` prompt plus a
   `tr` path through `scoring/wer.py`, the same condition Trendyol was parked on. Note that
   condition is *not* met by fr (2026-06) and es (2026-09-15): those are en-anchored prompt
