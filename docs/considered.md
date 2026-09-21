@@ -164,3 +164,77 @@ These aren't models to add; they're native **C++/ggml runtimes** (a "llama.cpp f
   AuK's non-TTS tasks (speech enhancement, source separation, lyric and paralinguistic editing) are
   out of scope for a TTS bench and must not be counted toward its case — the Gepard rule about
   non-independent headline wins applies to non-independent *capabilities* too.
+
+> **Surfaced 2026-09-17 (Tym sent an X link, "is this legit for our tts?").** The linked model is
+> ASR, not TTS — logged under *Wrong modality* below. Its TTS sibling was triaged on its own merits
+> and also skipped; that decision is here, because it is the one that would otherwise be
+> re-litigated.
+
+- **[Confucius4-TTS](https://huggingface.co/netease-youdao/Confucius4-TTS)** (NetEase Youdao,
+  Apache-2.0 code *and* weights, 2.64 GB T2S + 417 MB S2A, 14 languages) — *skipped on value, not
+  on quality or licence*. It clears three of the four bars cleanly, which is why the skip needs
+  writing down: the LICENSE is stock Apache 2.0 (GitHub's `NOASSERTION` is its classifier tripping
+  on the inserted copyright line — the HF `apache-2.0` tag is correct), the API is already our
+  contract (`ConfuciusTTS(config, device).generate(text, lang, prompt_wav)` → tensor, plus
+  `.sample_rate`), and the install is clone + `requirements.txt` with `torch`/`transformers`
+  already pinned — **Amphion is training-only**, inference imports just the vendored
+  `external/bigvgan` + `external/campplus`.
+  **It fails the fourth bar — value the board doesn't already have.** Its headline is cross-lingual
+  zero-shot cloning, and the board already carries **17 crosslingual cloners out of 74 models**
+  (`MODEL_CROSSLINGUAL` in `report.py`), including `qwentts` and `omnivoice` — the two systems its
+  own seed-tts-eval table shows beating or matching it. Against that, its **output is 22.05 kHz**
+  (`config/inference_config.yaml`: `target_sample_rate: 22050`, BigVGAN 22khz — the model card
+  never states this), which puts it in the `piper`/`luxtts` tier on a board that prefers 48 kHz.
+  A row here would be comparable but not informative.
+  Credit where due: the card is **honest** — its seed-tts-eval numbers are independent metrics
+  (WER *and* SIM, not one metric counted four ways) and it openly shows Qwen3-TTS ahead on WER/CER
+  and Seed-TTS ahead on SIM. It is not a gepard-style inflated case; it simply arrived late to a
+  crowded lens.
+  **Revisit if** (a) upstream ships a higher-SR vocoder — 22.05 kHz is the single strongest
+  argument against it and it is a vocoder swap, not an architecture change; (b) a *non-English*
+  quality gap opens on the board that its 14-language coverage would close, since fr/es are live
+  bench prompts and its transcript-free cloning is genuinely rarer than its crosslinguality; or
+  (c) a streaming/engine-pair lens makes `confuciustts/cli/inference_vllm.py` worth a `_fast` row.
+  If it is ever added: **compute params from the safetensors, do not infer them from the 2.64 GB
+  file size** (the NeuTTS Nano rule), verify the language list against `LANGUAGE_TOKEN_MAP` in
+  `confuciustts/utils/text_utils.py` rather than the card, and note that `pytorch-lightning` in
+  `requirements.txt` triggers the documented Windows cu128-torch-last downgrade trap.
+
+## Wrong modality (not a bench row at any size)
+
+- **[Confucius4-R2T2](https://github.com/netease-youdao/Confucius4-R2T2)** (NetEase Youdao, 2B,
+  built on Qwen3-ASR) — *skipped, 2026-09-17*. Circulated as "this new 2B open-source speech model"
+  and easy to mistake for TTS; it is **streaming ASR** (speech → text), an append-only transcriber
+  with a ~200 ms commit latency. There is no synthesis path, so there is no row to add. Recorded
+  only so the same link is not re-triaged. **Revisit never** as a bench row — but note it is a
+  live candidate for the *scoring* side (`scoring/wer.py` runs an ASR model) and for Cicero's
+  listen path, which are separate decisions. Its sibling **Confucius4-TTS** is a genuine TTS
+  candidate and is triaged on its own merits, not this one's.
+
+- **[Samsone](https://github.com/SamsungLabs/samsone)** (Samsung Labs, 99M / 134M / 356M,
+  Interspeech 2026) — *skipped, 2026-09-21*, surfaced as a bare GitHub link, "does this fit within
+  our stack?". It is a family of **Small Audio Language Models** for audio *understanding*:
+  `Samsone134M()(audio="x.wav", prompt="Caption the audio")` → a **string**. Audio in, text out —
+  the inverse of this bench. There is no synthesis path anywhere in it: a recursive tree of `main`
+  matches nothing for `tts|vocod|synth|decoder|codec|speech`, and `src/samsone/` is
+  data / evaluation (MMAU, MMAU-Pro) / experiments / inference around an audio feature extractor
+  bolted to a text backbone (`prompt_templates/` names SmolLM2-135M/360M and Qwen3-0.6B). The
+  v1.0.0 release ships `Samsone{99,134,356}M_{audio,text}_model.pte` + `*_bf16.ckpt` — encoder and
+  LM, no vocoder. So there is no row to add at any size, and the on-device angle (ExecuTorch,
+  Android app) does not change that.
+  **It also has no licence.** No `LICENSE` file in the repo tree, no `license` field in
+  `pyproject.toml`, and nothing licence-shaped among the release assets — "Open" appears only in
+  the title. That alone would fail the redistribution bar even if it *were* TTS, since the bench
+  publishes generated wavs.
+  **Revisit never** as a bench row. Unlike Confucius4-R2T2 above it is **not** a drop-in
+  scoring-layer candidate either: `scoring/wer.py` needs a transcriber and NAQ would need a
+  quality predictor, whereas this is a multiple-choice audio *reasoner* whose own weakest MMAU
+  subset is speech (MMAU-Speech 38–48% vs 71–76% on sound) — and UTMOS already beat our NAQ proxy 62.5% vs
+  39% on Tym's ground truth, so a 134M captioner is not the thing that closes that gap. Revisit
+  only if a licence lands **and** a concrete speech-judging task exists for it, not on the licence
+  alone.
+  If anyone ever does install it: `requires-python >= 3.12`, `torch==2.9.1` and
+  `executorch==1.0.1` both hard-pinned (ExecuTorch Windows wheels are doubtful), and the deps carry
+  **both** `lightning` *and* `clearml` — the two documented Windows cu128-torch-last downgrade
+  traps in a single file. Checkpoints come from the GitHub Release into `~/.cache/samsone`, not HF,
+  so the `refs/main` SHA trick for detecting moved weights does not apply.
