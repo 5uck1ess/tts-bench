@@ -11,7 +11,7 @@
   "gpu_vram_gb": 24,
   "captured_at": "2026-05-25T05:00:13Z",
   "label": "cloning \u00b7 chris_hemsworth voice (note: metavoice uses the 67s clip \u2014 it needs \u226530s ref \u2014 all other models use the 15s clip)",
-  "reference": null,
+  "reference": "chris_hemsworth_15s.wav",
   "models_filter": null,
   "prompts_filter": null
 }
