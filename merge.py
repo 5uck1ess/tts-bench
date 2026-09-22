@@ -50,12 +50,15 @@ def main() -> int:
     p.add_argument("--models", required=True, help="Comma-separated model names to merge in.")
     p.add_argument("--force", action="store_true", help="Append even if a named model already exists in the canonical (skips the duplicate guard).")
     p.add_argument("--replace", action="store_true", help="Replace the named models in --into: drop their existing rows + wavs first, then add the ones from --from. Use when re-benching a model already in the canonical (e.g. a corrected reference).")
+    p.add_argument("--devices", default=None, help="Comma-separated devices to limit the merge/replace to (e.g. 'cpu'); rows and wavs on other devices are left alone. Default: all.")
     p.add_argument("--no-report", action="store_true", help="Skip report regeneration (just CSV + wavs).")
     args = p.parse_args()
 
     into = Path(args.into) if Path(args.into).is_absolute() else REPO / args.into
     src = Path(args.src) if Path(args.src).is_absolute() else REPO / args.src
     models = [m.strip() for m in args.models.split(",") if m.strip()]
+    devices = [d.strip() for d in args.devices.split(",")] if args.devices else ["cpu", "cuda", "mps"]
+    in_scope = lambda r: r["model"] in set(models) and r["device"] in devices
 
     into_csv = into / "results.csv"
     src_csv = src / "results.csv"
@@ -79,7 +82,7 @@ def main() -> int:
         print("  Re-run with --replace to overwrite them, or --force to append anyway (duplicates rows).", file=sys.stderr)
         return 2
 
-    add_rows = [r for r in src_rows if r["model"] in set(models)]
+    add_rows = [r for r in src_rows if in_scope(r)]
     if not add_rows:
         print(f"ERROR: no rows for {models} found in {src_csv}", file=sys.stderr)
         return 2
@@ -94,7 +97,7 @@ def main() -> int:
     before = len(into_rows)
     removed_rows = 0
     if args.replace:
-        kept = [r for r in into_rows if r["model"] not in set(models)]
+        kept = [r for r in into_rows if not in_scope(r)]
         removed_rows = before - len(kept)
         # Write to a temp file and swap atomically — never truncate the canonical
         # CSV in place (a mid-write failure would destroy it unrecoverably).
@@ -116,7 +119,8 @@ def main() -> int:
     # Under --replace, delete the model's old wavs in --into first.
     copied = removed_wavs = 0
     for model in found_models:
-        pat = re.compile(rf"^{re.escape(model)}_(cpu|cuda|mps)_p\d+\.wav$")
+        dev_alt = "|".join(re.escape(d) for d in devices)
+        pat = re.compile(rf"^{re.escape(model)}_({dev_alt})_p\d+\.wav$")
         if args.replace:
             for wav in into.glob(f"{model}_*.wav"):
                 if pat.match(wav.name):
