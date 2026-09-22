@@ -76,10 +76,15 @@ def main() -> int:
         from liquid_audio import LFM2AudioModel, LFM2AudioProcessor, ChatState
 
         device = args.device if args.device in ("cpu", "cuda", "mps") else "cpu"
-        processor = LFM2AudioProcessor.from_pretrained(HF_REPO).eval()
-        model = LFM2AudioModel.from_pretrained(HF_REPO).eval()
-        if device != "cpu":
-            model = model.to(device)
+        # Both from_pretrained calls default to device="cuda"; without passing it,
+        # the "cpu" cell loaded onto the GPU.
+        if device == "cpu":
+            # Upstream builds the detokenizer with a hard-coded .cuda()
+            # (liquid_audio/processor.py); keep it on CPU for the cpu cell.
+            import liquid_audio.processor as _lp
+            _lp.LFM2AudioDetokenizer.cuda = lambda self, *a, **k: self
+        processor = LFM2AudioProcessor.from_pretrained(HF_REPO, device=device).eval()
+        model = LFM2AudioModel.from_pretrained(HF_REPO, device=device).eval()
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"load failed: {type(e).__name__}: {e}"}))

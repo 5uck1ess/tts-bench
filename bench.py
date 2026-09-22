@@ -207,6 +207,9 @@ def main() -> int:
                    help="Comma-sep devices to attempt; default: cpu + cuda + mps (auto-detect).")
     p.add_argument("--runs", type=int, default=3,
                    help="Generations per cell (run 1 = cold, runs 2..N = warm). Default 3.")
+    p.add_argument("--timeout", type=int, default=600,
+                   help="Seconds per (model, device, prompt) cell, covering all --runs "
+                        "generations plus model load. Default 600; raise it for slow CPU paths.")
     p.add_argument("--rig", default=None,
                    help="Short rig label (e.g. 'windows-5090'). Auto-detected if omitted.")
     p.add_argument("--label", default=None,
@@ -367,7 +370,8 @@ def main() -> int:
                 wav = out_dir / f"{cell['model']}_{cell['device']}_p{prompt_id}.wav"
                 print(label, end=" ", flush=True)
 
-                run_results = run_cell(cell, text, wav, lang, args.runs, args.reference)
+                run_results = run_cell(cell, text, wav, lang, args.runs, args.reference,
+                                       timeout=args.timeout)
                 if any("timeout" in (r.get("error") or "") for r in run_results):
                     timed_out.add(key)
 

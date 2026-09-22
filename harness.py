@@ -7,6 +7,7 @@ reads JSON-line results from stdout, and returns one dict per run.
 """
 
 import json
+import os
 import subprocess
 import sys
 import time
@@ -502,9 +503,16 @@ def run_cell(cell, text, out_wav, language="en", runs=1, reference=None,
     if reference:
         cmd += ["--reference", str(reference)]
 
+    # Hide the GPU from cpu cells. Several libraries ignore a requested device
+    # and autodetect CUDA (IndexTTS2 with device=None, StyleTTS2 hard-codes it),
+    # which silently published GPU timings as CPU rows.
+    env = None
+    if cell["device"] == "cpu":
+        env = {**os.environ, "CUDA_VISIBLE_DEVICES": "-1"}
+
     t0 = time.perf_counter()
     try:
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, env=env)
     except subprocess.TimeoutExpired:
         return [{"ok": False, "error": f"timeout {timeout}s", "run_index": 0,
                  "wall_s": time.perf_counter() - t0}]

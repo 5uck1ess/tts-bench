@@ -80,6 +80,8 @@ def main() -> int:
             cfg_path=f"{model_dir}/config.yaml",
             model_dir=model_dir,
             use_fp16=(args.device == "cuda"),
+            # device=None autodetects CUDA, so a "cpu" cell used to run on the GPU.
+            device=args.device,
             use_cuda_kernel=False,
             use_deepspeed=False,
         )
