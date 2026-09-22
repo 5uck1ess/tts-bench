@@ -22,6 +22,11 @@ chunks). Streaming TTFA is measured when the first yielded audio chunk is ready.
 Offline generation returns the complete waveform, so its reported TTFA equals
 gen_s (expressed in milliseconds), not genuine streaming latency.
 
+Seeding caveat: the pinned seed makes the OFFLINE path bit-reproducible across
+processes (verified 18 days apart on the same version), but the streaming path
+only within a process -- across launches the same seed gives the same token
+count and duration but a different waveform. See docs/known-issues.md.
+
 Pinned surfaces, re-verified 2026-09-04: package ``sopro==2.2.0`` (a hard floor
 -- the current artifacts do not load on earlier releases) against HF revision
 ``f747f9edfb7b0233a3b7105af3a75603a7213d26``. Upstream ships weight changes
