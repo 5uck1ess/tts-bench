@@ -476,6 +476,7 @@ MODEL_DISPLAY_NAMES = {
     "inflect_nano":  "Inflect-Nano v2",
     "inflect_micro": "Inflect-Micro v2",
     "vaniq":         "Vaniq-Edge",
+    "supratts":      "SupraTTS 0.1 Beta",
     "soprano":       "Soprano 1.1 80M",
     "moss_tts_nano": "MOSS-TTS-Nano",
     "moss_tts":      "MOSS-TTS v1.0",
@@ -566,6 +567,7 @@ MODEL_SIZE = {
     # Computed from the checkpoint: 12.16M total, minus the enc_q posterior encoder
     # (training-only) = 8,912,048 deployed. The card rounds this to "8.5M".
     "vaniq":         "8.91M",
+    "supratts":      "43.5M",   # 29.55M Glow-TTS + 13.93M HiFi-GAN (counted in-process); card's "29.6M" is acoustic only
     "soprano":       "80M",
     "moss_tts_nano": "100M",
     "moss_tts":      "8B",
@@ -649,6 +651,7 @@ MODEL_URL = {
     "inflect_nano":  _HF + "owensong/Inflect-Nano-v2",
     "inflect_micro": _HF + "owensong/Inflect-Micro-v2",
     "vaniq":         _HF + "Abiray/Vaniq-Edge",
+    "supratts":      _HF + "SupraLabs/SupraTTS-0.1-Beta",
     "soprano":       _HF + "ekwek/Soprano-1.1-80M",
     "moss_tts_nano": _HF + "OpenMOSS-Team/MOSS-TTS-Nano",
     "moss_tts":      _HF + "OpenMOSS-Team/MOSS-TTS",
@@ -693,6 +696,7 @@ MODEL_KIND = {
     "inflect_nano":  "predefined",   # one fixed synthetic voice, no wav cloning
     "inflect_micro": "predefined",
     "vaniq":         "predefined",   # one fixed voice, n_speakers=0, no wav cloning
+    "supratts":      "predefined",   # single-speaker LJSpeech, no wav cloning
     "soprano":       "predefined",
     "supertonic":    "predefined",
     "luxtts":        "predefined",
@@ -815,6 +819,7 @@ MODEL_RELEASE = {
     "inflect_nano":  "2026-07",   # v2.0.0 2026-07-24 (v1 was 2026-06)
     "inflect_micro": "2026-07",
     "vaniq":         "2026-08",   # v1.0.1, repo last updated 2026-08-02
+    "supratts":      "2026-09",   # 0.1-Beta, HF repo created 2026-09-27
     "soprano":       "2026-01",
     "moss_tts_nano": "2026-04",
     "moss_tts":      "2026-02",
@@ -886,7 +891,7 @@ MODEL_SR = {
     "magpie": "22.05k", "maya1": "24k", "melotts": "44.1k", "orpheus": "24k",
     "outetts": "44.1k", "parler": "44.1k", "piper": "22.05k", "scyllasband": "24k", "soprano": "32k",
     "sanotts_amy": "22.05k", "sanotts_heart_nano": "24k",
-    "inflect_nano": "24k", "inflect_micro": "24k", "vaniq": "24k",
+    "inflect_nano": "24k", "inflect_micro": "24k", "vaniq": "24k", "supratts": "22.05k",
     "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
     "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
     "breeze_tts2": "24k",
@@ -915,6 +920,8 @@ MODEL_EXPRESSIVE = {
     "inflect_nano": "2 knobs", "inflect_micro": "2 knobs",
     # length_scale only; noise scales are hardcoded in upstream's synthesize().
     "vaniq": "knob",
+    # length scale + latent noise + duration-predictor noise. No emotion/style control.
+    "supratts": "3 knobs",
     "soprano": "—", "supertonic": "tags",
     "vibevoice": "—", "voxtral": "—", "chatterbox": "knob", "chatterbox_turbo": "tags*",
     "coqui": "—", "cosyvoice": "desc", "dia": "tags", "dots_tts": "—", "dramabox": "desc",
@@ -946,7 +953,7 @@ MODEL_LICENSE = {
     "orpheus": "Apache 2.0", "outetts": "CC-BY-NC-SA 4.0 + Llama 3.2", "parler": "Apache 2.0",
     "piper": "GPL-3.0", "scyllasband": "Apache 2.0", "soprano": "Apache 2.0",
     "sanotts_amy": "GPL-3.0", "sanotts_heart_nano": "GPL-3.0",
-    "inflect_nano": "Apache 2.0", "inflect_micro": "Apache 2.0", "vaniq": "MIT",
+    "inflect_nano": "Apache 2.0", "inflect_micro": "Apache 2.0", "vaniq": "MIT", "supratts": "MIT",
     "supertonic": "MIT + OpenRAIL-M",
     "vibevoice": "MIT", "voxtral": "CC-BY-NC 4.0", "chatterbox": "MIT",
     "chatterbox_turbo": "MIT", "coqui": "CPML (non-commercial)", "cosyvoice": "Apache 2.0",
@@ -983,7 +990,7 @@ MODEL_LANGS = {
     "outetts": "✓ (12)", "parler": "—", "piper": "✓", "scyllasband": "✓ (4)",
     # sanoTTS supports six languages, but the two benched voices are English-only.
     "sanotts_amy": "— (en)", "sanotts_heart_nano": "— (en)",
-    "inflect_nano": "— (en)", "inflect_micro": "— (en)", "vaniq": "— (en)",
+    "inflect_nano": "— (en)", "inflect_micro": "— (en)", "vaniq": "— (en)", "supratts": "— (en)",
     "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
     "chatterbox_turbo": "—", "coqui": "✓ (17)", "cosyvoice": "✓", "dia": "—",

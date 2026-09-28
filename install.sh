@@ -257,6 +257,27 @@ else
     echo "vaniq: already installed"
 fi
 
+# --- SupraTTS-0.1-Beta (Glow-TTS + HiFi-GAN, one fixed voice) ---
+echo; cyan "=== SupraTTS-0.1-Beta (Glow-TTS + HiFi-GAN, one fixed voice) ==="
+if ! want supratts; then echo "supratts: skipped (not in install filter)"
+elif [ ! -x venvs/supratts/bin/python ]; then
+    # Coqui's espeak phonemizer shells out to the espeak-ng EXECUTABLE (not the lib).
+    command -v espeak-ng >/dev/null || die "supratts needs espeak-ng: apt install espeak-ng / brew install espeak-ng"
+    uv venv venvs/supratts --python 3.11 || die "uv venv supratts"
+    # Same pins as the coqui stanza: transformers<5 (XTTS import needs
+    # isin_mps_friendly), torch<2.9 (avoid the torchcodec/FFmpeg IO path). PyPI torch
+    # is already CUDA-enabled on Linux.
+    uv pip install --python venvs/supratts/bin/python coqui-tts soundfile numpy \
+        "transformers>=4.45,<5.0" "torch<2.9" "torchaudio<2.9" \
+        || die "uv pip install supratts deps"
+    # Not a PyPI package — HF repo ships infer_v2.py + full training checkpoints.
+    venvs/supratts/bin/python -c "from huggingface_hub import snapshot_download as d; d('SupraLabs/SupraTTS-0.1-Beta', revision='49d39b7b53f75c47199fb5f1b7650b0ae7e5d874', local_dir='venvs/supratts/src/SupraTTS-0.1-Beta', ignore_patterns=['*.wav'])" \
+        || die "download supratts weights"
+    green "supratts: ok"
+else
+    echo "supratts: already installed"
+fi
+
 # --- Audio8 TTS Preview (0.6B base eager + ScrappyLabs compiled fastpath + 0.1B share this venv) ---
 echo; cyan "=== Audio8 TTS Preview (0.6B base eager + compiled fastpath + 0.1B share this venv) ==="
 if ! want audio8; then echo "audio8: skipped (not in install filter)"

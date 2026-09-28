@@ -184,6 +184,32 @@ if (-not (Want "vaniq")) { Write-Host "vaniq: skipped (not in install filter)" -
     Write-Host "vaniq: already installed" -ForegroundColor Gray
 }
 
+Step "SupraTTS-0.1-Beta (Glow-TTS + HiFi-GAN, one fixed voice)"
+if (-not (Want "supratts")) { Write-Host "supratts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\supratts\Scripts\python.exe")) {
+    Invoke-Checked "uv venv supratts" { uv venv venvs\supratts --python 3.11 }
+    # Same coqui-tts + pins as the coqui stanza: transformers<5 because TTS/__init__
+    # imports XTTS, which needs transformers.pytorch_utils.isin_mps_friendly (gone in 5.x).
+    Invoke-Checked "uv pip install supratts deps" { uv pip install --python venvs\supratts\Scripts\python.exe coqui-tts soundfile numpy "transformers>=4.45,<5.0" }
+    # cu128 LAST, and torch<2.9 (2.9 routes torchaudio IO through torchcodec + FFmpeg DLLs).
+    Invoke-Checked "torch cu128 for supratts" { uv pip install --python venvs\supratts\Scripts\python.exe --reinstall "torch<2.9" "torchaudio<2.9" --index-url https://download.pytorch.org/whl/cu128 }
+    # Not a PyPI package — the HF repo ships infer_v2.py (FlareGlowTTS) + full training
+    # checkpoints (~1.4 GB incl. optimizer state). Pinned to the 2026-09-28 SHA.
+    Invoke-Checked "download supratts weights" { & "venvs\supratts\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('SupraLabs/SupraTTS-0.1-Beta', revision='49d39b7b53f75c47199fb5f1b7650b0ae7e5d874', local_dir='venvs/supratts/src/SupraTTS-0.1-Beta', ignore_patterns=['*.wav'])" }
+    # Coqui's espeak phonemizer needs an espeak-ng EXECUTABLE on PATH (espeakng-loader
+    # ships only the DLL). Admin-extract the official MSI into the venv — no system
+    # install, no UAC. The runner wires PATH + ESPEAK_DATA_PATH itself.
+    $msi = Join-Path $env:TEMP "espeak-ng-1.52.0.msi"
+    Invoke-Checked "download espeak-ng msi" { Invoke-WebRequest "https://github.com/espeak-ng/espeak-ng/releases/download/1.52.0/espeak-ng.msi" -OutFile $msi }
+    $stage = Join-Path $env:TEMP "espeak-ng-extract"
+    Start-Process msiexec -ArgumentList "/a `"$msi`" /qn TARGETDIR=`"$stage`"" -Wait
+    Move-Item (Join-Path $stage "eSpeak NG") "venvs\supratts\espeak-ng"
+    Remove-Item -Recurse -Force $stage
+    Write-Host "supratts: ok" -ForegroundColor Green
+} else {
+    Write-Host "supratts: already installed" -ForegroundColor Gray
+}
+
 Step "Audio8 TTS Preview (0.6B base eager + ScrappyLabs compiled fastpath + 0.1B share this venv)"
 if (-not (Want "audio8")) { Write-Host "audio8: skipped (not in install filter)" -ForegroundColor DarkGray
 } else {

@@ -124,6 +124,11 @@ MODELS = [
     # Inflect's is deterministic). One fixed English voice, no wav cloning ->
     # can_clone=False, default lens only. English-only -> langs={"en"}.
     ("vaniq",         "vaniq",   "runners/vaniq_runner.py",   {"en"},        ["cpu", "cuda"], None,    False),
+    # SupraTTS-0.1-Beta (MIT): Glow-TTS + stochastic duration predictor + HiFi-GAN v1,
+    # trained on LJSpeech in coqui-tts. One fixed English voice, no wav cloning ->
+    # can_clone=False, default lens only. English-only -> langs={"en"}. Needs an
+    # espeak-ng executable (portable copy under venvs/supratts/espeak-ng on Windows).
+    ("supratts",      "supratts", "runners/supratts_runner.py", {"en"},      ["cpu", "cuda"], None,    False),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], "1.5b", False),
     ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cuda"],               "7b",   True),
