@@ -891,6 +891,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/supertonic_cpu_p6.wav"
         },
         {
+          "model": "supratts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/supratts_cuda_p1.wav"
+        },
+        {
+          "model": "supratts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/supratts_cuda_p2.wav"
+        },
+        {
+          "model": "supratts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/supratts_cuda_p3.wav"
+        },
+        {
+          "model": "supratts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/supratts_cuda_p4.wav"
+        },
+        {
           "model": "vaniq",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/vaniq_cuda_p1.wav"
@@ -2348,6 +2368,10 @@
     "supertonic": {
       "name": "Supertonic 3",
       "url": "https://huggingface.co/Supertone/supertonic-3"
+    },
+    "supratts": {
+      "name": "SupraTTS 0.1 Beta",
+      "url": "https://huggingface.co/SupraLabs/SupraTTS-0.1-Beta"
     },
     "vaniq": {
       "name": "Vaniq-Edge",
