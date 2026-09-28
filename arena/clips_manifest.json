@@ -1031,6 +1031,11 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_cuda_p5.wav"
         },
         {
+          "model": "audio8",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/audio8_cuda_p6.wav"
+        },
+        {
           "model": "audio8_01b",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_01b_cuda_p1.wav"
@@ -1056,6 +1061,11 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_01b_cuda_p5.wav"
         },
         {
+          "model": "audio8_01b",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/audio8_01b_cuda_p6.wav"
+        },
+        {
           "model": "audio8_fast",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_fast_cuda_p1.wav"
@@ -1079,6 +1089,11 @@
           "model": "audio8_fast",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/audio8_fast_cuda_p5.wav"
+        },
+        {
+          "model": "audio8_fast",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/audio8_fast_cuda_p6.wav"
         },
         {
           "model": "auk_base",
@@ -1194,6 +1209,11 @@
           "model": "coqui",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/coqui_cuda_p5.wav"
+        },
+        {
+          "model": "coqui",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/coqui_cuda_p6.wav"
         },
         {
           "model": "cosyvoice",
@@ -1786,6 +1806,11 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/openvoice_cuda_p5.wav"
         },
         {
+          "model": "openvoice",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/openvoice_cuda_p6.wav"
+        },
+        {
           "model": "outetts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/outetts_cuda_p1.wav"
@@ -1836,6 +1861,11 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/pocket_cpu_p5.wav"
         },
         {
+          "model": "pocket",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/pocket_cpu_p6.wav"
+        },
+        {
           "model": "qwentts_fast",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/qwentts_fast_cuda_p1.wav"
@@ -1859,6 +1889,11 @@
           "model": "qwentts_fast",
           "prompt": 5,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/qwentts_fast_cuda_p5.wav"
+        },
+        {
+          "model": "qwentts_fast",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/qwentts_fast_cuda_p6.wav"
         },
         {
           "model": "sesame",

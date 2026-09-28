@@ -62,7 +62,9 @@ HOLD_FROM_POOL = set()
 #   with do_tn on and off, and is language-independent (the same 0.96 s signature
 #   appears on French). Its other prompts are clean, so a whole-model hold would
 #   throw away three good clips to suppress one defect. See docs/known-issues.md.
-HOLD_CLIPS = {("firered3", 1)}
+#   neutts_nano p6: 0.02 s of silence on any sentence starting with "Este" — both
+#   rigs, cpu and cuda. Nothing to vote on; its en/fr clips are fine.
+HOLD_CLIPS = {("firered3", 1), ("neutts_nano", 6)}
 
 # Mirrors publish.py SPEED_ONLY: models with a speed row but no place in the vote
 # pool because their audio duplicates another tracked model (kokoro_mlx == kokoro).
