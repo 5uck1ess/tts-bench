@@ -259,6 +259,20 @@ These aren't models to add; they're native **C++/ggml runtimes** (a "llama.cpp f
   come out truncated** (the duration predictor sizes the utterance from the character sequence) —
   canonical prompt 3 would need watching.
 
+> **Surfaced 2026-10-13 (Tym sent the HF link, "i cant run or add this right?").** Triaged from HF
+> metadata and the card only — nothing downloaded.
+
+- **[Fish Audio Drama 3](https://huggingface.co/fishaudio/drama-3)** (`fishaudio/drama-3`, created
+  2026-10-01). **Skipped 2026-10-13 on hardware: it fits no rig.** 35.9B-param MoE (3B active),
+  and the safetensors index puts that at 32.2B FP8-E4M3 expert params + 3.7B bf16 — **~40 GB of
+  weights before KV cache or the codec**, against 32 GB on the 5090 and 24 GB on the 3090. The 3090
+  is also Ampere, with no native FP8. The only documented inference path is an SGLang-Omni HTTP
+  server (`sgl-omni serve`); the card's numbers are on H200s. License is the Fish Audio Research
+  License, same family as `fish_s2`, so redistribution is not the blocker. Interesting on
+  features (16 speaker tags, inline `[sighs]`/`[laughs]`, editing by continuation), which makes it
+  the kind of model the board would want. **Revisit** if Fish ships a smaller/dense distill, a
+  quantization that fits 32 GB with a single-process Python path, or a rig with ≥48 GB VRAM appears.
+
 ## Wrong modality (not a bench row at any size)
 
 - **[Confucius4-R2T2](https://github.com/netease-youdao/Confucius4-R2T2)** (NetEase Youdao, 2B,
