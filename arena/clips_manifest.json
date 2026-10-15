@@ -1286,6 +1286,36 @@
           "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/dots_tts_cuda_p5.wav"
         },
         {
+          "model": "drama3",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/drama3_cuda_p1.wav"
+        },
+        {
+          "model": "drama3",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/drama3_cuda_p2.wav"
+        },
+        {
+          "model": "drama3",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/drama3_cuda_p3.wav"
+        },
+        {
+          "model": "drama3",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/drama3_cuda_p4.wav"
+        },
+        {
+          "model": "drama3",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/drama3_cuda_p5.wav"
+        },
+        {
+          "model": "drama3",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/drama3_cuda_p6.wav"
+        },
+        {
           "model": "dramabox",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/dramabox_cuda_p1.wav"
@@ -2207,6 +2237,10 @@
     "dots_tts": {
       "name": "dots.tts (soar)",
       "url": "https://huggingface.co/rednote-hilab/dots.tts-soar"
+    },
+    "drama3": {
+      "name": "Fish Audio Drama 3 (ComfyUI port)",
+      "url": "https://github.com/PedroMarinhoDev/ComfyUI-Drama3"
     },
     "dramabox": {
       "name": "DramaBox",
