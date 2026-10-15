@@ -67,3 +67,6 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 6,neutts_nano,cuda,nano,True,0,True,5560.1,5.5601,0.02,0.0,2588.7,3335.5,26.438,True,
 6,neutts_nano,cuda,nano,True,1,False,158.6,0.1586,0.02,0.13,2597.0,3335.5,0,True,
 6,neutts_nano,cuda,nano,True,2,False,170.6,0.1707,0.02,0.12,2601.3,3335.5,0,True,
+6,drama3,cuda,,True,0,True,12859.9,12.8599,5.248,0.41,33222.7,24487.2,64.265,True,
+6,drama3,cuda,,True,1,False,10485.4,10.4854,5.248,0.5,33225.9,24487.4,0,True,
+6,drama3,cuda,,True,2,False,11322.3,11.3223,5.248,0.46,33225.9,24487.4,0,True,
