@@ -23,6 +23,7 @@ DEV_PRIO = {"cuda": 0, "mps": 1, "cpu": 2}
 # no-reference "default" run is actually a Chris clone -> excluded from default lens.
 NO_PRESET_VOICE = {
     "moss_tts", "moss_tts_v15", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
+    "drama3",  # no preset voice; mirrors publish.py
     "openvoice", "zipvoice", "zonos", "zonos2", "vibevoice_15b", "vibevoice_7b", "echo",
     "breeze_tts2",
     # dots_tts is NOT here: it has a real (if per-prompt varying) default voice and

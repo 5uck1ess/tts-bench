@@ -994,6 +994,37 @@ else
     echo "dramabox: already installed"
 fi
 
+# --- Fish Audio Drama 3 via ComfyUI-Drama3 port (Fish research license, 35.9B MoE / 3B active, 44.1k, cloning, CUDA-only) ---
+echo; cyan "=== Fish Audio Drama 3 (ComfyUI-Drama3 port, MoE experts in RAM, cloning, CUDA-only) ==="
+if ! want drama3; then echo "drama3: skipped (not in install filter)"
+elif [ ! -x venvs/drama3/bin/python ]; then
+    # Third-party port (PedroMarinhoDev/ComfyUI-Drama3, GPL-3); Fish ships Drama 3 only as an
+    # SGLang-Omni server. ComfyUI v0.40.0 lives inside the venv and is imported as a library.
+    # Both pinned. Linux PyPI torch is CUDA-enabled (Ampere/3090 fine), so no cu128 swap.
+    # The 3090 has no native FP8: the port upcasts FP8 experts (author measured 84 ms/frame,
+    # 21.6 GB peak with a 16 GB cache on a 3090). Needs ~48 GB system RAM (box has 64).
+    uv venv venvs/drama3 --python 3.12 || die "uv venv drama3"
+    if [ ! -d venvs/drama3/ComfyUI ]; then
+        git clone https://github.com/comfyanonymous/ComfyUI venvs/drama3/ComfyUI || die "git clone ComfyUI"
+        git -C venvs/drama3/ComfyUI checkout -q v0.40.0 || die "ComfyUI v0.40.0"
+        git clone https://github.com/PedroMarinhoDev/ComfyUI-Drama3 venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 \
+            || die "git clone ComfyUI-Drama3"
+        git -C venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 checkout -q 66c4fb9cd3c0151e1e2ccd207847cb8335e87ab4 \
+            || die "ComfyUI-Drama3 pin"
+    fi
+    uv pip install --python venvs/drama3/bin/python -r venvs/drama3/ComfyUI/requirements.txt soundfile \
+        || die "uv pip install drama3"
+    # Two explicit downloads, never one `--include A B` (silently skipped a file for AuK).
+    REV=9063c072019aa578895e51adb5489c6cd2c834b0
+    hf download PedroMarinhoDev/Drama-3-ComfyUI drama3_codec.safetensors --revision $REV --local-dir models/drama3 \
+        || die "drama3 codec"
+    hf download PedroMarinhoDev/Drama-3-ComfyUI drama3_fp8experts_bf16.safetensors --revision $REV --local-dir models/drama3 \
+        || die "drama3 FP8 weights"
+    green "drama3: ok (port 66c4fb9 on ComfyUI v0.40.0; CUDA-only, 44.1k, ~24GB VRAM + ~48GB RAM)"
+else
+    echo "drama3: already installed"
+fi
+
 # --- dots.tts (rednote-hilab, Apache-2.0, 2B continuous AR TTS, 48k, cloning + default voice, CUDA-only) ---
 echo; cyan "=== dots.tts (rednote-hilab, 2B continuous AR TTS, 48k, cloning, CUDA-only) ==="
 if ! want dots_tts; then echo "dots_tts: skipped (not in install filter)"

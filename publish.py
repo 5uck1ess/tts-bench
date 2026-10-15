@@ -68,6 +68,8 @@ MODEL_MULTILINGUAL = frozenset(m for m in MODEL_LANGS if _is_multilingual(m))
 # → the en-Emma_woman preset, DO have genuine defaults, so they're not here.)
 NO_PRESET_VOICE = {
     "moss_tts", "moss_tts_v15", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
+    # drama3: no-reference voice is invented per prompt; runner clones house Chris instead.
+    "drama3",
     # Qwen3-TTS *Base* (both runtimes): no model-native preset voice -- Base is the
     # cloning checkpoint, so it is reference-only. CustomVoice (qwentts_06b_custom)
     # is the Qwen row with real preset timbres.

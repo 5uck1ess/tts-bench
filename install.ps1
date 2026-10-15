@@ -903,6 +903,33 @@ if (-not (Want "dramabox")) { Write-Host "dramabox: skipped (not in install filt
     Write-Host "dramabox: ok (LTX-2.3 audio DiT + audio-components + Gemma-3-12B-4bit auto-download from HF on first run; CUDA-only, 48k, ~18GB VRAM)" -ForegroundColor Green
 } else { Write-Host "dramabox: already installed" -ForegroundColor Gray }
 
+Step "Fish Audio Drama 3 via ComfyUI-Drama3 port (Fish research license, 35.9B MoE / 3B active, 44.1k, cloning, CUDA-only)"
+if (-not (Want "drama3")) { Write-Host "drama3: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\drama3\Scripts\python.exe")) {
+    # Third-party port (PedroMarinhoDev/ComfyUI-Drama3, GPL-3) — Fish ships Drama 3 only as
+    # an SGLang-Omni server. The port's drama3/ package imports ComfyUI internals, so
+    # ComfyUI v0.40.0 is checked out INSIDE the venv and imported as a library (no server).
+    # Both pinned: the runner's numbers describe exactly this code. Deps = ComfyUI's
+    # requirements minus torch, then cu128 torch LAST (Blackwell; PyPI Windows torch is
+    # CPU-only). Weights: two explicit `hf download` calls (never one `--include A B`,
+    # which silently skipped a checkpoint at exit 0 for AuK). FP8 file = original release
+    # precision, 38.6 GB; needs ~48 GB system RAM (experts live in RAM) + ~24 GB VRAM.
+    Invoke-Checked "uv venv drama3" { uv venv venvs\drama3 --python 3.12 }
+    if (-not (Test-Path "venvs\drama3\ComfyUI")) {
+        Invoke-Checked "git clone ComfyUI" { git clone https://github.com/comfyanonymous/ComfyUI venvs\drama3\ComfyUI }
+        Invoke-Checked "ComfyUI v0.40.0" { git -C venvs\drama3\ComfyUI checkout -q v0.40.0 }
+        Invoke-Checked "git clone ComfyUI-Drama3" { git clone https://github.com/PedroMarinhoDev/ComfyUI-Drama3 venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3 }
+        Invoke-Checked "ComfyUI-Drama3 pin" { git -C venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3 checkout -q 66c4fb9cd3c0151e1e2ccd207847cb8335e87ab4 }
+    }
+    Get-Content venvs\drama3\ComfyUI\requirements.txt | Where-Object { $_ -notmatch '^\s*(torch|torchvision|torchsde)\s*$' } | Set-Content venvs\drama3\req-notorch.txt -Encoding utf8
+    Invoke-Checked "uv pip install drama3 deps" { uv pip install --python venvs\drama3\Scripts\python.exe -r venvs\drama3\req-notorch.txt torchsde soundfile }
+    Invoke-Checked "torch cu128 for drama3 (LAST)" { uv pip install --python venvs\drama3\Scripts\python.exe --reinstall torch==2.11.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    $rev = "9063c072019aa578895e51adb5489c6cd2c834b0"
+    Invoke-Checked "drama3 codec" { hf download PedroMarinhoDev/Drama-3-ComfyUI drama3_codec.safetensors --revision $rev --local-dir models\drama3 }
+    Invoke-Checked "drama3 FP8 weights (38.6 GB)" { hf download PedroMarinhoDev/Drama-3-ComfyUI drama3_fp8experts_bf16.safetensors --revision $rev --local-dir models\drama3 }
+    Write-Host "drama3: ok (port 66c4fb9 on ComfyUI v0.40.0; CUDA-only, 44.1k, ~24GB VRAM + ~48GB RAM)" -ForegroundColor Green
+} else { Write-Host "drama3: already installed" -ForegroundColor Gray }
+
 # dots.tts is LINUX-ONLY — see install.sh. The Windows install never worked
 # (torch cu128 + the editable dots_tts build), so there's no install.ps1 stanza.
 

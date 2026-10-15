@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (75)
+## Models tracked (76)
 
 #### Predefined voices
 
@@ -133,6 +133,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [Echo-TTS](https://huggingface.co/jordand/echo-tts-base) | ~2.8B | Dec 2025 | — | ✓ | — | **44.1k** | tags | CC-BY-NC-SA 4.0 |
 | [F5-TTS v1](https://huggingface.co/SWivid/F5-TTS) | 330M | Oct 2024 | — | ✓ | ✓ (zh+en) | 24k | — | CC-BY-NC |
 | [FireRedTTS3](https://huggingface.co/FireRedTeam/FireRedTTS3) | 2.12B | Aug 2026 | — | ✓ | ✓ (24) | 24k | — | Apache 2.0 |
+| [Fish Audio Drama 3 (ComfyUI port)](https://github.com/PedroMarinhoDev/ComfyUI-Drama3) | 35.9B (MoE, 3B active) | Oct 2026 | — | ✓ | ✓ | **44.1k** | tags + desc | Research (non-commercial) |
 | [Fish Speech 1.5](https://huggingface.co/fishaudio/fish-speech-1.5) | ~500M | Nov 2024 | — | ✓ | ✓ | **44.1k** | — | CC-BY-NC-SA 4.0 |
 | [Fish Speech S2-Pro](https://huggingface.co/fishaudio/s2-pro) | 4B | Mar 2026 | — | ✓ | ✓ (80+) | **44.1k** | tags | Research (non-commercial) |
 | [Higgs Audio v3 TTS](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) | 4B | Jun 2026 | — | ✓ | ✓ (100) | 24k | tags | Research (NC) |
@@ -177,13 +178,13 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 > **Newly added, not yet benched.** `qwentts_06b_custom` (Qwen3-TTS 0.6B CustomVoice, 9 preset timbres) is registered and smoke-tested but carries **no speed or objective numbers yet** — the bench + UTMOS/WER/SIM scoring pass runs on the Linux rig. The 0.6B **Base** checkpoint (`qwentts_06b`) is registered too, but like both 1.7B Base rows it is **reference-only** — Base has no model-native preset voice, so its no-reference run clones the house `chris_hemsworth_15s.wav` and it appears under Cloning, never Default. Its cloning *lens* is disabled by an intermittent decode runaway (identical input yielded 12.9 s of audio on one call and 655.3 s on the next) — see [docs/known-issues.md](docs/known-issues.md).
 
-> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Higgs Audio v3 / dots.tts / Zonos2 / Orpheus / CosyVoice 3 are Linux-only (CUDA) — Higgs v3 is the one **server-backed** model (it runs via a Docker `sgl-omni` HTTP server, not an in-process load), dots.tts and Zonos2 require Linux-only dependencies/compiled CUDA kernels, and Orpheus (vLLM) + CosyVoice 3 (cu121 / torch 2.3.1) have no Blackwell-compatible Windows path; Echo-TTS and DramaBox are Windows + Linux (CUDA-only, no CPU/MPS; DramaBox needs ~18 GB VRAM). The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
+> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Higgs Audio v3 / dots.tts / Zonos2 / Orpheus / CosyVoice 3 are Linux-only (CUDA) — Higgs v3 is the one **server-backed** model (it runs via a Docker `sgl-omni` HTTP server, not an in-process load), dots.tts and Zonos2 require Linux-only dependencies/compiled CUDA kernels, and Orpheus (vLLM) + CosyVoice 3 (cu121 / torch 2.3.1) have no Blackwell-compatible Windows path; Echo-TTS and DramaBox are Windows + Linux (CUDA-only, no CPU/MPS; DramaBox needs ~18 GB VRAM). Fish Audio Drama 3 is Windows + Linux through the third-party ComfyUI-Drama3 port (CUDA-only; experts offloaded to system RAM, so it needs ~48 GB RAM and ~24 GB VRAM) — its row measures that port, not Fish's own server. The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
 
 ---
 
 ## Voice cloning
 
-**51 of the 75 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**52 of the 76 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

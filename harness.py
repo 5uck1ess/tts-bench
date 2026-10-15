@@ -89,6 +89,10 @@ MODELS = [
     # canonical prompt just works. Was wrongly False until 2026-08-15 (issue #8), which
     # skipped prompt 5 entirely; its FR clip needs a Linux-3090 bench.
     ("fish_s2",     "fish_s2",    "runners/fish_s2_runner.py",    {"en", "fr"},  ["cuda"],               None,   True),
+    # Fish Audio Drama 3 (35.9B MoE, 3B active) via the third-party ComfyUI-Drama3 port:
+    # experts in system RAM + 16 GB GPU expert cache, so it fits 32/24 GB cards. Every
+    # number measures the port, not Fish's server. en/fr/es heard by ear 2026-10-15.
+    ("drama3",      "drama3",     "runners/drama3_runner.py",     {"en", "fr", "es"}, ["cuda"],          None,   True),
     ("metavoice",   "metavoice",  "runners/metavoice_runner.py",  {"en"},        ["cuda"],               None,   True),
     ("step_editx",  "step_editx", "runners/step_editx_runner.py", {"en"},        ["cuda"],               None,   True),
     ("sesame",      "sesame",     "runners/sesame_runner.py",     {"en"},        ["cpu", "cuda"],        None,   "gated"),
@@ -332,6 +336,8 @@ GPU_CLASS = {
     "f5tts", "indextts", "voxcpm", "qwentts", "sesame", "mars5",
     "chatterbox", "magpie",
     "fish_s2", "metavoice", "step_editx",
+    # drama3: 38.6 GB FP8 MoE, experts offloaded to RAM -- CUDA-only port, no CPU path.
+    "drama3",
     # higgs_v3: server-backed CUDA model (the sgl-omni container runs on the GPU); the
     # thin HTTP-client venv would report cuda unavailable, so tag it gpu-class so non-CUDA
     # rigs skip it by default rather than trying to reach a server that isn't there.

@@ -272,6 +272,16 @@ These aren't models to add; they're native **C++/ggml runtimes** (a "llama.cpp f
   features (16 speaker tags, inline `[sighs]`/`[laughs]`, editing by continuation), which makes it
   the kind of model the board would want. **Revisit** if Fish ships a smaller/dense distill, a
   quantization that fits 32 GB with a single-process Python path, or a rig with ≥48 GB VRAM appears.
+  - **Correction 2026-10-15: the hardware skip was wrong.** It assumed every weight had to sit in
+    VRAM. With 3B active of 35.9B, the MoE experts can live in system RAM with a GPU expert
+    cache. [ComfyUI-Drama3](https://github.com/PedroMarinhoDev/ComfyUI-Drama3) (2026-10-14,
+    GPL-3 code) does this: about 12 GB of VRAM peak and ~48 GB of system RAM for the original FP8
+    file, measured by the author on a 3090. Both rigs clear that (5090 box 128 GB, Linux 3090
+    64 GB). Its `drama3/` package (`load_drama3`, `load_codec`, `generate`) can be driven
+    in-process with ComfyUI v0.40 imported as a library, so the single-process bar is met.
+    **Reopened, then SHIPPED 2026-10-15 as `drama3`** (cloning board; see docs/known-issues.md). Caveats: a third-party port that nobody has checked against
+    Fish's output (A/B it against the hosted API), and its speed is the port's offload engine
+    (~46 ms per frame = real time, bound by single-core CPU speed), not the model's.
 
 ## Wrong modality (not a bench row at any size)
 
