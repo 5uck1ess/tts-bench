@@ -460,6 +460,7 @@ MODEL_DISPLAY_NAMES = {
     "pocket":        "Pocket-TTS",
     "magpie":        "Magpie-TTS",
     "indextts":      "IndexTTS-2",
+    "indextts25":    "IndexTTS-2.5",
     "f5tts":         "F5-TTS v1",
     "chatterbox":       "Chatterbox",
     "chatterbox_turbo": "Chatterbox Turbo",
@@ -540,6 +541,7 @@ MODEL_SIZE = {
     "audio8_fast":   "601M",
     "audio8_01b":    "170M",   # 169,779,904 over model.safetensors; ~120M codec decoder not counted
     "indextts":      "1.5B",
+    "indextts25":    "0.97B",
     "sesame":        "1B",
     "miso":          "8.2B",
     "longcat_1b":    "1.42B",
@@ -636,6 +638,7 @@ MODEL_URL = {
     "audio8_fast":   _HF + "scrappylabsai/audio8-tts-fastpath",
     "audio8_01b":    _HF + "Audio8/Audio8-TTS-Preview-0.1b",
     "indextts":      _HF + "IndexTeam/IndexTTS-2",
+    "indextts25":    _HF + "IndexTeam/IndexTTS-2.5",
     "sesame":        _HF + "sesame/csm-1b",
     "miso":          _HF + "MisoLabs/MisoTTS",
     "longcat_1b":    _HF + "meituan-longcat/LongCat-AudioDiT-1B",
@@ -719,6 +722,7 @@ MODEL_KIND = {
     "chatterbox_turbo": "cloning",
     "f5tts":         "cloning",
     "indextts":      "cloning",
+    "indextts25":    "cloning",
     "omnivoice":     "cloning",
     "zipvoice":      "cloning",
     "voxcpm":        "cloning",
@@ -810,6 +814,7 @@ MODEL_RELEASE = {
     "audio8_fast":   "2026-08",   # fastpath repo created 2026-08-02
     "audio8_01b":    "2026-08",   # HF repo created 2026-08-19
     "indextts":      "2025-06",
+    "indextts25":    "2026-08",
     "sesame":        "2025-03",
     "miso":          "2026-05",
     "longcat_1b":    "2026-03",
@@ -915,7 +920,7 @@ MODEL_SR = {
     "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
     "breeze_tts2": "24k",
     "dots_tts": "48k", "dramabox": "48k", "echo": "44.1k", "f5tts": "24k",
-    "fish_15": "44.1k", "fish_s2": "44.1k", "drama3": "44.1k", "higgs_v3": "24k", "indextts": "24k",
+    "fish_15": "44.1k", "fish_s2": "44.1k", "drama3": "44.1k", "higgs_v3": "24k", "indextts": "22.05k", "indextts25": "22.05k",
     "firered3": "24k", "auk_base": "24k", "auk_flash": "24k",
     "longcat_1b": "24k", "longcat_3p5b": "24k", "mars5": "24k", "metavoice": "48k",
     "miotts_01b": "44.1k", "miotts_06b": "44.1k", "miratts": "48k", "miso": "24k",
@@ -948,7 +953,7 @@ MODEL_EXPRESSIVE = {
     # inline (laugh)/[笑] vocal events + a free-text instruction that steers delivery.
     "breeze_tts2": "tags + desc",
     "echo": "tags", "f5tts": "—", "fish_15": "—", "fish_s2": "tags", "drama3": "tags + desc", "higgs_v3": "tags",
-    "indextts": "emo-ref + desc + knob", "longcat_1b": "—", "longcat_3p5b": "—", "mars5": "—",
+    "indextts": "emo-ref + desc + knob", "indextts25": "emo-ref + desc + knob", "longcat_1b": "—", "longcat_3p5b": "—", "mars5": "—",
     "firered3": "—", "auk_base": "—", "auk_flash": "—",
     "metavoice": "—", "miotts_01b": "—", "miotts_06b": "—", "miratts": "knob", "miso": "—",
     "moss_tts": "—", "moss_tts_v15": "tags (pause)", "moss_tts_nano": "—", "neutts_air": "—",
@@ -981,7 +986,7 @@ MODEL_LICENSE = {
     "dia": "Apache 2.0", "dots_tts": "Apache 2.0", "dramabox": "LTX-2 Community (NC)",
     "breeze_tts2": "BreezeBlue Research (NC)",
     "echo": "CC-BY-NC-SA 4.0", "f5tts": "CC-BY-NC", "fish_15": "CC-BY-NC-SA 4.0",
-    "fish_s2": "Research (non-commercial)", "drama3": "Research (non-commercial)", "higgs_v3": "Research (NC)", "indextts": "Apache 2.0",
+    "fish_s2": "Research (non-commercial)", "drama3": "Research (non-commercial)", "higgs_v3": "Research (NC)", "indextts": "bilibili Model License", "indextts25": "bilibili Model License",
     # AuK weights are MIT; mandatory Qwen2.5-Omni-3B is qwen-research (NC).
     "firered3": "Apache 2.0",
     "auk_base": "MIT code / Qwen Research (NC) encoder",
@@ -1018,7 +1023,7 @@ MODEL_LANGS = {
     "chatterbox_turbo": "—", "coqui": "✓ (17)", "cosyvoice": "✓", "dia": "—",
     "breeze_tts2": "✓ (zh+en)",
     "dots_tts": "✓ (24)", "dramabox": "— (en)", "echo": "—", "f5tts": "✓ (zh+en)",
-    "fish_15": "✓", "fish_s2": "✓ (80+)", "drama3": "✓", "higgs_v3": "✓ (100)", "indextts": "✓ (zh+en)",
+    "fish_15": "✓", "fish_s2": "✓ (80+)", "drama3": "✓", "higgs_v3": "✓ (100)", "indextts": "✓ (zh+en)", "indextts25": "✓ (5)",
     "firered3": "✓ (24)", "auk_base": "✓", "auk_flash": "✓",
     "longcat_1b": "✓ (zh+en)", "longcat_3p5b": "✓ (zh+en)", "mars5": "—", "metavoice": "—",
     "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)",
@@ -1121,7 +1126,7 @@ def _sr_hz(model):
 # on positive evidence. Everything not listed (incl. all English-only cloners) is False.
 MODEL_CROSSLINGUAL = {
     "auk_base", "auk_flash",
-    "coqui", "cosyvoice", "dots_tts", "f5tts", "higgs_v3", "indextts", "moss_tts",
+    "coqui", "cosyvoice", "dots_tts", "f5tts", "higgs_v3", "indextts", "indextts25", "moss_tts",
     "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_06b",
     "qwentts_fast", "zonos",
 }

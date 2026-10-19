@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (78)
+## Models tracked (79)
 
 #### Predefined voices
 
@@ -139,7 +139,8 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [Fish Speech 1.5](https://huggingface.co/fishaudio/fish-speech-1.5) | ~500M | Nov 2024 | — | ✓ | ✓ | **44.1k** | — | CC-BY-NC-SA 4.0 |
 | [Fish Speech S2-Pro](https://huggingface.co/fishaudio/s2-pro) | 4B | Mar 2026 | — | ✓ | ✓ (80+) | **44.1k** | tags | Research (non-commercial) |
 | [Higgs Audio v3 TTS](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) | 4B | Jun 2026 | — | ✓ | ✓ (100) | 24k | tags | Research (NC) |
-| [IndexTTS-2](https://huggingface.co/IndexTeam/IndexTTS-2) | 1.5B | Jun 2025 | — | ✓ | ✓ (zh+en) | 24k | emo-ref + desc + knob | Apache 2.0 |
+| [IndexTTS-2](https://huggingface.co/IndexTeam/IndexTTS-2) | 1.5B | Jun 2025 | — | ✓ | ✓ (zh+en) | 22.05k | emo-ref + desc + knob | bilibili Model License |
+| [IndexTTS-2.5](https://huggingface.co/IndexTeam/IndexTTS-2.5) | 0.97B | Aug 2026 | — | ✓ | ✓ (5) | 22.05k | emo-ref + desc + knob | bilibili Model License |
 | [LongCat-AudioDiT 1B](https://huggingface.co/meituan-longcat/LongCat-AudioDiT-1B) | 1.42B | Mar 2026 | — | ✓ | ✓ (zh+en) | 24k | — | MIT |
 | [LongCat-AudioDiT 3.5B](https://huggingface.co/meituan-longcat/LongCat-AudioDiT-3.5B) | 3.83B | Mar 2026 | — | ✓ | ✓ (zh+en) | 24k | — | MIT |
 | [Mars5-TTS](https://huggingface.co/Camb-ai/mars5-tts) | 1.2B | Jun 2024 | — | ✓ | — | 24k | — | AGPL-3.0 |
@@ -186,7 +187,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**54 of the 78 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**55 of the 79 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

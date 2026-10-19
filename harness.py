@@ -84,6 +84,10 @@ MODELS = [
     # naive Mamba path, so the speed row understates the model -- see known-issues.
     ("audio8_01b",  "audio8", "runners/audio8_runner.py", {"en", "fr", "es"}, ["cpu", "cuda"], "base_01b", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   {"en"},        ["cpu", "cuda"],        None,   True),
+    # IndexTTS-2.5: own venv (upstream moved to numpy 2 / torch 2.8; sharing would
+    # change the live 2.0 row's code). zh/en/ja/es/ar, NO French -- the runner refuses
+    # fr because an unknown lang code silently maps to the "common" token.
+    ("indextts25",  "indextts25", "runners/indextts25_runner.py", {"en", "es"},  ["cpu", "cuda"],        None,   True),
     # S2-Pro is 80+ languages (card: tier-1 ja/en/zh, tier-2 incl. fr) and the runner
     # is text-driven — it ignores --language and detects from the text — so the FR
     # canonical prompt just works. Was wrongly False until 2026-08-15 (issue #8), which
@@ -339,7 +343,7 @@ if _BAD_LANGS:
 # there. Tagged from the May 2026 Apple-M4 pass; they still run on Windows/Linux
 # CUDA rigs unchanged. See docs/known-issues.md.
 GPU_CLASS = {
-    "f5tts", "indextts", "voxcpm", "qwentts", "sesame", "mars5",
+    "f5tts", "indextts", "indextts25", "voxcpm", "qwentts", "sesame", "mars5",
     "chatterbox", "magpie",
     "fish_s2", "metavoice", "step_editx",
     # drama3: 38.6 GB FP8 MoE, experts offloaded to RAM -- CUDA-only port, no CPU path.

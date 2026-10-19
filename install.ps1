@@ -499,7 +499,10 @@ if (-not (Want "indextts")) { Write-Host "indextts: skipped (not in install filt
     # on first runner call (~5GB), not by this install step.
     Invoke-Checked "uv venv indextts" { uv venv venvs\indextts --python 3.11 }
     if (-not (Test-Path "venvs\indextts\src")) {
-        Invoke-Checked "git clone index-tts" { git clone --depth 1 https://github.com/index-tts/index-tts venvs\indextts\src }
+        # Pinned: upstream HEAD is now the 2.5-era tree (numpy 2 / torch 2.8); the
+        # IndexTTS-2 row was measured on 830f6f8. 2.5 has its own venv below.
+        Invoke-Checked "git clone index-tts" { git clone https://github.com/index-tts/index-tts venvs\indextts\src }
+        Invoke-Checked "pin index-tts 830f6f8" { git -C venvs\indextts\src checkout -q 830f6f8 }
     }
     Invoke-Checked "uv pip install indextts source" { uv pip install --python venvs\indextts\Scripts\python.exe -e venvs\indextts\src soundfile numpy huggingface_hub }
     # cu128 wheels for Blackwell (RTX 5090, sm_120).
@@ -511,6 +514,25 @@ if (-not (Want "indextts")) { Write-Host "indextts: skipped (not in install filt
     Write-Host "indextts: ok (zero-shot cloning, wav only, weights auto-download from HF on first use)" -ForegroundColor Green
 } else {
     Write-Host "indextts: already installed" -ForegroundColor Gray
+}
+
+Step "IndexTTS-2.5 (Bilibili Index, zero-shot cloning, zh/en/ja/es/ar)"
+if (-not (Want "indextts25")) { Write-Host "indextts25: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\indextts25\Scripts\python.exe")) {
+    # Separate venv from indextts: upstream 2.5 pins numpy 2.2 / torch 2.8, which
+    # would change the code the IndexTTS-2 row runs. Weights (IndexTeam/IndexTTS-2.5,
+    # ~4 GB) auto-download on first runner call.
+    Invoke-Checked "uv venv indextts25" { uv venv venvs\indextts25 --python 3.11 }
+    if (-not (Test-Path "venvs\indextts25\src")) {
+        Invoke-Checked "git clone index-tts (2.5)" { git clone https://github.com/index-tts/index-tts venvs\indextts25\src }
+        Invoke-Checked "pin index-tts d9e41aa" { git -C venvs\indextts25\src checkout -q d9e41aa }
+    }
+    Invoke-Checked "uv pip install indextts25 source" { uv pip install --python venvs\indextts25\Scripts\python.exe -e venvs\indextts25\src soundfile huggingface_hub }
+    # cu128 last (Blackwell sm_120); keep upstream's torch 2.8 pin.
+    Invoke-Checked "torch cu128 for indextts25" { uv pip install --python venvs\indextts25\Scripts\python.exe --reinstall "torch==2.8.*" "torchaudio==2.8.*" --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "indextts25: ok (zero-shot cloning, wav only, weights auto-download from HF on first use)" -ForegroundColor Green
+} else {
+    Write-Host "indextts25: already installed" -ForegroundColor Gray
 }
 
 Step "Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning)"

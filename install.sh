@@ -605,8 +605,10 @@ elif [ ! -x venvs/indextts/bin/python ]; then
     # downloaded by huggingface_hub on first runner call (~5GB), not here.
     uv venv venvs/indextts --python 3.11 || die "uv venv indextts"
     if [ ! -d venvs/indextts/src ]; then
-        git clone --depth 1 https://github.com/index-tts/index-tts venvs/indextts/src \
+        # Pinned: upstream HEAD is the 2.5-era tree; the IndexTTS-2 row was measured on 830f6f8.
+        git clone https://github.com/index-tts/index-tts venvs/indextts/src \
             || die "git clone index-tts"
+        git -C venvs/indextts/src checkout -q 830f6f8 || die "pin index-tts 830f6f8"
     fi
     uv pip install --python venvs/indextts/bin/python -e venvs/indextts/src soundfile numpy huggingface_hub \
         || die "uv pip install indextts source"
@@ -618,6 +620,25 @@ elif [ ! -x venvs/indextts/bin/python ]; then
     green "indextts: ok (zero-shot cloning, wav only, weights auto-download from HF on first use)"
 else
     echo "indextts: already installed"
+fi
+
+# --- IndexTTS-2.5 (Bilibili Index, zero-shot cloning, zh/en/ja/es/ar) ---
+echo; cyan "=== IndexTTS-2.5 (Bilibili Index, zero-shot cloning, zh/en/ja/es/ar) ==="
+if ! want indextts25; then echo "indextts25: skipped (not in install filter)"
+elif [ ! -x venvs/indextts25/bin/python ]; then
+    # Separate venv from indextts (upstream 2.5 pins numpy 2.2 / torch 2.8).
+    # PyPI torch is CUDA-enabled on Linux. Weights auto-download on first call.
+    uv venv venvs/indextts25 --python 3.11 || die "uv venv indextts25"
+    if [ ! -d venvs/indextts25/src ]; then
+        git clone https://github.com/index-tts/index-tts venvs/indextts25/src \
+            || die "git clone index-tts (2.5)"
+        git -C venvs/indextts25/src checkout -q d9e41aa || die "pin index-tts d9e41aa"
+    fi
+    uv pip install --python venvs/indextts25/bin/python -e venvs/indextts25/src soundfile huggingface_hub \
+        || die "uv pip install indextts25 source"
+    green "indextts25: ok (zero-shot cloning, wav only, weights auto-download from HF on first use)"
+else
+    echo "indextts25: already installed"
 fi
 
 # --- Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning) ---

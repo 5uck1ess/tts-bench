@@ -83,7 +83,7 @@ NO_PRESET_VOICE = {
     # No model-native preset voice: the no-reference run clones the house Chris
     # reference, so these are reference-only (cloning board). Their fallback was
     # jo.wav until 2026-07-29 -- see docs/known-issues.md.
-    "f5tts", "indextts", "step_editx",
+    "f5tts", "indextts", "indextts25", "step_editx",
     # Reference-only: no model-native preset voice; the default lens clones house Chris.
     "firered3", "auk_base", "auk_flash",
     # Same defect, caught in the follow-up pass: these stored the fallback as a bare
