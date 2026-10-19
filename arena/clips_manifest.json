@@ -1526,6 +1526,31 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/indextts_cuda_p4.wav"
         },
         {
+          "model": "indextts25",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/indextts25_cuda_p1.wav"
+        },
+        {
+          "model": "indextts25",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/indextts25_cuda_p2.wav"
+        },
+        {
+          "model": "indextts25",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/indextts25_cuda_p3.wav"
+        },
+        {
+          "model": "indextts25",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/indextts25_cuda_p4.wav"
+        },
+        {
+          "model": "indextts25",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/indextts25_cuda_p6.wav"
+        },
+        {
           "model": "longcat_1b",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/longcat_1b_cuda_p1.wav"
@@ -2353,6 +2378,10 @@
     "indextts": {
       "name": "IndexTTS-2",
       "url": "https://huggingface.co/IndexTeam/IndexTTS-2"
+    },
+    "indextts25": {
+      "name": "IndexTTS-2.5",
+      "url": "https://huggingface.co/IndexTeam/IndexTTS-2.5"
     },
     "inflect_micro": {
       "name": "Inflect-Micro v2",
