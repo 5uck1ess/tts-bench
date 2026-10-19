@@ -187,6 +187,20 @@ Frictions surfaced while building the harness. None are blockers on Mac/Linux �
   patched venv, but that would measure a config upstream does not ship. Leave them absent until
   upstream takes the fix. Drafts in `docs/upstream/auk-bf16-encoder/`. **Not filed** — awaiting Tym.
 
+- **SteerTTS (`steertts` / `steertts_noflow`, added 2026-10-19).** Same weights (HF
+  `WhissleAI/steer-tts` @ `53b28c0`); the variant only toggles the flow refiner. **The
+  announced "23M params, real-time on CPU" describes the refiner-OFF row only** —
+  upstream's default is `flow=True`, which adds a 17.64M refiner (40.8M total), and cloning
+  swaps it for a 24.67M prompted flow plus a frozen WavLM-base-plus-sv speaker encoder.
+  Params on each row are counted from its own safetensors, not the post. The author's
+  "refiner drops CPU to 0.8×" is from a loaded 8-thread box; on the 9950X3D the refiner
+  row is **12.4× warm on p3** (no-refiner 87×), and only refiner + cloning gets slow
+  (3.1× warm p3 on CPU). The first CUDA call in a process costs ~20 s (init), so cuda cold
+  columns are dominated by it. Renders are bit-identical across runs on each device.
+  The Mamba-3 layers are pure PyTorch inside the package — no kernel build, so Windows
+  CPU/CUDA install cleanly. By ear (Tym): "not great"; published anyway per the
+  publish-defects rule. Author-stated: cloning similarity is low.
+
 
 ## Skipped on Apple Silicon (Apple M4, 16 GB)
 
@@ -213,6 +227,7 @@ Partial — CPU usable, mps skipped: **zipvoice** cloning (cpu works 10/11 once 
 - **NVIDIA Open Model License:** [Magpie-TTS Multilingual 357M](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) — commercial use permitted with terms; HF accept-terms gated.
 - **LTX-2 Community License:** [DramaBox](https://huggingface.co/ResembleAI/Dramabox) — non-commercial (commercial use requires a separate Commercial Use Agreement from the LTX-2 licensor, Lightricks). Llama-style community license: no "no-benchmarking" clause and redistribution is permitted, so non-commercial benchmarking + publishing sample clips here is allowed. Built on Lightricks LTX-2.3; outputs are watermarked (Resemble Perth).
 - **Boson Higgs Audio v3 Research and Non-Commercial License:** [Higgs Audio v3 TTS](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) — non-commercial. *Explicitly* permits "non-production benchmarking, evaluation … by commercial entities" and says publication of benchmark outputs / illustrative samples in blog posts, public model cards, or non-commercial repositories is **not** a Commercial Purpose — so benchmarking here and publishing sample clips on the public leaderboard is allowed. Download is HF accept-terms gated (export `HF_TOKEN` before `sgl-omni serve`).
+- **CC-BY-NC 4.0 (non-commercial weights, MIT code):** [SteerTTS](https://huggingface.co/WhissleAI/steer-tts).
 - **CC-BY-NC (non-commercial weights):** [OmniVoice](https://github.com/k2-fsa/OmniVoice) — the code is Apache 2.0, but the pre-trained model weights are **CC-BY-NC** due to constraints from its Emilia training data (same mechanism as WavTTS). No commercial use of the model. Reclassified 2026-07 after the upstream card was changed from Apache 2.0 (see [HF discussion #29](https://huggingface.co/k2-fsa/OmniVoice/discussions/29) and [GitHub issue #211](https://github.com/k2-fsa/OmniVoice/issues/211)).
 - **GPL-3.0 (copyleft — with an MIT runtime carve-out):** [sanoTTS](https://github.com/Ampixa/sanoTTS) — the HF weights are tagged `gpl-3.0` and the project as a whole is GPL-3.0-or-later, but the **inference runtime and language bindings** (`mcu/src/snt_*.c`, `mcu/include/`, `mobile/`) are dual-licensed **MIT** (`LICENSE.MIT`), and the PyPI `sanotts` package we install declares MIT. The copyleft comes from **espeak-ng** alone, which supplies grapheme-to-phoneme; upstream audited the boundary and none of the MIT runtime files reference espeak. So the runtime can be embedded permissively, but the G2P cannot be taken without GPL-3.0. Benchmark outputs are unaffected — GPL does not reach a program's output — which is why this clears the redistribution bar the same way the board's existing GPL-3.0 and AGPL-3.0 rows do.
 - **Check upstream — see model repo:** [VoxCPM](https://github.com/OpenBMB/VoxCPM). License field is not stated in the standard MIT/Apache form in the upstream README — verify before deploying anywhere production-adjacent.

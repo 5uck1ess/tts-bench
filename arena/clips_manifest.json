@@ -841,6 +841,46 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/soprano_cuda_p4.wav"
         },
         {
+          "model": "steertts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/steertts_cuda_p1.wav"
+        },
+        {
+          "model": "steertts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/steertts_cuda_p2.wav"
+        },
+        {
+          "model": "steertts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/steertts_cuda_p3.wav"
+        },
+        {
+          "model": "steertts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/steertts_cuda_p4.wav"
+        },
+        {
+          "model": "steertts_noflow",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/steertts_noflow_cuda_p1.wav"
+        },
+        {
+          "model": "steertts_noflow",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/steertts_noflow_cuda_p2.wav"
+        },
+        {
+          "model": "steertts_noflow",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/steertts_noflow_cuda_p3.wav"
+        },
+        {
+          "model": "steertts_noflow",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/steertts_noflow_cuda_p4.wav"
+        },
+        {
           "model": "styletts2",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/styletts2_cuda_p1.wav"
@@ -1996,6 +2036,46 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/sopro_streaming_cuda_p5.wav"
         },
         {
+          "model": "steertts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/steertts_cuda_p1.wav"
+        },
+        {
+          "model": "steertts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/steertts_cuda_p2.wav"
+        },
+        {
+          "model": "steertts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/steertts_cuda_p3.wav"
+        },
+        {
+          "model": "steertts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/steertts_cuda_p4.wav"
+        },
+        {
+          "model": "steertts_noflow",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/steertts_noflow_cuda_p1.wav"
+        },
+        {
+          "model": "steertts_noflow",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/steertts_noflow_cuda_p2.wav"
+        },
+        {
+          "model": "steertts_noflow",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/steertts_noflow_cuda_p3.wav"
+        },
+        {
+          "model": "steertts_noflow",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/steertts_noflow_cuda_p4.wav"
+        },
+        {
           "model": "step_editx",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/step_editx_cuda_p1.wav"
@@ -2425,6 +2505,14 @@
     "sopro_streaming": {
       "name": "Sopro V2 Turbo (streaming)",
       "url": "https://huggingface.co/samuel-vitorino/sopro-v2-turbo"
+    },
+    "steertts": {
+      "name": "SteerTTS",
+      "url": "https://huggingface.co/WhissleAI/steer-tts"
+    },
+    "steertts_noflow": {
+      "name": "SteerTTS (no refiner)",
+      "url": "https://huggingface.co/WhissleAI/steer-tts"
     },
     "step_editx": {
       "name": "Step-Audio-EditX",
