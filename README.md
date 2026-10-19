@@ -105,7 +105,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [OuteTTS 1.0 1B](https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B) | ~1B | Apr 2025 | ✓ | ✓ | ✓ (12) | 44.1k | — | CC-BY-NC-SA 4.0 + Llama 3.2 |
 | [Parler-TTS Mini v1](https://huggingface.co/parler-tts/parler-tts-mini-v1) | 878M | Jun 2024 | ✓ (voice desc) | — | — | **44.1k** | desc\* | Apache 2.0 |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) | ~15M | Jan 2023 | ✓ | — | ✓ | 22.05k | — | GPL-3.0 |
-| [Qwen3-TTS 0.6B CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice) | 0.6B | Jan 2026 | ✓ (9) | — | ✓ | 24k | — | Apache 2.0 |
+| [Qwen3-TTS 0.6B CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice) | 0.6B | Jan 2026 | ✓ (9) | — | ✓ (10) | 24k | — | Apache 2.0 |
 | [sanoTTS Amy](https://huggingface.co/ampixa/sanoTTS) | 1.46M | Jul 2026 | ✓ (1) | — | — (en) | 22.05k | knob | GPL-3.0 |
 | [sanoTTS Heart-Nano](https://huggingface.co/ampixa/sanoTTS) | 294K | Sep 2026 | ✓ (1) | — | — (en) | 24k | knob | GPL-3.0 |
 | [Scylla's Band](https://huggingface.co/spybyscript/scyllasband) | ~103M | Jul 2026 | ✓ (10) | — | ✓ (4) | 24k | 6 knobs | Apache 2.0 |
@@ -157,9 +157,9 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [OmniVoice](https://huggingface.co/k2-fsa/OmniVoice) | ~1B | Mar 2026 | — | ✓ | ✓ (600+) | 24k | tags\* | Apache 2.0 code / CC-BY-NC weights |
 | [OpenVoice v2](https://huggingface.co/myshell-ai/OpenVoiceV2) | ~100M | Apr 2024 | — | ✓ | ✓ | 22.05k | knob | MIT |
 | [Pocket-TTS](https://github.com/kyutai-labs/pocket-tts) | 100M | Jan 2026 | — | ✓ | ✓ (6) | 24k | — | Apache 2.0 |
-| [Qwen3-TTS 0.6B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-Base) | 0.6B | Jan 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
-| [Qwen3-TTS 1.7B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | Apache 2.0 |
-| [Qwen3-TTS 1.7B (CUDA-graph)](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ | 24k | — | MIT |
+| [Qwen3-TTS 0.6B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-Base) | 0.6B | Jan 2026 | — | ✓ | ✓ (10) | 24k | — | Apache 2.0 |
+| [Qwen3-TTS 1.7B Base](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ (10) | 24k | — | Apache 2.0 |
+| [Qwen3-TTS 1.7B (CUDA-graph)](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base) | 1.7B | Jan 2026 | — | ✓ | ✓ (10) | 24k | — | Apache 2.0 weights / MIT wrapper |
 | [Sesame CSM-1B](https://huggingface.co/sesame/csm-1b) | 1B | Mar 2025 | — | ✓ | — | 24k | — | Apache 2.0 |
 | [Sopro V2 Turbo](https://huggingface.co/samuel-vitorino/sopro-v2-turbo) | 120M | Aug 2026 | — | ✓ | ✓ (4) | 24k | — | Apache 2.0 |
 | [Sopro V2 Turbo (streaming)](https://huggingface.co/samuel-vitorino/sopro-v2-turbo) | 120M | Aug 2026 | — | ✓ | ✓ (4) | 24k | — | Apache 2.0 |
@@ -179,7 +179,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 > **Predefined vs Cloning.** *Predefined* models have fixed/selectable speaker voices baked into the weights — they speak with no reference needed. *Cloning* (zero-shot) models have **no voice of their own**: they synthesize whatever voice you hand them as a reference clip at inference. Given no reference, a pure zero-shot model falls back to a bundled sample (this bench uses `chris_hemsworth_15s.wav`), so its "default voice" is just a clone of that clip. A few models do both (e.g. Voxtral has 20 presets *and* cloning).
 
-> **Newly added, not yet benched.** `qwentts_06b_custom` (Qwen3-TTS 0.6B CustomVoice, 9 preset timbres) is registered and smoke-tested but carries **no speed or objective numbers yet** — the bench + UTMOS/WER/SIM scoring pass runs on the Linux rig. The 0.6B **Base** checkpoint (`qwentts_06b`) is registered too, but like both 1.7B Base rows it is **reference-only** — Base has no model-native preset voice, so its no-reference run clones the house `chris_hemsworth_15s.wav` and it appears under Cloning, never Default. Its cloning *lens* is disabled by an intermittent decode runaway (identical input yielded 12.9 s of audio on one call and 655.3 s on the next) — see [docs/known-issues.md](docs/known-issues.md).
+> **Qwen3-TTS rows.** `qwentts_06b_custom` (0.6B CustomVoice) is the only Qwen row with real preset voices (9 timbres) and sits on the Default board; its `instruct` style control is not supported at 0.6B (the `qwen-tts` package ignores it for 0b6 despite the card), hence `—` in Expressive. The 0.6B **Base** checkpoint (`qwentts_06b`), like both 1.7B Base rows, is **reference-only** — Base has no model-native preset voice, so its no-reference run clones the house `chris_hemsworth_15s.wav` and it appears under Cloning, never Default. Its cloning *lens* is disabled by an intermittent decode runaway (identical input yielded 12.9 s of audio on one call and 655.3 s on the next) — see [docs/known-issues.md](docs/known-issues.md).
 
 > Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Higgs Audio v3 / dots.tts / Zonos2 / Orpheus / CosyVoice 3 are Linux-only (CUDA) — Higgs v3 is the one **server-backed** model (it runs via a Docker `sgl-omni` HTTP server, not an in-process load), dots.tts and Zonos2 require Linux-only dependencies/compiled CUDA kernels, and Orpheus (vLLM) + CosyVoice 3 (cu121 / torch 2.3.1) have no Blackwell-compatible Windows path; Echo-TTS and DramaBox are Windows + Linux (CUDA-only, no CPU/MPS; DramaBox needs ~18 GB VRAM). Fish Audio Drama 3 is Windows + Linux through the third-party ComfyUI-Drama3 port (CUDA-only; experts offloaded to system RAM, so it needs ~48 GB RAM and ~24 GB VRAM) — its row measures that port, not Fish's own server. The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
 
