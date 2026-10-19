@@ -231,6 +231,26 @@ else
     echo "inflect: already installed"
 fi
 
+# --- SteerTTS (23.1M + 17.6M flow refiner; steertts + steertts_noflow share this venv) ---
+echo; cyan "=== SteerTTS (23.1M + 17.6M flow refiner) ==="
+if ! want steertts; then echo "steertts: skipped (not in install filter)"
+elif [ ! -x venvs/steertts/bin/python ]; then
+    uv venv venvs/steertts --python 3.11 || die "uv venv steertts"
+    uv pip install --python venvs/steertts/bin/python "huggingface-hub>=0.36" psutil \
+        || die "uv pip install hf hub"
+    # The HF repo IS the package (pyproject + steertts/ + weights). Pinned SHA; the
+    # stale build/ and egg-info/ copies and the leaderboard Docker harness are skipped.
+    venvs/steertts/bin/python -c "from huggingface_hub import snapshot_download as d; d('WhissleAI/steer-tts', revision='53b28c07778519df0103f35d188656c5cdc3232a', local_dir='venvs/steertts/src/steer-tts', ignore_patterns=['build/*','*.egg-info/*','leaderboard/*','samples/*'])" \
+        || die "download steertts"
+    # [all] adds transformers==5.19.0 (WavLM speaker encoder for cloning) + parselmouth.
+    # On Linux the PyPI torch wheel is already CUDA-enabled — no cu128 swap needed.
+    uv pip install --python venvs/steertts/bin/python "venvs/steertts/src/steer-tts[all]" \
+        || die "uv pip install steertts"
+    green "steertts: ok"
+else
+    echo "steertts: already installed"
+fi
+
 # --- Vaniq-Edge (8.5M VITS, one fixed voice) ---
 echo; cyan "=== Vaniq-Edge (8.5M VITS, one fixed voice) ==="
 if ! want vaniq; then echo "vaniq: skipped (not in install filter)"

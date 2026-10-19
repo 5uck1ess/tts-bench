@@ -162,6 +162,24 @@ if (-not (Want "inflect")) { Write-Host "inflect: skipped (not in install filter
     Write-Host "inflect: already installed" -ForegroundColor Gray
 }
 
+Step "SteerTTS (23.1M + 17.6M flow refiner; steertts + steertts_noflow share this venv)"
+if (-not (Want "steertts")) { Write-Host "steertts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\steertts\Scripts\python.exe")) {
+    Invoke-Checked "uv venv steertts" { uv venv venvs\steertts --python 3.11 }
+    Invoke-Checked "uv pip install hf hub" { uv pip install --python venvs\steertts\Scripts\python.exe "huggingface-hub>=0.36" psutil }
+    # The HF repo IS the package (pyproject + steertts/ + weights). Pinned SHA; the
+    # stale build/ and egg-info/ copies and the leaderboard Docker harness are skipped.
+    Invoke-Checked "download steertts" { & "venvs\steertts\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('WhissleAI/steer-tts', revision='53b28c07778519df0103f35d188656c5cdc3232a', local_dir='venvs/steertts/src/steer-tts', ignore_patterns=['build/*','*.egg-info/*','leaderboard/*','samples/*'])" }
+    # [all] adds transformers==5.19.0 (WavLM speaker encoder for cloning) + parselmouth.
+    Invoke-Checked "uv pip install steertts" { uv pip install --python venvs\steertts\Scripts\python.exe "venvs\steertts\src\steer-tts[all]" }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120), LAST: the package pulls PyPI's CPU
+    # torch 2.11. torchaudio (vocos dep) must match the torch version.
+    Invoke-Checked "torch cu128 for steertts" { uv pip install --python venvs\steertts\Scripts\python.exe torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "steertts: ok" -ForegroundColor Green
+} else {
+    Write-Host "steertts: already installed" -ForegroundColor Gray
+}
+
 Step "Vaniq-Edge (8.5M VITS, one fixed voice)"
 if (-not (Want "vaniq")) { Write-Host "vaniq: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\vaniq\Scripts\python.exe")) {

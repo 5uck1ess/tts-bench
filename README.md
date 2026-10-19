@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (76)
+## Models tracked (78)
 
 #### Predefined voices
 
@@ -110,6 +110,8 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [sanoTTS Heart-Nano](https://huggingface.co/ampixa/sanoTTS) | 294K | Sep 2026 | ✓ (1) | — | — (en) | 24k | knob | GPL-3.0 |
 | [Scylla's Band](https://huggingface.co/spybyscript/scyllasband) | ~103M | Jul 2026 | ✓ (10) | — | ✓ (4) | 24k | 6 knobs | Apache 2.0 |
 | [Soprano 1.1 80M](https://huggingface.co/ekwek/Soprano-1.1-80M) | 80M | Jan 2026 | ✓ | — | — | 32k | — | Apache 2.0 |
+| [SteerTTS](https://huggingface.co/WhissleAI/steer-tts) | 40.8M | Oct 2026 | ✓ (2,825) | ✓ | — (en) | 24k | 12 knobs + tags | MIT code / CC-BY-NC 4.0 weights |
+| [SteerTTS (no refiner)](https://huggingface.co/WhissleAI/steer-tts) | 23.1M | Oct 2026 | ✓ (2,825) | ✓ | — (en) | 24k | 12 knobs + tags | MIT code / CC-BY-NC 4.0 weights |
 | [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) | 99M | May 2026 | ✓ | — | ✓ (31) | 24k | tags | MIT + OpenRAIL-M |
 | [SupraTTS 0.1 Beta](https://huggingface.co/SupraLabs/SupraTTS-0.1-Beta) | 43.5M | Sep 2026 | ✓ (1) | — | — (en) | 22.05k | 3 knobs | MIT |
 | [Vaniq-Edge](https://huggingface.co/Abiray/Vaniq-Edge) | 8.91M | Aug 2026 | ✓ (1) | — | — (en) | 24k | knob | MIT |
@@ -184,7 +186,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**52 of the 76 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**54 of the 78 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

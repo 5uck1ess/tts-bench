@@ -123,6 +123,12 @@ MODELS = [
     # checkpoint dir under venvs/inflect/src/.
     ("inflect_nano",  "inflect", "runners/inflect_runner.py", {"en"},        ["cpu", "cuda"], "nano",  False),
     ("inflect_micro", "inflect", "runners/inflect_runner.py", {"en"},        ["cpu", "cuda"], "micro", False),
+    # SteerTTS (code MIT / weights CC BY-NC 4.0): 2,825 built-in voices AND zero-shot
+    # cloning -> can_clone=True, in publish._PRESET_AND_CLONE (fills both lenses).
+    # English-only. Same weights, variant toggles the flow refiner: `steertts` is the
+    # upstream default (refiner on, 40.8M), `steertts_noflow` the 23.1M real-time-CPU mode.
+    ("steertts",        "steertts", "runners/steertts_runner.py", {"en"},  ["cpu", "cuda"], "flow",   True),
+    ("steertts_noflow", "steertts", "runners/steertts_runner.py", {"en"},  ["cpu", "cuda"], "noflow", True),
     # Vaniq-Edge (MIT): the same compressed-VITS class as Inflect but an independent
     # training (128/128/384, 4 enc layers, and a STOCHASTIC duration predictor where
     # Inflect's is deterministic). One fixed English voice, no wav cloning ->

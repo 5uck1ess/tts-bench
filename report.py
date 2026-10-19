@@ -475,6 +475,8 @@ MODEL_DISPLAY_NAMES = {
     "scyllasband":   "Scylla's Band",
     "inflect_nano":  "Inflect-Nano v2",
     "inflect_micro": "Inflect-Micro v2",
+    "steertts":        "SteerTTS",
+    "steertts_noflow": "SteerTTS (no refiner)",
     "vaniq":         "Vaniq-Edge",
     "supratts":      "SupraTTS 0.1 Beta",
     "soprano":       "Soprano 1.1 80M",
@@ -565,6 +567,11 @@ MODEL_SIZE = {
     # decoder is inside these numbers, not bolted on as a separate vocoder).
     "inflect_nano":  "3.96M",
     "inflect_micro": "9.36M",
+    # Counted over the safetensors @ 53b28c0: acoustic 9.59M + Vocos 13.53M, plus the
+    # 17.64M flow refiner on the default row. Cloning swaps the refiner for the 24.67M
+    # prompted flow and adds a frozen WavLM-base-plus-sv speaker encoder (not counted).
+    "steertts":        "40.8M",
+    "steertts_noflow": "23.1M",
     # Computed from the checkpoint: 12.16M total, minus the enc_q posterior encoder
     # (training-only) = 8,912,048 deployed. The card rounds this to "8.5M".
     "vaniq":         "8.91M",
@@ -652,6 +659,8 @@ MODEL_URL = {
     "scyllasband":   _HF + "spybyscript/scyllasband",
     "inflect_nano":  _HF + "owensong/Inflect-Nano-v2",
     "inflect_micro": _HF + "owensong/Inflect-Micro-v2",
+    "steertts":        _HF + "WhissleAI/steer-tts",
+    "steertts_noflow": _HF + "WhissleAI/steer-tts",
     "vaniq":         _HF + "Abiray/Vaniq-Edge",
     "supratts":      _HF + "SupraLabs/SupraTTS-0.1-Beta",
     "soprano":       _HF + "ekwek/Soprano-1.1-80M",
@@ -698,6 +707,8 @@ MODEL_KIND = {
     "scyllasband":   "predefined",
     "inflect_nano":  "predefined",   # one fixed synthetic voice, no wav cloning
     "inflect_micro": "predefined",
+    "steertts":        "cloning",   # 2,825 real presets too — in _PRESET_AND_CLONE, fills both lenses
+    "steertts_noflow": "cloning",
     "vaniq":         "predefined",   # one fixed voice, n_speakers=0, no wav cloning
     "supratts":      "predefined",   # single-speaker LJSpeech, no wav cloning
     "soprano":       "predefined",
@@ -822,6 +833,8 @@ MODEL_RELEASE = {
     "scyllasband":   "2026-07",
     "inflect_nano":  "2026-07",   # v2.0.0 2026-07-24 (v1 was 2026-06)
     "inflect_micro": "2026-07",
+    "steertts":        "2026-10",   # HF repo created 2026-10-15
+    "steertts_noflow": "2026-10",
     "vaniq":         "2026-08",   # v1.0.1, repo last updated 2026-08-02
     "supratts":      "2026-09",   # 0.1-Beta, HF repo created 2026-09-27
     "soprano":       "2026-01",
@@ -897,6 +910,7 @@ MODEL_SR = {
     "outetts": "44.1k", "parler": "44.1k", "piper": "22.05k", "scyllasband": "24k", "soprano": "32k",
     "sanotts_amy": "22.05k", "sanotts_heart_nano": "24k",
     "inflect_nano": "24k", "inflect_micro": "24k", "vaniq": "24k", "supratts": "22.05k",
+    "steertts": "24k", "steertts_noflow": "24k",
     "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
     "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
     "breeze_tts2": "24k",
@@ -923,6 +937,7 @@ MODEL_EXPRESSIVE = {
     "sanotts_amy": "knob", "sanotts_heart_nano": "knob",
     # speed + variation (latent noise scale). No emotion/style control.
     "inflect_nano": "2 knobs", "inflect_micro": "2 knobs",
+    "steertts": "12 knobs + tags", "steertts_noflow": "12 knobs + tags",
     # length_scale only; noise scales are hardcoded in upstream's synthesize().
     "vaniq": "knob",
     # length scale + latent noise + duration-predictor noise. No emotion/style control.
@@ -959,6 +974,7 @@ MODEL_LICENSE = {
     "piper": "GPL-3.0", "scyllasband": "Apache 2.0", "soprano": "Apache 2.0",
     "sanotts_amy": "GPL-3.0", "sanotts_heart_nano": "GPL-3.0",
     "inflect_nano": "Apache 2.0", "inflect_micro": "Apache 2.0", "vaniq": "MIT", "supratts": "MIT",
+    "steertts": "MIT code / CC-BY-NC 4.0 weights", "steertts_noflow": "MIT code / CC-BY-NC 4.0 weights",
     "supertonic": "MIT + OpenRAIL-M",
     "vibevoice": "MIT", "voxtral": "CC-BY-NC 4.0", "chatterbox": "MIT",
     "chatterbox_turbo": "MIT", "coqui": "CPML (non-commercial)", "cosyvoice": "Apache 2.0",
@@ -996,6 +1012,7 @@ MODEL_LANGS = {
     # sanoTTS supports six languages, but the two benched voices are English-only.
     "sanotts_amy": "— (en)", "sanotts_heart_nano": "— (en)",
     "inflect_nano": "— (en)", "inflect_micro": "— (en)", "vaniq": "— (en)", "supratts": "— (en)",
+    "steertts": "— (en)", "steertts_noflow": "— (en)",
     "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
     "chatterbox_turbo": "—", "coqui": "✓ (17)", "cosyvoice": "✓", "dia": "—",
