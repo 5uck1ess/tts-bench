@@ -185,26 +185,26 @@
 <th class="num">TTFA warm</th>
 <th>Audio</th>
 </tr></thead><tbody>
-<tr id="sample-p6-neutts_nano-cuda">
+<tr id="sample-p6-neutts_nano-cpu">
 <td class="num" data-sort="1">1</td>
 <td>NeuTTS Nano</td>
-<td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="171.45">171ms</td>
-<td><audio controls preload="none" src="neutts_nano_cuda_p6.wav"></audio></td>
-</tr>
-<tr id="sample-p6-neutts_nano-cpu">
-<td class="num" data-sort="2">2</td>
-<td>NeuTTS Nano</td>
 <td class="dev-cpu">cpu</td>
-<td class="num pill" data-sort="207.9">208ms</td>
+<td class="num pill" data-sort="197.8">198ms</td>
 <td><audio controls preload="none" src="neutts_nano_cpu_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-openvoice-cuda">
-<td class="num" data-sort="3">3</td>
+<td class="num" data-sort="2">2</td>
 <td>OpenVoice v2</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="274.5">274ms</td>
 <td><audio controls preload="none" src="openvoice_cuda_p6.wav"></audio></td>
+</tr>
+<tr id="sample-p6-neutts_nano-cuda">
+<td class="num" data-sort="3">3</td>
+<td>NeuTTS Nano</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="283.8">284ms</td>
+<td><audio controls preload="none" src="neutts_nano_cuda_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-pocket-cpu">
 <td class="num" data-sort="4">4</td>
@@ -217,49 +217,49 @@
 <td class="num" data-sort="5">5</td>
 <td>Audio8 TTS 0.6B (compiled)</td>
 <td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="652.45">652ms</td>
+<td class="num pill" data-sort="563.25">563ms</td>
 <td><audio controls preload="none" src="audio8_fast_cuda_p6.wav"></audio></td>
 </tr>
-<tr id="sample-p6-openvoice-cpu">
+<tr id="sample-p6-qwentts_fast-cuda">
 <td class="num" data-sort="6">6</td>
+<td>Qwen3-TTS 1.7B (CUDA-graph)</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="1516.9">1.52s</td>
+<td><audio controls preload="none" src="qwentts_fast_cuda_p6.wav"></audio></td>
+</tr>
+<tr id="sample-p6-openvoice-cpu">
+<td class="num" data-sort="7">7</td>
 <td>OpenVoice v2</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="1574.35">1.57s</td>
 <td><audio controls preload="none" src="openvoice_cpu_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-coqui-cuda">
-<td class="num" data-sort="7">7</td>
+<td class="num" data-sort="8">8</td>
 <td>Coqui XTTS-v2</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="1736.95">1.74s</td>
 <td><audio controls preload="none" src="coqui_cuda_p6.wav"></audio></td>
 </tr>
-<tr id="sample-p6-qwentts_fast-cuda">
-<td class="num" data-sort="8">8</td>
-<td>Qwen3-TTS 1.7B (CUDA-graph)</td>
+<tr id="sample-p6-ming-cuda">
+<td class="num" data-sort="9">9</td>
+<td>Ming-3.0-TTS 0.5B</td>
 <td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="2032.2">2.03s</td>
-<td><audio controls preload="none" src="qwentts_fast_cuda_p6.wav"></audio></td>
+<td class="num pill" data-sort="6526.35">6.53s</td>
+<td><audio controls preload="none" src="ming_cuda_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-audio8-cuda">
-<td class="num" data-sort="9">9</td>
+<td class="num" data-sort="10">10</td>
 <td>Audio8 TTS Preview 0.6B</td>
 <td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="10392.45">10.39s</td>
+<td class="num pill" data-sort="9529.4">9.53s</td>
 <td><audio controls preload="none" src="audio8_cuda_p6.wav"></audio></td>
-</tr>
-<tr id="sample-p6-drama3-cuda">
-<td class="num" data-sort="10">10</td>
-<td>Fish Audio Drama 3 (ComfyUI port)</td>
-<td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="10868.75">10.87s</td>
-<td><audio controls preload="none" src="drama3_cuda_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-audio8_01b-cuda">
 <td class="num" data-sort="11">11</td>
 <td>Audio8 TTS Preview 0.1B</td>
 <td class="dev-cuda">cuda</td>
-<td class="num pill" data-sort="12024.85">12.02s</td>
+<td class="num pill" data-sort="11252.6">11.25s</td>
 <td><audio controls preload="none" src="audio8_01b_cuda_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-coqui-cpu">
@@ -273,15 +273,22 @@
 <td class="num" data-sort="13">13</td>
 <td>Audio8 TTS Preview 0.1B</td>
 <td class="dev-cpu">cpu</td>
-<td class="num pill" data-sort="28066.300000000003">28.07s</td>
+<td class="num pill" data-sort="21352.85">21.35s</td>
 <td><audio controls preload="none" src="audio8_01b_cpu_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-audio8-cpu">
 <td class="num" data-sort="14">14</td>
 <td>Audio8 TTS Preview 0.6B</td>
 <td class="dev-cpu">cpu</td>
-<td class="num pill" data-sort="44879.5">44.88s</td>
+<td class="num pill" data-sort="37876.600000000006">37.88s</td>
 <td><audio controls preload="none" src="audio8_cpu_p6.wav"></audio></td>
+</tr>
+<tr id="sample-p6-drama3-cuda">
+<td class="num" data-sort="15">15</td>
+<td>Fish Audio Drama 3 (ComfyUI port)</td>
+<td class="dev-cuda">cuda</td>
+<td class="num pill" data-sort="39542.95">39.54s</td>
+<td><audio controls preload="none" src="drama3_cuda_p6.wav"></audio></td>
 </tr>
 </tbody></table></div>
 <script>
