@@ -88,6 +88,17 @@ def _read_ref_transcript(ref_wav: str | None) -> str | None:
     return None
 
 
+# Known clean cut points for house references: (seconds, exact transcript of
+# that slice), from Whisper word timestamps + the quietest 20 ms frame. The
+# proportional word-count guess below is only right by luck: with the full
+# chris_hemsworth_15s transcript (fixed 2026-10-20) it kept "...you. Today is
+# your" for a 3 s slice that only says "...you. Today", and the extra words
+# leaked into the output ("Today is your. The Parakeet ...").
+_KNOWN_CLIPS = {
+    "chris_hemsworth_15s": (2.62, "Hey you. Yes, yes, yes, you."),
+}
+
+
 def _maybe_clip_reference(wav_path: str, ref_text: str, max_sec: float = 3.0):
     """Clip the reference wav + text proportionally if wav > max_sec.
 
@@ -116,12 +127,16 @@ def _maybe_clip_reference(wav_path: str, ref_text: str, max_sec: float = 3.0):
     if duration <= max_sec:
         return wav_path, ref_text
 
-    clip_samples = int(max_sec * sr)
-    y_clip = y[:clip_samples]
-
-    words = ref_text.split()
-    n_words = max(1, int(len(words) * max_sec / duration))
-    text_clip = " ".join(words[:n_words])
+    known = _KNOWN_CLIPS.get(Path(wav_path).stem)
+    if known:
+        cut_sec, text_clip = known
+        y_clip = y[:int(cut_sec * sr)]
+    else:
+        clip_samples = int(max_sec * sr)
+        y_clip = y[:clip_samples]
+        words = ref_text.split()
+        n_words = max(1, int(len(words) * max_sec / duration))
+        text_clip = " ".join(words[:n_words])
 
     fd, clip_path = tempfile.mkstemp(suffix=".wav", prefix="zipvoice_ref_")
     os.close(fd)
@@ -226,6 +241,8 @@ def main() -> int:
 
     # ------------------------------------------------------------------ infer
     def _one(text: str, out_path: str, run_index: int, write_wav: bool) -> bool:
+        import torch
+
         try:
             _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
@@ -235,20 +252,25 @@ def main() -> int:
             save_path = out_path if write_wav else str(
                 Path(out_path).with_suffix("") ) + f"._tmp_run{run_index}.wav"
 
-            metrics = generate_sentence(
-                save_path=save_path,
-                prompt_text=ref_text,
-                prompt_wav=ref_wav,
-                text=text,
-                model=model,
-                vocoder=vocoder,
-                tokenizer=tokenizer,
-                feature_extractor=feature_extractor,
-                device=device,
-                num_step=16,
-                guidance_scale=1.0,
-                sampling_rate=sampling_rate,
-            )
+            # Upstream puts @torch.inference_mode() on its CLI main() only, not on
+            # generate_sentence(); calling it directly without this guard lets
+            # autograd keep every flow step's activations (prompt 3 on cuda hit
+            # 30 GB VRAM + 34 GB spilled to RAM, 2026-10-20).
+            with torch.inference_mode():
+                metrics = generate_sentence(
+                    save_path=save_path,
+                    prompt_text=ref_text,
+                    prompt_wav=ref_wav,
+                    text=text,
+                    model=model,
+                    vocoder=vocoder,
+                    tokenizer=tokenizer,
+                    feature_extractor=feature_extractor,
+                    device=device,
+                    num_step=16,
+                    guidance_scale=1.0,
+                    sampling_rate=sampling_rate,
+                )
 
             t_end = time.perf_counter()
 
