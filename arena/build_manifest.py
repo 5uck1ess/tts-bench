@@ -65,6 +65,8 @@ HOLD_FROM_POOL = set()
 #   throw away three good clips to suppress one defect. See docs/known-issues.md.
 #   neutts_nano p6: 0.02 s of silence on any sentence starting with "Este" — both
 #   rigs, cpu and cuda. Nothing to vote on; its en/fr clips are fine.
+#   NOTE 2026-10-20: the firered3 p1 defect was our truncated house transcript;
+#   drop this hold once the re-benched (fixed) clip is published and checked.
 HOLD_CLIPS = {("firered3", 1), ("neutts_nano", 6)}
 
 # Mirrors publish.py SPEED_ONLY: models with a speed row but no place in the vote

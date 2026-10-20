@@ -25,9 +25,10 @@ Gotchas:
   the two rigs run identical inputs.
 - raw_text stays False (upstream default): text is split into ~50-char fragments
   and trailing silence trimmed per fragment. Upstream's published numbers used
-  raw_text=True, but that is the benchmark harness, not the library default. With
-  splitting, each fragment is far below max_decode_steps=1000 (~66 steps per
-  second of audio -> ~15 s ceiling per fragment).
+  raw_text=True, but that is the benchmark harness, not the library default. One
+  decode step = 3528 samples (882 hop x 4 patch) = 80 ms, i.e. 12.5 steps per
+  second of audio, so max_decode_steps=1000 is an 80 s ceiling per fragment --
+  no cap risk. The ~13 steps/s decode rate is why it runs at ~1x realtime.
 - cache_prompts=False: encoding the reference samples the VAE posterior, so with
   the cache on, run 1 and runs 2-3 draw different noise under the same seed and
   are not the same computation. Re-encoding per call keeps runs reproducible and
@@ -87,7 +88,12 @@ def main() -> int:
             print(json.dumps({"ok": False, "run_index": 0,
                               "error": f"reference wav + sibling .txt required: {ref_wav}"}))
             return 1
-        ref_text = txt.read_text(encoding="utf-8").strip()
+        try:
+            ref_text = txt.read_text(encoding="utf-8").strip()
+        except Exception as e:
+            print(json.dumps({"ok": False, "run_index": 0,
+                              "error": f"reading transcript {txt}: {type(e).__name__}: {e}"}))
+            return 1
 
     src = Path(__file__).resolve().parent.parent / "venvs" / "ming" / "src"
     cwd = Path.cwd()  # out paths are relative to the caller, not to src
@@ -150,12 +156,13 @@ def main() -> int:
                 continue
             try:
                 job = json.loads(line)
-            except json.JSONDecodeError as e:
+                text, out = job["text"], job["out"]
+            except (json.JSONDecodeError, KeyError, TypeError) as e:
                 print(json.dumps({"ok": False, "run_index": idx,
-                                  "error": f"json parse: {e}"}), flush=True)
+                                  "error": f"bad job: {type(e).__name__}: {e}"}), flush=True)
                 idx += 1
                 continue
-            _one(job["text"], job["out"], idx, write_wav=True)
+            _one(text, out, idx, write_wav=True)
             idx += 1
         return 0
 

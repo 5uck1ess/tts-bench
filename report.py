@@ -1124,7 +1124,8 @@ def _sr_hz(model):
 
 # Cross-lingual voice cloning: clones a voice from a reference in one language and
 # speaks a DIFFERENT one in that same voice. CURATED, not derived — each entry was
-# verified against the model's card/paper (2026-06-30). A multilingual cloner is NOT
+# verified against the model's card/paper (2026-06-30). ming (2026-10-20): upstream cookbook says the reference carries
+# the voice "not the language", and the English house ref spoke fr/es at WER 0.0/0.07. A multilingual cloner is NOT
 # automatically cross-lingual: longcat (1B/3.5B), miotts (0.1B/0.6B), and voxtral are
 # multilingual cloners documented to clone only within a single language, so they are
 # omitted. Multilingual cloners with no documented cross-lingual transfer are also
@@ -1133,7 +1134,7 @@ def _sr_hz(model):
 MODEL_CROSSLINGUAL = {
     "auk_base", "auk_flash",
     "coqui", "cosyvoice", "dots_tts", "f5tts", "higgs_v3", "indextts", "indextts25", "moss_tts",
-    "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_06b",
+    "ming", "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_06b",
     "qwentts_fast", "zonos",
 }
 
