@@ -83,7 +83,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## Models tracked (79)
+## Models tracked (80)
 
 #### Predefined voices
 
@@ -101,6 +101,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 | [Magpie-TTS](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) | 357M | Dec 2025 | ✓ | — | ✓ (9) | 22.05k | emotion voices\* | NVIDIA OML |
 | [Maya1](https://huggingface.co/maya-research/maya1) | 3B | Oct 2025 | ✓ (voice desc) | — | — | 24k | tags + desc | Apache 2.0 |
 | [MeloTTS](https://huggingface.co/myshell-ai/MeloTTS-English) | ~52M | Feb 2024 | ✓ | — | ✓ (4) | **44.1k** | — | MIT |
+| [Ming-3.0-TTS 0.5B](https://huggingface.co/inclusionAI/Ming-3.0-tts-0.5B) | 1.48B | Oct 2026 | ✓ (100+) | ✓ | ✓ (7) | 44.1k | tags + desc | MIT |
 | [Orpheus TTS](https://huggingface.co/canopylabs/orpheus-3b-0.1-ft) | 3B | Mar 2025 | ✓ (8) | — | — (en) | 24k | tags | Apache 2.0 |
 | [OuteTTS 1.0 1B](https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B) | ~1B | Apr 2025 | ✓ | ✓ | ✓ (12) | 44.1k | — | CC-BY-NC-SA 4.0 + Llama 3.2 |
 | [Parler-TTS Mini v1](https://huggingface.co/parler-tts/parler-tts-mini-v1) | 878M | Jun 2024 | ✓ (voice desc) | — | — | **44.1k** | desc\* | Apache 2.0 |
@@ -187,7 +188,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**55 of the 79 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**56 of the 80 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

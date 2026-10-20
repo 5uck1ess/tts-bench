@@ -535,6 +535,25 @@ if (-not (Want "indextts25")) { Write-Host "indextts25: skipped (not in install 
     Write-Host "indextts25: already installed" -ForegroundColor Gray
 }
 
+Step "Ming-3.0-tts 0.5B (inclusionAI, preset voices + cloning, 7 langs)"
+if (-not (Want "ming")) { Write-Host "ming: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\ming\Scripts\python.exe")) {
+    # Plain repo clone (no package); the runner puts src on sys.path. pynini (text
+    # normalization) is skipped -- no usable Windows wheel; the runner disables TN.
+    # Weights (inclusionAI/Ming-3.0-tts-0.5B, ~3 GB) auto-download on first call.
+    Invoke-Checked "uv venv ming" { uv venv venvs\ming --python 3.11 }
+    if (-not (Test-Path "venvs\ming\src")) {
+        Invoke-Checked "git clone Ming-3.0-tts" { git clone https://github.com/inclusionAI/Ming-3.0-tts venvs\ming\src }
+        Invoke-Checked "pin Ming-3.0-tts e999c39" { git -C venvs\ming\src checkout -q e999c39 }
+    }
+    Invoke-Checked "uv pip install ming requirements" { uv pip install --python venvs\ming\Scripts\python.exe -r venvs\ming\src\requirements.txt }
+    # cu128 last (Blackwell sm_120): upstream pins torch 2.6; 2.8 is the cu128 build used here.
+    Invoke-Checked "torch cu128 for ming" { uv pip install --python venvs\ming\Scripts\python.exe --reinstall "torch==2.8.*" "torchaudio==2.8.*" --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "ming: ok (US_James preset + transcript cloning, weights auto-download from HF on first use)" -ForegroundColor Green
+} else {
+    Write-Host "ming: already installed" -ForegroundColor Gray
+}
+
 Step "Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning)"
 if (-not (Want "dia")) { Write-Host "dia: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\dia\Scripts\python.exe")) {

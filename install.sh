@@ -641,6 +641,27 @@ else
     echo "indextts25: already installed"
 fi
 
+# --- Ming-3.0-tts 0.5B (inclusionAI, preset voices + cloning, 7 langs) ---
+echo; cyan "=== Ming-3.0-tts 0.5B (inclusionAI, preset voices + cloning, 7 langs) ==="
+if ! want ming; then echo "ming: skipped (not in install filter)"
+elif [ ! -x venvs/ming/bin/python ]; then
+    # Plain repo clone (no package); the runner puts src on sys.path and disables
+    # text normalization (pynini) so both rigs run identical inputs. torch 2.8 to
+    # match the Windows rig (PyPI torch is CUDA-enabled on Linux).
+    uv venv venvs/ming --python 3.11 || die "uv venv ming"
+    if [ ! -d venvs/ming/src ]; then
+        git clone https://github.com/inclusionAI/Ming-3.0-tts venvs/ming/src || die "git clone Ming-3.0-tts"
+        git -C venvs/ming/src checkout -q e999c39 || die "pin Ming-3.0-tts e999c39"
+    fi
+    uv pip install --python venvs/ming/bin/python -r venvs/ming/src/requirements.txt \
+        || die "uv pip install ming requirements"
+    uv pip install --python venvs/ming/bin/python "torch==2.8.*" "torchaudio==2.8.*" \
+        || die "torch 2.8 for ming"
+    green "ming: ok (US_James preset + transcript cloning, weights auto-download from HF on first use)"
+else
+    echo "ming: already installed"
+fi
+
 # --- Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning) ---
 echo; cyan "=== Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning) ==="
 if ! want dia; then echo "dia: skipped (not in install filter)"
