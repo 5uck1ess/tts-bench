@@ -526,6 +526,61 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/melotts_cuda_p6.wav"
         },
         {
+          "model": "ming",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/ming_cuda_p1.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/ming_cuda_p2.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/ming_cuda_p3.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/ming_cuda_p4.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/ming_cuda_p5.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/ming_cuda_p6.wav"
+        },
+        {
+          "model": "ming_tiny",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/ming_tiny_cuda_p1.wav"
+        },
+        {
+          "model": "ming_tiny",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/ming_tiny_cuda_p2.wav"
+        },
+        {
+          "model": "ming_tiny",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/ming_tiny_cuda_p3.wav"
+        },
+        {
+          "model": "ming_tiny",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/ming_tiny_cuda_p4.wav"
+        },
+        {
+          "model": "ming_tiny",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/ming_tiny_cuda_p5.wav"
+        },
+        {
           "model": "miratts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/linux-default/miratts_cuda_p1.wav"
@@ -1417,6 +1472,11 @@
         },
         {
           "model": "firered3",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/firered3_cuda_p1.wav"
+        },
+        {
+          "model": "firered3",
           "prompt": 2,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/firered3_cuda_p2.wav"
         },
@@ -1649,6 +1709,61 @@
           "model": "metavoice",
           "prompt": 4,
           "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/metavoice_cuda_p4.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/ming_cuda_p1.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/ming_cuda_p2.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/ming_cuda_p3.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/ming_cuda_p4.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/ming_cuda_p5.wav"
+        },
+        {
+          "model": "ming",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/ming_cuda_p6.wav"
+        },
+        {
+          "model": "ming_tiny",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/ming_tiny_cuda_p1.wav"
+        },
+        {
+          "model": "ming_tiny",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/ming_tiny_cuda_p2.wav"
+        },
+        {
+          "model": "ming_tiny",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/ming_tiny_cuda_p3.wav"
+        },
+        {
+          "model": "ming_tiny",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/ming_tiny_cuda_p4.wav"
+        },
+        {
+          "model": "ming_tiny",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/ming_tiny_cuda_p5.wav"
         },
         {
           "model": "miotts_01b",
@@ -2238,7 +2353,7 @@
         {
           "model": "zipvoice",
           "prompt": 3,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/zipvoice_cpu_p3.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/zipvoice_cuda_p3.wav"
         },
         {
           "model": "zipvoice",
@@ -2434,6 +2549,14 @@
     "metavoice": {
       "name": "MetaVoice-1B",
       "url": "https://huggingface.co/metavoiceio/metavoice-1B-v0.1"
+    },
+    "ming": {
+      "name": "Ming-3.0-TTS 0.5B",
+      "url": "https://huggingface.co/inclusionAI/Ming-3.0-tts-0.5B"
+    },
+    "ming_tiny": {
+      "name": "Ming-3.0-TTS tiny",
+      "url": "https://huggingface.co/inclusionAI/Ming-3.0-tts-tiny"
     },
     "miotts_01b": {
       "name": "MioTTS 0.1B",

@@ -18,6 +18,14 @@ an OpenAI-style HTTP `/v1/audio/speech`. This runner is a thin HTTP client again
       -v "$(pwd)":"$(pwd)" -w "$(pwd)" -e HF_TOKEN=hf_xxx lmsysorg/sglang-omni:dev /bin/zsh
     # inside: clone sglang-omni, `uv pip install -e .`, accept HF terms, then
     sgl-omni serve --model-path bosonai/higgs-audio-v3-tts-4b --port 8000
+  PINNED 2026-10-20 (the June image had been deleted and the original server version was
+  never recorded): image lmsysorg/sglang-omni@sha256:46235435997d (created 2026-06-16,
+  ships sglang 0.5.12.post1) + sglang-omni 8da859d08, the first commit pinned to that
+  sglang; HEAD needs sglang 0.5.21 and fails to resolve in this image. Install with
+  `uv pip install --system --break-system-packages -e .` -- plain pip hits a protobuf
+  conflict. Re-bench speed matched the published June row (~3.0x warm on every prompt).
+  On the Linux box :8000 is taken, so sgl-omni silently picks a random port: read it from
+  `docker logs` ("Uvicorn running on ...") and export HIGGS_V3_SERVER_URL.
 
 Cloning is in-context: the reference wav AND its transcript (a same-basename `.txt`, like
 f5tts / neutts / higgs v2) are handed to the server via the CreateSpeechRequest top-level

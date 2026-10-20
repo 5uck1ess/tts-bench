@@ -57,17 +57,12 @@ HOLD_FROM_POOL = set()
 # Held out by (model, prompt_id) rather than whole-model — for a model that renders
 # most prompts fine but has one clip that is not a fair thing to vote on. The board
 # still carries the row and its real score; only the pairwise pool skips the clip.
-#   firered3 p1: 0.96 s of audio whose Whisper transcript is the single word
-#   "female." (WER 1.000) instead of "Open the browser and read my email." It is a
-#   speaker-descriptor leaking into the output, reproduces on both rigs in every run
-#   with do_tn on and off, and is language-independent (the same 0.96 s signature
-#   appears on French). Its other prompts are clean, so a whole-model hold would
-#   throw away three good clips to suppress one defect. See docs/known-issues.md.
 #   neutts_nano p6: 0.02 s of silence on any sentence starting with "Este" — both
 #   rigs, cpu and cuda. Nothing to vote on; its en/fr clips are fine.
-#   NOTE 2026-10-20: the firered3 p1 defect was our truncated house transcript;
-#   drop this hold once the re-benched (fixed) clip is published and checked.
-HOLD_CLIPS = {("firered3", 1), ("neutts_nano", 6)}
+#   (firered3 p1 was held here until 2026-10-20: its 0.96 s "female." clip was our
+#   truncated house transcript, not the model. The re-benched clip reads the full
+#   prompt at WER 0, so the hold is gone. See docs/known-issues.md.)
+HOLD_CLIPS = {("neutts_nano", 6)}
 
 # Mirrors publish.py SPEED_ONLY: models with a speed row but no place in the vote
 # pool because their audio duplicates another tracked model (kokoro_mlx == kokoro).
