@@ -965,7 +965,9 @@ MODEL_EXPRESSIVE = {
     "moss_tts": "—", "moss_tts_v15": "tags (pause)", "moss_tts_nano": "—", "neutts_air": "—",
     "neutts_nano": "—", "omnivoice": "tags*", "openvoice": "knob", "pocket": "—",
     "qwentts": "—", "qwentts_06b": "—",
-    # CustomVoice instruct control is unverified pending a runtime check (card/table conflict).
+    # 0.6B CustomVoice: qwen_tts 0.1.1 generate_custom_voice() forces instruct=None for
+    # 0b6 models ("instruct is not supported"). Instruct lives only in the unbenched
+    # 1.7B CustomVoice / 1.7B VoiceDesign checkpoints.
     "qwentts_06b_custom": "—", "qwentts_fast": "—",
     "sopro": "—", "sopro_streaming": "—",
     # `<|speaker:N|>` selects a built-in voice; no emotion/style control documented.
