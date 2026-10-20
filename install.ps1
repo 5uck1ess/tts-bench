@@ -554,6 +554,10 @@ if (-not (Want "ming")) { Write-Host "ming: skipped (not in install filter)" -Fo
     Write-Host "ming: already installed" -ForegroundColor Gray
 }
 
+# --- Ming-3.0-tts tiny — LINUX-ONLY, intentionally no Windows stanza ---
+# requirements-tiny.txt pins torch 2.7.1+cu118 + fla-core/triton (Linux wheels). Benched on
+# the Linux-3090 only; see install.sh's ming_tiny stanza.
+
 Step "Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning)"
 if (-not (Want "dia")) { Write-Host "dia: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\dia\Scripts\python.exe")) {

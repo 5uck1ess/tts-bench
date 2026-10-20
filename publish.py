@@ -57,7 +57,7 @@ _CPU_OK = frozenset(row[0] for row in _HARNESS_MODELS if "cpu" in row[4])
 # id, so the no-reference run is a genuine preset, not a clone fallback.
 # ming: built-in "US_James" IP voice (task="IP", no reference) on the default lens.
 _PRESET_AND_CLONE = {"outetts", "voxtral", "audio8", "audio8_fast", "audio8_01b",
-                     "steertts", "steertts_noflow", "ming"}
+                     "steertts", "steertts_noflow", "ming", "ming_tiny"}
 
 # Models that synthesize more than English — derived from report.MODEL_LANGS (the
 # single source of truth) so the Listen badge can never disagree with the

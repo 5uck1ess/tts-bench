@@ -92,6 +92,8 @@ MODELS = [
     # default lens + transcript-conditioned cloning. 7 langs; fr/es via the
     # multilingual path. CUDA only (~1x realtime on the 5090; CPU untested).
     ("ming",        "ming",       "runners/ming_runner.py",       {"en", "fr", "es"}, ["cuda"],     "0.5b", True),
+    # Ming-3.0-tts-tiny: 7.9B-A1.3B MoE, Linux-only venv (cu118 torch + fla-core), ~17.5 GB VRAM.
+    ("ming_tiny",   "ming_tiny",  "runners/ming_runner.py",       {"en", "fr", "es"}, ["cuda"],     "tiny", True),
     # S2-Pro is 80+ languages (card: tier-1 ja/en/zh, tier-2 incl. fr) and the runner
     # is text-driven — it ignores --language and detects from the text — so the FR
     # canonical prompt just works. Was wrongly False until 2026-08-15 (issue #8), which

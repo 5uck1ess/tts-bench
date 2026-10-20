@@ -462,6 +462,7 @@ MODEL_DISPLAY_NAMES = {
     "indextts":      "IndexTTS-2",
     "indextts25":    "IndexTTS-2.5",
     "ming":          "Ming-3.0-TTS 0.5B",
+    "ming_tiny":     "Ming-3.0-TTS tiny",
     "f5tts":         "F5-TTS v1",
     "chatterbox":       "Chatterbox",
     "chatterbox_turbo": "Chatterbox Turbo",
@@ -544,6 +545,7 @@ MODEL_SIZE = {
     "indextts":      "1.5B",
     "indextts25":    "0.97B",
     "ming":          "1.48B",
+    "ming_tiny":     "8.98B (MoE, 1.3B active)",
     "sesame":        "1B",
     "miso":          "8.2B",
     "longcat_1b":    "1.42B",
@@ -642,6 +644,7 @@ MODEL_URL = {
     "indextts":      _HF + "IndexTeam/IndexTTS-2",
     "indextts25":    _HF + "IndexTeam/IndexTTS-2.5",
     "ming":          _HF + "inclusionAI/Ming-3.0-tts-0.5B",
+    "ming_tiny":     _HF + "inclusionAI/Ming-3.0-tts-tiny",
     "sesame":        _HF + "sesame/csm-1b",
     "miso":          _HF + "MisoLabs/MisoTTS",
     "longcat_1b":    _HF + "meituan-longcat/LongCat-AudioDiT-1B",
@@ -727,6 +730,7 @@ MODEL_KIND = {
     "indextts":      "cloning",
     "indextts25":    "cloning",
     "ming":          "cloning",
+    "ming_tiny":     "cloning",
     "omnivoice":     "cloning",
     "zipvoice":      "cloning",
     "voxcpm":        "cloning",
@@ -820,6 +824,7 @@ MODEL_RELEASE = {
     "indextts":      "2025-06",
     "indextts25":    "2026-08",
     "ming":          "2026-10",
+    "ming_tiny":     "2026-10",
     "sesame":        "2025-03",
     "miso":          "2026-05",
     "longcat_1b":    "2026-03",
@@ -928,7 +933,7 @@ MODEL_SR = {
     "fish_15": "44.1k", "fish_s2": "44.1k", "drama3": "44.1k", "higgs_v3": "24k", "indextts": "22.05k", "indextts25": "22.05k",
     "firered3": "24k", "auk_base": "24k", "auk_flash": "24k",
     "longcat_1b": "24k", "longcat_3p5b": "24k", "mars5": "24k", "metavoice": "48k",
-    "miotts_01b": "44.1k", "miotts_06b": "44.1k", "miratts": "48k", "miso": "24k", "ming": "44.1k",
+    "miotts_01b": "44.1k", "miotts_06b": "44.1k", "miratts": "48k", "miso": "24k", "ming": "44.1k", "ming_tiny": "44.1k",
     "moss_tts": "24k", "moss_tts_v15": "24k", "moss_tts_nano": "48k",
     "neutts_air": "24k", "neutts_nano": "24k", "omnivoice": "24k", "openvoice": "22.05k",
     "pocket": "24k", "qwentts": "24k", "qwentts_06b": "24k", "qwentts_06b_custom": "24k",
@@ -962,6 +967,7 @@ MODEL_EXPRESSIVE = {
     "firered3": "—", "auk_base": "—", "auk_flash": "—",
     "metavoice": "—", "miotts_01b": "—", "miotts_06b": "—", "miratts": "knob", "miso": "—",
     "ming": "tags + desc",
+    "ming_tiny": "tags + desc",
     "moss_tts": "—", "moss_tts_v15": "tags (pause)", "moss_tts_nano": "—", "neutts_air": "—",
     "neutts_nano": "—", "omnivoice": "tags*", "openvoice": "knob", "pocket": "—",
     "qwentts": "—", "qwentts_06b": "—",
@@ -998,7 +1004,7 @@ MODEL_LICENSE = {
     "auk_base": "MIT code / Qwen Research (NC) encoder",
     "auk_flash": "MIT code / Qwen Research (NC) encoder",
     "longcat_1b": "MIT", "longcat_3p5b": "MIT", "mars5": "AGPL-3.0", "metavoice": "Apache 2.0",
-    "miotts_01b": "Falcon-LLM", "miotts_06b": "Apache 2.0", "miratts": "MIT", "miso": "Modified MIT", "ming": "MIT",
+    "miotts_01b": "Falcon-LLM", "miotts_06b": "Apache 2.0", "miratts": "MIT", "miso": "Modified MIT", "ming": "MIT", "ming_tiny": "MIT",
     "moss_tts": "Apache 2.0", "moss_tts_v15": "Apache 2.0", "moss_tts_nano": "Apache 2.0",
     "neutts_air": "Apache 2.0", "neutts_nano": "Apache 2.0",
     "omnivoice": "Apache 2.0 code / CC-BY-NC weights",
@@ -1032,7 +1038,7 @@ MODEL_LANGS = {
     "fish_15": "✓", "fish_s2": "✓ (80+)", "drama3": "✓", "higgs_v3": "✓ (100)", "indextts": "✓ (zh+en)", "indextts25": "✓ (5)",
     "firered3": "✓ (24)", "auk_base": "✓", "auk_flash": "✓",
     "longcat_1b": "✓ (zh+en)", "longcat_3p5b": "✓ (zh+en)", "mars5": "—", "metavoice": "—",
-    "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)", "ming": "✓ (7)",
+    "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)", "ming": "✓ (7)", "ming_tiny": "✓ (7)",
     "moss_tts": "✓ (20)", "moss_tts_v15": "✓ (31)", "moss_tts_nano": "✓ (zh+en)",
     "neutts_air": "—", "neutts_nano": "✓ (4)", "omnivoice": "✓ (600+)", "openvoice": "✓",
     "pocket": "✓ (6)", "qwentts": "✓ (10)", "qwentts_06b": "✓ (10)", "qwentts_06b_custom": "✓ (10)",
@@ -1125,7 +1131,8 @@ def _sr_hz(model):
 # Cross-lingual voice cloning: clones a voice from a reference in one language and
 # speaks a DIFFERENT one in that same voice. CURATED, not derived — each entry was
 # verified against the model's card/paper (2026-06-30). ming (2026-10-20): upstream cookbook says the reference carries
-# the voice "not the language", and the English house ref spoke fr/es at WER 0.0/0.07. A multilingual cloner is NOT
+# the voice "not the language", and the English house ref spoke fr/es at WER 0.0/0.07;
+# ming_tiny: same English ref spoke fr/es at WER 0.0/0.0 (Linux smoke 2026-10-20). A multilingual cloner is NOT
 # automatically cross-lingual: longcat (1B/3.5B), miotts (0.1B/0.6B), and voxtral are
 # multilingual cloners documented to clone only within a single language, so they are
 # omitted. Multilingual cloners with no documented cross-lingual transfer are also
@@ -1134,7 +1141,7 @@ def _sr_hz(model):
 MODEL_CROSSLINGUAL = {
     "auk_base", "auk_flash",
     "coqui", "cosyvoice", "dots_tts", "f5tts", "higgs_v3", "indextts", "indextts25", "moss_tts",
-    "ming", "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_06b",
+    "ming", "ming_tiny", "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_06b",
     "qwentts_fast", "zonos",
 }
 

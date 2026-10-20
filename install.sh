@@ -662,6 +662,25 @@ else
     echo "ming: already installed"
 fi
 
+# --- Ming-3.0-tts tiny (inclusionAI, 7.9B-A1.3B MoE, preset + cloning; Linux-only) ---
+echo; cyan "=== Ming-3.0-tts tiny (inclusionAI, 7.9B-A1.3B MoE, preset + cloning, Linux-only) ==="
+if ! want ming_tiny; then echo "ming_tiny: skipped (not in install filter)"
+elif [ ! -x venvs/ming_tiny/bin/python ]; then
+    # Same repo clone as `ming` (venvs/ming/src); its own venv because upstream's
+    # requirements-tiny.txt pins Python 3.10 + torch 2.7.1+cu118 + fla-core/triton.
+    # cu118 is fine on Ampere (3090); ~17.5 GB VRAM in bf16.
+    uv venv venvs/ming_tiny --python 3.10.15 || die "uv venv ming_tiny"
+    if [ ! -d venvs/ming/src ]; then
+        git clone https://github.com/inclusionAI/Ming-3.0-tts venvs/ming/src || die "git clone Ming-3.0-tts"
+        git -C venvs/ming/src checkout -q e999c39 || die "pin Ming-3.0-tts e999c39"
+    fi
+    uv pip install --python venvs/ming_tiny/bin/python -r venvs/ming/src/requirements-tiny.txt \
+        --index-strategy unsafe-best-match psutil || die "uv pip install ming_tiny requirements"
+    green "ming_tiny: ok (US_James preset + transcript cloning, ~18 GB weights auto-download from HF on first use)"
+else
+    echo "ming_tiny: already installed"
+fi
+
 # --- Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning) ---
 echo; cyan "=== Dia 1.6B (Nari Labs, Apache 2.0, dialogue + cloning) ==="
 if ! want dia; then echo "dia: skipped (not in install filter)"
@@ -1143,8 +1162,8 @@ elif [ ! -x venvs/miso/bin/python ]; then
             || die "git clone MisoTTS"
     fi
     uv pip install --python venvs/miso/bin/python \
-        transformers tokenizers huggingface_hub "moshi==0.2.2" torchtune torchao \
-        torchaudio safetensors soundfile numpy sentencepiece \
+        transformers tokenizers huggingface_hub "moshi==0.2.2" torchtune "torchao==0.17.0" \
+        "torch==2.7.1" "torchaudio==2.7.1" safetensors soundfile numpy sentencepiece \
         || die "uv pip install miso deps"
     green "miso: ok (MisoLabs/MisoTTS ~33GB fp32 safetensors + kyutai Mimi + unsloth/Llama-3.2-1B tokenizer auto-download from HF on first run; CUDA-only, bf16 ~16GB VRAM, 24k)"
 else

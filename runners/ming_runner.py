@@ -1,7 +1,10 @@
 """Ming-3.0-tts runner (inclusionAI / Ant Group, 2026-10-19, MIT).
 
 Variant `0.5b` = Ming-3.0-tts-0.5B: dense Qwen2.5-0.5B backbone + flow-matching
-patch head, 44.1 kHz. Source is a plain repo clone (no package) at
+patch head, 44.1 kHz. Variant `tiny` = Ming-3.0-tts-tiny: 9.0B-total / ~1.3B-active
+MoE (BailingMoeV3), same 44.1 kHz patch geometry; Linux-only (its own venv,
+venvs/ming_tiny: Python 3.10 + torch 2.7.1+cu118 from requirements-tiny.txt, which
+needs fla-core/triton), ~17.5 GB VRAM in bf16, ~0.4x realtime on a 3090. Source is a plain repo clone (no package) at
 `venvs/ming/src`, pinned at `e999c39`; the runner puts it on sys.path and
 chdirs into it because the repo imports its own top-level modules
 (`tts_tasks`, `frontend`, ...).
@@ -37,6 +40,12 @@ Gotchas:
 - Non-streaming: ttfa_ms == gen_s (whole clip, not a first-chunk latency).
 - Languages: en/fr/es map to the upstream language_id; fr/es go through the
   "multilingual" path, which bypasses the zh/en text frontend.
+
+Tiny (`ming_tiny.MingTinyTTS`, a different API in the same repo):
+- Default lens: task="ip", ip="US_James" (same preset as 0.5B).
+- Cloning lens: task="seed" (en) or "multilingual" (fr/es, target_language name),
+  prompt_wav + prompt_text. `generate(seed=)` is passed as well as torch.manual_seed.
+- Returns an output object; the audio is `.waveform`.
 """
 
 import argparse
@@ -48,7 +57,9 @@ from pathlib import Path
 
 import _meminfo
 
-VARIANTS = {"0.5b": "inclusionAI/Ming-3.0-tts-0.5B"}
+VARIANTS = {"0.5b": "inclusionAI/Ming-3.0-tts-0.5B", "tiny": "inclusionAI/Ming-3.0-tts-tiny"}
+TINY_LANG = {"en": "English", "fr": "French", "es": "Spanish", "de": "German",
+             "ja": "Japanese", "ko": "Korean", "zh": "Chinese"}
 DEFAULT_VOICE = "US_James"
 SEED = 1895
 SUPPORTED_LANGS = {"en", "fr", "es", "de", "ja", "ko", "zh"}
@@ -102,11 +113,16 @@ def main() -> int:
         os.chdir(src)
         import soundfile as sf
         import torch
-        from ming_tts import MingTTS
 
         device = "cuda:0" if args.device == "cuda" else args.device
-        tts = MingTTS(VARIANTS[args.variant], device=device,
-                      text_normalization=False, cache_prompts=False)
+        tiny = args.variant == "tiny"
+        if tiny:
+            from ming_tiny import MingTinyTTS
+            tts = MingTinyTTS.from_pretrained(VARIANTS[args.variant], device=device)
+        else:
+            from ming_tts import MingTTS
+            tts = MingTTS(VARIANTS[args.variant], device=device,
+                          text_normalization=False, cache_prompts=False)
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"load failed: {type(e).__name__}: {e}"}))
@@ -117,7 +133,13 @@ def main() -> int:
             torch.manual_seed(SEED)
             _meminfo.reset_peak(args.device)
             t0 = time.perf_counter()
-            if ref_wav is None:
+            if tiny and ref_wav is None:
+                wav = tts.generate(task="ip", text=text, ip=DEFAULT_VOICE, seed=SEED).waveform
+            elif tiny:
+                wav = tts.generate(task="seed" if lang in ("en", "zh") else "multilingual",
+                                   text=text, prompt_wav=str(ref_wav), prompt_text=ref_text,
+                                   target_language=TINY_LANG[lang], seed=SEED).waveform
+            elif ref_wav is None:
                 wav = tts.synthesize(task="IP", text=text, language_id=lang,
                                      controls={"ip": DEFAULT_VOICE}, use_zero_spk_emb=True)
             else:
@@ -128,7 +150,7 @@ def main() -> int:
                 torch.cuda.synchronize()
             t_end = time.perf_counter()
 
-            arr = wav.squeeze(0).float().cpu().numpy()
+            arr = wav.squeeze().float().cpu().numpy()
             audio_s = float(len(arr) / tts.sample_rate)
             if write_wav:
                 sf.write(str(cwd / out_path), arr, tts.sample_rate)
