@@ -65,3 +65,4 @@ _listen_*/
 
 # Hosted-API samples (scripts/collect_hosted.py) — unpublished, API ToS unchecked.
 hosted/
+reference/.refcheck.json

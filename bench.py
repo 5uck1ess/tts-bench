@@ -197,6 +197,40 @@ PROMPTS = [
 ]
 
 
+def _refcheck(reference):
+    """Run scoring/refcheck.py over every reference/*.wav (+ --reference) before a pass.
+
+    A reference .txt that does not match its audio makes transcript-conditioned
+    cloners skip the start of every prompt (the 2026-10 chris_hemsworth_15s bug).
+    Returns an exit code to abort with, or None to continue. A confirmed mismatch
+    aborts; being unable to run the check (no scoring venv) only warns.
+    """
+    py = REPO / "venvs" / "scoring" / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    if not py.exists():
+        print(f"refcheck: WARNING scoring venv not found ({py}); reference transcripts NOT verified")
+        return None
+    targets = sorted(str(w) for w in (REPO / "reference").glob("*.wav"))
+    if reference:
+        ref = Path(reference).resolve()
+        if str(ref) not in targets:
+            targets.append(str(ref))
+    proc = subprocess.run([str(py), "-m", "scoring.refcheck", *targets], cwd=REPO,
+                          capture_output=True, text=True, encoding="utf-8", errors="replace",
+                          env={**os.environ, "PYTHONUTF8": "1"})
+    lines = [l for l in proc.stdout.splitlines() if l.startswith(("refcheck:", "      "))]
+    if proc.returncode == 1:
+        print("\n".join(lines))
+        print("refcheck: a reference transcript does not match its audio -- fix the .txt "
+              "(or pass --skip-refcheck if you really mean it). Aborting.")
+        return 2
+    if proc.returncode != 0:
+        print("\n".join(lines) or proc.stderr[-500:])
+        print("refcheck: WARNING could not verify reference transcripts; continuing")
+        return None
+    print(f"refcheck: {len(lines)} reference transcript(s) match their audio")
+    return None
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description="Quick TTS bench (cold + warm).")
     p.add_argument("--reference", default=None,
@@ -227,7 +261,15 @@ def main() -> int:
     p.add_argument("--all", action="store_true",
                    help="Include GPU-class models (see harness.GPU_CLASS) even on a non-CUDA rig. "
                         "By default they're skipped there — sub-realtime, not deploy candidates.")
+    p.add_argument("--skip-refcheck", action="store_true",
+                   help="Skip the reference-transcript check (scoring/refcheck.py). Don't: a "
+                        "wrong .txt silently corrupts every transcript-conditioned cloner.")
     args = p.parse_args()
+
+    if not args.write_meta and not args.skip_refcheck:
+        rc = _refcheck(args.reference)
+        if rc is not None:
+            return rc
 
     if args.write_meta:
         run_dir = Path(args.write_meta)
