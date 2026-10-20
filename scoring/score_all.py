@@ -52,10 +52,15 @@ def score_clips(clips, utmos, wer, sim, health=None, ref_for_dir=ref_for_dir, gh
     for c in clips:
         wav = os.path.join(gh_root, c.dir, c.wav)
         u = _try(lambda: utmos.score(wav), "utmos", c.wav)
-        w = None
+        w, text_flags = None, []
         if c.prompt_id in PROMPT_BY_ID:
             lang, text = PROMPT_BY_ID[c.prompt_id]
-            w = _try(lambda: wer.score(wav, text, lang), "wer", c.wav)
+            if hasattr(wer, "score_detail"):
+                got = _try(lambda: wer.score_detail(wav, text, lang), "wer", c.wav)
+                if got is not None:
+                    w, text_flags = got
+            else:
+                w = _try(lambda: wer.score(wav, text, lang), "wer", c.wav)
         s = None
         if c.mode == "cloning":
             ref = ref_for_dir(c.dir)
@@ -63,10 +68,12 @@ def score_clips(clips, utmos, wer, sim, health=None, ref_for_dir=ref_for_dir, gh
                 s = _try(lambda: sim.score(wav, ref), "sim", c.wav)
         # Deterministic health triage — reference-free, no text, no ML. "" = clean.
         h = _try(lambda: health.score(wav), "health", c.wav) if health else None
+        # Plus text-aware flags from the WER pass ("head" = opening words missing).
+        flags = [f for f in (h or "").split(";") if f] + text_flags
         rows.append({"dir": c.dir, "wav": c.wav, "model": c.model, "mode": c.mode,
                      "prompt_id": c.prompt_id,
                      "utmos": _fmt(u), "wer": _fmt(w), "sim": _fmt(s),
-                     "health": h or ""})
+                     "health": ";".join(flags)})
     return rows
 
 

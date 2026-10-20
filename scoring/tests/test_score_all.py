@@ -73,3 +73,15 @@ def test_score_clips_per_metric_failure_is_blank_not_crash():
     clips = [Clip("windows-default", "kokoro_cuda_p1.wav", "kokoro", "cuda", "1", "default")]
     rows = score_clips(clips, Boom(), FakeWer(), FakeSim(), ref_for_dir=lambda d: None)
     assert rows[0]["utmos"] == "" and rows[0]["wer"] == "0.0000"
+
+
+class FakeWerHead:
+    name = "wer"
+    def score_detail(self, wav, ref_text, lang): return 0.5, ["head"]
+
+
+def test_score_clips_merges_head_flag_into_health():
+    clips = [Clip("windows-cloning", "ming_cuda_p1.wav", "ming", "cuda", "1", "cloning")]
+    rows = score_clips(clips, FakeUtmos(), FakeWerHead(), FakeSim(), FakeHealth("gap"),
+                       ref_for_dir=lambda d: None)
+    assert rows[0]["wer"] == "0.5000" and rows[0]["health"] == "gap;head"

@@ -937,7 +937,7 @@ def _health_cell(flags):
                       for f, pids in sorted(by_flag.items()))
     return (f'<td class="num" data-sort="{len(flags)}">'
             f'<span class="health-flag" title="mechanical defect in the published clip '
-            f'(long internal silence / clipping / dead audio) — listen before trusting">'
+            f'(long internal silence / clipping / dead audio / head = opening words missing) — listen before trusting">'
             f'⚠ {escape(label)}</span></td>')
 
 
@@ -945,7 +945,7 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
                   show_health=True):
     """One sortable table. columns = list of (metric_key, header, higher_better).
     Rows aggregated per model; WER>threshold rows get the 'flagged' class.
-    show_health appends a non-ranking Health triage column (clip/silent/gap).
+    show_health appends a non-ranking Health triage column (clip/silent/gap, plus head from the WER pass).
     fallback_dirs/fallback_models: for NO_PRESET_VOICE models on the cloning board,
     append default dirs so a model benched only in default mode still appears."""
     # Numeric headers get class="num" so they right-align over their right-aligned

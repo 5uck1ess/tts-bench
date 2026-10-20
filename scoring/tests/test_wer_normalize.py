@@ -36,3 +36,27 @@ def test_wer_value_one_substitution():
 
 def test_wer_value_empty_ref_is_none():
     assert wer_value("", "anything") is None
+
+
+from scoring.wer import head_dropped
+
+
+def test_head_dropped_flags_missing_opening_words():
+    # Ming p1 on the truncated reference transcript: only the last word survived.
+    assert head_dropped("open the browser and read my email", "email")
+    # Cloner that ate the first ~3 s of prompt 2.
+    assert head_dropped("ill start a new git branch push the changes and open a pull request",
+                        "push the changes and open a pull request")
+
+
+def test_head_dropped_ignores_misheard_first_word_and_garbage():
+    assert not head_dropped("run pytest test slash test", "ron pytest test slash test")
+    # Opening spoken but run together by Whisper (prompt 4): misheard, not dropped.
+    assert not head_dropped("run pytest test slash test underscore voice dot py with verbose flag",
+                            "were on paytesttest slash test underscore voice dot py with verbose flag")
+    assert not head_dropped("open the browser and read my email", "open the browser and read my email")
+    # Matches nothing at all: garbage, WER already says so.
+    assert not head_dropped("open the browser and read my email", "female")
+    # Leaked reference tail BEFORE an intact prompt is not a dropped head.
+    assert not head_dropped("open the browser", "youre amazing open the browser")
+    assert not head_dropped("", "x") and not head_dropped("a b c", "")

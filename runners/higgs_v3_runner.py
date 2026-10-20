@@ -40,6 +40,7 @@ outputs / illustrative samples in non-commercial repositories. Model download is
 import argparse
 import io
 import json
+import os
 import socket
 import sys
 import time
@@ -108,8 +109,11 @@ def main() -> int:
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--language", default="en")
     p.add_argument("--stdin", action="store_true")
-    p.add_argument("--server-url", default=DEFAULT_SERVER_URL,
-                   help="Base URL of the sgl-omni server (default http://localhost:8000).")
+    # bench.py can't pass runner flags, so HIGGS_V3_SERVER_URL overrides the default:
+    # sgl-omni silently moves to a random port when 8000 is taken (it is on the Linux box).
+    p.add_argument("--server-url", default=os.environ.get("HIGGS_V3_SERVER_URL", DEFAULT_SERVER_URL),
+                   help="Base URL of the sgl-omni server (default $HIGGS_V3_SERVER_URL or "
+                        "http://localhost:8000).")
     args = p.parse_args()
 
     if not args.stdin and (args.text is None or args.out is None):
