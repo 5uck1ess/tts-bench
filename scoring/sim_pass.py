@@ -53,14 +53,8 @@ SIM_NOT_APPLICABLE = {
     ("qwentts_06b", "default"),
     ("qwentts_06b_custom", "default"),
     ("qwentts_fast", "default"),
-    # breeze_tts2 clones a consent-clean reference (licence §5(c) forbids pointing it
-    # at the house one — see docs/known-issues.md), so its clips target a DIFFERENT
-    # speaker than every other row in the cloning dir. Scored against that dir's
-    # _reference.wav it would post a near-zero SIM that reads as a catastrophically
-    # bad cloner rather than a reference mismatch. Remove this only when the board
-    # can carry a per-model reference.
-    ("breeze_tts2", "cloning"),
-    ("breeze_tts2", "default"),
+    # breeze_tts2 was here while it cloned tym.wav; since 2026-10-20 it clones the
+    # house reference like every other cloner, so its SIM is meaningful again.
 }
 
 
