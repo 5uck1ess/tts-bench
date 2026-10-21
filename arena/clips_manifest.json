@@ -711,6 +711,56 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/parler_cuda_p4.wav"
         },
         {
+          "model": "phonon_31m",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/phonon_31m_cpu_p1.wav"
+        },
+        {
+          "model": "phonon_31m",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/phonon_31m_cpu_p2.wav"
+        },
+        {
+          "model": "phonon_31m",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/phonon_31m_cpu_p3.wav"
+        },
+        {
+          "model": "phonon_31m",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/phonon_31m_cpu_p4.wav"
+        },
+        {
+          "model": "phonon_40m",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/phonon_40m_cpu_p1.wav"
+        },
+        {
+          "model": "phonon_40m",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/phonon_40m_cpu_p2.wav"
+        },
+        {
+          "model": "phonon_40m",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/phonon_40m_cpu_p3.wav"
+        },
+        {
+          "model": "phonon_40m",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/phonon_40m_cpu_p4.wav"
+        },
+        {
+          "model": "phonon_40m",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/phonon_40m_cpu_p5.wav"
+        },
+        {
+          "model": "phonon_40m",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/phonon_40m_cpu_p6.wav"
+        },
+        {
           "model": "piper",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/piper_cpu_p1.wav"
@@ -2613,6 +2663,14 @@
     "parler": {
       "name": "Parler-TTS Mini v1",
       "url": "https://huggingface.co/parler-tts/parler-tts-mini-v1"
+    },
+    "phonon_31m": {
+      "name": "Phonon 31m",
+      "url": "https://huggingface.co/gradium/phonon-31m-en"
+    },
+    "phonon_40m": {
+      "name": "Phonon 40m",
+      "url": "https://huggingface.co/gradium/phonon-40m-en"
     },
     "piper": {
       "name": "Piper",
