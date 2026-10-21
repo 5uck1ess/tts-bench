@@ -39,6 +39,7 @@ from report import (
     _ds, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
     _build_context, _speed_table_html, _display_name, _release_label, _release_td,
     _is_multilingual, _is_commercial, _sr_hz, _is_crosslingual, MODEL_LANGS,
+    HOUSE_REF_LABEL, display_ref,
 )
 from harness import MODELS as _HARNESS_MODELS
 
@@ -130,7 +131,7 @@ SPEED_ONLY = {
     # breeze_tts2 clones a consent-clean reference instead of the house one (licence
     # §5(c) — see docs/known-issues.md), so its clip is a DIFFERENT speaker to every
     # other row in the cloning dir. The Listen lens publishes one _reference.wav per
-    # dir and hardcodes the section label "Cloning — chris_hemsworth", so the clip
+    # dir and hardcodes the section label "Cloning — House reference", so the clip
     # would show under the wrong reference; an arena pairing would ask voters to match
     # it against a voice it was never cloning. Its SPEED numbers don't depend on the
     # reference, so the speed row is honest and publishes. Remove this once the board
@@ -487,7 +488,7 @@ _LISTEN_GUIDE = (
     'else Mac. The small tag on each row shows the source rig·device. '
     '<strong>Default voice</strong> = the model\'s own preset/built-in speaker; '
     '<strong>Cloning</strong> = the model imitating one reference voice '
-    '(<code>chris_hemsworth_15s</code>). Switch <strong>By prompt</strong> (compare every '
+    '(the house reference). Switch <strong>By prompt</strong> (compare every '
     'model on one sentence) and <strong>By model</strong> (audition one model across prompts) '
     'below; only one clip plays at a time. Speed per rig is on the '
     '<a href="speed.html">Speed</a> page.</div>'
@@ -714,7 +715,7 @@ def build_listen():
         bp.append(f'<details class="panel" id="p{escape(pid)}"{" open" if i == 0 else ""}>'
                   f'<summary>{summ}</summary>')
         bp.append(_prompt_section("Default voice", default_clips, pid, "default"))
-        bp.append(_prompt_section("Cloning — chris_hemsworth", cloning_clips, pid, "cloning",
+        bp.append(_prompt_section(f"Cloning — {HOUSE_REF_LABEL}", cloning_clips, pid, "cloning",
                                   accent=True, ref_src=cloning_ref))
         bp.append('</details>')
     bp.append('</div>')
@@ -749,7 +750,7 @@ def build_listen():
                   f'<span class="summary-meta">{meta}</span> '
                   f'{_badges(m)}{_issue_badge(m, "default")}{_issue_badge(m, "cloning")}</summary>')
         bm.append(_model_section("Default voice", default_clips.get(m, {}), m, "default"))
-        bm.append(_model_section("Cloning — chris_hemsworth", cloning_clips.get(m, {}), m, "cloning",
+        bm.append(_model_section(f"Cloning — {HOUSE_REF_LABEL}", cloning_clips.get(m, {}), m, "cloning",
                                  accent=True, ref_src=cloning_ref))
         bm.append('</details>')
     bm.append('</div>')
@@ -913,7 +914,7 @@ _SCORES_GUIDE = (
     '<strong>WER</strong> = ASR word-error rate vs the intended text — a '
     '<em>failure-detector</em>, not a fine ranking (lower better); '
     '<strong>SIM</strong> = speaker similarity to the cloned reference '
-    '(<code>chris_hemsworth_15s</code>, higher better); '
+    '(the house reference, higher better); '
     '<strong>Health</strong> = deterministic defect triage of the published clip '
     '(⚠ flags long internal silence / clipping / dead audio — a "go listen" cue, '
     'not a score). Switch '
@@ -1478,7 +1479,7 @@ def build_archive_index():
                   else f"{len(r['models'])} models")
         rig_cell = (f'<code title="{escape(r["rig_full"])}">{escape(r["rig"])}</code>'
                     if r["rig"] else '<span class="muted">—</span>')
-        label_cell = (escape(r["label"])
+        label_cell = (escape(display_ref(r["label"]))
                       if r["label"]
                       else '<span class="muted">—</span>')
         out.append('<tr>')

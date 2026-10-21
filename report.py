@@ -23,11 +23,24 @@ Usage:
 import argparse
 import csv
 import json
+import re
 import sys
 import webbrowser
 from collections import defaultdict
 from html import escape
 from pathlib import Path
+
+# Public pages show the house cloning reference under a neutral name. The file keeps
+# its on-disk name (runners, harness and scoring all point at that path); only the
+# text a visitor reads goes through display_ref().
+HOUSE_REF_LABEL = "House reference"
+_HOUSE_REF_RE = re.compile(r"(?:reference/)?chris_hemsworth(?:_15s)?(?:\.wav)?", re.I)
+
+
+def display_ref(text):
+    """Replace house-reference filenames/paths in page text with HOUSE_REF_LABEL."""
+    return _HOUSE_REF_RE.sub(HOUSE_REF_LABEL, text) if text else text
+
 
 REPO = Path(__file__).parent
 RESULTS = REPO / "results"
@@ -1368,9 +1381,9 @@ def _render_lens_picker(ctx):
                    f'{escape(_rig_summary(meta))}</div>')
         if meta.get("label"):
             ref = meta.get("reference")
-            ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
+            ref_html = f' — ref <code>{escape(display_ref(ref))}</code>' if ref else ""
             out.append(f'<div class="meta"><strong>Label:</strong> '
-                       f'{escape(meta["label"])}{ref_html}</div>')
+                       f'{escape(display_ref(meta["label"]))}{ref_html}</div>')
     n_models = len(ctx["models_seen"])
     n_devices = len(ctx["devices_seen"])
     n_prompts = len(ctx["prompts_seen"])
@@ -1539,9 +1552,9 @@ def _render_speed(ctx):
                    f'{escape(_rig_summary(meta))}</div>')
         if meta.get("label"):
             ref = meta.get("reference")
-            ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
+            ref_html = f' — ref <code>{escape(display_ref(ref))}</code>' if ref else ""
             out.append(f'<div class="meta"><strong>Label:</strong> '
-                       f'{escape(meta["label"])}{ref_html}</div>')
+                       f'{escape(display_ref(meta["label"]))}{ref_html}</div>')
 
     out.append(_READING_GUIDE["speed"])
 
@@ -1592,9 +1605,9 @@ def _render_samples(ctx):
                    f'{escape(_rig_summary(meta))}</div>')
         if meta.get("label"):
             ref = meta.get("reference")
-            ref_html = f' — ref <code>{escape(ref)}</code>' if ref else ""
+            ref_html = f' — ref <code>{escape(display_ref(ref))}</code>' if ref else ""
             out.append(f'<div class="meta"><strong>Label:</strong> '
-                       f'{escape(meta["label"])}{ref_html}</div>')
+                       f'{escape(display_ref(meta["label"]))}{ref_html}</div>')
     rank_basis = "warm TTFA (fastest first)"
     out.append(f'<div class="meta">{len(prompts)} prompt(s) · '
                f'one section per prompt · all models ranked by {rank_basis} within each</div>')
@@ -1611,7 +1624,7 @@ def _render_samples(ctx):
             '<div class="prompt" style="border-left: 3px solid var(--accent);">'
             '<h2>Reference voice</h2>'
             f'<div class="meta">Each model below was given this clip + transcript as the voice to imitate. '
-            f'Source: <code>{escape(ref_meta)}</code></div>'
+            f'Source: <code>{escape(display_ref(ref_meta))}</code></div>'
             '<audio controls preload="metadata" src="_reference.wav" '
             'style="width: 100%; max-width: 480px;"></audio>'
             '</div>'
@@ -1756,7 +1769,7 @@ def build_index() -> Path:
             link = '<span class="muted">no report</span>'
         rig_cell = (f'<code title="{escape(r["rig_full"])}">{escape(r["rig"])}</code>'
                     if r["rig"] else '<span class="muted">—</span>')
-        label_cell = (escape(r["label"])
+        label_cell = (escape(display_ref(r["label"]))
                       if r["label"]
                       else '<span class="muted">—</span>')
         out.append('<tr>')
