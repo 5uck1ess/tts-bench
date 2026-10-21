@@ -70,7 +70,13 @@ def main() -> int:
     into_fields, into_rows = _read_csv(into_csv)
     src_fields, src_rows = _read_csv(src_csv)
 
-    if into_fields != src_fields:
+    # Older canonicals still carry the retired naq* columns (private lab data the
+    # bench no longer computes; publish.py strips them). A new run has none, so
+    # allow exactly that difference: its rows are written with those cells blank.
+    legacy_naq = [c for c in into_fields if "naq" in c.lower()]
+    if [c for c in into_fields if c not in legacy_naq] == src_fields:
+        pass
+    elif into_fields != src_fields:
         print("ERROR: CSV headers differ between --into and --from; refusing to merge.", file=sys.stderr)
         print(f"  into: {into_fields}\n  from: {src_fields}", file=sys.stderr)
         return 2
