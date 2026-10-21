@@ -1291,6 +1291,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/auk_flash_cuda_p5.wav"
         },
         {
+          "model": "breeze_tts2",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/breeze_tts2_cuda_p1.wav"
+        },
+        {
+          "model": "breeze_tts2",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/breeze_tts2_cuda_p2.wav"
+        },
+        {
+          "model": "breeze_tts2",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/breeze_tts2_cuda_p3.wav"
+        },
+        {
+          "model": "breeze_tts2",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/breeze_tts2_cuda_p4.wav"
+        },
+        {
           "model": "chatterbox",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/chatterbox_cuda_p1.wav"
@@ -2483,6 +2503,10 @@
     "auk_flash": {
       "name": "AuK-Flash",
       "url": "https://huggingface.co/tencent/AuK-Flash"
+    },
+    "breeze_tts2": {
+      "name": "Breeze TTS 2",
+      "url": "https://huggingface.co/BreezeBlue/Breeze-TTS-2"
     },
     "chatterbox": {
       "name": "Chatterbox",
