@@ -128,7 +128,7 @@ Two runs reported per model: **default voice** (the cloning model with its bundl
 **Top-line takeaway on CUDA:**
 
 - *Predefined voices:* **Kokoro on the 5090 is the deploy-target answer** — 69ms warm TTFA, 101× RTFx on short prompts, 0.7 GB VRAM. Lower latency than Piper/cpu and roughly 2× the RTFx.
-- *Cloning, fastest:* **OmniVoice** — 869ms warm TTFA at 9.2× RTFx on the Chris Hemsworth reference, scaling to 20× on long prompts. F5-TTS is the runner-up (5.3× warm RTFx, smallest VRAM at 0.8 GB).
+- *Cloning, fastest:* **OmniVoice** — 869ms warm TTFA at 9.2× RTFx on the house reference, scaling to 20× on long prompts. F5-TTS is the runner-up (5.3× warm RTFx, smallest VRAM at 0.8 GB).
 - *Cloning, slowest:* MARS5 at 0.1× RTFx and Qwen3-TTS Base at 0.5-0.6× — both genuinely sub-realtime on a 5090, with Qwen also hitting the 10-min per-cell wall on the 15-second reference (only the shortest prompt completed for cloning).
 - *VRAM budget:* the heaviest cloning models (IndexTTS-2 at 7.3 GB, MARS5 at 6.9 GB, VoxCPM2 at 5.7 GB) all comfortably fit a 16 GB GPU; the 32 GB on this rig is overkill.
 
