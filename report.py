@@ -457,7 +457,7 @@ MODEL_DISPLAY_NAMES = {
     "neutts_nano":   "NeuTTS Nano",
     "voxcpm":        "VoxCPM2 2B",
     "mars5":         "Mars5-TTS",
-    "pocket":        "Pocket-TTS",
+    "pocket":        "Pocket-TTS v4",
     "magpie":        "Magpie-TTS",
     "indextts":      "IndexTTS-2",
     "indextts25":    "IndexTTS-2.5",
