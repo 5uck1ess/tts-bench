@@ -163,6 +163,18 @@ if (-not (Want "inflect")) { Write-Host "inflect: skipped (not in install filter
     Write-Host "inflect: already installed" -ForegroundColor Gray
 }
 
+Step "Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m)"
+if (-not (Want "ptts")) { Write-Host "ptts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\ptts\Scripts\python.exe")) {
+    Invoke-Checked "uv venv ptts" { uv venv venvs\ptts --python 3.11 }
+    # CPU-only wheel (CUDA/Vulkan are from-source Cargo features). Checkpoints are
+    # pinned by revision in runners/phonon_runner.py and download on first load.
+    Invoke-Checked "uv pip install ptts" { uv pip install --python venvs\ptts\Scripts\python.exe "ptts==0.4.0" "huggingface-hub>=0.36" numpy soundfile psutil }
+    Write-Host "ptts: ok" -ForegroundColor Green
+} else {
+    Write-Host "ptts: already installed" -ForegroundColor Gray
+}
+
 Step "SteerTTS (23.1M + 17.6M flow refiner; steertts + steertts_noflow share this venv)"
 if (-not (Want "steertts")) { Write-Host "steertts: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\steertts\Scripts\python.exe")) {

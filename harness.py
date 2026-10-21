@@ -149,6 +149,10 @@ MODELS = [
     # can_clone=False, default lens only. English-only -> langs={"en"}. Needs an
     # espeak-ng executable (portable copy under venvs/supratts/espeak-ng on Windows).
     ("supratts",      "supratts", "runners/supratts_runner.py", {"en"},      ["cpu", "cuda"], None,    False),
+    # Phonon (Gradium): Pocket-TTS derivative on the Rust `xn` runtime via the `ptts`
+    # wheel. Checkpoint default voice only — cloning is Gradium's hosted API, so
+    # can_clone=False, default lens only. The PyPI wheel is CPU-only -> ["cpu"].
+    ("phonon_31m",    "ptts",    "runners/phonon_runner.py",  {"en"},        ["cpu"],         "31m",   False),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], "1.5b", False),
     ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cuda"],               "7b",   True),

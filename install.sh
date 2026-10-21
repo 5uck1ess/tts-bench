@@ -252,6 +252,20 @@ else
     echo "steertts: already installed"
 fi
 
+# --- Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m) ---
+echo; cyan "=== Phonon (ptts wheel, Rust runtime) ==="
+if ! want ptts; then echo "ptts: skipped (not in install filter)"
+elif [ ! -x venvs/ptts/bin/python ]; then
+    uv venv venvs/ptts --python 3.11 || die "uv venv ptts"
+    # CPU-only wheel (CUDA/Vulkan are from-source Cargo features). Checkpoints are
+    # pinned by revision in runners/phonon_runner.py and download on first load.
+    uv pip install --python venvs/ptts/bin/python "ptts==0.4.0" "huggingface-hub>=0.36" numpy soundfile psutil \
+        || die "uv pip install ptts"
+    green "ptts: ok"
+else
+    echo "ptts: already installed"
+fi
+
 # --- Vaniq-Edge (8.5M VITS, one fixed voice) ---
 echo; cyan "=== Vaniq-Edge (8.5M VITS, one fixed voice) ==="
 if ! want vaniq; then echo "vaniq: skipped (not in install filter)"
