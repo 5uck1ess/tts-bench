@@ -1041,7 +1041,7 @@ MODEL_LANGS = {
     "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)", "ming": "✓ (7)", "ming_tiny": "✓ (7)",
     "moss_tts": "✓ (20)", "moss_tts_v15": "✓ (31)", "moss_tts_nano": "✓ (zh+en)",
     "neutts_air": "—", "neutts_nano": "✓ (4)", "omnivoice": "✓ (600+)", "openvoice": "✓",
-    "pocket": "✓ (6)", "qwentts": "✓ (10)", "qwentts_06b": "✓ (10)", "qwentts_06b_custom": "✓ (10)",
+    "pocket": "✓ (7)", "qwentts": "✓ (10)", "qwentts_06b": "✓ (10)", "qwentts_06b_custom": "✓ (10)",
     "qwentts_fast": "✓ (10)", "sopro": "✓ (4)", "sopro_streaming": "✓ (4)",
     "audio8": "✓ (11)", "audio8_fast": "✓ (11)", "audio8_01b": "✓ (11)",
     "sesame": "—", "step_editx": "—",

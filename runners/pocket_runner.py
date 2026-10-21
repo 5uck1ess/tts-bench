@@ -1,7 +1,8 @@
 """Pocket-TTS runner.
 
-Benched on **pocket-tts v3.1.0** (re-benched 2026-09-05 from v2.1.0; install.sh /
-install.ps1 now clone `--branch v3.1.0`).
+Benched on **pocket-tts v4.0.0** (re-benched 2026-10-20 from v3.1.0, which was
+itself re-benched 2026-09-05 from v2.1.0; install.sh / install.ps1 clone
+`--branch v4.0.0`).
 
 ⚠ The pin only protects a **fresh** install. Both installers short-circuit on an
 existing `venvs/pocket/` ("pocket: already installed") and never re-clone, and even
@@ -12,8 +13,11 @@ trusting a row's version.
 
 Resolved checkpoints — nothing here passes `revision=`, so these SHAs are the only
 record of what a row was actually measured on:
-    pocket (live)  english             @39592ff23c9ef80098bb74895d104c26275fe2c9
+    pocket (live)  english_2026-09_2   @7f364c05d1be3faf2b234cdbe4cbb68a026d4218
+                   french_24l          @3e82814a68665eec246ff649b14c71331f955c06
+                   spanish_24l         @2dd944b099d06bb9edbd221fef138685711d9bf0
     --variant 24l  english_2026-04_24l @492522650173a0653b7575cdc25ae09810e5d741
+    (v3.1.0 rows were english @39592ff2; fr/es _24l @39592ff2 — all superseded)
 
 `--variant 24l` has NO harness row: the 24-layer variant was benched 2026-09-05 and
 skipped (336M for 1.62x RTFx against the base row's 4.90x — both are same-basis
@@ -28,10 +32,17 @@ back to the global DEFAULT_TEMPERATURE = 0.7. This runner deliberately does NOT
 pass `temp`, so a row always reflects upstream's own default — which is why the
 re-benched audio differs from the published v2.1.0 clips.
 
-API discovered by inspection (2026-05-22, re-verified against v3.1.0 2026-09-05):
+**The v3.1.0 -> v4.0.0 delta IS weights.** v4 turned `english` into an alias of
+`english_2026-09_2` (new checkpoint), retrained French and Spanish (both _24l
+configs point at new revisions), moved every config to a `tokenizers` tokenizer
+with `replace_characters` rewrites, added a 5 ms fade-in at chunk starts, and
+ends voice prompts on a short pause. We name `english_2026-09_2` explicitly so
+a future alias move upstream cannot swap the checkpoint under a published row.
+
+API discovered by inspection (2026-05-22, re-verified against v3.1.0 2026-09-05 and v4.0.0 2026-10-20):
     from pocket_tts import TTSModel
     from pocket_tts.utils.utils import _ORIGINS_OF_PREDEFINED_VOICES
-    model = TTSModel.load_model(language="english")   # see LANGUAGE_CONFIG
+    model = TTSModel.load_model(language="english_2026-09_2")   # see LANGUAGE_CONFIG
     state = model.get_state_for_audio_prompt("hf://kyutai/tts-voices/...")
     for chunk in model.generate_audio_stream(state, text):
         ...
@@ -50,15 +61,13 @@ import _meminfo
 
 
 LANGUAGE_CONFIG = {
-    # "english", NOT "english_2026-04". They are different checkpoints despite
-    # upstream's load_model docstring calling them "the same model":
-    #   english          -> languages/english/model.safetensors@39592ff2
-    #   english_2026-04  -> languages/english_2026-04/model.safetensors@19f95fe2
-    # Every published `pocket` row was measured on "english" (the old code path
-    # called load_model() with no argument, which resolves here), so this stays
-    # "english" to keep the v2.1.0 -> v3.1.0 re-bench a clean version comparison
-    # rather than a silent checkpoint swap.
-    "en": "english",
+    # v4.0.0's latest English, named explicitly rather than via the "english"
+    # alias (which upstream re-pointed from @39592ff2 to english_2026-09_2 in
+    # v4). Pinning the name means an alias move is a visible diff here, not a
+    # silent checkpoint swap on a published row.
+    # fr/es stay on the 24-layer configs (retrained in v4); v4's new 6-layer
+    # "french"/"spanish" are a different model size and are not benched.
+    "en": "english_2026-09_2",
     "fr": "french_24l",
     "de": "german_24l",
     "it": "italian_24l",
@@ -70,7 +79,7 @@ LANGUAGE_CONFIG = {
 # the non-English entries above are already upstream's 24-layer builds, so the
 # variant is meaningful for English only.
 VARIANT_EN_CONFIG = {
-    None:  "english",
+    None:  LANGUAGE_CONFIG["en"],
     "24l": "english_2026-04_24l",
 }
 
@@ -104,6 +113,15 @@ def main() -> int:
 
     try:
         from pocket_tts import TTSModel
+        # v4.0.0 bug: utils/config.py reads the model YAML with a bare
+        # open(path, "r"), i.e. the locale codec (cp1252 on Windows). v4's new
+        # `replace_characters` keys ('’', '«', ...) then decode to multi-char
+        # mojibake and load_model dies with "string keys in translate table
+        # must be of length 1" -- for every language. Shadow `open` in that one
+        # module (its only open() call) so the stock install runs as on Linux.
+        import functools
+        import pocket_tts.utils.config as _pocket_config
+        _pocket_config.open = functools.partial(open, encoding="utf-8")
         import numpy as np
         import soundfile as sf
 
