@@ -255,16 +255,33 @@ fi
 # --- Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m + phonon_40m share this venv) ---
 # phonon-40m-{en,fr,es} are gated: accept the terms on HF (auto-approved) before benching.
 echo; cyan "=== Phonon (ptts wheel, Rust runtime) ==="
+# The PyPI wheel is CPU-only (CUDA/Vulkan are from-source Cargo features). With nvcc and
+# cargo on the box, build the same 0.4.0 sdist with --features cuda instead: its CPU path
+# matches the wheel, so one venv serves the cpu and cuda cells (harness PTTS_CUDA).
+# Checkpoints are pinned by revision in runners/phonon_runner.py and download on first load.
+PTTS_PATH="/usr/local/cuda/bin:${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
 if ! want ptts; then echo "ptts: skipped (not in install filter)"
-elif [ ! -x venvs/ptts/bin/python ]; then
-    uv venv venvs/ptts --python 3.11 || die "uv venv ptts"
-    # CPU-only wheel (CUDA/Vulkan are from-source Cargo features). Checkpoints are
-    # pinned by revision in runners/phonon_runner.py and download on first load.
-    uv pip install --python venvs/ptts/bin/python "ptts==0.4.0" "huggingface-hub>=0.36" numpy soundfile psutil \
-        || die "uv pip install ptts"
-    green "ptts: ok"
 else
-    echo "ptts: already installed"
+    if [ ! -x venvs/ptts/bin/python ]; then
+        uv venv venvs/ptts --python 3.11 || die "uv venv ptts"
+        uv pip install --python venvs/ptts/bin/python "huggingface-hub>=0.36" numpy soundfile psutil \
+            || die "uv pip install ptts deps"
+    fi
+    if venvs/ptts/bin/python -c "import ptts, sys; sys.exit('cuda' not in ptts.available_devices())" 2>/dev/null; then
+        echo "ptts: already installed (cuda build)"
+    elif PATH="$PTTS_PATH" command -v nvcc >/dev/null 2>&1 && PATH="$PTTS_PATH" command -v cargo >/dev/null 2>&1; then
+        # ~1 min compile. --reinstall replaces a CPU wheel already in the venv.
+        PATH="$PTTS_PATH" MATURIN_PEP517_ARGS="--features cuda" \
+            uv pip install --python venvs/ptts/bin/python --reinstall-package ptts --no-binary ptts "ptts==0.4.0" \
+            || die "uv pip install ptts (cuda source build)"
+        green "ptts: ok (cuda build)"
+    elif venvs/ptts/bin/python -c "import ptts" 2>/dev/null; then
+        echo "ptts: already installed (CPU wheel; no nvcc+cargo for a cuda build)"
+    else
+        yellow "ptts: no nvcc+cargo -> CPU-only PyPI wheel (no phonon cuda cell)"
+        uv pip install --python venvs/ptts/bin/python "ptts==0.4.0" || die "uv pip install ptts"
+        green "ptts: ok"
+    fi
 fi
 
 # --- Vaniq-Edge (8.5M VITS, one fixed voice) ---
