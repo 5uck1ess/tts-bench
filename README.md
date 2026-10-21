@@ -65,11 +65,11 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 
 ---
 
-## TLDR (June 2026)
+## TLDR (October 2026)
 
 **Fastest:**
-- CPU (Ryzen 9 9950X3D, Windows): **Piper** — 107ms warm TTFA, 59× RTFx
-- CUDA (RTX 5090): **Kokoro** — 67ms warm TTFA, 104× RTFx
+- CPU (Ryzen 9 9950X3D, Windows): **sanoTTS Heart-Nano** — 50ms warm TTFA, 104× RTFx
+- CUDA (RTX 5090): **Vaniq-Edge** — 30ms warm TTFA, 298× RTFx
 - CPU + MPS (Apple M4, 16 GB): **Piper** — 208ms warm TTFA, 32× RTFx
 
 **Best sounding:** *No objective ranking right now — the NAQ score is paused pending redesign. Open the [Demos site](https://5uck1ess.github.io/tts-bench/) and use the Listen lens.*
@@ -195,7 +195,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 **57 of the 83 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
-Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 738 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
+Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 2,094 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 
 ---
 
