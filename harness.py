@@ -151,10 +151,11 @@ MODELS = [
     ("supratts",      "supratts", "runners/supratts_runner.py", {"en"},      ["cpu", "cuda"], None,    False),
     # Phonon (Gradium): Pocket-TTS derivative on the Rust `xn` runtime via the `ptts`
     # wheel. Checkpoint default voice only — cloning is Gradium's hosted API, so
-    # can_clone=False, default lens only. The PyPI wheel is CPU-only -> ["cpu"].
-    ("phonon_31m",    "ptts",    "runners/phonon_runner.py",  {"en"},        ["cpu"],         "31m",   False),
+    # can_clone=False, default lens only. The PyPI wheel is CPU-only; the cuda cell only
+    # builds where install.sh compiled ptts with --features cuda (see PTTS_CUDA below).
+    ("phonon_31m",    "ptts",    "runners/phonon_runner.py",  {"en"},        ["cpu", "cuda"], "31m",   False),
     # 40m: one gated checkpoint per language (phonon-40m-{en,fr,es}), not the multilingual one.
-    ("phonon_40m",    "ptts",    "runners/phonon_runner.py",  {"en", "fr", "es"}, ["cpu"],    "40m",   False),
+    ("phonon_40m",    "ptts",    "runners/phonon_runner.py",  {"en", "fr", "es"}, ["cpu", "cuda"], "40m", False),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], "1.5b", False),
     ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cuda"],               "7b",   True),
@@ -398,6 +399,11 @@ SERVER_BACKED = {
     "miotts_01b", "miotts_06b",
 }
 
+# Phonon runs on the torch-free `ptts` runtime, so detect_cuda() can't see the GPU either.
+# Its cuda cell needs a GPU (nvidia-smi) AND a ptts build that lists "cuda": the PyPI wheel
+# lists only "cpu", so rigs on the wheel keep the cpu cell alone.
+PTTS_CUDA = {"phonon_31m", "phonon_40m"}
+
 
 def venv_python(venv_dir: str) -> Path:
     """Resolve the python.exe / bin/python path for a venv on this OS."""
@@ -482,6 +488,9 @@ def build_cells(reference=None, requested_models=None, requested_devices=None,
         if model_name in SERVER_BACKED:
             # Torch-free venv: probe the GPU via nvidia-smi, not torch in the venv.
             cuda_ok = ("cuda" in model_devices) and detect_cuda_smi()
+        elif model_name in PTTS_CUDA:
+            cuda_ok = ("cuda" in model_devices) and detect_cuda_smi() and _probe(
+                py, "import ptts; print('cuda' in ptts.available_devices())")
         else:
             cuda_ok = ("cuda" in model_devices) and detect_cuda(py)
         mps_ok = ("mps" in model_devices) and detect_mps(py)

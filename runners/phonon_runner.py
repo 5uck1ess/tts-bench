@@ -30,7 +30,12 @@ encodes a reference, so --reference is ignored and the model has no cloning row.
 Each checkpoint's own default voice is used.
 
 Devices: the PyPI wheels for Windows/Linux are CPU-only (`ptts.available_devices()`
-== ['cpu']). CUDA/Vulkan exist only as Cargo features in a from-source maturin build.
+== ['cpu']). CUDA/Vulkan exist only as Cargo features in a from-source build, so on
+Linux `install.sh` builds the same 0.4.0 sdist with `--features cuda` when nvcc and
+cargo are present. That build's CPU path matches the PyPI wheel (31m warm: 8.6x vs
+8.4x RTF on the 5900XT), so one venv serves both cells. A --device the installed
+build does not list is reported as a failed run, not silently run on another device.
+peak_vram_mb stays empty on cuda: `_meminfo` reads it from torch, and this venv has none.
 
 Threads: the runtime defaults to one thread per logical core (32 on the 9950X3D).
 Like every other runner we leave the library default alone, but note it is not the
@@ -86,16 +91,16 @@ def main() -> int:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"phonon {variant} has no checkpoint for language={args.language}"}))
         return 1
-    if args.device != "cpu":
-        print(json.dumps({"ok": False, "run_index": 0,
-                          "error": f"ptts PyPI wheel is CPU-only, got device={args.device}"}))
-        return 1
-
     try:
         import ptts
         import soundfile as sf
 
-        tts = ptts.TTS(f"hf://{repo}", lang=args.language,
+        if args.device not in ptts.available_devices():
+            print(json.dumps({"ok": False, "run_index": 0,
+                              "error": f"this ptts build has no device={args.device} "
+                                       f"(available: {ptts.available_devices()})"}))
+            return 1
+        tts = ptts.TTS(f"hf://{repo}", lang=args.language, device=args.device,
                        seed=SEED, temperature=TEMPERATURE)
         sample_rate = tts.sample_rate
     except Exception as e:
