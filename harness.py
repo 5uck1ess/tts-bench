@@ -153,6 +153,8 @@ MODELS = [
     # wheel. Checkpoint default voice only — cloning is Gradium's hosted API, so
     # can_clone=False, default lens only. The PyPI wheel is CPU-only -> ["cpu"].
     ("phonon_31m",    "ptts",    "runners/phonon_runner.py",  {"en"},        ["cpu"],         "31m",   False),
+    # 40m: one gated checkpoint per language (phonon-40m-{en,fr,es}), not the multilingual one.
+    ("phonon_40m",    "ptts",    "runners/phonon_runner.py",  {"en", "fr", "es"}, ["cpu"],    "40m",   False),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], "1.5b", False),
     ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cuda"],               "7b",   True),

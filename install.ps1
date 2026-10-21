@@ -163,7 +163,7 @@ if (-not (Want "inflect")) { Write-Host "inflect: skipped (not in install filter
     Write-Host "inflect: already installed" -ForegroundColor Gray
 }
 
-Step "Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m)"
+Step "Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m + phonon_40m share this venv; 40m repos are gated — accept terms on HF)"
 if (-not (Want "ptts")) { Write-Host "ptts: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\ptts\Scripts\python.exe")) {
     Invoke-Checked "uv venv ptts" { uv venv venvs\ptts --python 3.11 }

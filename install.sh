@@ -252,7 +252,8 @@ else
     echo "steertts: already installed"
 fi
 
-# --- Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m) ---
+# --- Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m + phonon_40m share this venv) ---
+# phonon-40m-{en,fr,es} are gated: accept the terms on HF (auto-approved) before benching.
 echo; cyan "=== Phonon (ptts wheel, Rust runtime) ==="
 if ! want ptts; then echo "ptts: skipped (not in install filter)"
 elif [ ! -x venvs/ptts/bin/python ]; then

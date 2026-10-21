@@ -464,6 +464,7 @@ MODEL_DISPLAY_NAMES = {
     "ming":          "Ming-3.0-TTS 0.5B",
     "ming_tiny":     "Ming-3.0-TTS tiny",
     "phonon_31m":    "Phonon 31m",
+    "phonon_40m":    "Phonon 40m",
     "f5tts":         "F5-TTS v1",
     "chatterbox":       "Chatterbox",
     "chatterbox_turbo": "Chatterbox Turbo",
@@ -548,6 +549,7 @@ MODEL_SIZE = {
     "ming":          "1.48B",
     "ming_tiny":     "8.98B (MoE, 1.3B active)",
     "phonon_31m":    "41.1M (30.8M LM + Mimi)",   # counted from model.safetensors; card's "31M" excludes the codec
+    "phonon_40m":    "50.5M (40.2M LM + Mimi)",   # same count; identical across the en/fr/es checkpoints
     "sesame":        "1B",
     "miso":          "8.2B",
     "longcat_1b":    "1.42B",
@@ -648,6 +650,7 @@ MODEL_URL = {
     "ming":          _HF + "inclusionAI/Ming-3.0-tts-0.5B",
     "ming_tiny":     _HF + "inclusionAI/Ming-3.0-tts-tiny",
     "phonon_31m":    _HF + "gradium/phonon-31m-en",
+    "phonon_40m":    _HF + "gradium/phonon-40m-en",
     "sesame":        _HF + "sesame/csm-1b",
     "miso":          _HF + "MisoLabs/MisoTTS",
     "longcat_1b":    _HF + "meituan-longcat/LongCat-AudioDiT-1B",
@@ -735,6 +738,7 @@ MODEL_KIND = {
     "ming":          "cloning",
     "ming_tiny":     "cloning",
     "phonon_31m":    "predefined",  # checkpoint default voice; cloning is Gradium's hosted API only
+    "phonon_40m":    "predefined",
     "omnivoice":     "cloning",
     "zipvoice":      "cloning",
     "voxcpm":        "cloning",
@@ -830,6 +834,7 @@ MODEL_RELEASE = {
     "ming":          "2026-10",
     "ming_tiny":     "2026-10",
     "phonon_31m":    "2026-10",   # HF repo created 2026-10-19
+    "phonon_40m":    "2026-10",
     "sesame":        "2025-03",
     "miso":          "2026-05",
     "longcat_1b":    "2026-03",
@@ -930,7 +935,7 @@ MODEL_SR = {
     "outetts": "44.1k", "parler": "44.1k", "piper": "22.05k", "scyllasband": "24k", "soprano": "32k",
     "sanotts_amy": "22.05k", "sanotts_heart_nano": "24k",
     "inflect_nano": "24k", "inflect_micro": "24k", "vaniq": "24k", "supratts": "22.05k",
-    "steertts": "24k", "steertts_noflow": "24k", "phonon_31m": "24k",
+    "steertts": "24k", "steertts_noflow": "24k", "phonon_31m": "24k", "phonon_40m": "24k",
     "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
     "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
     "breeze_tts2": "24k",
@@ -958,7 +963,7 @@ MODEL_EXPRESSIVE = {
     # speed + variation (latent noise scale). No emotion/style control.
     "inflect_nano": "2 knobs", "inflect_micro": "2 knobs",
     "steertts": "12 knobs + tags", "steertts_noflow": "12 knobs + tags",
-    "phonon_31m": "knob",  # duration_delta (speaking rate)
+    "phonon_31m": "knob", "phonon_40m": "knob",  # duration_delta (speaking rate)
     # length_scale only; noise scales are hardcoded in upstream's synthesize().
     "vaniq": "knob",
     # length scale + latent noise + duration-predictor noise. No emotion/style control.
@@ -998,7 +1003,7 @@ MODEL_LICENSE = {
     "sanotts_amy": "GPL-3.0", "sanotts_heart_nano": "GPL-3.0",
     "inflect_nano": "Apache 2.0", "inflect_micro": "Apache 2.0", "vaniq": "MIT", "supratts": "MIT",
     "steertts": "MIT code / CC-BY-NC 4.0 weights", "steertts_noflow": "MIT code / CC-BY-NC 4.0 weights",
-    "phonon_31m": "Apache 2.0",
+    "phonon_31m": "Apache 2.0", "phonon_40m": "CC BY-NC 4.0",
     "supertonic": "MIT + OpenRAIL-M",
     "vibevoice": "MIT", "voxtral": "CC-BY-NC 4.0", "chatterbox": "MIT",
     "chatterbox_turbo": "MIT", "coqui": "CPML (non-commercial)", "cosyvoice": "Apache 2.0",
@@ -1036,7 +1041,7 @@ MODEL_LANGS = {
     # sanoTTS supports six languages, but the two benched voices are English-only.
     "sanotts_amy": "— (en)", "sanotts_heart_nano": "— (en)",
     "inflect_nano": "— (en)", "inflect_micro": "— (en)", "vaniq": "— (en)", "supratts": "— (en)",
-    "steertts": "— (en)", "steertts_noflow": "— (en)", "phonon_31m": "— (en)",
+    "steertts": "— (en)", "steertts_noflow": "— (en)", "phonon_31m": "— (en)", "phonon_40m": "✓ (5)",
     "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
     "chatterbox_turbo": "—", "coqui": "✓ (17)", "cosyvoice": "✓", "dia": "—",
