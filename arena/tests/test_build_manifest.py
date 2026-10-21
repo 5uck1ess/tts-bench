@@ -3,8 +3,8 @@ from arena.build_manifest import (RIG_PRIO, DEV_PRIO, HOLD_FROM_POOL, NO_PRESET_
                                   SPEED_ONLY, scan_dirs)
 
 # `NO_PRESET_VOICE` is a set, so `next(iter(...))` picks a DIFFERENT member each
-# process (hash randomization). Three of its members (`qwentts`, `qwentts_06b`,
-# `breeze_tts2`) are also in SPEED_ONLY and therefore dropped from BOTH lenses, so
+# process (hash randomization). Two of its members (`qwentts`, `qwentts_06b`)
+# are also in SPEED_ONLY and therefore dropped from BOTH lenses, so
 # a test that expects the sample to survive failed on ~9% of runs. Pick the sample
 # deterministically from the members that are actually votable.
 SAMPLE_NO_PRESET = sorted(NO_PRESET_VOICE - SPEED_ONLY - HOLD_FROM_POOL)[0]

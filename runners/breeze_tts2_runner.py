@@ -12,9 +12,8 @@ path does not hold a speaker across prompts (median F0 ranged 114.6-215.1 Hz ove
 canonical English prompts at a fixed seed). Pinning a specific maya1-style description
 tightens that to 37.7 Hz and makes it seed-stable, but that is still looser than every
 default-board row (maya1 8.8 Hz, kokoro 10.5, melotts 30.2), so there is no honest
-preset voice to publish. Absent --reference we fall back to DEFAULT_REF, matching the
-NO_PRESET_VOICE convention (see docs/known-issues.md) — but pointed at a consent-clean
-reference rather than the house one, for the licence reason noted at DEFAULT_REF.
+preset voice to publish. Absent --reference we fall back to DEFAULT_REF, the house
+reference, matching the NO_PRESET_VOICE convention (see docs/known-issues.md).
 
 Streaming: genuine. `iter_audio_chunks` is a real generator, so ttfa_ms is a true
 time-to-first-chunk, NOT a copy of gen_s. Measured through this runner on Win-5090
@@ -57,8 +56,8 @@ runner: three consecutive --runs produced 4.56 s of audio each, byte-identical d
 with warm gen_s within 0.25 s. If run 2 or 3 ever drifts, suspect that close.
 
 License note: weights are non-commercial, and §5(c)/(d) prohibit cloning a real person's
-voice without their consent, with no research carve-out. Whatever wav is passed as
---reference must be one there is consent to clone.
+voice without their consent, with no research carve-out. Benched on the house reference
+like every other cloner at Tym's direction (2026-10-20); the licence call is his.
 """
 
 import argparse
@@ -101,13 +100,9 @@ def _stdin_shielded():
 REPO_ROOT = Path(__file__).resolve().parent.parent
 BREEZE_SRC = REPO_ROOT / "venvs" / "breeze_tts2" / "src" / "breeze-tts"
 CKPT = REPO_ROOT / "venvs" / "breeze_tts2" / "src" / "Breeze-TTS-2"
-# NOT the house chris_hemsworth_15s.wav that every other NO_PRESET_VOICE runner falls
-# back to. License §5(c)/(d) forbid cloning a real person without their consent, with no
-# research carve-out, so this model must never be pointed at the house reference — and a
-# no-reference run is exactly where that would happen silently. tym.wav is a consent-clean
-# reference (recorded by the repo owner, of himself). Keep this override if the house
-# reference ever changes; it is a licence constraint, not a preference.
-DEFAULT_REF = REPO_ROOT / "reference" / "tym.wav"
+# The house reference, like every other NO_PRESET_VOICE runner. Until 2026-10-20 this was
+# reference/tym.wav and the row was SPEED_ONLY (licence §5(c)); see docs/known-issues.md.
+DEFAULT_REF = REPO_ROOT / "reference" / "chris_hemsworth_15s.wav"
 
 SAMPLERATE = 24_000
 MAX_NEW_TOKENS = 1500   # frames; 12.5 fps -> 120 s. See docstring.
