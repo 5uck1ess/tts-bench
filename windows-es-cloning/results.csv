@@ -1,7 +1,4 @@
 prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,peak_vram_mb,wall_s,ok,error
-6,pocket,cpu,,gated,0,True,487.3,6.5751,6.16,0.94,2355.4,,25.632,True,
-6,pocket,cpu,,gated,1,False,561.5,6.8977,7.6,1.1,2359.2,,0,True,
-6,pocket,cpu,,gated,2,False,365.8,4.822,5.68,1.18,2361.9,,0,True,
 6,coqui,cpu,,True,0,True,10050.6,10.0506,6.721,0.67,3056.9,,60.185,True,
 6,coqui,cpu,,True,1,False,10270.9,10.2709,7.041,0.69,3070.5,,0,True,
 6,coqui,cpu,,True,2,False,24155.5,24.1555,15.585,0.65,3290.9,,0,True,
@@ -44,3 +41,6 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 6,qwentts_fast,cuda,base,True,0,True,14504.3,14.5043,6.64,0.46,2589.0,4958.6,29.534,True,
 6,qwentts_fast,cuda,base,True,1,False,1405.7,1.4057,5.12,3.64,2590.6,4912.5,0,True,
 6,qwentts_fast,cuda,base,True,2,False,1628.1,1.6281,6.0,3.69,2591.6,4938.3,0,True,
+6,pocket,cpu,,gated,0,True,366.0,4.7802,7.04,1.47,2411.5,,21.835,True,
+6,pocket,cpu,,gated,1,False,354.6,4.6587,6.96,1.49,2416.1,,0,True,
+6,pocket,cpu,,gated,2,False,352.3,4.784,6.96,1.45,2418.8,,0,True,
