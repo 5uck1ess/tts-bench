@@ -77,3 +77,6 @@ prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s
 6,pocket,cpu,,gated,0,True,386.3,4.8761,7.2,1.48,2070.6,,20.795,True,
 6,pocket,cpu,,gated,1,False,350.4,5.1744,7.76,1.5,2075.3,,0,True,
 6,pocket,cpu,,gated,2,False,351.5,5.4446,8.32,1.53,2079.1,,0,True,
+6,phonon_40m,cpu,40m,False,0,True,109.4,1.1376,6.72,5.91,271.2,,3.618,True,
+6,phonon_40m,cpu,40m,False,1,False,55.8,1.0338,6.72,6.5,289.4,,0,True,
+6,phonon_40m,cpu,40m,False,2,False,50.7,1.0733,6.72,6.26,320.8,,0,True,
