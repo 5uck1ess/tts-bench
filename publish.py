@@ -57,8 +57,9 @@ _CPU_OK = frozenset(row[0] for row in _HARNESS_MODELS if "cpu" in row[4])
 # steertts/steertts_noflow: 2,825 built-in voices (default voice_1361) selected by
 # id, so the no-reference run is a genuine preset, not a clone fallback.
 # ming: built-in "US_James" IP voice (task="IP", no reference) on the default lens.
+# kittentts2: 115 built-in voices (default Bruno, the repo's own default_voice).
 _PRESET_AND_CLONE = {"outetts", "voxtral", "audio8", "audio8_fast", "audio8_01b",
-                     "steertts", "steertts_noflow", "ming", "ming_tiny"}
+                     "steertts", "steertts_noflow", "ming", "ming_tiny", "kittentts2"}
 
 # Models that synthesize more than English — derived from report.MODEL_LANGS (the
 # single source of truth) so the Listen badge can never disagree with the

@@ -102,10 +102,34 @@ if (-not (Want "kittentts")) { Write-Host "kittentts: skipped (not in install fi
 } elseif (-not (Test-Path "venvs\kittentts\Scripts\python.exe")) {
     Invoke-Checked "uv venv kittentts" { uv venv venvs\kittentts --python 3.11 }
     # KittenTTS uses phonemizer + espeak-ng. espeakng-loader bundles the DLL.
-    Invoke-Checked "uv pip install kittentts" { uv pip install --python venvs\kittentts\Scripts\python.exe kittentts espeakng-loader soundfile numpy }
+    # Nano 0.8 ships as a GitHub release wheel; PyPI `kittentts` stops at 0.1.3.
+    Invoke-Checked "uv pip install kittentts" { uv pip install --python venvs\kittentts\Scripts\python.exe "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl" espeakng-loader soundfile numpy psutil }
     Write-Host "kittentts: ok" -ForegroundColor Green
 } else {
     Write-Host "kittentts: already installed" -ForegroundColor Gray
+}
+
+Step "KittenTTS 2 (kittenml, torch engine; cpu + cuda, presets + cloning)"
+if (-not (Want "kittentts2")) { Write-Host "kittentts2: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\kittentts2\Scripts\python.exe")) {
+    Invoke-Checked "uv venv kittentts2" { uv venv venvs\kittentts2 --python 3.11 }
+    Invoke-Checked "uv pip install kittenml" { uv pip install --python venvs\kittentts2\Scripts\python.exe "kittenml==0.9.6" "transformers==5.20.2" psutil }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120), LAST: kittenml pulls PyPI's CPU torch.
+    Invoke-Checked "torch cu128 for kittentts2" { uv pip install --python venvs\kittentts2\Scripts\python.exe --reinstall-package torch --reinstall-package torchaudio torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "kittentts2: ok" -ForegroundColor Green
+} else {
+    Write-Host "kittentts2: already installed" -ForegroundColor Gray
+}
+
+Step "KittenTTS 2 C++ (kitten_tts_cpp, llama.cpp fork; CPU-only, presets only)"
+if (-not (Want "kittentts2_cpp")) { Write-Host "kittentts2_cpp: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\kittentts2_cpp\Scripts\python.exe")) {
+    Invoke-Checked "uv venv kittentts2_cpp" { uv venv venvs\kittentts2_cpp --python 3.11 }
+    # Prebuilt win_amd64 wheel; it pins torch==2.13.0 (CPU LibTorch for the decoder).
+    Invoke-Checked "uv pip install kitten_tts_cpp" { uv pip install --python venvs\kittentts2_cpp\Scripts\python.exe "kitten_tts_cpp==0.2.0" psutil }
+    Write-Host "kittentts2_cpp: ok" -ForegroundColor Green
+} else {
+    Write-Host "kittentts2_cpp: already installed" -ForegroundColor Gray
 }
 
 Step "Piper"

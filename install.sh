@@ -161,11 +161,39 @@ echo; cyan "=== KittenTTS ==="
 if ! want kittentts; then echo "kittentts: skipped (not in install filter)"
 elif [ ! -x venvs/kittentts/bin/python ]; then
     uv venv venvs/kittentts --python 3.11 || die "uv venv kittentts"
-    uv pip install --python venvs/kittentts/bin/python kittentts espeakng-loader soundfile numpy \
+    # Nano 0.8 ships as a GitHub release wheel; PyPI `kittentts` stops at 0.1.3.
+    uv pip install --python venvs/kittentts/bin/python \
+        "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl" \
+        espeakng-loader soundfile numpy psutil \
         || die "uv pip install kittentts"
     green "kittentts: ok"
 else
     echo "kittentts: already installed"
+fi
+
+# --- KittenTTS 2 (torch engine) ---
+echo; cyan "=== KittenTTS 2 (kittenml) ==="
+if ! want kittentts2; then echo "kittentts2: skipped (not in install filter)"
+elif [ ! -x venvs/kittentts2/bin/python ]; then
+    uv venv venvs/kittentts2 --python 3.11 || die "uv venv kittentts2"
+    # PyPI torch is CUDA-enabled on Linux, so no separate cu128 step.
+    uv pip install --python venvs/kittentts2/bin/python "kittenml==0.9.6" "transformers==5.20.2" psutil \
+        || die "uv pip install kittenml"
+    green "kittentts2: ok"
+else
+    echo "kittentts2: already installed"
+fi
+
+# --- KittenTTS 2 C++ (llama.cpp fork, CPU-only, presets only) ---
+echo; cyan "=== KittenTTS 2 C++ (kitten_tts_cpp) ==="
+if ! want kittentts2_cpp; then echo "kittentts2_cpp: skipped (not in install filter)"
+elif [ ! -x venvs/kittentts2_cpp/bin/python ]; then
+    uv venv venvs/kittentts2_cpp --python 3.11 || die "uv venv kittentts2_cpp"
+    uv pip install --python venvs/kittentts2_cpp/bin/python "kitten_tts_cpp==0.2.0" psutil \
+        || die "uv pip install kitten_tts_cpp"
+    green "kittentts2_cpp: ok"
+else
+    echo "kittentts2_cpp: already installed"
 fi
 
 # --- Piper ---
