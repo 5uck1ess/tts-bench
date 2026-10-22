@@ -341,6 +341,86 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts_cpu_p4.wav"
         },
         {
+          "model": "kittentts08",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts08_cpu_p1.wav"
+        },
+        {
+          "model": "kittentts08",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts08_cpu_p2.wav"
+        },
+        {
+          "model": "kittentts08",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts08_cpu_p3.wav"
+        },
+        {
+          "model": "kittentts08",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts08_cpu_p4.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts2_cuda_p1.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts2_cuda_p2.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts2_cuda_p3.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts2_cuda_p4.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts2_cuda_p5.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/kittentts2_cuda_p6.wav"
+        },
+        {
+          "model": "kittentts2_cpp",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts2_cpp_cpu_p1.wav"
+        },
+        {
+          "model": "kittentts2_cpp",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts2_cpp_cpu_p2.wav"
+        },
+        {
+          "model": "kittentts2_cpp",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts2_cpp_cpu_p3.wav"
+        },
+        {
+          "model": "kittentts2_cpp",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts2_cpp_cpu_p4.wav"
+        },
+        {
+          "model": "kittentts2_cpp",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/kittentts2_cpp_cpu_p5.wav"
+        },
+        {
+          "model": "kittentts2_cpp",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/kittentts2_cpp_cpu_p6.wav"
+        },
+        {
           "model": "kokoro",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/kokoro_cuda_p1.wav"
@@ -1681,6 +1761,36 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/indextts25_cuda_p6.wav"
         },
         {
+          "model": "kittentts2",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/kittentts2_cuda_p1.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/kittentts2_cuda_p2.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/kittentts2_cuda_p3.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/kittentts2_cuda_p4.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/kittentts2_cuda_p5.wav"
+        },
+        {
+          "model": "kittentts2",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/kittentts2_cuda_p6.wav"
+        },
+        {
           "model": "longcat_1b",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/longcat_1b_cuda_p1.wav"
@@ -2583,6 +2693,18 @@
     "kittentts": {
       "name": "KittenTTS Nano 0.1",
       "url": "https://huggingface.co/KittenML/kitten-tts-nano-0.1"
+    },
+    "kittentts08": {
+      "name": "KittenTTS Nano 0.8",
+      "url": "https://huggingface.co/KittenML/kitten-tts-nano-0.8"
+    },
+    "kittentts2": {
+      "name": "KittenTTS 2",
+      "url": "https://huggingface.co/KittenML/kitten-tts-2"
+    },
+    "kittentts2_cpp": {
+      "name": "KittenTTS 2 (C++ CPU)",
+      "url": "https://github.com/KittenML/kitten-tts-2-cpp"
     },
     "kokoro": {
       "name": "Kokoro",
