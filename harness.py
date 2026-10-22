@@ -119,6 +119,7 @@ MODELS = [
     # SPEED_ONLY in publish.py. MPS still wins; docs/known-issues.md has the numbers.
     ("kokoro_mlx",  "kokoro_mlx", "runners/kokoro_mlx_runner.py", {"en", "fr", "es"}, ["mps"],                None,   False),
     ("kittentts",   "kittentts",  "runners/kittentts_runner.py",  {"en"},        ["cpu"],                None,   False),
+    ("kittentts08", "kittentts08", "runners/kittentts08_runner.py", {"en"},     ["cpu"],                None,   False),
     # KittenTTS 2: one 1.7B ternary LM through two engines (see the runner). torch =
     # the kittenml package, presets + cloning (_PRESET_AND_CLONE); cpp = KittenML's
     # llama.cpp fork, CPU-only and presets-only (raw-audio cloning not implemented),

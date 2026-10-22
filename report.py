@@ -487,7 +487,8 @@ MODEL_DISPLAY_NAMES = {
     "piper":         "Piper",
     "kokoro":        "Kokoro",
     "kokoro_mlx":    "Kokoro (MLX)",
-    "kittentts":     "KittenTTS Nano 0.8",
+    "kittentts":     "KittenTTS Nano 0.1",
+    "kittentts08":   "KittenTTS Nano 0.8",
     "kittentts2":     "KittenTTS 2",
     "kittentts2_cpp": "KittenTTS 2 (C++ CPU)",
     "sanotts_amy":        "sanoTTS Amy",
@@ -583,7 +584,8 @@ MODEL_SIZE = {
     "dia":           "1.6B",
     "kokoro":        "82M",
     "kokoro_mlx":    "82M",
-    "kittentts":     "15M",
+    "kittentts":     "<100M",
+    "kittentts08":   "15M",
     "kittentts2":     "1.7B",   # card; 1.58-bit ternary LM body
     "kittentts2_cpp": "1.7B",
     "piper":         "~25MB",
@@ -684,7 +686,8 @@ MODEL_URL = {
     "dia":           _HF + "nari-labs/Dia-1.6B-0626",
     "kokoro":        _HF + "hexgrad/Kokoro-82M",
     "kokoro_mlx":    _HF + "prince-canuma/Kokoro-82M",
-    "kittentts":     _HF + "KittenML/kitten-tts-nano-0.8",
+    "kittentts":     _HF + "KittenML/kitten-tts-nano-0.1",
+    "kittentts08":   _HF + "KittenML/kitten-tts-nano-0.8",
     "kittentts2":     _HF + "KittenML/kitten-tts-2",
     "kittentts2_cpp": "https://github.com/KittenML/kitten-tts-2-cpp",
     "piper":         "https://github.com/OHF-Voice/piper1-gpl",
@@ -733,6 +736,7 @@ MODEL_KIND = {
     "kokoro":        "predefined",
     "kokoro_mlx":    "predefined",
     "kittentts":     "predefined",
+    "kittentts08":   "predefined",
     "kittentts2":     "cloning",
     "kittentts2_cpp": "predefined",  # same model; this engine cannot clone raw audio
     "sanotts_amy":        "predefined",
@@ -872,7 +876,8 @@ MODEL_RELEASE = {
     "dia":           "2025-06",
     "kokoro":        "2024-12",
     "kokoro_mlx":    "2024-12",   # same Kokoro-82M checkpoint (MLX backend) — shares its date
-    "kittentts":     "2026-02",   # Nano 0.8 (re-benched 2026-10-22; was 0.1, 2025-08)
+    "kittentts":     "2025-08",
+    "kittentts08":   "2026-02",
     "kittentts2":     "2026-09",
     "kittentts2_cpp": "2026-09",
     "piper":         "2023-01",   # original rhasspy/piper engine, not the piper1-gpl re-home
@@ -954,7 +959,7 @@ def _release_td(model, cls="muted"):
 # Output sample rate, as shown in the README (e.g. "44.1k").
 MODEL_SR = {
     "kittentts": "24k", "kokoro": "24k", "kokoro_mlx": "24k", "lfm2_audio": "24k", "luxtts": "22.05k",
-    "kittentts2": "24k", "kittentts2_cpp": "24k",
+    "kittentts2": "24k", "kittentts2_cpp": "24k", "kittentts08": "24k",
     "magpie": "22.05k", "maya1": "24k", "melotts": "44.1k", "orpheus": "24k",
     "outetts": "44.1k", "parler": "44.1k", "piper": "22.05k", "scyllasband": "24k", "soprano": "32k",
     "sanotts_amy": "22.05k", "sanotts_heart_nano": "24k",
@@ -981,7 +986,7 @@ MODEL_SR = {
 # "*" = a caveat applies (see docs/expressive-control.md). "—" = none.
 MODEL_EXPRESSIVE = {
     "kittentts": "—", "kokoro": "—", "kokoro_mlx": "—", "lfm2_audio": "—", "luxtts": "—",
-    "kittentts2": "tags", "kittentts2_cpp": "tags",
+    "kittentts2": "tags", "kittentts2_cpp": "tags", "kittentts08": "—",
     "magpie": "emotion voices*", "maya1": "tags + desc", "melotts": "—", "orpheus": "tags",
     "outetts": "—", "parler": "desc*", "piper": "—", "scyllasband": "6 knobs",
     "sanotts_amy": "knob", "sanotts_heart_nano": "knob",
@@ -1021,7 +1026,7 @@ MODEL_EXPRESSIVE = {
 # filter is a coarse heuristic derived from it — see _is_commercial).
 MODEL_LICENSE = {
     "kittentts": "Apache 2.0", "kokoro": "Apache 2.0", "kokoro_mlx": "Apache 2.0",
-    "kittentts2": "Stellon Labs Community", "kittentts2_cpp": "Stellon Labs Community",
+    "kittentts2": "Stellon Labs Community", "kittentts2_cpp": "Stellon Labs Community", "kittentts08": "Apache 2.0",
     "lfm2_audio": "LFM Open v1.0",
     "luxtts": "MIT", "magpie": "NVIDIA OML", "maya1": "Apache 2.0", "melotts": "MIT",
     "orpheus": "Apache 2.0", "outetts": "CC-BY-NC-SA 4.0 + Llama 3.2", "parler": "Apache 2.0",
@@ -1062,7 +1067,7 @@ MODEL_LICENSE = {
 # with detail, "—"/"— (en)" English-only. _is_multilingual keys off the leading ✓.
 MODEL_LANGS = {
     "kittentts": "—", "kokoro": "✓", "kokoro_mlx": "✓", "lfm2_audio": "— (en)", "luxtts": "—",
-    "kittentts2": "✓ (16)", "kittentts2_cpp": "✓ (16)",
+    "kittentts2": "✓ (16)", "kittentts2_cpp": "✓ (16)", "kittentts08": "—",
     "magpie": "✓ (9)", "maya1": "—", "melotts": "✓ (4)", "orpheus": "— (en)",
     "outetts": "✓ (12)", "parler": "—", "piper": "✓", "scyllasband": "✓ (4)",
     # sanoTTS supports six languages, but the two benched voices are English-only.

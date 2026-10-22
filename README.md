@@ -85,7 +85,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 
 ---
 
-## Models tracked (85)
+## Models tracked (86)
 
 #### Predefined voices
 
@@ -98,6 +98,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [Inflect-Nano v2](https://huggingface.co/owensong/Inflect-Nano-v2) | 3.96M | Jul 2026 | ✓ (1) | — | — (en) | 24k | 2 knobs | Apache 2.0 |
 | [KittenTTS 2](https://huggingface.co/KittenML/kitten-tts-2) | 1.7B | Sep 2026 | ✓ | ✓ | ✓ (16) | 24k | tags | Stellon Labs Community |
 | [KittenTTS 2 (C++ CPU)](https://github.com/KittenML/kitten-tts-2-cpp) | 1.7B | Sep 2026 | ✓ | — | ✓ (16) | 24k | tags | Stellon Labs Community |
+| [KittenTTS Nano 0.1](https://huggingface.co/KittenML/kitten-tts-nano-0.1) | <100M | Aug 2025 | ✓ | — | — | 24k | — | Apache 2.0 |
 | [KittenTTS Nano 0.8](https://huggingface.co/KittenML/kitten-tts-nano-0.8) | 15M | Feb 2026 | ✓ | — | — | 24k | — | Apache 2.0 |
 | [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) | 82M | Dec 2024 | ✓ | — | ✓ | 24k | — | Apache 2.0 |
 | [LFM2.5-Audio 1.5B](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B) | 1.5B | Dec 2025 | ✓ (4) | — | — (en) | 24k | — | LFM Open v1.0 |
@@ -195,7 +196,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**58 of the 85 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**58 of the 86 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 2,094 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

@@ -1,21 +1,12 @@
-"""KittenTTS Nano runner (Apache 2.0, English-only, 8 predefined voices, no cloning).
+"""KittenTTS runner (Apache 2.0, English-only, 8 predefined voices, no cloning).
 
-Re-benched 2026-10-22 on Nano 0.8 (`kittentts` 0.8.1, the GitHub release wheel --
-PyPI stops at 0.1.3). The previous row was Nano 0.1 (`kittentts` 0.1.3); its rows
-and wavs are kept in results/_preserved_kittentts_0.1/.
-
-API (kittentts==0.8.x, ONNX-backed, 15M params):
+API (kittentts==0.1.x, ONNX-backed):
     from kittentts import KittenTTS
-    m = KittenTTS("KittenML/kitten-tts-nano-0.8")
-    audio = m.generate(text, voice="Jasper", speed=1.0)  # -> np.ndarray, 24kHz
+    m = KittenTTS()
+    audio = m.generate(text, voice="expr-voice-2-m", speed=1.0)  # -> np.ndarray, 24kHz
 
-Weights: HF KittenML/kitten-tts-nano-0.8 @ 7a1db645b1f3ab9420761d87428e042b9cec3f26
-(the package default; pinned by name here so a future default bump can't move it).
-
-Voices: Bella, Jasper, Luna, Bruno, Rosie, Hugo, Kiki, Leo. 0.8 keeps the 0.1
-names as aliases: `expr-voice-2-m` (the 0.1 row's voice) resolves to Jasper --
-same-length output on prompt 3 -- so the re-bench keeps the same speaker.
-CPU only: 0.8.1's constructor has no execution-provider argument.
+Voices: expr-voice-{2,3,4,5}-{m,f} (8 total). English (en-us) hardcoded
+in phonemizer init.
 
 Non-streaming: ONNX runs the full inference and returns the complete
 audio array in one call. TTFA == gen_s for this model (no incremental
@@ -28,9 +19,6 @@ at it via env vars before importing kittentts.
 Install gotcha #2: the bundled espeak-ng DLL has a hardcoded CI build path
 ('D:/a/espeakng-loader/...') baked in. Setting ESPEAK_DATA_PATH to the
 real path is required, otherwise espeak errors on `phontab` lookup.
-
-0.8.1 prints "Generating audio for text: ..." to stdout on every call; the
-harness skips non-JSON lines, so it is harmless.
 """
 
 import argparse
@@ -42,8 +30,7 @@ import time
 import _meminfo
 
 
-REPO_ID = "KittenML/kitten-tts-nano-0.8"
-DEFAULT_VOICE = "Jasper"
+DEFAULT_VOICE = "expr-voice-2-m"
 SAMPLE_RATE = 24000
 
 
@@ -53,7 +40,7 @@ def main() -> int:
     p.add_argument("--out", default=None)
     p.add_argument("--device", default="cpu")
     p.add_argument("--reference", default=None,
-                   help="Voice NAME (e.g. 'Luna') — KittenTTS doesn't support wav cloning.")
+                   help="Voice NAME (e.g. 'expr-voice-3-f') — KittenTTS doesn't support wav cloning.")
     p.add_argument("--variant", default=None)
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--language", default="en")
@@ -82,7 +69,7 @@ def main() -> int:
         import numpy as np
         import soundfile as sf
 
-        m = KittenTTS(REPO_ID)
+        m = KittenTTS()
         voice = args.reference or DEFAULT_VOICE
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,

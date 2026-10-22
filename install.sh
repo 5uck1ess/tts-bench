@@ -161,14 +161,26 @@ echo; cyan "=== KittenTTS ==="
 if ! want kittentts; then echo "kittentts: skipped (not in install filter)"
 elif [ ! -x venvs/kittentts/bin/python ]; then
     uv venv venvs/kittentts --python 3.11 || die "uv venv kittentts"
-    # Nano 0.8 ships as a GitHub release wheel; PyPI `kittentts` stops at 0.1.3.
-    uv pip install --python venvs/kittentts/bin/python \
-        "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl" \
-        espeakng-loader soundfile numpy psutil \
+    uv pip install --python venvs/kittentts/bin/python kittentts espeakng-loader soundfile numpy \
         || die "uv pip install kittentts"
     green "kittentts: ok"
 else
     echo "kittentts: already installed"
+fi
+
+# --- KittenTTS Nano 0.8 (own venv; same package name as Nano 0.1) ---
+echo; cyan "=== KittenTTS Nano 0.8 ==="
+if ! want kittentts08; then echo "kittentts08: skipped (not in install filter)"
+elif [ ! -x venvs/kittentts08/bin/python ]; then
+    uv venv venvs/kittentts08 --python 3.11 || die "uv venv kittentts08"
+    # Nano 0.8 ships as a GitHub release wheel; PyPI `kittentts` stops at 0.1.3.
+    uv pip install --python venvs/kittentts08/bin/python \
+        "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl" \
+        espeakng-loader soundfile numpy psutil \
+        || die "uv pip install kittentts 0.8.1"
+    green "kittentts08: ok"
+else
+    echo "kittentts08: already installed"
 fi
 
 # --- KittenTTS 2 (torch engine) ---

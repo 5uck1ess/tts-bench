@@ -102,11 +102,21 @@ if (-not (Want "kittentts")) { Write-Host "kittentts: skipped (not in install fi
 } elseif (-not (Test-Path "venvs\kittentts\Scripts\python.exe")) {
     Invoke-Checked "uv venv kittentts" { uv venv venvs\kittentts --python 3.11 }
     # KittenTTS uses phonemizer + espeak-ng. espeakng-loader bundles the DLL.
-    # Nano 0.8 ships as a GitHub release wheel; PyPI `kittentts` stops at 0.1.3.
-    Invoke-Checked "uv pip install kittentts" { uv pip install --python venvs\kittentts\Scripts\python.exe "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl" espeakng-loader soundfile numpy psutil }
+    Invoke-Checked "uv pip install kittentts" { uv pip install --python venvs\kittentts\Scripts\python.exe kittentts espeakng-loader soundfile numpy }
     Write-Host "kittentts: ok" -ForegroundColor Green
 } else {
     Write-Host "kittentts: already installed" -ForegroundColor Gray
+}
+
+Step "KittenTTS Nano 0.8 (own venv; same `kittentts` package name as Nano 0.1)"
+if (-not (Want "kittentts08")) { Write-Host "kittentts08: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\kittentts08\Scripts\python.exe")) {
+    Invoke-Checked "uv venv kittentts08" { uv venv venvs\kittentts08 --python 3.11 }
+    # Nano 0.8 ships as a GitHub release wheel; PyPI `kittentts` stops at 0.1.3.
+    Invoke-Checked "uv pip install kittentts 0.8.1" { uv pip install --python venvs\kittentts08\Scripts\python.exe "kittentts @ https://github.com/KittenML/KittenTTS/releases/download/0.8.1/kittentts-0.8.1-py3-none-any.whl" espeakng-loader soundfile numpy psutil }
+    Write-Host "kittentts08: ok" -ForegroundColor Green
+} else {
+    Write-Host "kittentts08: already installed" -ForegroundColor Gray
 }
 
 Step "KittenTTS 2 (kittenml, torch engine; cpu + cuda, presets + cloning)"
