@@ -163,6 +163,9 @@ MODELS = [
     ("phonon_31m",    "ptts",    "runners/phonon_runner.py",  {"en"},        ["cpu", "cuda"], "31m",   False),
     # 40m: one gated checkpoint per language (phonon-40m-{en,fr,es}), not the multilingual one.
     ("phonon_40m",    "ptts",    "runners/phonon_runner.py",  {"en", "fr", "es"}, ["cpu", "cuda"], "40m", False),
+    # AuroraTTS-100K: 95.6K params, harmonic+noise DSP instead of a vocoder; one
+    # LJSpeech voice, no cloning. Pinned remote code (see the runner).
+    ("auroratts",     "auroratts", "runners/auroratts_runner.py", {"en"},     ["cpu", "cuda"], None,    False),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], "1.5b", False),
     ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cuda"],               "7b",   True),

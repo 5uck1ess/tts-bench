@@ -121,6 +121,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/audio8_fast_cuda_p6.wav"
         },
         {
+          "model": "auroratts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/auroratts_cuda_p1.wav"
+        },
+        {
+          "model": "auroratts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/auroratts_cuda_p2.wav"
+        },
+        {
+          "model": "auroratts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/auroratts_cuda_p3.wav"
+        },
+        {
+          "model": "auroratts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/auroratts_cuda_p4.wav"
+        },
+        {
           "model": "chatterbox",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/chatterbox_cuda_p1.wav"
@@ -2613,6 +2633,10 @@
     "auk_flash": {
       "name": "AuK-Flash",
       "url": "https://huggingface.co/tencent/AuK-Flash"
+    },
+    "auroratts": {
+      "name": "AuroraTTS-100K",
+      "url": "https://huggingface.co/AuroraAI-Research/AuroraTTS-100K"
     },
     "breeze_tts2": {
       "name": "Breeze TTS 2",
