@@ -292,6 +292,21 @@ else
     echo "steertts: already installed"
 fi
 
+# --- AuroraTTS-100K (95.6K params, transformers remote code) ---
+echo; cyan "=== AuroraTTS-100K ==="
+if ! want auroratts; then echo "auroratts: skipped (not in install filter)"
+elif [ ! -x venvs/auroratts/bin/python ]; then
+    uv venv venvs/auroratts --python 3.11 || die "uv venv auroratts"
+    # transformers pinned: the checkpoint ships trust_remote_code modeling code, and the
+    # runner pins its revision. PyPI torch is CUDA-enabled on Linux.
+    uv pip install --python venvs/auroratts/bin/python torch==2.8.0 "transformers==4.57.1" \
+        safetensors huggingface-hub g2p_en nltk numpy soundfile psutil \
+        || die "uv pip install auroratts"
+    green "auroratts: ok"
+else
+    echo "auroratts: already installed"
+fi
+
 # --- Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m + phonon_40m share this venv) ---
 # phonon-40m-{en,fr,es} are gated: accept the terms on HF (auto-approved) before benching.
 echo; cyan "=== Phonon (ptts wheel, Rust runtime) ==="

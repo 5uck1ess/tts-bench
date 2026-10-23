@@ -197,6 +197,20 @@ if (-not (Want "inflect")) { Write-Host "inflect: skipped (not in install filter
     Write-Host "inflect: already installed" -ForegroundColor Gray
 }
 
+Step "AuroraTTS-100K (95.6K params, transformers remote code)"
+if (-not (Want "auroratts")) { Write-Host "auroratts: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\auroratts\Scripts\python.exe")) {
+    Invoke-Checked "uv venv auroratts" { uv venv venvs\auroratts --python 3.11 }
+    # transformers pinned: the checkpoint ships trust_remote_code modeling code, and the
+    # runner pins its revision. NLTK corpora for g2p_en download on first use.
+    Invoke-Checked "uv pip install auroratts deps" { uv pip install --python venvs\auroratts\Scripts\python.exe "transformers==4.57.1" safetensors huggingface-hub g2p_en nltk numpy soundfile psutil }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120), LAST. PyPI's Windows torch is CPU-only.
+    Invoke-Checked "torch cu128 for auroratts" { uv pip install --python venvs\auroratts\Scripts\python.exe torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "auroratts: ok" -ForegroundColor Green
+} else {
+    Write-Host "auroratts: already installed" -ForegroundColor Gray
+}
+
 Step "Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m + phonon_40m share this venv; 40m repos are gated — accept terms on HF)"
 if (-not (Want "ptts")) { Write-Host "ptts: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\ptts\Scripts\python.exe")) {
