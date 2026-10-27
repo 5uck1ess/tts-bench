@@ -19,7 +19,7 @@ Gotchas:
   * **The 80M continues the reference if it is long.** On the full 15 s house
     reference it often speaks the reference transcript's tail before or inside
     the target ("...otherwise because you, you're amazing"). So, like zipvoice,
-    the house reference is cut in-runner via ``_KNOWN_CLIPS`` at a pause, with
+    the house reference is cut in-runner via ``_KNOWN_CLIPS`` at a pause (cached once in venvs/hojo/ref_cache), with
     its exact transcript; other references are used as given. Cut length vs
     result (CPU, 3 seeds x prompts 1-4, WavLM-sv similarity to the house ref):
         5.27 s  sim 0.831  WER mean 0.134  0/12 clips WER > 0.5
@@ -48,12 +48,10 @@ The API is non-streaming and returns the full waveform, so TTFA == gen_s.
 """
 
 import argparse
-import atexit
 import glob
 import json
 import os
 import sys
-import tempfile
 import time
 from pathlib import Path
 
@@ -104,14 +102,18 @@ def _resolve_reference(ref_wav):
     if not known:
         return str(ref_wav), txt.read_text(encoding="utf-8").strip()
     cut_sec, text = known
-    y, sr = sf.read(str(ref_wav), dtype="float32", always_2d=False)
-    if y.ndim > 1:
-        y = y.mean(axis=1)
-    fd, clip = tempfile.mkstemp(suffix=".wav", prefix="hojo_ref_")
-    os.close(fd)
-    atexit.register(lambda: os.path.exists(clip) and os.remove(clip))
-    sf.write(clip, y[:int(cut_sec * sr)], sr)
-    return clip, text
+    # One fixed cache file per cut, reused by every run, so a killed (timed-out)
+    # runner leaves nothing new behind. Written to a temp name then renamed.
+    clip = VENV / "ref_cache" / f"{ref_wav.stem}_{cut_sec}s.wav"
+    if not clip.exists():
+        y, sr = sf.read(str(ref_wav), dtype="float32", always_2d=False)
+        if y.ndim > 1:
+            y = y.mean(axis=1)
+        clip.parent.mkdir(exist_ok=True)
+        tmp = clip.with_name(f"{clip.stem}.{os.getpid()}.tmp.wav")
+        sf.write(str(tmp), y[:int(cut_sec * sr)], sr)
+        os.replace(tmp, clip)
+    return str(clip), text
 
 
 def main() -> int:
