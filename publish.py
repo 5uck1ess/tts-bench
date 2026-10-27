@@ -76,6 +76,9 @@ NO_PRESET_VOICE = {
     "moss_tts", "moss_tts_v15", "moss_tts_nano", "fish_15", "fish_s2", "metavoice",
     # drama3: no-reference voice is invented per prompt; runner clones house Chris instead.
     "drama3",
+    # hojo_80m: voice.npz is token embeddings only and generate() requires a reference;
+    # the no-reference run clones the house Chris (5.27 s cut, see the runner).
+    "hojo_80m",
     # Qwen3-TTS *Base* (both runtimes): no model-native preset voice -- Base is the
     # cloning checkpoint, so it is reference-only. CustomVoice (qwentts_06b_custom)
     # is the Qwen row with real preset timbres.

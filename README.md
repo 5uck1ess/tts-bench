@@ -59,7 +59,7 @@ python bench.py
 python bench.py
 ```
 
-Pass model names to install only those (names = the `venvs/<name>` slugs, which match the tables below — lowercase, e.g. `kokoro`, `f5tts`, `chatterbox`, `miso`). A few share one install: `neutts` covers NeuTTS Air + Nano, `chatterbox` both ChatterBox variants, `vibevoice` the 0.5B/1.5B, `moss_tts` both MOSS checkpoints, `inflect` both Inflect v2 sizes, `qwentts` the 1.7B Base + both 0.6B checkpoints, `fish` is Fish Speech 1.5. Add `scoring` (plus `scoring_sim` on Linux) for the objective-metrics venv. `bench.py` only runs models whose venv exists, so a partial install benches cleanly — install more models later by re-running with new names.
+Pass model names to install only those (names = the `venvs/<name>` slugs, which match the tables below — lowercase, e.g. `kokoro`, `f5tts`, `chatterbox`, `miso`). A few share one install: `neutts` covers NeuTTS Air + Nano, `chatterbox` both ChatterBox variants, `vibevoice` the 0.5B/1.5B, `moss_tts` both MOSS checkpoints, `inflect` both Inflect v2 sizes, `hojo` both Hojo-TTS-Light sizes, `qwentts` the 1.7B Base + both 0.6B checkpoints, `fish` is Fish Speech 1.5. Add `scoring` (plus `scoring_sim` on Linux) for the objective-metrics venv. `bench.py` only runs models whose venv exists, so a partial install benches cleanly — install more models later by re-running with new names.
 
 Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `python compare.py "your phrase"`. See [docs/architecture.md](docs/architecture.md) for the runner protocol and how to add a model.
 
@@ -85,7 +85,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 
 ---
 
-## Models tracked (87)
+## Models tracked (89)
 
 #### Predefined voices
 
@@ -95,6 +95,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [Audio8 TTS Preview 0.1B](https://huggingface.co/Audio8/Audio8-TTS-Preview-0.1b) | 170M | Aug 2026 | ✓ | ✓ | ✓ (11) | 44.1k | — | Audio8 Community v1.0 |
 | [Audio8 TTS Preview 0.6B](https://huggingface.co/Audio8/Audio8-TTS-Preview-0.6b) | 601M | Jul 2026 | ✓ | ✓ | ✓ (11) | 44.1k | — | Apache 2.0 |
 | [AuroraTTS-100K](https://huggingface.co/AuroraAI-Research/AuroraTTS-100K) | 95.6K | Oct 2026 | ✓ (1) | — | — (en) | 22.05k | 2 knobs | Apache 2.0 |
+| [Hojo-TTS-Light 40M](https://huggingface.co/HojoAI/Hojo-TTS-Light-40M) | 84.5M (40.4M LM + 13.3M fine + 30.8M decoder) | Aug 2026 | ✓ (15) | — | ✓ (zh+en) | 24k | — | Apache 2.0 |
 | [Inflect-Micro v2](https://huggingface.co/owensong/Inflect-Micro-v2) | 9.36M | Jul 2026 | ✓ (1) | — | — (en) | 24k | 2 knobs | Apache 2.0 |
 | [Inflect-Nano v2](https://huggingface.co/owensong/Inflect-Nano-v2) | 3.96M | Jul 2026 | ✓ (1) | — | — (en) | 24k | 2 knobs | Apache 2.0 |
 | [KittenTTS 2](https://huggingface.co/KittenML/kitten-tts-2) | 1.7B | Sep 2026 | ✓ | ✓ | ✓ (16) | 24k | tags | Stellon Labs Community |
@@ -149,6 +150,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [Fish Speech 1.5](https://huggingface.co/fishaudio/fish-speech-1.5) | ~500M | Nov 2024 | — | ✓ | ✓ | **44.1k** | — | CC-BY-NC-SA 4.0 |
 | [Fish Speech S2-Pro](https://huggingface.co/fishaudio/s2-pro) | 4B | Mar 2026 | — | ✓ | ✓ (80+) | **44.1k** | tags | Research (non-commercial) |
 | [Higgs Audio v3 TTS](https://huggingface.co/bosonai/higgs-audio-v3-tts-4b) | 4B | Jun 2026 | — | ✓ | ✓ (100) | 24k | tags | Research (NC) |
+| [Hojo-TTS-Light 80M](https://huggingface.co/HojoAI/Hojo-TTS-Light) | 167M (89.4M LM + 20.3M codec enc + 45.0M dec + 12.0M spk) | Aug 2026 | — | ✓ | ✓ (zh+en) | 24k | — | Apache 2.0 |
 | [IndexTTS-2](https://huggingface.co/IndexTeam/IndexTTS-2) | 1.5B | Jun 2025 | — | ✓ | ✓ (zh+en) | 22.05k | emo-ref + desc + knob | bilibili Model License |
 | [IndexTTS-2.5](https://huggingface.co/IndexTeam/IndexTTS-2.5) | 0.97B | Aug 2026 | — | ✓ | ✓ (5) | 22.05k | emo-ref + desc + knob | bilibili Model License |
 | [LongCat-AudioDiT 1B](https://huggingface.co/meituan-longcat/LongCat-AudioDiT-1B) | 1.42B | Mar 2026 | — | ✓ | ✓ (zh+en) | 24k | — | MIT |
@@ -197,7 +199,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**58 of the 87 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**59 of the 89 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 2,094 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

@@ -166,6 +166,10 @@ MODELS = [
     # AuroraTTS-100K: 95.6K params, harmonic+noise DSP instead of a vocoder; one
     # LJSpeech voice, no cloning. Pinned remote code (see the runner).
     ("auroratts",     "auroratts", "runners/auroratts_runner.py", {"en"},     ["cpu", "cuda"], None,    False),
+    # Hojo-TTS-Light (ONNX Runtime, no torch): 40M = 15 preset voices, no cloning;
+    # 80M = cloning only (no preset; the no-reference run clones the house ref).
+    ("hojo_40m",      "hojo",      "runners/hojo_runner.py",      {"en"},     ["cpu", "cuda"], "40m",   False),
+    ("hojo_80m",      "hojo",      "runners/hojo_runner.py",      {"en"},     ["cpu", "cuda"], "80m",   True),
     ("vibevoice",      "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], None,    False),
     ("vibevoice_15b",  "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cpu", "cuda", "mps"], "1.5b", False),
     ("vibevoice_7b",   "vibevoice",  "runners/vibevoice_runner.py",  {"en"},        ["cuda"],               "7b",   True),
@@ -414,6 +418,11 @@ SERVER_BACKED = {
 # lists only "cpu", so rigs on the wheel keep the cpu cell alone.
 PTTS_CUDA = {"phonon_31m", "phonon_40m"}
 
+# Hojo-TTS-Light runs on ONNX Runtime with no torch in the venv, so detect_cuda() can't
+# see the GPU. Its cuda cell needs a GPU (nvidia-smi) AND an onnxruntime build that
+# exposes the CUDA execution provider (onnxruntime-gpu, not the CPU wheel).
+ORT_CUDA = {"hojo_40m", "hojo_80m"}
+
 
 def venv_python(venv_dir: str) -> Path:
     """Resolve the python.exe / bin/python path for a venv on this OS."""
@@ -501,6 +510,9 @@ def build_cells(reference=None, requested_models=None, requested_devices=None,
         elif model_name in PTTS_CUDA:
             cuda_ok = ("cuda" in model_devices) and detect_cuda_smi() and _probe(
                 py, "import ptts; print('cuda' in ptts.available_devices())")
+        elif model_name in ORT_CUDA:
+            cuda_ok = ("cuda" in model_devices) and detect_cuda_smi() and _probe(
+                py, "import onnxruntime as o; print('CUDAExecutionProvider' in o.get_available_providers())")
         else:
             cuda_ok = ("cuda" in model_devices) and detect_cuda(py)
         mps_ok = ("mps" in model_devices) and detect_mps(py)

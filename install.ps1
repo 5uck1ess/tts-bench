@@ -211,6 +211,25 @@ if (-not (Want "auroratts")) { Write-Host "auroratts: skipped (not in install fi
     Write-Host "auroratts: already installed" -ForegroundColor Gray
 }
 
+Step "Hojo-TTS-Light (40M preset + 80M cloner share this venv; ONNX Runtime, no torch)"
+if (-not (Want "hojo")) { Write-Host "hojo: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\hojo\Scripts\python.exe")) {
+    Invoke-Checked "uv venv hojo" { uv venv venvs\hojo --python 3.12 }
+    # Not a package: each size ships its own onnx_model.py; the runner imports from src.
+    if (-not (Test-Path "venvs\hojo\src")) {
+        Invoke-Checked "git clone hojo" { git clone https://github.com/HojoAI/Hojo-TTS-Light venvs\hojo\src }
+        Invoke-Checked "pin hojo" { git -C venvs\hojo\src checkout -q 7b2c674b0b02a979670a9496c9ed471ff99c05cf }
+    }
+    # WeTextProcessing is left out: it needs pynini (no Windows build) and the runner skips TN.
+    # onnxruntime-gpu 1.21.1 per upstream (1.25 breaks the 80M decoder on CUDA); it also runs CPU.
+    # The nvidia-* wheels supply CUDA 12 + cuDNN 9; the runner puts their bin dirs on PATH.
+    Invoke-Checked "uv pip install hojo deps" { uv pip install --python venvs\hojo\Scripts\python.exe "numpy>=1.26.4,<2" scipy librosa soundfile tokenizers onnx "onnxruntime-gpu==1.21.1" huggingface_hub psutil "nvidia-cudnn-cu12==9.*" "nvidia-cuda-runtime-cu12==12.*" "nvidia-cublas-cu12==12.*" "nvidia-cufft-cu12==11.*" "nvidia-curand-cu12==10.*" "nvidia-cuda-nvrtc-cu12==12.*" }
+    Invoke-Checked "download hojo weights" { & "venvs\hojo\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; [d(r, revision=v, local_dir=p) for r,v,p in [('HojoAI/Hojo-TTS-Light-40M','c3cf21c77dc04b220aa4dabe20fc59e66a2a5485','venvs/hojo/models-40m'),('HojoAI/Hojo-TTS-Light','d9c02af95496b6363b44944326d71491ab8905b0','venvs/hojo/models-80m')]]" }
+    Write-Host "hojo: ok" -ForegroundColor Green
+} else {
+    Write-Host "hojo: already installed" -ForegroundColor Gray
+}
+
 Step "Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m + phonon_40m share this venv; 40m repos are gated — accept terms on HF)"
 if (-not (Want "ptts")) { Write-Host "ptts: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\ptts\Scripts\python.exe")) {
