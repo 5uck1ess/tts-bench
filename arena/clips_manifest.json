@@ -301,6 +301,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/linux-default/higgs_v3_cuda_p5.wav"
         },
         {
+          "model": "hojo_40m",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/hojo_40m_cuda_p1.wav"
+        },
+        {
+          "model": "hojo_40m",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/hojo_40m_cuda_p2.wav"
+        },
+        {
+          "model": "hojo_40m",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/hojo_40m_cuda_p3.wav"
+        },
+        {
+          "model": "hojo_40m",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/hojo_40m_cuda_p4.wav"
+        },
+        {
           "model": "inflect_micro",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/inflect_micro_cuda_p1.wav"
@@ -1736,6 +1756,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/higgs_v3_cuda_p5.wav"
         },
         {
+          "model": "hojo_80m",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/hojo_80m_cuda_p1.wav"
+        },
+        {
+          "model": "hojo_80m",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/hojo_80m_cuda_p2.wav"
+        },
+        {
+          "model": "hojo_80m",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/hojo_80m_cuda_p3.wav"
+        },
+        {
+          "model": "hojo_80m",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/hojo_80m_cuda_p4.wav"
+        },
+        {
           "model": "indextts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/indextts_cuda_p1.wav"
@@ -2697,6 +2737,14 @@
     "higgs_v3": {
       "name": "Higgs Audio v3 TTS",
       "url": "https://huggingface.co/bosonai/higgs-audio-v3-tts-4b"
+    },
+    "hojo_40m": {
+      "name": "Hojo-TTS-Light 40M",
+      "url": "https://huggingface.co/HojoAI/Hojo-TTS-Light-40M"
+    },
+    "hojo_80m": {
+      "name": "Hojo-TTS-Light 80M",
+      "url": "https://huggingface.co/HojoAI/Hojo-TTS-Light"
     },
     "indextts": {
       "name": "IndexTTS-2",

@@ -1,0 +1,225 @@
+"""Hojo-TTS-Light runner (HojoAI, Apache-2.0, ONNX Runtime, no torch). Two sizes:
+
+  * ``--variant 40m``: 15 built-in voices, NO cloning. Runs the repo's default
+    voice ``hojo_en_m_02``. ``--reference`` is accepted and ignored.
+  * ``--variant 80m``: cloning ONLY (reference wav + sibling .txt transcript).
+    Its ``voice.npz`` holds just token embeddings and ``generate()`` requires
+    ``prompt_speech``, so there is no preset voice; the no-reference path clones
+    the house chris_hemsworth_15s reference instead (NO_PRESET_VOICE).
+
+Both are token-LMs over a 50 Hz codec, 24 kHz output. Source is the GitHub repo
+pinned at 7b2c674 (2026-10-27; each size ships its own ``onnx_model.py``, so the
+runner imports from that size's folder), weights pinned by HF revision below.
+
+Sampling: upstream defaults (temperature 0.8, top_p 0.95, repetition penalty
+1.1, max 2048 tokens = ~41 s, prompt 3 is ~18 s). ``generate()`` re-seeds
+``np.random`` with ``seed`` on every call, so reruns are bit-identical.
+
+Gotchas:
+  * **The 80M continues the reference if it is long.** On the full 15 s house
+    reference it often speaks the reference transcript's tail before or inside
+    the target ("...otherwise because you, you're amazing"). So, like zipvoice,
+    the house reference is cut in-runner via ``_KNOWN_CLIPS`` at a pause (cached once in venvs/hojo/ref_cache), with
+    its exact transcript; other references are used as given. Cut length vs
+    result (CPU, 3 seeds x prompts 1-4, WavLM-sv similarity to the house ref):
+        5.27 s  sim 0.831  WER mean 0.134  0/12 clips WER > 0.5
+        9.27 s  sim 0.856  WER mean 0.069  0/12   <- used: best on both
+       11.81 s  sim 0.850  WER mean 0.124  0/12
+       15 s     sim 0.869  WER mean 0.607  6/12 (max 2.11; p2 ran to 30 s once)
+  * **The 80M does not hold this speaker at any cut.** 0.83-0.87 is barely above
+    the 40M's preset voice (0.80, not a clone) and below real cloners on the same
+    ref (0.93-0.99); output F0 stays 115-138 Hz vs the ref's 87 Hz. It is not the
+    runner: upstream ``infer.py`` gives the same result. Other refs: its own
+    zh1.wav example 0.96-0.97, jo 0.92, tym 0.90, dafoe_scientist 0.49.
+  * **Text normalisation is skipped.** Upstream runs WeTextProcessing, which needs
+    pynini, which does not build on Windows. The English bench prompts are already
+    spelled out (no digits/symbols), so English TN would be a no-op; skipping it on
+    every rig keeps the rigs comparable.
+  * **CUDA on Windows needs the cuDNN wheel dirs on PATH.** ``ort.preload_dlls()``
+    loads cudnn64_9.dll, but cuDNN lazy-loads its sub-libraries by name and fails
+    with CUDNN_STATUS_SUBLIBRARY_LOADING_FAILED at the first Conv. ORT then logs
+    "EP Error" and silently reruns that session on CPU, so the cell still "works".
+    The nvidia/*/bin dirs are prepended to PATH before onnxruntime is imported, and
+    every cuda run checks that no session fell back (a fallback fails the run).
+  * onnxruntime-gpu pinned 1.21.1 (upstream: 1.25 breaks the 80M decoder on CUDA).
+    Upstream promotes the BF16 weights to FP32 at load for every provider.
+
+The API is non-streaming and returns the full waveform, so TTFA == gen_s.
+"""
+
+import argparse
+import glob
+import json
+import os
+import sys
+import time
+from pathlib import Path
+
+import _meminfo
+
+
+REPO = Path(__file__).resolve().parent.parent
+VENV = Path(sys.prefix)
+SRC_DIRS = {"40m": VENV / "src" / "Hojo-TTS-Light-40M",
+            "80m": VENV / "src" / "Hojo-TTS-Light-80M"}
+MODEL_DIRS = {"40m": VENV / "models-40m", "80m": VENV / "models-80m"}
+# HF revisions the install scripts download (recorded here; snapshot is local).
+REVISIONS = {"40m": "c3cf21c77dc04b220aa4dabe20fc59e66a2a5485",   # HojoAI/Hojo-TTS-Light-40M
+             "80m": "d9c02af95496b6363b44944326d71491ab8905b0"}   # HojoAI/Hojo-TTS-Light
+VOICE_40M = "hojo_en_m_02"   # the repo's documented default voice
+SEED = 42                    # upstream default
+DEFAULT_REF = REPO / "reference" / "chris_hemsworth_15s.wav"
+SR = 24000
+
+# Clean cut points for house references: (seconds, exact transcript of that slice).
+_KNOWN_CLIPS = {
+    "chris_hemsworth_15s": (9.27, "Hey you. Yes, yes, yes, you. Today is your day. You got this. "
+                                  "You're absolutely crushing it at everything you do from your "
+                                  "job to maintaining"),
+}
+
+
+def _add_cuda_dll_dirs():
+    # Windows only: cuDNN sub-DLLs resolve via PATH. On Linux, preload_dlls() below
+    # dlopens the nvidia wheel libs (LD_LIBRARY_PATH can't change after startup).
+    if os.name != "nt":
+        return
+    nv = VENV / "Lib" / "site-packages" / "nvidia"
+    bins = glob.glob(str(nv / "*" / "bin"))
+    if bins:
+        os.environ["PATH"] = os.pathsep.join(bins) + os.pathsep + os.environ.get("PATH", "")
+
+
+def _resolve_reference(ref_wav):
+    """(wav_path, transcript) for 80M cloning; house refs are cut to a clean slice."""
+    import soundfile as sf
+
+    ref_wav = Path(ref_wav)
+    txt = ref_wav.with_suffix(".txt")
+    if not txt.exists():
+        raise FileNotFoundError(f"reference {ref_wav} needs a sibling .txt transcript")
+    known = _KNOWN_CLIPS.get(ref_wav.stem)
+    if not known:
+        return str(ref_wav), txt.read_text(encoding="utf-8").strip()
+    cut_sec, text = known
+    # One fixed cache file per cut, reused by every run, so a killed (timed-out)
+    # runner leaves nothing new behind. Written to a temp name then renamed.
+    clip = VENV / "ref_cache" / f"{ref_wav.stem}_{cut_sec}s.wav"
+    if not clip.exists():
+        y, sr = sf.read(str(ref_wav), dtype="float32", always_2d=False)
+        if y.ndim > 1:
+            y = y.mean(axis=1)
+        clip.parent.mkdir(exist_ok=True)
+        tmp = clip.with_name(f"{clip.stem}.{os.getpid()}.tmp.wav")
+        sf.write(str(tmp), y[:int(cut_sec * sr)], sr)
+        os.replace(tmp, clip)
+    return str(clip), text
+
+
+def main() -> int:
+    p = argparse.ArgumentParser()
+    p.add_argument("--text", default=None)
+    p.add_argument("--out", default=None)
+    p.add_argument("--device", default="cpu")
+    p.add_argument("--reference", default=None,
+                   help="80m: wav + sibling .txt (defaults to the house reference). 40m: ignored.")
+    p.add_argument("--variant", default="40m", choices=sorted(SRC_DIRS))
+    p.add_argument("--runs", type=int, default=1)
+    p.add_argument("--language", default="en")
+    p.add_argument("--stdin", action="store_true")
+    args = p.parse_args()
+    if not args.stdin and (args.text is None or args.out is None):
+        print(json.dumps({"ok": False, "run_index": 0,
+                          "error": "either --stdin or both --text and --out are required"}))
+        return 1
+    if args.language != "en":
+        # Chinese is the model's only other language, and not a bench prompt language.
+        print(json.dumps({"ok": False, "run_index": 0,
+                          "error": f"Hojo-TTS-Light runs English only here, got language={args.language}"}))
+        return 1
+    if args.device not in ("cpu", "cuda"):
+        print(json.dumps({"ok": False, "run_index": 0,
+                          "error": f"unsupported device {args.device} (ONNX Runtime cpu/cuda only)"}))
+        return 1
+
+    try:
+        if args.device == "cuda":
+            _add_cuda_dll_dirs()
+        sys.path.insert(0, str(SRC_DIRS[args.variant]))
+        import soundfile as sf
+        import onnx_model
+        if args.device == "cuda":
+            # The 80M constructor preloads the CUDA/cuDNN wheel libs; the 40M's doesn't.
+            import onnxruntime as ort
+            ort.preload_dlls(cuda=True, cudnn=True)
+
+        tts = onnx_model.HojoTTSLightOnnx(str(MODEL_DIRS[args.variant]), provider=args.device)
+        sessions = ([tts.lm, tts.codec_encoder, tts.decoder, tts.speaker_encoder]
+                    if args.variant == "80m" else [tts.lm, tts.fine_local, tts.codec_decode])
+        if args.variant == "80m":
+            ref_path, ref_text = _resolve_reference(args.reference or DEFAULT_REF)
+            gen = lambda t: tts.generate(t, prompt_speech=ref_path, prompt_text=ref_text, seed=SEED)
+        else:
+            gen = lambda t: tts.generate(t, voice=VOICE_40M, seed=SEED)
+    except Exception as e:
+        print(json.dumps({"ok": False, "run_index": 0,
+                          "error": f"load failed: {type(e).__name__}: {e}"}))
+        return 1
+
+    def _one(text, out_path, run_index, write_wav):
+        try:
+            _meminfo.reset_peak(args.device)
+            t0 = time.perf_counter()
+            wav = gen(text)
+            t_end = time.perf_counter()
+            # ORT's fallback happens at run time (EP Error -> session rebuilt on CPU),
+            # so a cuda cell must be checked after the call, not just at load.
+            if args.device == "cuda" and any(
+                    s.get_providers()[0] != "CUDAExecutionProvider" for s in sessions):
+                raise RuntimeError("an ONNX session fell back to CPU on --device cuda")
+
+            audio_s = float(len(wav) / SR)
+            if write_wav:
+                sf.write(out_path, wav, SR)
+
+            # Non-streaming: TTFA = gen_s (no audio until the call returns).
+            print(json.dumps({
+                "ok": True, "run_index": run_index,
+                "ttfa_ms": (t_end - t0) * 1000,
+                "gen_s": t_end - t0, "audio_s": audio_s,
+                **_meminfo.sample(args.device),
+            }), flush=True)
+            return True
+        except Exception as e:
+            print(json.dumps({
+                "ok": False, "run_index": run_index,
+                "error": f"{type(e).__name__}: {e}",
+            }), flush=True)
+            return False
+
+    if args.stdin:
+        idx = 0
+        print(json.dumps({"ready": True}), flush=True)
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                job = json.loads(line)
+            except json.JSONDecodeError as e:
+                print(json.dumps({"ok": False, "run_index": idx,
+                                  "error": f"json parse: {e}"}), flush=True)
+                idx += 1
+                continue
+            _one(job["text"], job["out"], idx, write_wav=True)
+            idx += 1
+        return 0
+
+    for i in range(args.runs):
+        if not _one(args.text, args.out, i, write_wav=(i == 0)):
+            return 1
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

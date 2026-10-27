@@ -479,6 +479,8 @@ MODEL_DISPLAY_NAMES = {
     "phonon_31m":    "Phonon 31m",
     "phonon_40m":    "Phonon 40m",
     "auroratts":     "AuroraTTS-100K",
+    "hojo_40m":      "Hojo-TTS-Light 40M",
+    "hojo_80m":      "Hojo-TTS-Light 80M",
     "f5tts":         "F5-TTS v1",
     "chatterbox":       "Chatterbox",
     "chatterbox_turbo": "Chatterbox Turbo",
@@ -568,6 +570,8 @@ MODEL_SIZE = {
     "phonon_31m":    "41.1M (30.8M LM + Mimi)",   # counted from model.safetensors; card's "31M" excludes the codec
     "phonon_40m":    "50.5M (40.2M LM + Mimi)",   # same count; identical across the en/fr/es checkpoints
     "auroratts":     "95.6K",   # card: 95,638 inference params incl. the 145-param DSP; verified by numel at load
+    "hojo_40m":      "84.5M (40.4M LM + 13.3M fine + 30.8M decoder)",   # ONNX initializers + npz token embedding
+    "hojo_80m":      "167M (89.4M LM + 20.3M codec enc + 45.0M dec + 12.0M spk)",   # same method; card's "80M" excludes input embeddings
     "sesame":        "1B",
     "miso":          "8.2B",
     "longcat_1b":    "1.42B",
@@ -673,6 +677,8 @@ MODEL_URL = {
     "phonon_31m":    _HF + "gradium/phonon-31m-en",
     "phonon_40m":    _HF + "gradium/phonon-40m-en",
     "auroratts":     _HF + "AuroraAI-Research/AuroraTTS-100K",
+    "hojo_40m":      _HF + "HojoAI/Hojo-TTS-Light-40M",
+    "hojo_80m":      _HF + "HojoAI/Hojo-TTS-Light",
     "sesame":        _HF + "sesame/csm-1b",
     "miso":          _HF + "MisoLabs/MisoTTS",
     "longcat_1b":    _HF + "meituan-longcat/LongCat-AudioDiT-1B",
@@ -768,6 +774,8 @@ MODEL_KIND = {
     "phonon_31m":    "predefined",  # checkpoint default voice; cloning is Gradium's hosted API only
     "phonon_40m":    "predefined",
     "auroratts":     "predefined",  # single LJSpeech speaker, no cloning
+    "hojo_40m":      "predefined",  # 15 voices, no cloning
+    "hojo_80m":      "cloning",     # no preset voice; no-reference path clones the house ref
     "omnivoice":     "cloning",
     "zipvoice":      "cloning",
     "voxcpm":        "cloning",
@@ -865,6 +873,8 @@ MODEL_RELEASE = {
     "phonon_31m":    "2026-10",   # HF repo created 2026-10-19
     "phonon_40m":    "2026-10",
     "auroratts":     "2026-10",   # HF repo created 2026-10-22
+    "hojo_40m":      "2026-08",   # v2 weights benched (HF 2026-08-19); first 40M release 2026-06
+    "hojo_80m":      "2026-08",   # v2 weights benched (HF 2026-08-21); v1 released 2026-05
     "sesame":        "2025-03",
     "miso":          "2026-05",
     "longcat_1b":    "2026-03",
@@ -971,6 +981,7 @@ MODEL_SR = {
     "inflect_nano": "24k", "inflect_micro": "24k", "vaniq": "24k", "supratts": "22.05k",
     "steertts": "24k", "steertts_noflow": "24k", "phonon_31m": "24k", "phonon_40m": "24k",
     "auroratts": "22.05k",
+    "hojo_40m": "24k", "hojo_80m": "24k",
     "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
     "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
     "breeze_tts2": "24k",
@@ -1001,6 +1012,7 @@ MODEL_EXPRESSIVE = {
     "steertts": "12 knobs + tags", "steertts_noflow": "12 knobs + tags",
     "phonon_31m": "knob", "phonon_40m": "knob",  # duration_delta (speaking rate)
     "auroratts": "2 knobs",  # speed + pitch_shift
+    "hojo_40m": "—", "hojo_80m": "—",  # pinyin override only; style control is on the roadmap
     # length_scale only; noise scales are hardcoded in upstream's synthesize().
     "vaniq": "knob",
     # length scale + latent noise + duration-predictor noise. No emotion/style control.
@@ -1043,6 +1055,7 @@ MODEL_LICENSE = {
     "steertts": "MIT code / CC-BY-NC 4.0 weights", "steertts_noflow": "MIT code / CC-BY-NC 4.0 weights",
     "phonon_31m": "Apache 2.0", "phonon_40m": "CC BY-NC 4.0",
     "auroratts": "Apache 2.0",
+    "hojo_40m": "Apache 2.0", "hojo_80m": "Apache 2.0",
     "supertonic": "MIT + OpenRAIL-M",
     "vibevoice": "MIT", "voxtral": "CC-BY-NC 4.0", "chatterbox": "MIT",
     "chatterbox_turbo": "MIT", "coqui": "CPML (non-commercial)", "cosyvoice": "Apache 2.0",
@@ -1083,6 +1096,7 @@ MODEL_LANGS = {
     "inflect_nano": "— (en)", "inflect_micro": "— (en)", "vaniq": "— (en)", "supratts": "— (en)",
     "steertts": "— (en)", "steertts_noflow": "— (en)", "phonon_31m": "— (en)", "phonon_40m": "✓ (5)",
     "auroratts": "— (en)",
+    "hojo_40m": "✓ (zh+en)", "hojo_80m": "✓ (zh+en)",
     "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
     "chatterbox_turbo": "—", "coqui": "✓ (17)", "cosyvoice": "✓", "dia": "—",

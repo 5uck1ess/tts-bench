@@ -307,6 +307,37 @@ else
     echo "auroratts: already installed"
 fi
 
+# --- Hojo-TTS-Light (40M preset + 80M cloner share this venv; ONNX Runtime, no torch) ---
+echo; cyan "=== Hojo-TTS-Light ==="
+if ! want hojo; then echo "hojo: skipped (not in install filter)"
+elif [ ! -x venvs/hojo/bin/python ]; then
+    uv venv venvs/hojo --python 3.12 || die "uv venv hojo"
+    # Not a package: each size ships its own onnx_model.py; the runner imports from src.
+    if [ ! -d venvs/hojo/src ]; then
+        git clone https://github.com/HojoAI/Hojo-TTS-Light venvs/hojo/src || die "git clone hojo"
+        git -C venvs/hojo/src checkout -q 7b2c674b0b02a979670a9496c9ed471ff99c05cf || die "pin hojo"
+    fi
+    # WeTextProcessing (pynini) left out: the runner skips TN on every rig so rigs match.
+    # onnxruntime-gpu 1.21.1 per upstream (1.25 breaks the 80M decoder on CUDA); the
+    # nvidia-* wheels give it CUDA 12 + cuDNN 9 (the runner's ort.preload_dlls loads them).
+    # onnxruntime-gpu has no macOS wheel, so Darwin gets the CPU build at the same version.
+    if [ "$(uname)" = "Darwin" ]; then
+        HOJO_ORT=("onnxruntime==1.21.1")
+    else
+        HOJO_ORT=("onnxruntime-gpu==1.21.1"
+            "nvidia-cudnn-cu12==9.*" "nvidia-cuda-runtime-cu12==12.*" "nvidia-cublas-cu12==12.*"
+            "nvidia-cufft-cu12==11.*" "nvidia-curand-cu12==10.*" "nvidia-cuda-nvrtc-cu12==12.*")
+    fi
+    uv pip install --python venvs/hojo/bin/python "numpy>=1.26.4,<2" scipy librosa soundfile \
+        tokenizers onnx huggingface_hub psutil "${HOJO_ORT[@]}" \
+        || die "uv pip install hojo"
+    venvs/hojo/bin/python -c "from huggingface_hub import snapshot_download as d; [d(r, revision=v, local_dir=p) for r,v,p in [('HojoAI/Hojo-TTS-Light-40M','c3cf21c77dc04b220aa4dabe20fc59e66a2a5485','venvs/hojo/models-40m'),('HojoAI/Hojo-TTS-Light','d9c02af95496b6363b44944326d71491ab8905b0','venvs/hojo/models-80m')]]" \
+        || die "download hojo weights"
+    green "hojo: ok"
+else
+    echo "hojo: already installed"
+fi
+
 # --- Phonon (Gradium ptts wheel, Rust runtime, no torch; phonon_31m + phonon_40m share this venv) ---
 # phonon-40m-{en,fr,es} are gated: accept the terms on HF (auto-approved) before benching.
 echo; cyan "=== Phonon (ptts wheel, Rust runtime) ==="
