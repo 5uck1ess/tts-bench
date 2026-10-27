@@ -511,6 +511,36 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm2_audio_cuda_p4.wav"
         },
         {
+          "model": "lfm3_audio",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm3_audio_cuda_p1.wav"
+        },
+        {
+          "model": "lfm3_audio",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm3_audio_cuda_p2.wav"
+        },
+        {
+          "model": "lfm3_audio",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm3_audio_cuda_p3.wav"
+        },
+        {
+          "model": "lfm3_audio",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm3_audio_cuda_p4.wav"
+        },
+        {
+          "model": "lfm3_audio",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/lfm3_audio_cuda_p5.wav"
+        },
+        {
+          "model": "lfm3_audio",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/lfm3_audio_cuda_p6.wav"
+        },
+        {
           "model": "longcat_1b",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_1b_cuda_p1.wav"
@@ -2785,6 +2815,10 @@
     "lfm2_audio": {
       "name": "LFM2.5-Audio 1.5B",
       "url": "https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B"
+    },
+    "lfm3_audio": {
+      "name": "LFM3-Audio 2B",
+      "url": "https://huggingface.co/LiquidAI/LFM3-Audio-2B"
     },
     "longcat_1b": {
       "name": "LongCat-AudioDiT 1B",
