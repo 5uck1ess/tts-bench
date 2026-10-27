@@ -451,6 +451,7 @@ MODEL_DISPLAY_NAMES = {
     "orpheus":       "Orpheus-TTS 3B",
     "cosyvoice":     "CosyVoice 3 0.5B",
     "lfm2_audio":    "LFM2.5-Audio 1.5B",
+    "lfm3_audio":    "LFM3-Audio 2B",
     "miotts_01b":    "MioTTS 0.1B",
     "miotts_06b":    "MioTTS 0.6B",
     "wavtts":        "WavTTS 0.67B",
@@ -583,6 +584,7 @@ MODEL_SIZE = {
     "orpheus":       "3.3B",   # Llama-3.2-3B backbone + SNAC decoder
     "cosyvoice":     "0.5B",   # Fun-CosyVoice3-0.5B-2512
     "lfm2_audio":    "1.5B",   # 1.2B LFM2.5 LM + 115M FastConformer encoder
+    "lfm3_audio":    "2.0B",   # HF safetensors count 2,002,332,928 (LFM3-1.7B backbone + encoder + LiquidCodec)
     "miotts_01b":    "0.1B",   # Falcon-H1-Tiny-Multilingual-100M backbone
     "miotts_06b":    "0.6B",   # Qwen3-0.6B-Base backbone
     "wavtts":        "0.67B",  # WavTTS_Large DiT (1152x28), 673M from checkpoint
@@ -689,6 +691,7 @@ MODEL_URL = {
     "orpheus":       _HF + "canopylabs/orpheus-3b-0.1-ft",
     "cosyvoice":     _HF + "FunAudioLLM/Fun-CosyVoice3-0.5B-2512",
     "lfm2_audio":    _HF + "LiquidAI/LFM2.5-Audio-1.5B",
+    "lfm3_audio":    _HF + "LiquidAI/LFM3-Audio-2B",
     "miotts_01b":    _HF + "Aratako/MioTTS-0.1B",
     "miotts_06b":    _HF + "Aratako/MioTTS-0.6B",
     "mars5":         _HF + "Camb-ai/mars5-tts",
@@ -801,6 +804,7 @@ MODEL_KIND = {
     "orpheus":       "predefined",   # named preset voices (tara, ...), no wav cloning
     "cosyvoice":     "cloning",
     "lfm2_audio":    "predefined",   # 4 preset voices (US/UK x m/f) via system prompt; no wav cloning
+    "lfm3_audio":    "predefined",   # female/male (+US/UK) via system prompt; no wav cloning
     "miotts_01b":    "cloning",      # zero-shot clone; no-reference run = bundled chris clip
     "miotts_06b":    "cloning",
     "mars5":         "cloning",
@@ -885,6 +889,7 @@ MODEL_RELEASE = {
     "orpheus":       "2025-03",
     "cosyvoice":     "2025-12",
     "lfm2_audio":    "2025-12",
+    "lfm3_audio":    "2026-10",
     "miotts_01b":    "2026-02",
     "miotts_06b":    "2026-02",
     "mars5":         "2024-06",
@@ -973,7 +978,7 @@ def _release_td(model, cls="muted"):
 
 # Output sample rate, as shown in the README (e.g. "44.1k").
 MODEL_SR = {
-    "kittentts": "24k", "kokoro": "24k", "kokoro_mlx": "24k", "lfm2_audio": "24k", "luxtts": "22.05k",
+    "kittentts": "24k", "kokoro": "24k", "kokoro_mlx": "24k", "lfm2_audio": "24k", "lfm3_audio": "24k", "luxtts": "22.05k",
     "kittentts2": "24k", "kittentts2_cpp": "24k", "kittentts08": "24k",
     "magpie": "22.05k", "maya1": "24k", "melotts": "44.1k", "orpheus": "24k",
     "outetts": "44.1k", "parler": "44.1k", "piper": "22.05k", "scyllasband": "24k", "soprano": "32k",
@@ -1002,7 +1007,7 @@ MODEL_SR = {
 # Explicit emotion/delivery control offered (tags / desc / knob / emo-ref / —);
 # "*" = a caveat applies (see docs/expressive-control.md). "—" = none.
 MODEL_EXPRESSIVE = {
-    "kittentts": "—", "kokoro": "—", "kokoro_mlx": "—", "lfm2_audio": "—", "luxtts": "—",
+    "kittentts": "—", "kokoro": "—", "kokoro_mlx": "—", "lfm2_audio": "—", "lfm3_audio": "—", "luxtts": "—",
     "kittentts2": "tags", "kittentts2_cpp": "tags", "kittentts08": "—",
     "magpie": "emotion voices*", "maya1": "tags + desc", "melotts": "—", "orpheus": "tags",
     "outetts": "—", "parler": "desc*", "piper": "—", "scyllasband": "6 knobs",
@@ -1046,7 +1051,7 @@ MODEL_EXPRESSIVE = {
 MODEL_LICENSE = {
     "kittentts": "Apache 2.0", "kokoro": "Apache 2.0", "kokoro_mlx": "Apache 2.0",
     "kittentts2": "Stellon Labs Community", "kittentts2_cpp": "Stellon Labs Community", "kittentts08": "Apache 2.0",
-    "lfm2_audio": "LFM Open v1.0",
+    "lfm2_audio": "LFM Open v1.0", "lfm3_audio": "LFM Open v1.0",
     "luxtts": "MIT", "magpie": "NVIDIA OML", "maya1": "Apache 2.0", "melotts": "MIT",
     "orpheus": "Apache 2.0", "outetts": "CC-BY-NC-SA 4.0 + Llama 3.2", "parler": "Apache 2.0",
     "piper": "GPL-3.0", "scyllasband": "Apache 2.0", "soprano": "Apache 2.0",
@@ -1087,7 +1092,7 @@ MODEL_LICENSE = {
 # Language coverage cell from the README: "✓" multilingual, "✓ (N)"/"✓ (zh+en)"
 # with detail, "—"/"— (en)" English-only. _is_multilingual keys off the leading ✓.
 MODEL_LANGS = {
-    "kittentts": "—", "kokoro": "✓", "kokoro_mlx": "✓", "lfm2_audio": "— (en)", "luxtts": "—",
+    "kittentts": "—", "kokoro": "✓", "kokoro_mlx": "✓", "lfm2_audio": "— (en)", "lfm3_audio": "✓ (18)", "luxtts": "—",
     "kittentts2": "✓ (16)", "kittentts2_cpp": "✓ (16)", "kittentts08": "—",
     "magpie": "✓ (9)", "maya1": "—", "melotts": "✓ (4)", "orpheus": "— (en)",
     "outetts": "✓ (12)", "parler": "—", "piper": "✓", "scyllasband": "✓ (4)",

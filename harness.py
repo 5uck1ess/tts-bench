@@ -319,6 +319,12 @@ MODELS = [
     # `pip install liquid-audio` (py>=3.12), in-process torch model, 24 kHz, English-only.
     # cpu+cuda (cross-rig). NOT in NO_PRESET_VOICE.
     ("lfm2_audio",  "lfm2_audio", "runners/lfm2_audio_runner.py", {"en"},        ["cpu", "cuda"], None,  False),
+    # LFM3-Audio-2B (Liquid AI, LFM Open License v1.0) — successor omni audio model, own
+    # row (new backbone + LiquidCodec + parallel audio-token decoding). TTS mode via stock
+    # transformers ==5.20.2 + trust_remote_code (revision pinned in the runner), 24 kHz.
+    # PREDEFINED-VOICE (female/male via system prompt, no cloning -> default lens).
+    # fr/es measured WER 0.0 on bench prompts 5/6 -> langs en/fr/es. cpu+cuda.
+    ("lfm3_audio",  "lfm3_audio", "runners/lfm3_audio_runner.py", {"en", "fr", "es"}, ["cpu", "cuda"], None,  False),
     # MioTTS (Aratako) — LLM-codec TTS, SERVER-BACKED, runs on Linux-3090 (reuses its
     # llama.cpp). A llama.cpp/Ollama OpenAI server (emits MioCodec tokens) + the
     # MioTTS-Inference run_server.py REST orchestrator (decodes via MioCodec torch -> 44.1 kHz

@@ -85,7 +85,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 
 ---
 
-## Models tracked (89)
+## Models tracked (90)
 
 #### Predefined voices
 
@@ -104,6 +104,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [KittenTTS Nano 0.8](https://huggingface.co/KittenML/kitten-tts-nano-0.8) | 15M | Feb 2026 | ✓ | — | — | 24k | — | Apache 2.0 |
 | [Kokoro](https://huggingface.co/hexgrad/Kokoro-82M) | 82M | Dec 2024 | ✓ | — | ✓ | 24k | — | Apache 2.0 |
 | [LFM2.5-Audio 1.5B](https://huggingface.co/LiquidAI/LFM2.5-Audio-1.5B) | 1.5B | Dec 2025 | ✓ (4) | — | — (en) | 24k | — | LFM Open v1.0 |
+| [LFM3-Audio 2B](https://huggingface.co/LiquidAI/LFM3-Audio-2B) | 2.0B | Oct 2026 | ✓ (2) | — | ✓ (18) | 24k | — | LFM Open v1.0 |
 | [LuxTTS](https://github.com/ysharma3501/LuxTTS) | 123M | Jan 2026 | ✓ | — | — | 22.05k | — | MIT |
 | [Magpie-TTS](https://huggingface.co/nvidia/magpie_tts_multilingual_357m) | 357M | Dec 2025 | ✓ | — | ✓ (9) | 22.05k | emotion voices\* | NVIDIA OML |
 | [Maya1](https://huggingface.co/maya-research/maya1) | 3B | Oct 2025 | ✓ (voice desc) | — | — | 24k | tags + desc | Apache 2.0 |
@@ -199,7 +200,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**59 of the 89 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**59 of the 90 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 2,094 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 
