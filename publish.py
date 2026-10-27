@@ -77,7 +77,7 @@ NO_PRESET_VOICE = {
     # drama3: no-reference voice is invented per prompt; runner clones house Chris instead.
     "drama3",
     # hojo_80m: voice.npz is token embeddings only and generate() requires a reference;
-    # the no-reference run clones the house Chris (5.27 s cut, see the runner).
+    # the no-reference run clones the house Chris (9.27 s cut, see the runner).
     "hojo_80m",
     # Qwen3-TTS *Base* (both runtimes): no model-native preset voice -- Base is the
     # cloning checkpoint, so it is reference-only. CustomVoice (qwentts_06b_custom)
@@ -165,6 +165,16 @@ KNOWN_ISSUES = {
         "in front fixes it. Also mis-phonemizes unusual tokens (\"pytest\" → \"piteous\"). "
         "Ordinary prose is clean: prompts 1-2 score 0.00 WER and prompt 3 beats the board "
         "median — nearly all of this model's WER comes from prompt 4."
+    ),
+    ("hojo_80m", "cloning"): (
+        "warn", "⚠ clone doesn't hold ref",
+        "Does not hold the house reference speaker: WavLM similarity to it is 0.83-0.87 at "
+        "any reference length, barely above the 40M's preset voice (0.80) and below real "
+        "cloners (0.93-0.99), with pitch well above the reference (by ear: sounds like a "
+        "default voice). It is the model, not the runner: upstream infer.py gives the same "
+        "result, and it does clone other voices (its own example 0.97, jo 0.92, tym 0.90). "
+        "The reference is cut to 9.27 s because the full 15 s clip makes it read the "
+        "reference transcript's tail aloud."
     ),
     ("miso", "default"): (
         "warn", "⚠ artifacts",

@@ -18,13 +18,19 @@ Sampling: upstream defaults (temperature 0.8, top_p 0.95, repetition penalty
 Gotchas:
   * **The 80M continues the reference if it is long.** On the full 15 s house
     reference it often speaks the reference transcript's tail before or inside
-    the target ("...otherwise because you, you're amazing"): CPU, 3 seeds x 4
-    English prompts gave WER up to 2.1, and p2 ran to 30 s once. On a 5.27 s
-    clean cut (Whisper-timed, cut in the 5.21-5.33 s pause) all 12 clips were
-    sensible lengths, p1/p2 WER 0-0.14. Upstream pitches cloning from "a few
-    seconds" of audio (its example ref is 5.5 s) and the speaker encoder reads
-    only 6 s anyway. So, like zipvoice, the house reference is cut in-runner via
-    ``_KNOWN_CLIPS``; other references are used as given.
+    the target ("...otherwise because you, you're amazing"). So, like zipvoice,
+    the house reference is cut in-runner via ``_KNOWN_CLIPS`` at a pause, with
+    its exact transcript; other references are used as given. Cut length vs
+    result (CPU, 3 seeds x prompts 1-4, WavLM-sv similarity to the house ref):
+        5.27 s  sim 0.831  WER mean 0.134  0/12 clips WER > 0.5
+        9.27 s  sim 0.856  WER mean 0.069  0/12   <- used: best on both
+       11.81 s  sim 0.850  WER mean 0.124  0/12
+       15 s     sim 0.869  WER mean 0.607  6/12 (max 2.11; p2 ran to 30 s once)
+  * **The 80M does not hold this speaker at any cut.** 0.83-0.87 is barely above
+    the 40M's preset voice (0.80, not a clone) and below real cloners on the same
+    ref (0.93-0.99); output F0 stays 115-138 Hz vs the ref's 87 Hz. It is not the
+    runner: upstream ``infer.py`` gives the same result. Other refs: its own
+    zh1.wav example 0.96-0.97, jo 0.92, tym 0.90, dafoe_scientist 0.49.
   * **Text normalisation is skipped.** Upstream runs WeTextProcessing, which needs
     pynini, which does not build on Windows. The English bench prompts are already
     spelled out (no digits/symbols), so English TN would be a no-op; skipping it on
@@ -68,7 +74,9 @@ SR = 24000
 
 # Clean cut points for house references: (seconds, exact transcript of that slice).
 _KNOWN_CLIPS = {
-    "chris_hemsworth_15s": (5.27, "Hey you. Yes, yes, yes, you. Today is your day. You got this."),
+    "chris_hemsworth_15s": (9.27, "Hey you. Yes, yes, yes, you. Today is your day. You got this. "
+                                  "You're absolutely crushing it at everything you do from your "
+                                  "job to maintaining"),
 }
 
 
