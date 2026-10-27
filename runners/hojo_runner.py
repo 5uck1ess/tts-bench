@@ -48,6 +48,7 @@ The API is non-streaming and returns the full waveform, so TTFA == gen_s.
 """
 
 import argparse
+import atexit
 import glob
 import json
 import os
@@ -81,6 +82,10 @@ _KNOWN_CLIPS = {
 
 
 def _add_cuda_dll_dirs():
+    # Windows only: cuDNN sub-DLLs resolve via PATH. On Linux, preload_dlls() below
+    # dlopens the nvidia wheel libs (LD_LIBRARY_PATH can't change after startup).
+    if os.name != "nt":
+        return
     nv = VENV / "Lib" / "site-packages" / "nvidia"
     bins = glob.glob(str(nv / "*" / "bin"))
     if bins:
@@ -104,6 +109,7 @@ def _resolve_reference(ref_wav):
         y = y.mean(axis=1)
     fd, clip = tempfile.mkstemp(suffix=".wav", prefix="hojo_ref_")
     os.close(fd)
+    atexit.register(lambda: os.path.exists(clip) and os.remove(clip))
     sf.write(clip, y[:int(cut_sec * sr)], sr)
     return clip, text
 
@@ -140,6 +146,10 @@ def main() -> int:
         sys.path.insert(0, str(SRC_DIRS[args.variant]))
         import soundfile as sf
         import onnx_model
+        if args.device == "cuda":
+            # The 80M constructor preloads the CUDA/cuDNN wheel libs; the 40M's doesn't.
+            import onnxruntime as ort
+            ort.preload_dlls(cuda=True, cudnn=True)
 
         tts = onnx_model.HojoTTSLightOnnx(str(MODEL_DIRS[args.variant]), provider=args.device)
         sessions = ([tts.lm, tts.codec_encoder, tts.decoder, tts.speaker_encoder]
