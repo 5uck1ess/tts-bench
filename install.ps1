@@ -1012,6 +1012,18 @@ if (-not (Want "lfm2_audio")) { Write-Host "lfm2_audio: skipped (not in install 
     Write-Host "lfm2_audio: ok (LFM2.5-Audio-1.5B weights auto-download from HF on first run; English, 24k, 4 preset voices, no cloning)" -ForegroundColor Green
 } else { Write-Host "lfm2_audio: already installed" -ForegroundColor Gray }
 
+Step "LFM3-Audio-2B (Liquid AI, LFM Open License v1.0, omni audio -> TTS mode, female/male voices, 24k)"
+if (-not (Want "lfm3_audio")) { Write-Host "lfm3_audio: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\lfm3_audio\Scripts\python.exe")) {
+    # Stock transformers + trust_remote_code (no liquid-audio package, unlike lfm2_audio).
+    # Pin transformers exactly: the remote modeling code targets the card's 5.20.2 floor.
+    # cu128 torch+torchaudio LAST (PyPI Windows torch is CPU-only).
+    Invoke-Checked "uv venv lfm3_audio" { uv venv venvs\lfm3_audio --python 3.12 }
+    Invoke-Checked "uv pip install lfm3_audio deps" { uv pip install --python venvs\lfm3_audio\Scripts\python.exe "transformers==5.20.2" accelerate librosa soundfile }
+    Invoke-Checked "torch cu128 for lfm3_audio (LAST)" { uv pip install --python venvs\lfm3_audio\Scripts\python.exe --reinstall-package torch --reinstall-package torchaudio torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "lfm3_audio: ok (LFM3-Audio-2B weights, 4 GB, auto-download from HF on first run; en/fr/es benched, 24k, no cloning)" -ForegroundColor Green
+} else { Write-Host "lfm3_audio: already installed" -ForegroundColor Gray }
+
 # --- MioTTS — LINUX-ONLY here, intentionally no Windows stanza ---
 # MioTTS is server-backed: a llama.cpp/Ollama LLM server (emits MioCodec tokens) + the
 # MioTTS-Inference REST orchestrator (run_server.py). We run it on the Linux-3090 (reuses

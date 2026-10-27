@@ -1100,6 +1100,19 @@ else
     echo "lfm2_audio: already installed"
 fi
 
+# --- LFM3-Audio-2B (Liquid AI, LFM Open License v1.0, omni audio -> TTS mode, female/male voices, 24k) ---
+echo; cyan "=== LFM3-Audio-2B (Liquid AI, omni audio — TTS mode, female/male voices, 24k) ==="
+if ! want lfm3_audio; then echo "lfm3_audio: skipped (not in install filter)"
+elif [ ! -x venvs/lfm3_audio/bin/python ]; then
+    # Stock transformers + trust_remote_code (no liquid-audio package). transformers pinned
+    # exactly to the card's 5.20.2 floor. Linux PyPI torch is CUDA-enabled — no reinstall.
+    uv venv venvs/lfm3_audio --python 3.12 || die "uv venv lfm3_audio"
+    uv pip install --python venvs/lfm3_audio/bin/python "transformers==5.20.2" torch torchaudio accelerate librosa soundfile || die "uv pip install lfm3_audio deps"
+    green "lfm3_audio: ok (LFM3-Audio-2B weights, 4 GB, auto-download from HF on first run; en/fr/es benched, 24k, no cloning)"
+else
+    echo "lfm3_audio: already installed"
+fi
+
 # --- Higgs Audio v3 TTS (Boson AI, Research/Non-Commercial, ~4B) — SERVER-BACKED, LINUX-ONLY ---
 #
 # Unlike every other model here, Higgs v3 is NOT a venv install: its only supported
