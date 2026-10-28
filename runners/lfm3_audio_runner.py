@@ -23,8 +23,10 @@ Gotchas:
   gives a different take (seed 0 vs 1 differ everywhere on prompt 2), the same seed is
   bit-identical. We reseed to SEED before every generate so runs 1-3 match and reruns
   reproduce. Sampling params are the card's recommended TTS settings.
-- Non-streaming here: ttfa_ms == gen_s (model.generate returns all frames at once; the
-  card's audio_streamer path is not used), so don't read ttfa as a streaming latency.
+- TTFA is streamed: an audio_streamer stream-decodes frames through LiquidCodec as they
+  are sampled, and ttfa_ms is when the codec first yields playable samples (same idea as
+  lfm2_audio's first-audio-token time). The saved wav is still one full decode of
+  audio_codes, so it is bit-identical to the old non-streaming runner's at the same seed.
 - Languages. Each bench language maps to a card-listed locale; an unknown code fails
   the cell instead of silently speaking English. fr/es measured WER 0.0 (Whisper-v3)
   on bench prompts 5/6 at revision below.
@@ -103,10 +105,33 @@ def main() -> int:
         processor = AutoProcessor.from_pretrained(HF_REPO, revision=REVISION,
                                                   trust_remote_code=True)
         codec = processor.audio_tokenizer.to(device=device).eval()
+        StreamingCache = sys.modules[type(codec).__module__].LiquidCodecStreamingCache
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"load failed: {type(e).__name__}: {e}"}))
         return 1
+
+    class _FirstAudio:
+        """audio_streamer: stream-decodes frames as generate() samples them and stamps the
+        moment the codec first yields playable samples (t). The wav is still decoded in one
+        pass from audio_codes, so streaming only measures TTFA and never touches the audio."""
+
+        def __init__(self):
+            self.t = None
+            self.cache = StreamingCache(codec.config)
+
+        def put(self, codes):
+            if self.t is not None:
+                return
+            chunk = codec.decode(codes.view(1, -1, 1), streaming_cache=self.cache,
+                                 finalize=False).audio_values
+            if chunk.shape[-1] > 0:
+                if device == "cuda":
+                    torch.cuda.synchronize()
+                self.t = time.perf_counter()
+
+        def end(self):
+            pass
 
     def _one(text, out_path, run_index, write_wav):
         try:
@@ -116,6 +141,7 @@ def main() -> int:
                 {"role": "user", "content": text},
                 {"role": "assistant", "content": "<|audio_start|>"},
             ]
+            first = _FirstAudio()
             torch.manual_seed(SEED)
             t0 = time.perf_counter()
             inputs = processor.apply_chat_template(
@@ -126,9 +152,9 @@ def main() -> int:
                     **inputs, max_new_tokens=MAX_NEW_TOKENS,
                     audio_temperature=1.0, audio_top_k=128,
                     audio_repetition_penalty=1.1, audio_repetition_window=4096,
-                    return_dict_in_generate=True)
+                    audio_streamer=first, return_dict_in_generate=True)
                 n = int(out.audio_lengths[0])
-                if n < 1:
+                if n < 1 or first.t is None:
                     print(json.dumps({"ok": False, "run_index": run_index,
                                       "error": "no audio produced"}), flush=True)
                     return False
@@ -144,7 +170,7 @@ def main() -> int:
                 sf.write(out_path, audio, SAMPLE_RATE)
             print(json.dumps({
                 "ok": True, "run_index": run_index,
-                "ttfa_ms": gen_s * 1000,   # non-streaming: ttfa == gen_s
+                "ttfa_ms": (first.t - t0) * 1000,
                 "gen_s": gen_s, "audio_s": float(len(audio) / SAMPLE_RATE),
                 **_meminfo.sample(args.device),
             }), flush=True)
