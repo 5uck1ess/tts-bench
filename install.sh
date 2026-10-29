@@ -1212,28 +1212,34 @@ echo; cyan "=== Fish Audio Drama 3 (ComfyUI-Drama3 port, MoE experts in RAM, clo
 if ! want drama3; then echo "drama3: skipped (not in install filter)"
 elif [ ! -x venvs/drama3/bin/python ]; then
     # Third-party port (PedroMarinhoDev/ComfyUI-Drama3, GPL-3); Fish ships Drama 3 only as an
-    # SGLang-Omni server. ComfyUI v0.40.0 lives inside the venv and is imported as a library.
-    # Both pinned. Linux PyPI torch is CUDA-enabled (Ampere/3090 fine), so no cu128 swap.
-    # The 3090 has no native FP8: the port upcasts FP8 experts (author measured 84 ms/frame,
-    # 21.6 GB peak with a 16 GB cache on a 3090). Needs ~48 GB system RAM (box has 64).
+    # SGLang-Omni server. ComfyUI lives inside the venv and is imported as a library; pins and
+    # deps are applied below. Linux PyPI torch is CUDA-enabled (Ampere/3090 fine), so no cu128 swap.
     uv venv venvs/drama3 --python 3.12 || die "uv venv drama3"
     if [ ! -d venvs/drama3/ComfyUI ]; then
         git clone https://github.com/comfyanonymous/ComfyUI venvs/drama3/ComfyUI || die "git clone ComfyUI"
-        git -C venvs/drama3/ComfyUI checkout -q v0.40.0 || die "ComfyUI v0.40.0"
         git clone https://github.com/PedroMarinhoDev/ComfyUI-Drama3 venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 \
             || die "git clone ComfyUI-Drama3"
-        git -C venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 checkout -q 66c4fb9cd3c0151e1e2ccd207847cb8335e87ab4 \
-            || die "ComfyUI-Drama3 pin"
     fi
-    uv pip install --python venvs/drama3/bin/python -r venvs/drama3/ComfyUI/requirements.txt soundfile \
-        || die "uv pip install drama3"
     # Two explicit downloads, never one `--include A B` (silently skipped a file for AuK).
     REV=9063c072019aa578895e51adb5489c6cd2c834b0
     hf download PedroMarinhoDev/Drama-3-ComfyUI drama3_codec.safetensors --revision $REV --local-dir models/drama3 \
         || die "drama3 codec"
-    green "drama3: ok (port 66c4fb9 on ComfyUI v0.40.0; CUDA-only, 44.1k, ~24GB VRAM + ~48GB RAM)"
 else
-    echo "drama3: already installed"
+    echo "drama3: venv present"
+fi
+# Pins, outside the venv guard so existing installs move too: port 8cb3c64 (2026-10-25: NVRTC
+# expert kernels + CUDA-graph decode, ~4x faster; stall retry) on ComfyUI v0.42.5, the newest
+# release before that commit. Both pinned: the runner's numbers describe exactly this code.
+DRAMA3_PORT=8cb3c64379d4988b9693cae9f3436b8fd54b22ad
+if want drama3 && [ -d venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 ] \
+        && [ "$(git -C venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 rev-parse HEAD)" != "$DRAMA3_PORT" ]; then
+    git -C venvs/drama3/ComfyUI fetch -q --tags origin && git -C venvs/drama3/ComfyUI checkout -q v0.42.5 \
+        || die "ComfyUI v0.42.5"
+    git -C venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 fetch -q origin \
+        && git -C venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 checkout -q $DRAMA3_PORT || die "ComfyUI-Drama3 pin"
+    uv pip install --python venvs/drama3/bin/python -r venvs/drama3/ComfyUI/requirements.txt soundfile \
+        || die "uv pip install drama3"
+    green "drama3: ok (port 8cb3c64 on ComfyUI v0.42.5; CUDA-only, 44.1k)"
 fi
 # LM weights, outside the venv guard so pre-2026-10-29 installs pick them up too: Fish @
 # 78e5ab7 (2026-10-29 re-upload; Pedro's file is the ORIGINAL upload), repacked with the
