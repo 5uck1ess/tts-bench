@@ -1063,27 +1063,38 @@ if (-not (Want "drama3")) { Write-Host "drama3: skipped (not in install filter)"
 } elseif (-not (Test-Path "venvs\drama3\Scripts\python.exe")) {
     # Third-party port (PedroMarinhoDev/ComfyUI-Drama3, GPL-3) — Fish ships Drama 3 only as
     # an SGLang-Omni server. The port's drama3/ package imports ComfyUI internals, so
-    # ComfyUI v0.40.0 is checked out INSIDE the venv and imported as a library (no server).
-    # Both pinned: the runner's numbers describe exactly this code. Deps = ComfyUI's
-    # requirements minus torch, then cu128 torch LAST (Blackwell; PyPI Windows torch is
-    # CPU-only). Weights: two explicit `hf download` calls (never one `--include A B`,
-    # which silently skipped a checkpoint at exit 0 for AuK). FP8 file = original release
-    # precision, 38.6 GB; needs ~48 GB system RAM (experts live in RAM) + ~24 GB VRAM.
+    # ComfyUI is checked out INSIDE the venv and imported as a library (no server); the
+    # pins and deps are applied below. Weights: explicit `hf download` calls (never one
+    # `--include A B`, which silently skipped a checkpoint at exit 0 for AuK). FP8 file =
+    # original release precision, 38.6 GB; peak ~71 GB system RAM + ~18 GB VRAM on the 5090.
     Invoke-Checked "uv venv drama3" { uv venv venvs\drama3 --python 3.12 }
     if (-not (Test-Path "venvs\drama3\ComfyUI")) {
         Invoke-Checked "git clone ComfyUI" { git clone https://github.com/comfyanonymous/ComfyUI venvs\drama3\ComfyUI }
-        Invoke-Checked "ComfyUI v0.40.0" { git -C venvs\drama3\ComfyUI checkout -q v0.40.0 }
         Invoke-Checked "git clone ComfyUI-Drama3" { git clone https://github.com/PedroMarinhoDev/ComfyUI-Drama3 venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3 }
-        Invoke-Checked "ComfyUI-Drama3 pin" { git -C venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3 checkout -q 66c4fb9cd3c0151e1e2ccd207847cb8335e87ab4 }
     }
-    Get-Content venvs\drama3\ComfyUI\requirements.txt | Where-Object { $_ -notmatch '^\s*(torch|torchvision|torchsde)\s*$' } | Set-Content venvs\drama3\req-notorch.txt -Encoding utf8
-    Invoke-Checked "uv pip install drama3 deps" { uv pip install --python venvs\drama3\Scripts\python.exe -r venvs\drama3\req-notorch.txt torchsde soundfile }
-    Invoke-Checked "torch cu128 for drama3 (LAST)" { uv pip install --python venvs\drama3\Scripts\python.exe --reinstall torch==2.11.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 }
     # Codec from the port's repo (codec.pth is unchanged upstream).
     $rev = "9063c072019aa578895e51adb5489c6cd2c834b0"
     Invoke-Checked "drama3 codec" { hf download PedroMarinhoDev/Drama-3-ComfyUI drama3_codec.safetensors --revision $rev --local-dir models\drama3 }
-    Write-Host "drama3: ok (port 66c4fb9 on ComfyUI v0.40.0; CUDA-only, 44.1k, ~24GB VRAM + ~48GB RAM)" -ForegroundColor Green
-} else { Write-Host "drama3: already installed" -ForegroundColor Gray }
+} else { Write-Host "drama3: venv present" -ForegroundColor Gray }
+# Pins, outside the venv guard so existing installs move too: port 8cb3c64 (2026-10-25: NVRTC
+# expert kernels + CUDA-graph decode, ~4x faster; stall retry) on ComfyUI v0.42.5, the newest
+# release before that commit. Both pinned: the runner's numbers describe exactly this code.
+# Deps = ComfyUI's requirements minus torch, then cu128 torch LAST (Blackwell; PyPI Windows
+# torch is CPU-only).
+# Keyed on a stamp of the applied pins, not the port's HEAD: a fresh clone of the port's main
+# can already sit at the pin while ComfyUI and the deps are still unset.
+$drama3Port = "8cb3c64379d4988b9693cae9f3436b8fd54b22ad"
+$drama3Stamp = "port=$drama3Port comfyui=v0.42.5 torch=2.11.0+cu128"
+$drama3StampFile = "venvs\drama3\.drama3-pins"
+if ((Want "drama3") -and (Test-Path "venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3") -and -not ((Test-Path $drama3StampFile) -and ((Get-Content $drama3StampFile -Raw).Trim() -eq $drama3Stamp))) {
+    Invoke-Checked "ComfyUI v0.42.5" { git -C venvs\drama3\ComfyUI fetch -q --tags origin; git -C venvs\drama3\ComfyUI checkout -q v0.42.5 }
+    Invoke-Checked "ComfyUI-Drama3 pin" { git -C venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3 fetch -q origin; git -C venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3 checkout -q $drama3Port }
+    Get-Content venvs\drama3\ComfyUI\requirements.txt | Where-Object { $_ -notmatch '^\s*(torch|torchvision|torchsde)\s*$' } | Set-Content venvs\drama3\req-notorch.txt -Encoding utf8
+    Invoke-Checked "uv pip install drama3 deps" { uv pip install --python venvs\drama3\Scripts\python.exe -r venvs\drama3\req-notorch.txt torchsde soundfile }
+    Invoke-Checked "torch cu128 for drama3 (LAST)" { uv pip install --python venvs\drama3\Scripts\python.exe --reinstall torch==2.11.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Set-Content $drama3StampFile $drama3Stamp -Encoding utf8
+    Write-Host "drama3: ok (port 8cb3c64 on ComfyUI v0.42.5; CUDA-only, 44.1k)" -ForegroundColor Green
+}
 # LM weights, outside the venv guard so pre-2026-10-29 installs pick them up too: Fish @
 # 78e5ab7 (2026-10-29 re-upload; Pedro's 9063c07 file is the ORIGINAL upload), repacked with
 # the port's own converter (lossless FP8 copy). Shards are a full snapshot dir (no --include

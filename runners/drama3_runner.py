@@ -1,11 +1,13 @@
 """Fish Audio Drama 3 runner, through the third-party ComfyUI-Drama3 port (not Fish's code).
 
 Fish ships Drama 3 (35.9B MoE, 3B active) only as an SGLang-Omni server for H200-class
-GPUs. ComfyUI-Drama3 (PedroMarinhoDev, GPL-3, pinned 66c4fb9) reimplements inference
+GPUs. ComfyUI-Drama3 (PedroMarinhoDev, GPL-3, pinned 8cb3c64) reimplements inference
 and keeps the MoE experts in system RAM with a GPU expert cache, so it runs on a
-32 GB or 24 GB card. Every number this row produces measures THAT port: its speed
-is the offload engine (single-core-bound kernel launches, ~46 ms/frame = realtime),
-and its audio has not been verified against Fish's own output.
+32 GB or 24 GB card. Every number this row produces measures THAT port: its speed is
+the offload engine (since 2026-10-17: NVRTC kernels read cached experts in place and
+missed ones straight from RAM, every layer replays as a CUDA graph; 46 ms/frame =
+realtime). The original port's math was checked against Fish's fish_omni reference
+(KL 0.0041, known-issues); later port versions were not re-checked.
 
 Weights: fishaudio/drama-3 @ 78e5ab7 (the 2026-10-29 re-upload), repacked locally with the
 port's own `tools/convert.py model <dir> drama3_fp8experts_bf16_78e5ab7.safetensors --format fp8`
@@ -19,25 +21,34 @@ audio head); codec.pth and tokenizer unchanged. The
 tensor for tensor. Those rows live in results/_preserved_drama3_9063c07/.
 The W4A8/int8 quants exist; they are not what this row measures.
 
-In-process, no ComfyUI server: ComfyUI v0.40.0 is checked out at
+In-process, no ComfyUI server: ComfyUI v0.42.5 is checked out at
 venvs/drama3/ComfyUI and imported as a library (the port's `drama3/` package uses
 comfy.ops / model_management / text_encoders). The port's node classes are called
 directly. ComfyUI's executor runs every node under torch.inference_mode(); a direct
 call without it dies in qwen35.py's `torch.add(..., out=)` with an autograd error.
+A library import also skips main.py's DynamicVRAM (comfy-aimdo) startup, without which
+the CUDA graphs never engage and the new port runs at the OLD speed (p3 cloned 0.6x vs
+2.6x warm); `_enable_dynamic_vram` repeats it and refuses to load if it fails.
+Port defaults the runner overrides: Decode's `shorten_long_pauses` (post-processing,
+off here) and Generate's `top_k` (0 since 2026-10-16; 30 here, see Sampling). The port
+now tidies the voice clip (Fish Space's `tidy_reference`: edge trim + peak normalize)
+before encoding it; that input-side step stays on, and it changed the cloned takes.
 
 Voice: no model-native preset. Without a reference the model invents a voice per
 prompt (smoke p3/p5 came out at a different level and timbre), so like fish_s2 the
 no-reference path clones the house chris_hemsworth_15s ref (wav + sibling .txt) and
 the row is in NO_PRESET_VOICE (cloning board only).
 
-Sampling = the port's defaults, which it documents as Fish's server defaults:
-temperature 1.0, top_p 0.9, top_k 30, seed pinned at 0. max_frames 600 per ~300-byte
-text chunk (27.9 s); canonical prompt 3 (253 bytes, one chunk) measured ~495 frames (23.0 s)
-on 78e5ab7, ~105 frames of headroom. The ORIGINAL weights ran Spanish prompt 6 into this cap
-(27.9 s, a runaway); 78e5ab7 ends it at 7.4 s.
+Sampling = the model card's benchmark settings (the first port's defaults): temperature
+1.0, top_p 0.9, top_k 30, seed pinned at 0. max_frames 600 per ~300-byte text chunk
+(27.9 s); canonical prompt 3 (253 bytes, one chunk) is ~436 frames (20.3 s) on this port,
+~495 (23.0 s) on 66c4fb9. The ORIGINAL weights ran Spanish prompt 6 into this cap (27.9 s,
+a runaway); 78e5ab7 ends it at 7.4 s.
 
-Non-streaming: codes are generated in full and then decoded, so TTFA == gen_s.
-Expert cache 16 GB on every rig (peak ~24 GB on the 5090) so rigs stay comparable.
+Non-streaming: codes are generated in full and then decoded, so TTFA == gen_s. The first
+take of a process captures the CUDA graphs and fills the cache, so cold runs are slow.
+Expert cache 16 GB on every rig so rigs stay comparable. Peak on the 5090: ~18 GB VRAM,
+~71 GB system RAM (pinned experts + the loaded file).
 """
 
 import argparse
@@ -62,6 +73,30 @@ EXPERT_CACHE_GB = 16.0
 TEMPERATURE, TOP_P, TOP_K = 1.0, 0.9, 30
 MAX_FRAMES = 600
 SEED = 0
+
+
+def _enable_dynamic_vram():
+    """ComfyUI main.py's DynamicVRAM (comfy-aimdo) startup, which a library import skips.
+
+    The port's decode CUDA graphs need `comfy.memory_management.aimdo_enabled`; without it the
+    kernels still compile but every frame takes the old copy path at the old speed (measured:
+    p3 cloned 0.6x either way). Must run before torch touches CUDA, as in main.py."""
+    sys.path.insert(0, str(COMFY))
+    from comfy.cli_args import args, enables_dynamic_vram
+    import comfy_aimdo.control
+    if not enables_dynamic_vram():
+        raise RuntimeError("ComfyUI says DynamicVRAM is disabled; the drama3 row measures the dynamic-VRAM path")
+    comfy_aimdo.control.init(
+        simple_vram_headroom=None if args.reserve_vram is None else int(args.reserve_vram * 1024 ** 3),
+        nvml_pressure=not args.disable_nvml_pressure)
+    import comfy.memory_management
+    import comfy.model_management
+    import comfy.model_patcher
+    if not comfy_aimdo.control.init_devices((d.index, int(args.vram_headroom * 1024 ** 3))
+                                            for d in comfy.model_management.get_all_torch_devices()):
+        raise RuntimeError("comfy-aimdo failed to initialise the CUDA device (DynamicVRAM unavailable)")
+    comfy.model_patcher.CoreModelPatcher = comfy.model_patcher.ModelPatcherDynamic
+    comfy.memory_management.aimdo_enabled = True
 
 
 def _import_port():
@@ -106,6 +141,7 @@ def main() -> int:
     try:
         # ComfyUI prints startup notices to stdout; keep stdout JSON-only.
         with contextlib.redirect_stdout(sys.stderr):
+            _enable_dynamic_vram()
             import soundfile as sf
             import torch
             nodes, load_codec, load_drama3 = _import_port()
@@ -133,7 +169,8 @@ def main() -> int:
                 codes = nodes.Drama3Generate.execute(
                     model, text, {"voice0": voice}, SEED, TEMPERATURE, TOP_P, TOP_K,
                     MAX_FRAMES).args[0]
-                audio = nodes.Drama3Decode.execute(codec, codes).args[0]
+                # shorten_long_pauses off: it is output post-processing (Fish's Space SilenceGuard), not the model.
+                audio = nodes.Drama3Decode.execute(codec, codes, shorten_long_pauses=False).args[0]
             torch.cuda.synchronize()
             t_end = time.perf_counter()
             w = audio["waveform"][0, 0].numpy()
