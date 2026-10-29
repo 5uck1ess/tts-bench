@@ -288,6 +288,8 @@ These aren't models to add; they're native **C++/ggml runtimes** (a "llama.cpp f
     **Reopened, then SHIPPED 2026-10-15 as `drama3`** (cloning board; see docs/known-issues.md). Caveats: a third-party port that nobody has checked against
     Fish's output (A/B it against the hosted API), and its speed is the port's offload engine
     (~46 ms per frame = real time, bound by single-core CPU speed), not the model's.
+    **Re-benched 2026-10-29** on Fish's silent weight re-upload (`78e5ab7`, 909/912 tensors
+    changed), which now matches the hosted app's pacing; see known-issues.
 
 ## Wrong modality (not a bench row at any size)
 

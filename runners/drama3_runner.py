@@ -12,7 +12,8 @@ port's own `tools/convert.py model <dir> drama3_fp8experts_bf16_78e5ab7.safetens
 (lossless: the checkpoint's FP8-E4M3 expert bytes + block scales copied, bf16 rest), and
 `drama3_codec.safetensors` (Fish S2-Pro codec, 44.1 kHz, 21.5 frames/s), in models/drama3/.
 Fish replaced the LM weights on 2026-10-29 without a note: same tensor names, shapes and
-total size, different expert/embedding bytes; codec.pth and tokenizer unchanged. The
+total size, but 909 of 912 repacked tensors differ (experts, attention, norms, embeddings,
+audio head); codec.pth and tokenizer unchanged. The
 2026-10-15 row used PedroMarinhoDev/Drama-3-ComfyUI @ 9063c07 (`drama3_fp8experts_bf16
 .safetensors`), a repack of the original upload; convert.py on that upload reproduces it
 tensor for tensor. Those rows live in results/_preserved_drama3_9063c07/.
@@ -31,7 +32,9 @@ the row is in NO_PRESET_VOICE (cloning board only).
 
 Sampling = the port's defaults, which it documents as Fish's server defaults:
 temperature 1.0, top_p 0.9, top_k 30, seed pinned at 0. max_frames 600 per ~300-byte
-text chunk (27.9 s); canonical prompt 3 measured 308 (default) / 361 (cloned) frames.
+text chunk (27.9 s); canonical prompt 3 (253 bytes, one chunk) measured ~495 frames (23.0 s)
+on 78e5ab7, ~105 frames of headroom. The ORIGINAL weights ran Spanish prompt 6 into this cap
+(27.9 s, a runaway); 78e5ab7 ends it at 7.4 s.
 
 Non-streaming: codes are generated in full and then decoded, so TTFA == gen_s.
 Expert cache 16 GB on every rig (peak ~24 GB on the 5090) so rigs stay comparable.
