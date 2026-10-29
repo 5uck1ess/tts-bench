@@ -1231,8 +1231,12 @@ elif [ ! -x venvs/drama3/bin/python ]; then
     REV=9063c072019aa578895e51adb5489c6cd2c834b0
     hf download PedroMarinhoDev/Drama-3-ComfyUI drama3_codec.safetensors --revision $REV --local-dir models/drama3 \
         || die "drama3 codec"
-    hf download PedroMarinhoDev/Drama-3-ComfyUI drama3_fp8experts_bf16.safetensors --revision $REV --local-dir models/drama3 \
-        || die "drama3 FP8 weights"
+    # LM weights from Fish @ 78e5ab7 (2026-10-29 re-upload; Pedro's file is the ORIGINAL
+    # upload), repacked with the port's own converter (lossless FP8 copy).
+    hf download fishaudio/drama-3 --revision 78e5ab79e49aa9a25abe8799eff2c4d73a1c3216 --local-dir models/drama3-original-78e5ab7 \
+        || die "drama3 Fish weights @ 78e5ab7"
+    venvs/drama3/bin/python scripts/drama3_convert.py models/drama3-original-78e5ab7 models/drama3/drama3_fp8experts_bf16_78e5ab7.safetensors \
+        || die "drama3 FP8 repack"
     green "drama3: ok (port 66c4fb9 on ComfyUI v0.40.0; CUDA-only, 44.1k, ~24GB VRAM + ~48GB RAM)"
 else
     echo "drama3: already installed"

@@ -1079,9 +1079,14 @@ if (-not (Want "drama3")) { Write-Host "drama3: skipped (not in install filter)"
     Get-Content venvs\drama3\ComfyUI\requirements.txt | Where-Object { $_ -notmatch '^\s*(torch|torchvision|torchsde)\s*$' } | Set-Content venvs\drama3\req-notorch.txt -Encoding utf8
     Invoke-Checked "uv pip install drama3 deps" { uv pip install --python venvs\drama3\Scripts\python.exe -r venvs\drama3\req-notorch.txt torchsde soundfile }
     Invoke-Checked "torch cu128 for drama3 (LAST)" { uv pip install --python venvs\drama3\Scripts\python.exe --reinstall torch==2.11.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    # Codec from the port's repo (codec.pth is unchanged upstream). LM weights from Fish
+    # @ 78e5ab7 (2026-10-29 re-upload; Pedro's 9063c07 file is the ORIGINAL upload), then
+    # repacked with the port's own converter (lossless FP8 copy). Shards are a full
+    # snapshot dir (no --include list), deletable after the repack.
     $rev = "9063c072019aa578895e51adb5489c6cd2c834b0"
     Invoke-Checked "drama3 codec" { hf download PedroMarinhoDev/Drama-3-ComfyUI drama3_codec.safetensors --revision $rev --local-dir models\drama3 }
-    Invoke-Checked "drama3 FP8 weights (38.6 GB)" { hf download PedroMarinhoDev/Drama-3-ComfyUI drama3_fp8experts_bf16.safetensors --revision $rev --local-dir models\drama3 }
+    Invoke-Checked "drama3 Fish weights @ 78e5ab7 (39.6 GB)" { hf download fishaudio/drama-3 --revision 78e5ab79e49aa9a25abe8799eff2c4d73a1c3216 --local-dir models\drama3-original-78e5ab7 }
+    Invoke-Checked "drama3 FP8 repack" { venvs\drama3\Scripts\python.exe scripts\drama3_convert.py models\drama3-original-78e5ab7 models\drama3\drama3_fp8experts_bf16_78e5ab7.safetensors }
     Write-Host "drama3: ok (port 66c4fb9 on ComfyUI v0.40.0; CUDA-only, 44.1k, ~24GB VRAM + ~48GB RAM)" -ForegroundColor Green
 } else { Write-Host "drama3: already installed" -ForegroundColor Gray }
 
