@@ -461,6 +461,11 @@ if [ ! -d venvs/audio8/src/Audio8-TTS-Preview-0.1b ]; then
     venvs/audio8/bin/python -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.1b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.1b', ignore_patterns=['*.jpeg','*.png','samples/*'])" \
         || die "download audio8 0.1B weights"
 fi
+# Realistic 0.6B: weights-only fine-tune of the Preview 0.6B (same code + codec).
+if [ ! -d venvs/audio8/src/Audio8-TTS-Realistic-0.6b ]; then
+    venvs/audio8/bin/python -c "from huggingface_hub import snapshot_download as d; d('Edge0/Audio8-TTS-Realistic-0.6b', local_dir='venvs/audio8/src/Audio8-TTS-Realistic-0.6b', ignore_patterns=['*.jpeg','*.png','assets/*'])" \
+        || die "download audio8 Realistic 0.6B weights"
+fi
 # Mamba fast-path kernels for the 0.1B's Falcon-H1 hybrid AR. Linux-only: both build
 # CUDA kernels from source and neither ships a Windows wheel, which is why the Windows
 # row is a floor. Without them transformers logs "The fast path is not available ...
@@ -478,7 +483,7 @@ if ! venvs/audio8/bin/python -c "import mamba_ssm, causal_conv1d" 2>/dev/null; t
 else
     echo "audio8: mamba fast-path kernels already present"
 fi
-green "audio8: ok (0.6B base + fastpath + 0.1B via --variant; first fastpath run compiles ~370s, then inductor-cached)"
+green "audio8: ok (0.6B base + fastpath + 0.1B + Realistic 0.6B via --variant; first fastpath run compiles ~370s, then inductor-cached)"
 fi
 
 # --- ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv) ---

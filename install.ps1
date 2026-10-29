@@ -350,7 +350,11 @@ if (-not (Test-Path "venvs\audio8\src\fastpath")) {
 if (-not (Test-Path "venvs\audio8\src\Audio8-TTS-Preview-0.1b")) {
     Invoke-Checked "download audio8 0.1B weights" { & "venvs\audio8\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.1b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.1b', ignore_patterns=['*.jpeg','*.png','samples/*'])" }
 }
-Write-Host "audio8: ok (0.6B base + fastpath + 0.1B via --variant; first fastpath run compiles ~370s, then inductor-cached)" -ForegroundColor Green
+# Realistic 0.6B: weights-only fine-tune of the Preview 0.6B (same code + codec).
+if (-not (Test-Path "venvs\audio8\src\Audio8-TTS-Realistic-0.6b")) {
+    Invoke-Checked "download audio8 Realistic 0.6B weights" { & "venvs\audio8\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Edge0/Audio8-TTS-Realistic-0.6b', local_dir='venvs/audio8/src/Audio8-TTS-Realistic-0.6b', ignore_patterns=['*.jpeg','*.png','assets/*'])" }
+}
+Write-Host "audio8: ok (0.6B base + fastpath + 0.1B + Realistic 0.6B via --variant; first fastpath run compiles ~370s, then inductor-cached)" -ForegroundColor Green
 }
 
 Step "ChatterBox-TTS (base 1.2B + Turbo ~744M share this venv)"
