@@ -7,10 +7,17 @@ and keeps the MoE experts in system RAM with a GPU expert cache, so it runs on a
 is the offload engine (single-core-bound kernel launches, ~46 ms/frame = realtime),
 and its audio has not been verified against Fish's own output.
 
-Weights: PedroMarinhoDev/Drama-3-ComfyUI @ 9063c07, `drama3_fp8experts_bf16.safetensors`
-(38.6 GB, the original release precision: FP8-E4M3 experts + bf16 rest) and
-`drama3_codec.safetensors` (Fish S2-Pro codec, 44.1 kHz, 21.5 frames/s), in
-models/drama3/. The W4A8/int8 quants exist; they are not what this row measures.
+Weights: fishaudio/drama-3 @ 78e5ab7 (the 2026-10-29 re-upload), repacked locally with the
+port's own `tools/convert.py model <dir> drama3_fp8experts_bf16_78e5ab7.safetensors --format fp8`
+(lossless: the checkpoint's FP8-E4M3 expert bytes + block scales copied, bf16 rest), and
+`drama3_codec.safetensors` (Fish S2-Pro codec, 44.1 kHz, 21.5 frames/s), in models/drama3/.
+Fish replaced the LM weights on 2026-10-29 without a note: same tensor names, shapes and
+total size, but 909 of 912 repacked tensors differ (experts, attention, norms, embeddings,
+audio head); codec.pth and tokenizer unchanged. The
+2026-10-15 row used PedroMarinhoDev/Drama-3-ComfyUI @ 9063c07 (`drama3_fp8experts_bf16
+.safetensors`), a repack of the original upload; convert.py on that upload reproduces it
+tensor for tensor. Those rows live in results/_preserved_drama3_9063c07/.
+The W4A8/int8 quants exist; they are not what this row measures.
 
 In-process, no ComfyUI server: ComfyUI v0.40.0 is checked out at
 venvs/drama3/ComfyUI and imported as a library (the port's `drama3/` package uses
@@ -25,7 +32,9 @@ the row is in NO_PRESET_VOICE (cloning board only).
 
 Sampling = the port's defaults, which it documents as Fish's server defaults:
 temperature 1.0, top_p 0.9, top_k 30, seed pinned at 0. max_frames 600 per ~300-byte
-text chunk (27.9 s); canonical prompt 3 measured 308 (default) / 361 (cloned) frames.
+text chunk (27.9 s); canonical prompt 3 (253 bytes, one chunk) measured ~495 frames (23.0 s)
+on 78e5ab7, ~105 frames of headroom. The ORIGINAL weights ran Spanish prompt 6 into this cap
+(27.9 s, a runaway); 78e5ab7 ends it at 7.4 s.
 
 Non-streaming: codes are generated in full and then decoded, so TTFA == gen_s.
 Expert cache 16 GB on every rig (peak ~24 GB on the 5090) so rigs stay comparable.
@@ -45,7 +54,7 @@ REPO = Path(__file__).resolve().parents[1]
 COMFY = REPO / "venvs" / "drama3" / "ComfyUI"
 PORT = COMFY / "custom_nodes" / "ComfyUI-Drama3"
 WEIGHTS = REPO / "models" / "drama3"
-MODEL_FILE = "drama3_fp8experts_bf16.safetensors"
+MODEL_FILE = "drama3_fp8experts_bf16_78e5ab7.safetensors"
 CODEC_FILE = "drama3_codec.safetensors"
 DEFAULT_REF = REPO / "reference" / "chris_hemsworth_15s.wav"
 
