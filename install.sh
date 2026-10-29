@@ -462,8 +462,10 @@ if [ ! -d venvs/audio8/src/Audio8-TTS-Preview-0.1b ]; then
         || die "download audio8 0.1B weights"
 fi
 # Realistic 0.6B: weights-only fine-tune of the Preview 0.6B (same code + codec).
+# Pinned to the benched revision: it loads with trust_remote_code, so an unpinned
+# download would execute whatever modeling code the repo holds at install time.
 if [ ! -d venvs/audio8/src/Audio8-TTS-Realistic-0.6b ]; then
-    venvs/audio8/bin/python -c "from huggingface_hub import snapshot_download as d; d('Edge0/Audio8-TTS-Realistic-0.6b', local_dir='venvs/audio8/src/Audio8-TTS-Realistic-0.6b', ignore_patterns=['*.jpeg','*.png','assets/*'])" \
+    venvs/audio8/bin/python -c "from huggingface_hub import snapshot_download as d; d('Edge0/Audio8-TTS-Realistic-0.6b', revision='1e857568bfd4f02931aca3988ee773a44d2d26d3', local_dir='venvs/audio8/src/Audio8-TTS-Realistic-0.6b', ignore_patterns=['*.jpeg','*.png','assets/*'])" \
         || die "download audio8 Realistic 0.6B weights"
 fi
 # Mamba fast-path kernels for the 0.1B's Falcon-H1 hybrid AR. Linux-only: both build

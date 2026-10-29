@@ -351,8 +351,10 @@ if (-not (Test-Path "venvs\audio8\src\Audio8-TTS-Preview-0.1b")) {
     Invoke-Checked "download audio8 0.1B weights" { & "venvs\audio8\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Audio8/Audio8-TTS-Preview-0.1b', local_dir='venvs/audio8/src/Audio8-TTS-Preview-0.1b', ignore_patterns=['*.jpeg','*.png','samples/*'])" }
 }
 # Realistic 0.6B: weights-only fine-tune of the Preview 0.6B (same code + codec).
+# Pinned to the benched revision: it loads with trust_remote_code, so an unpinned
+# download would execute whatever modeling code the repo holds at install time.
 if (-not (Test-Path "venvs\audio8\src\Audio8-TTS-Realistic-0.6b")) {
-    Invoke-Checked "download audio8 Realistic 0.6B weights" { & "venvs\audio8\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Edge0/Audio8-TTS-Realistic-0.6b', local_dir='venvs/audio8/src/Audio8-TTS-Realistic-0.6b', ignore_patterns=['*.jpeg','*.png','assets/*'])" }
+    Invoke-Checked "download audio8 Realistic 0.6B weights" { & "venvs\audio8\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Edge0/Audio8-TTS-Realistic-0.6b', revision='1e857568bfd4f02931aca3988ee773a44d2d26d3', local_dir='venvs/audio8/src/Audio8-TTS-Realistic-0.6b', ignore_patterns=['*.jpeg','*.png','assets/*'])" }
 }
 Write-Host "audio8: ok (0.6B base + fastpath + 0.1B + Realistic 0.6B via --variant; first fastpath run compiles ~370s, then inductor-cached)" -ForegroundColor Green
 }
