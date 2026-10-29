@@ -83,6 +83,12 @@ MODELS = [
     # NOTE: without mamba-ssm/causal-conv1d (no Windows wheels) transformers runs the
     # naive Mamba path, so the speed row understates the model -- see known-issues.
     ("audio8_01b",  "audio8", "runners/audio8_runner.py", {"en", "fr", "es"}, ["cpu", "cuda"], "base_01b", True),
+    # Audio8 TTS Realistic 0.6B: a WEIGHTS-ONLY fine-tune of the Preview 0.6B --
+    # identical modeling code, byte-identical codec, same 601,159,424 params -- so
+    # `audio8` vs `audio8_realistic` is the same engine on different weights. Real
+    # <|speaker:N|> preset (verified: ~165 Hz, 1.6 st spread across en prompts vs
+    # Chris's 87 Hz) AND wav cloning -> _PRESET_AND_CLONE, both lenses.
+    ("audio8_realistic", "audio8", "runners/audio8_runner.py", {"en", "fr", "es"}, ["cpu", "cuda"], "realistic", True),
     ("indextts",    "indextts",   "runners/indextts_runner.py",   {"en"},        ["cpu", "cuda"],        None,   True),
     # IndexTTS-2.5: own venv (upstream moved to numpy 2 / torch 2.8; sharing would
     # change the live 2.0 row's code). zh/en/ja/es/ar, NO French -- the runner refuses

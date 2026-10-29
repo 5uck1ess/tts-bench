@@ -1,4 +1,15 @@
-"""Audio8 TTS Preview -- 0.6B and 0.1B (11 languages, zero-shot cloning).
+"""Audio8 TTS Preview 0.6B / 0.1B + Realistic 0.6B (zero-shot cloning).
+
+REALISTIC (--variant realistic, Edge0/Audio8-TTS-Realistic-0.6b, HF sha
+1e857568bfd4f02931aca3988ee773a44d2d26d3) is a WEIGHTS-ONLY fine-tune of the
+Preview 0.6B: modeling_arktts.py and codec.pth are byte-identical, param count
+is the same 601,159,424. So `base` vs `realistic` isolates the weights on one
+engine. 23 languages (Preview: 11). Its card's no-reference example omits the
+speaker tag, but `<|speaker:2|>` still selects a stable built-in voice (~165 Hz
+median F0, 1.6 st spread across the English prompts vs the Chris ref's 87 Hz),
+so it fills the default lens like its siblings. Smoke on all 6 canonical
+prompts: prompt 3 is ~19 s / ~411 frames, well inside MAX_NEW_TOKENS. It
+leaves longer interior pauses than Preview (0.6-1.0 s vs 0.1-0.4 s).
 
 DualAR architecture (explicitly credited to Fish Audio S2 Pro): a 24-layer slow
 AR transformer emits one semantic token per audio frame, a 4-layer fast AR
@@ -92,14 +103,20 @@ MODEL_DIRS = {
     "base":      _SRC / "Audio8-TTS-Preview-0.6b",
     "fastpath":  _SRC / "Audio8-TTS-Preview-0.6b",
     "base_01b":  _SRC / "Audio8-TTS-Preview-0.1b",
+    "realistic": _SRC / "Audio8-TTS-Realistic-0.6b",
 }
 
 VARIANTS = tuple(MODEL_DIRS)
 DEFAULT_VARIANT = "base"
 
 # Cantonese, Chinese, Dutch, English, French, German, Italian, Japanese,
-# Korean, Polish, Spanish (the Preview checkpoint's stated coverage).
-SUPPORTED_LANGS = {"yue", "zh", "nl", "en", "fr", "de", "it", "ja", "ko", "pl", "es"}
+# Korean, Polish, Spanish (the Preview checkpoints' stated coverage).
+_PREVIEW_LANGS = {"yue", "zh", "nl", "en", "fr", "de", "it", "ja", "ko", "pl", "es"}
+# Realistic adds Arabic, Finnish, Hindi, Indonesian, Malay, Norwegian,
+# Portuguese, Russian, Swedish, Thai, Turkish, Vietnamese.
+SUPPORTED_LANGS = {v: _PREVIEW_LANGS for v in MODEL_DIRS}
+SUPPORTED_LANGS["realistic"] = _PREVIEW_LANGS | {
+    "ar", "fi", "hi", "id", "ms", "no", "pt", "ru", "sv", "th", "tr", "vi"}
 
 # ~21.5 frames/s (44100 / codec_frame_size 2048) -> 1024 frames is ~47 s. See the
 # module docstring for why not 400. Both checkpoints share that frame rate; the
@@ -140,7 +157,7 @@ def main() -> int:
     p.add_argument("--reference", default=None,
                    help="Wav path for zero-shot voice cloning. Needs sibling .txt transcript.")
     p.add_argument("--variant", default=None, choices=VARIANTS,
-                   help="base (transformers eager) or fastpath (compiled fast_arktts)")
+                   help="base / base_01b / realistic (transformers eager) or fastpath (compiled fast_arktts)")
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--language", default="en")
     p.add_argument("--stdin", action="store_true")
@@ -151,12 +168,12 @@ def main() -> int:
                           "error": "either --stdin or both --text and --out are required"}))
         return 1
 
-    if args.language not in SUPPORTED_LANGS:
-        print(json.dumps({"ok": False, "run_index": 0,
-                          "error": f"Audio8 TTS Preview does not support language={args.language}"}))
-        return 1
-
     variant = args.variant or DEFAULT_VARIANT
+
+    if args.language not in SUPPORTED_LANGS[variant]:
+        print(json.dumps({"ok": False, "run_index": 0,
+                          "error": f"Audio8 TTS variant {variant} does not support language={args.language}"}))
+        return 1
 
     # The fast path is a torch.compile/CUDA-graph rewrite -- there is no CPU or
     # MPS story. Fail the cell cleanly rather than silently running eager and
