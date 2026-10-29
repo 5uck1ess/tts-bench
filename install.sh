@@ -1230,15 +1230,19 @@ fi
 # Pins, outside the venv guard so existing installs move too: port 8cb3c64 (2026-10-25: NVRTC
 # expert kernels + CUDA-graph decode, ~4x faster; stall retry) on ComfyUI v0.42.5, the newest
 # release before that commit. Both pinned: the runner's numbers describe exactly this code.
+# Keyed on a stamp of the applied pins, not the port's HEAD: a fresh clone of the port's main
+# can already sit at the pin while ComfyUI and the deps are still unset.
 DRAMA3_PORT=8cb3c64379d4988b9693cae9f3436b8fd54b22ad
+DRAMA3_STAMP="port=$DRAMA3_PORT comfyui=v0.42.5"
 if want drama3 && [ -d venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 ] \
-        && [ "$(git -C venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 rev-parse HEAD)" != "$DRAMA3_PORT" ]; then
+        && [ "$(cat venvs/drama3/.drama3-pins 2>/dev/null)" != "$DRAMA3_STAMP" ]; then
     git -C venvs/drama3/ComfyUI fetch -q --tags origin && git -C venvs/drama3/ComfyUI checkout -q v0.42.5 \
         || die "ComfyUI v0.42.5"
     git -C venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 fetch -q origin \
         && git -C venvs/drama3/ComfyUI/custom_nodes/ComfyUI-Drama3 checkout -q $DRAMA3_PORT || die "ComfyUI-Drama3 pin"
     uv pip install --python venvs/drama3/bin/python -r venvs/drama3/ComfyUI/requirements.txt soundfile \
         || die "uv pip install drama3"
+    echo "$DRAMA3_STAMP" > venvs/drama3/.drama3-pins
     green "drama3: ok (port 8cb3c64 on ComfyUI v0.42.5; CUDA-only, 44.1k)"
 fi
 # LM weights, outside the venv guard so pre-2026-10-29 installs pick them up too: Fish @

@@ -1081,13 +1081,18 @@ if (-not (Want "drama3")) { Write-Host "drama3: skipped (not in install filter)"
 # release before that commit. Both pinned: the runner's numbers describe exactly this code.
 # Deps = ComfyUI's requirements minus torch, then cu128 torch LAST (Blackwell; PyPI Windows
 # torch is CPU-only).
+# Keyed on a stamp of the applied pins, not the port's HEAD: a fresh clone of the port's main
+# can already sit at the pin while ComfyUI and the deps are still unset.
 $drama3Port = "8cb3c64379d4988b9693cae9f3436b8fd54b22ad"
-if ((Want "drama3") -and (Test-Path "venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3") -and ((git -C venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3 rev-parse HEAD) -ne $drama3Port)) {
+$drama3Stamp = "port=$drama3Port comfyui=v0.42.5 torch=2.11.0+cu128"
+$drama3StampFile = "venvs\drama3\.drama3-pins"
+if ((Want "drama3") -and (Test-Path "venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3") -and -not ((Test-Path $drama3StampFile) -and ((Get-Content $drama3StampFile -Raw).Trim() -eq $drama3Stamp))) {
     Invoke-Checked "ComfyUI v0.42.5" { git -C venvs\drama3\ComfyUI fetch -q --tags origin; git -C venvs\drama3\ComfyUI checkout -q v0.42.5 }
     Invoke-Checked "ComfyUI-Drama3 pin" { git -C venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3 fetch -q origin; git -C venvs\drama3\ComfyUI\custom_nodes\ComfyUI-Drama3 checkout -q $drama3Port }
     Get-Content venvs\drama3\ComfyUI\requirements.txt | Where-Object { $_ -notmatch '^\s*(torch|torchvision|torchsde)\s*$' } | Set-Content venvs\drama3\req-notorch.txt -Encoding utf8
     Invoke-Checked "uv pip install drama3 deps" { uv pip install --python venvs\drama3\Scripts\python.exe -r venvs\drama3\req-notorch.txt torchsde soundfile }
     Invoke-Checked "torch cu128 for drama3 (LAST)" { uv pip install --python venvs\drama3\Scripts\python.exe --reinstall torch==2.11.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Set-Content $drama3StampFile $drama3Stamp -Encoding utf8
     Write-Host "drama3: ok (port 8cb3c64 on ComfyUI v0.42.5; CUDA-only, 44.1k)" -ForegroundColor Green
 }
 # LM weights, outside the venv guard so pre-2026-10-29 installs pick them up too: Fish @
