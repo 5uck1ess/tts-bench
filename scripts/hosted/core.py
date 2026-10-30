@@ -170,6 +170,8 @@ def _first_speech_ms(data, fmt, arrivals):
 
 
 def synth(client, ad, text, lang):
+    if hasattr(ad, "synth_ws"):  # WebSocket-only vendors time their own session
+        return ad.synth_ws(text, lang)
     voice = ad.voice(lang)
     req = ad.request(text, lang, voice)
     marks = {}
