@@ -64,12 +64,13 @@ class OpenAIMiniTTS(Adapter):
     slug = "openai_gpt4o_mini_tts"
     provider = "openai"
     vendor = "OpenAI"
-    model = "gpt-4o-mini-tts"  # deprecated 2026-10-01, shuts down 2027-01-06; no newer TTS model
+    # Latest snapshot, pinned. Deprecated 2026-10-01, shuts down 2027-01-06; no newer TTS model.
+    model = "gpt-4o-mini-tts-2025-12-15"
     langs = FR_ES
     sr = 24000
 
     def voice(self, lang):
-        return "coral"  # quickstart voice
+        return "marin"  # TTS guide: "For best quality, we recommend using marin or cedar"
 
     def request(self, text, lang, voice):
         return dict(method="POST", url="https://api.openai.com/v1/audio/speech",
