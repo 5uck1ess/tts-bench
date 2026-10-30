@@ -48,26 +48,40 @@ xAI $20 left, ElevenLabs on existing credits; the rest have free credit. Sources
 `wiki/research/deepfake/voice/tts-refresh-sep2026.md`, `wiki/research/pipecat-service-catalog-oct2026.md`.
 The table below predates the lock and still has older per-row notes.
 
-Prices are list $/1M chars from Tym's 2026-10-28 list (homebase `wiki/research/deepfake/voice/tts-refresh-sep2026.md`).
-"Per sweep" = 6 prompts × 2 lenses × 3 runs ≈ 3,950 chars.
+Prices are list $/1M chars, taken from homebase research (each row there was read off the vendor's
+pricing page; read dates 2026-09-25 → 2026-10-28): `wiki/research/deepfake/voice/tts-refresh-sep2026.md`
+(TR), `wiki/research/pipecat-service-catalog-oct2026.md` (PC), `wiki/research/phone-voice-agent-cost-sep2026.md`
+(PV), `wiki/setup/artifact-refresh.md` (AR). Per-minute/token prices are converted at ~900 chars per
+minute of speech and marked ≈. Re-check each against the vendor page on publish day.
 
-| Model | $/1M | Per sweep | Cloning API | Notes |
+| Model | $/1M chars | As published | Source | Notes |
 |---|---|---|---|---|
-| ElevenLabs Eleven v4 | $80 | ~$0.32 | IVC | 10k-char request cap |
-| ElevenLabs Eleven v4 Turbo | $40 | ~$0.16 | IVC | AA #1/#2 (1333) |
-| Qwen-Audio-3.1-TTS-Plus (Alibaba) | $19.3 | ~$0.08 | yes | AA #3; #2 on AA cloning |
-| Cartesia Sonic 3.6 | $49 | ~$0.20 | instant | |
-| Gemini 3.8 Flash TTS | $16.5 | ~$0.07 | 30 s + consent | price doubles 2027-01-01 |
-| Gemini 3.8 Flash-Lite TTS | $11 | ~$0.04 | 30 s + consent | price doubles 2027-01-01 |
-| Inworld TTS-2 | $20.8 | ~$0.08 | free | |
-| Speechify SIMBA 3.2 | $6.6 | ~$0.03 | unverified | needs a $10/mo API plan |
-| Mistral Voxtral 3 TTS | $13 | ~$0.05 | unverified | |
-| SpaceXAI (Grok) TTS | unverified | — | unverified | "grok top tts"; price not in the list |
-| Fish Audio (s2.1-pro; Drama 3 if the API serves it) | unverified | — | yes (`references`) | adapter already exists (`collect_hosted.py`). API credit is separate from platform credit (402 on 2026-10-15). Drama 3 may silently fall back to s2.1-pro, so `--probe` first |
-| Soniox TTS Real-Time v2 | $14.2 | ~$0.06 | unverified | AA 1173; strong on alphanumerics; the Yazyk receptionist's live TTS (voice Iris), so we already have working client code there |
-| AssemblyAI TTS-1 | $15 | ~$0.06 | instant, included | launched 2026-10-28; en/es/fr/de/it/pt only (covers all 6 bench prompts); no SSML/speed/emotion tags yet; vendor 47 ms median TTFA |
-| Rime Mist v3 (+ Arcana?) | unverified | — | unverified | IVR/high-volume lane; vendor ~37 ms TTFA P50; deterministic pronunciation. Price and which model(s) to bench not in homebase yet |
-| GiggySpeech (Giggy) | $5 Fast / $10 Streaming | ~$0.02 / ~$0.04 | yes, $0.01/voice | issue #14. Only queued Batch is $0 (rate- and queue-limited); prepaid credits, no subscription; $10 Pro pack minimum for the listed rate (Starter $3 / Creator $6 cost more per char). Trained from scratch, runs with a separate "Giggy Harness" model (Henry, 2026-10-12). No SLA; status page giggy.ai/status |
+| Eleven v4 | $80 | $0.08/1k | TR | launch promo ended Oct 12 |
+| Eleven v4 Turbo | $40 | $0.04/1k | TR | |
+| Rime Coda | $50 | $0.05/1k | TR | |
+| Giggy (streaming) | $10 | $10/1M | TR | Pro pack or larger; Fast $5, Batch free |
+| Cartesia Sonic 3.6 | $38–65 | credits = chars, by plan | TR | $65 Pro · $45 Startup · $38 Scale |
+| Gemini 3.8 Flash TTS | ≈$15 | $0.50/1M text in + $9/1M audio out | TR | ≈$0.0135/min; doubles 2027-01-01 |
+| Inworld TTS-2 | $25 | $25/1M on-demand | TR | → $5 enterprise |
+| Speechify SIMBA 3.5 | **gap** | — | — | homebase has SIMBA 3.2 only ($6–10/1M by plan) |
+| Fish Drama 3 | $10 now, $50 list | per 1M UTF-8 bytes | AR | $10 launch price ends 2026-11-12 |
+| Mistral Voxtral TTS 3 | $16 | $16/1M | PC | AR: Mistral lists Voxtral TTS 3 without a price |
+| xAI TTS | **gap** | — | — | not in homebase |
+| AssemblyAI TTS-1 | $15 | $15/1M | TR | flat, all voices |
+| Soniox tts-rt-v2 | ≈$14.1 | ≈$0.70/hr of speech | PC | |
+| StepFun stepaudio-3-tts | $36 (≈$18 EN) | $0.36/10k chars, 2 EN letters = 1 char | TR | |
+| Smallest Lightning v3.1 Pro | $19.5 | $0.195/10k | TR | |
+| Deepgram Flux TTS | $45 | $0.045/1k | TR | |
+| MAI-Voice-2.1 | ≈$22 | ≈$1.19 per generated hour | PV | |
+| VUI Luna | $15 | $15/1M | TR | AA-listed, not a vendor page |
+| OpenAI gpt-4o-mini-tts | ≈$17 | $0.60/1M text in + $12/1M audio out | TR | ≈$0.015/min; retires 2027-01-06 |
+| OpenAI gpt-realtime-2.1 | token-priced | $4/1M text in, $64/1M audio out | PV | |
+| Murf Falcon 2.1 | $10 | $0.01/1k | TR | /api page says "1¢/min", a mismatch |
+| HeyGen Voice 1 | $30 | $30/1M | TR | |
+| MiniMax speech-2.8-hd | $100 | $100/1M (MiniMax direct) | TR | OpenRouter price not in homebase |
+| Bland Speech v3 | $40 | $40/1M | TR | |
+| Gradium | $35.9–57.8 | by plan | PC | |
+| Async Flash v1.5 | ≈$10.1 | AA-listed | PC | not a vendor page |
 
 Already collected: Fish Drama 3 web-app clips in `hosted/drama-3-webapp/` (fidelity check for the `drama3`
 port). These are web-app clips, not API clips, and stay out of the hosted board.
