@@ -73,7 +73,7 @@ minute of speech and marked ≈. Re-check each against the vendor page on publis
 | Smallest Lightning v3.1 Pro | $19.5 | $0.195/10k | TR | |
 | Deepgram Flux TTS | $45 | $0.045/1k | TR | |
 | MAI-Voice-2.1 | $22 | $22/1M on OpenRouter; ≈$1.19/generated hr on Azure | TR (10-30), PV | |
-| VUI Luna | $15 | $15/1M | TR | AA-listed, not a vendor page |
+| VUI Luna | $15 | $15/1M chars | vuilabs.ai/pricing (10-30) | cloning $3/clone; Luna-TTS Character same price |
 | OpenAI gpt-4o-mini-tts | ≈$17 | $0.60/1M text in + $12/1M audio out | TR | ≈$0.015/min; retires 2027-01-06 |
 | OpenAI gpt-realtime-2.1 | token-priced | $4/1M text in, $64/1M audio out | PV | |
 | Murf Falcon 2.1 | $10 | $0.01/1k | TR | /api page says "1¢/min", a mismatch |
