@@ -121,7 +121,14 @@ Network phases, timed by the client so network can be separated from generation:
 
 ### Published (hosted speed table)
 
-- **TTFA** and **Total** (+ RTF), plus **vendor-side TTFA** (TTFA − RTT) in its own column.
+- **Time to first speech** (`ttfa_speech_ms`: first sample above −40 dBFS, so leading silence
+  doesn't count) leads the table and is the speed ranking.
+- **Total** and RTFx are shown as "delivery time, includes vendor pacing": some vendors (Deepgram,
+  Soniox) send audio at roughly playback speed on purpose, so a 6 s clip takes 4–5 s to arrive
+  even though first audio is ~200 ms. Never rank by Total/RTFx.
+- **Transport**: each vendor runs on whichever of its paths gave the faster warm first speech in an
+  A/B on 2026-10-30 (Gemini `streamGenerateContent`; Cartesia and AssemblyAI WebSocket; the rest
+  HTTP). The transport is a column.
 - Each is the **median over ≥10 calls spread across ≥3 days and different times of day**, with p90
   and the call count shown. Failed or errored calls are counted and shown (error rate), not dropped.
 - Per-prompt for p1 (short) and p3 (long), since TTFA vs length is the interesting curve.
