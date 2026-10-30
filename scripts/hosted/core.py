@@ -232,11 +232,13 @@ def cell_status(ad, lens, pid, take):
 
 
 def warmup(client, ad, text="Hello."):
-    """Untimed, unsaved call so the sweep's timed calls all run on a warm connection."""
-    try:
-        synth(client, ad, text, "en")
-    except Exception as e:
-        print(f"{ad.slug:>18} warmup failed: {str(e)[:160]}")
+    """Untimed, unsaved call so the sweep's timed calls all run on a warm connection.
+    WebSocket adapters open one socket per language, so they warm each one."""
+    for lang in (sorted(ad.langs) if hasattr(ad, "synth_ws") else ["en"]):
+        try:
+            synth(client, ad, text, lang)
+        except Exception as e:
+            print(f"{ad.slug:>18} warmup ({lang}) failed: {str(e)[:160]}")
 
 
 def run_cell(client, ad, lens, pid, lang, text, take):
