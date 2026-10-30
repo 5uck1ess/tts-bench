@@ -22,6 +22,8 @@ def main():
     ap.add_argument("--prompts", default="1,2,3,4,5,6")
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--refresh-keys", action="store_true", help="re-fetch keys from 1Password")
+    ap.add_argument("--only-failed", action="store_true",
+                    help="re-run only cells whose sidecar is missing or status=error")
     args = ap.parse_args()
     if args.refresh_keys:
         keys.refresh()
@@ -45,6 +47,9 @@ def main():
             for take in range(1, runs + 1):
                 for pid in pids:
                     lang, text = by_id[pid]
+                    if args.only_failed and core.cell_status(ad, "default", pid, take) not in (
+                            None, "error"):
+                        continue
                     core.run_cell(client, ad, "default", pid, lang, text, take)
 
 

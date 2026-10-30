@@ -49,6 +49,8 @@ class Adapter:
     fmt = "pcm16"      # "pcm16" (headerless, needs sr) | "wav" | "mp3"
     sr = 24000
     params = {}        # non-default parameters we send, recorded in the public sidecar
+    min_interval = 0.0  # seconds between request starts, for vendors with tight rate limits
+    _last_start = 0.0
 
     def __init__(self, key):
         self.key = key
@@ -170,6 +172,11 @@ def _first_speech_ms(data, fmt, arrivals):
 
 
 def synth(client, ad, text, lang):
+    # Rate-limit pacing happens before the clock starts, so it never lands in a timing.
+    wait = ad._last_start + ad.min_interval - time.monotonic()
+    if wait > 0:
+        time.sleep(wait)
+    ad._last_start = time.monotonic()
     if hasattr(ad, "synth_ws"):  # WebSocket-only vendors time their own session
         return ad.synth_ws(text, lang)
     voice = ad.voice(lang)
@@ -217,6 +224,11 @@ def synth(client, ad, text, lang):
                 http_version=http_version, ttfb_ms=round(t_headers, 1),
                 ttfa_ms=round(ttfa, 1) if ad.streaming and ttfa else None,
                 total_ms=round(total, 1))
+
+
+def cell_status(ad, lens, pid, take):
+    f = OUT / ad.slug / lens / f"p{pid}_t{take}.json"
+    return json.loads(f.read_text(encoding="utf-8")).get("status") if f.exists() else None
 
 
 def warmup(client, ad, text="Hello."):

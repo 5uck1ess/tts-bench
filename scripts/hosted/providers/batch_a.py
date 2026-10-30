@@ -36,6 +36,7 @@ class Gemini38FlashTTS(Adapter):
     langs = FR_ES
     sr = 24000
     params = {"stream": True, "mime_type": "audio/l16"}
+    min_interval = 6.5  # Tier 1: 10 requests/minute
 
     def voice(self, lang):
         return "Kore"  # quickstart voice; language is detected from the text
@@ -94,6 +95,7 @@ class SpeechifySimba35(Adapter):
     langs = FR_ES
     sr = 24000
     LOCALE = {"en": "en-US", "fr": "fr-FR", "es": "es-ES"}
+    min_interval = 1.1  # plan allows 1 request/second
 
     def voice(self, lang):
         return "geffen_32"  # quickstart voice; on simba-3.5 every voice speaks all 48 langs
