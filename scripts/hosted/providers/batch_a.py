@@ -35,30 +35,32 @@ class Gemini38FlashTTS(Adapter):
     model = "gemini-3.8-flash-tts"
     langs = FR_ES
     sr = 24000
-    params = {"stream": True, "mime_type": "audio/l16"}
+    params = {"endpoint": "streamGenerateContent", "alt": "sse"}
     min_interval = 6.5  # Tier 1: 10 requests/minute
 
     def voice(self, lang):
         return "Kore"  # quickstart voice; language is detected from the text
 
     def request(self, text, lang, voice):
+        # streamGenerateContent, not the newer /interactions stream: measured 2026-10-30 at
+        # ~0.8 s vs ~1.85 s to first audio on the same sentence (3 alternating runs each).
         return dict(method="POST",
-                    url="https://generativelanguage.googleapis.com/v1beta/interactions",
+                    url=("https://generativelanguage.googleapis.com/v1beta/models/"
+                         f"{self.model}:streamGenerateContent"),
+                    params={"alt": "sse"},
                     headers={"x-goog-api-key": self.key},
-                    json={"model": self.model,
-                          "input": [{"type": "user_input",
-                                     "content": [{"type": "text", "text": text}]}],
-                          "response_format": {"type": "audio", "mime_type": "audio/l16",
-                                              "sample_rate": self.sr},
-                          "generation_config": {"speech_config": [{"voice": voice}]},
-                          "stream": True})
+                    json={"contents": [{"parts": [{"text": text}]}],
+                          "generationConfig": {
+                              "responseModalities": ["AUDIO"],
+                              "speechConfig": {"voiceConfig": {
+                                  "prebuiltVoiceConfig": {"voiceName": voice}}}}})
 
     def audio_chunks(self, raw_iter):
-        for ev in json_lines(raw_iter):
-            d = ev.get("delta") or {}
-            # Live events carry {"mime_type": "audio/l16", "data": b64}, no "type" key.
-            if str(d.get("mime_type", "")).startswith("audio") and d.get("data"):
-                yield base64.b64decode(d["data"])
+        for ev in json_lines(raw_iter):  # inlineData is audio/L16 at 24 kHz
+            for c in ev.get("candidates") or []:
+                for p in (c.get("content") or {}).get("parts") or []:
+                    if (p.get("inlineData") or {}).get("data"):
+                        yield base64.b64decode(p["inlineData"]["data"])
 
 
 class InworldTTS2(Adapter):
