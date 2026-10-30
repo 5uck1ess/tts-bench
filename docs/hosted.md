@@ -81,7 +81,7 @@ minute of speech and marked ≈. Re-check each against the vendor page on publis
 | MiniMax speech-2.8-hd | $100 | $100/1M on OpenRouter (same as direct) | TR (10-30) | |
 | Bland Speech v3 | $40 | $40/1M | TR | |
 | Gradium | $35.9–57.8 | by plan | PC | |
-| Async Flash v1.5 | ≈$10.1 | AA-listed | PC | vendor page renders prices client-side; unverified |
+| Async Flash v1.5 | ≈$9.3 | $0.50 per hour of generated audio | docs.async.com Billing & Pricing (10-30) | prepaid wallet; Pro v1.0 $1.00/hr |
 
 Already collected: Fish Drama 3 web-app clips in `hosted/drama-3-webapp/` (fidelity check for the `drama3`
 port). These are web-app clips, not API clips, and stay out of the hosted board.
