@@ -3,6 +3,7 @@ import httpx
 from ..core import Adapter
 
 BASE = "https://api.giggy.ai/v1"
+LANG_NAME = {"en": "english", "fr": "french", "es": "spanish"}
 
 
 class GiggyTTS(Adapter):
@@ -13,7 +14,9 @@ class GiggyTTS(Adapter):
     provider = "giggy"
     vendor = "Giggy"
     model = "giggyspeech"
-    langs = {"en", "fr", "es"}  # narrowed at runtime to languages /v1/voices actually lists
+    # /v1/voices (2026-10-29) lists 10 voices: 8 English, 1 Oromo, 1 Urdu. language_code must
+    # match the voice's language, so fr/es are not supported.
+    langs = {"en"}
     fmt = "pcm16"
     sr = 24000
     params = {"mode": "streaming"}
@@ -23,20 +26,19 @@ class GiggyTTS(Adapter):
         if self._voices is None:
             r = httpx.get(f"{BASE}/voices", headers={"xi-api-key": self.key}, timeout=30)
             r.raise_for_status()
-            data = r.json()
-            self._voices = data.get("voices", data) if isinstance(data, dict) else data
+            self._voices = r.json()["voices"]
         return self._voices
 
     def voice(self, lang):
-        # Giggy publishes no quickstart voice id; rule fallback: first catalog voice per language.
+        # No quickstart voice id is published; rule fallback = first catalog voice whose
+        # labels.language is exactly this language.
         for v in self._catalog():
-            vl = (v.get("language") or v.get("labels", {}).get("language") or "").lower()
-            if vl.startswith(lang):
-                return v.get("voice_id") or v.get("id")
+            if (v.get("labels") or {}).get("language", "").lower() == LANG_NAME[lang]:
+                return v["voice_id"]
         raise RuntimeError(f"no Giggy voice for {lang}")
 
     def request(self, text, lang, voice):
         return dict(method="POST", url=f"{BASE}/text-to-speech",
                     headers={"xi-api-key": self.key},
-                    json={"text": text, "voice_id": voice, "mode": "streaming",
-                          "output_format": "pcm_24000"})
+                    json={"text": text, "voice_id": voice, "model_id": self.model,
+                          "mode": "streaming", "output_format": "pcm_24000"})

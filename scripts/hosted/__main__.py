@@ -40,12 +40,12 @@ def main():
         cls = ADAPTERS[slug]
         ad = cls(keys.get(cls.provider))
         with core.new_client() as client:
-            cold = True
+            if not args.probe:
+                core.warmup(client, ad)  # every timed call then runs warm; sidecars say if not
             for take in range(1, runs + 1):
                 for pid in pids:
                     lang, text = by_id[pid]
-                    core.run_cell(client, ad, "default", pid, lang, text, take, cold)
-                    cold = False
+                    core.run_cell(client, ad, "default", pid, lang, text, take)
 
 
 if __name__ == "__main__":

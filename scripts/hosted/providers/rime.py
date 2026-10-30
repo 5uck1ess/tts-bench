@@ -21,4 +21,5 @@ class RimeCoda(Adapter):
         # Model is chosen by host; Accept audio/L16 = headerless PCM16 at samplingRate.
         return dict(method="POST", url="https://coda.api.rime.ai/",
                     headers={"Authorization": f"Bearer {self.key}", "Accept": "audio/L16"},
-                    json={"text": text, "speaker": voice, "lang": lang})
+                    json={"text": text, "speaker": voice, "lang": lang,
+                          "samplingRate": self.sr})

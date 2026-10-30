@@ -67,11 +67,44 @@ class Adapter:
         """Turn the raw response body into audio bytes. Default: passthrough."""
         yield from raw_iter
 
+    def on_headers(self, headers):
+        """Hook for vendors that report the sample rate in a response header."""
+
+    def model_sent(self, lang):
+        """Model id actually sent for this language (Deepgram encodes voice+lang in it)."""
+        return self.model
+
     def echo(self, headers, body_meta):
         """Vendor-reported identity/timing worth keeping in the public sidecar."""
         keep = ("request-id", "x-request-id", "server-timing", "x-model", "openai-model",
                 "x-processing-ms", "history-item-id", "character-cost", "x-character-count")
         return {k: v for k, v in headers.items() if k.lower() in keep}
+
+
+def json_lines(raw_iter):
+    """Yield parsed JSON objects from an SSE (`data: {...}`) or NDJSON byte stream."""
+    buf = b""
+    for chunk in raw_iter:
+        buf += chunk
+        while b"\n" in buf:
+            line, buf = buf.split(b"\n", 1)
+            line = line.strip()
+            if line.startswith(b"data:"):
+                line = line[5:].strip()
+            if not line or line == b"[DONE]" or line.startswith((b"event:", b"id:", b":")):
+                continue
+            try:
+                yield json.loads(line)
+            except ValueError:
+                continue
+    if buf.strip():
+        line = buf.strip()
+        if line.startswith(b"data:"):
+            line = line[5:].strip()
+        try:
+            yield json.loads(line)
+        except ValueError:
+            pass
 
 
 def _trace(marks, t0):
@@ -83,6 +116,13 @@ def _trace(marks, t0):
 
 def to_wav(data, fmt, sr):
     """Return (wav_bytes, sr, duration_s). pcm16 gets a header; wav/mp3 are decoded to check."""
+    if fmt == "pcm_f32":
+        import numpy as np
+        f = np.frombuffer(data[:len(data) // 4 * 4], dtype="<f4")
+        data = (np.clip(f, -1.0, 1.0) * 32767).astype("<i2").tobytes()
+        fmt = "pcm16"
+    if fmt == "pcm16" and data[:4] == b"RIFF":  # vendor wrapped it in WAV after all
+        fmt = "wav"
     if fmt == "pcm16":
         if len(data) % 2:
             data = data[:-1]
@@ -100,6 +140,35 @@ def to_wav(data, fmt, sr):
     return buf.getvalue(), rate, len(audio) / rate
 
 
+SPEECH_THRESHOLD = 0.01  # |sample| as a fraction of full scale (-40 dBFS)
+
+
+def _first_speech_ms(data, fmt, arrivals):
+    """Arrival time of the chunk holding the first sample above SPEECH_THRESHOLD, so a vendor
+    that streams leading silence early doesn't get credit for it. None for mp3 (not decodable
+    per byte offset)."""
+    import numpy as np
+    head = 0
+    if fmt == "pcm16" and data[:4] == b"RIFF":  # e.g. Deepgram wraps linear16 in WAV
+        i = data.find(b"data", 12)
+        head = i + 8 if i > 0 else 44
+    if fmt == "pcm16":
+        body = data[head:]
+        a, width = np.frombuffer(body[:len(body) // 2 * 2], dtype="<i2") / 32768.0, 2
+    elif fmt == "pcm_f32":
+        a, width = np.frombuffer(data[:len(data) // 4 * 4], dtype="<f4"), 4
+    else:
+        return None
+    hits = np.flatnonzero(np.abs(a) > SPEECH_THRESHOLD)
+    if not hits.size:
+        return None
+    off = head + int(hits[0]) * width
+    for end, ms in arrivals:
+        if off < end:
+            return round(ms, 1)
+    return None
+
+
 def synth(client, ad, text, lang):
     voice = ad.voice(lang)
     req = ad.request(text, lang, voice)
@@ -115,30 +184,56 @@ def synth(client, ad, text, lang):
         if r.status_code != 200:
             body = r.read()[:600]
             raise RuntimeError(f"{ad.slug}: HTTP {r.status_code}: {body!r}")
-        for chunk in ad.audio_chunks(r.iter_raw()):
+        ctype = r.headers.get("content-type", "")
+        if type(ad).audio_chunks is Adapter.audio_chunks and ("json" in ctype or "text/" in ctype):
+            # A raw-audio adapter got a JSON/text body with HTTP 200: an error envelope, not audio.
+            raise RuntimeError(f"{ad.slug}: expected audio, got {ctype}: {r.read()[:300]!r}")
+        ad.on_headers(r.headers)
+        # iter_bytes = as-received chunks with Content-Encoding (gzip on Gemini's SSE) decoded;
+        # iter_raw would hand back compressed bytes. Neither applies a fixed read size.
+        arrivals = []  # (byte offset where the chunk ends, arrival ms)
+        nbytes = 0
+        for chunk in ad.audio_chunks(r.iter_bytes()):
             if chunk:
+                now = (time.perf_counter() - t0) * 1000
                 if ttfa is None:
-                    ttfa = (time.perf_counter() - t0) * 1000
+                    ttfa = now
                 chunks.append(chunk)
+                nbytes += len(chunk)
+                arrivals.append((nbytes, now))
         total = (time.perf_counter() - t0) * 1000
         headers = dict(r.headers)
         http_version = r.http_version
     data = b"".join(chunks)
     if not data:
         raise RuntimeError(f"{ad.slug}: empty audio")
-    return dict(voice=voice, req=req, data=data, marks=marks, headers=headers,
+    # Fresh connection iff httpcore opened a TCP connection for this request.
+    cold = any(k.startswith("connection.connect_tcp") for k in marks)
+    ttfa_speech = _first_speech_ms(data, ad.fmt, arrivals) if ad.streaming else None
+    return dict(voice=voice, req=req, data=data, marks=marks, headers=headers, cold=cold,
+                ttfa_speech_ms=ttfa_speech,
                 http_version=http_version, ttfb_ms=round(t_headers, 1),
                 ttfa_ms=round(ttfa, 1) if ad.streaming and ttfa else None,
                 total_ms=round(total, 1))
 
 
-def run_cell(client, ad, lens, pid, lang, text, take, cold):
+def warmup(client, ad, text="Hello."):
+    """Untimed, unsaved call so the sweep's timed calls all run on a warm connection."""
+    try:
+        synth(client, ad, text, "en")
+    except Exception as e:
+        print(f"{ad.slug:>18} warmup failed: {str(e)[:160]}")
+
+
+def run_cell(client, ad, lens, pid, lang, text, take):
     name = f"p{pid}_t{take}"
     pub_dir = OUT / ad.slug / lens
     priv_dir = PRIVATE / ad.slug / lens
     pub_dir.mkdir(parents=True, exist_ok=True)
     priv_dir.mkdir(parents=True, exist_ok=True)
-    base = {"model_row": ad.slug, "vendor": ad.vendor, "model_id_sent": ad.model,
+    for stale in (pub_dir / f"{name}.wav", priv_dir / f"{name}.json"):
+        stale.unlink(missing_ok=True)
+    base = {"model_row": ad.slug, "vendor": ad.vendor, "model_id_sent": ad.model_sent(lang),
             "route": ad.route, "lens": lens, "prompt_id": pid, "lang": lang, "take": take,
             "text_sha256": hashlib.sha256(text.encode()).hexdigest()[:16],
             "utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -150,32 +245,41 @@ def run_cell(client, ad, lens, pid, lang, text, take, cold):
         return base
     try:
         res = synth(client, ad, text, lang)
+        wav, sr, dur = to_wav(res["data"], ad.fmt, ad.sr)
+        if dur < 0.05:
+            raise RuntimeError(f"{ad.slug}: {dur:.3f}s of audio")
     except Exception as e:  # published as a defect/error, never dropped
         base.update(status="error", error=str(e)[:400])
         (pub_dir / f"{name}.json").write_text(json.dumps(base, indent=2), encoding="utf-8")
         print(f"{ad.slug:>18} {lens:<8} p{pid} t{take}  ERROR {str(e)[:160]}")
         return base
-    wav, sr, dur = to_wav(res["data"], ad.fmt, ad.sr)
     (pub_dir / f"{name}.wav").write_bytes(wav)
     total_s = res["total_ms"] / 1000
     base.update(
         status="ok", voice_id=res["voice"], params=ad.params, streaming=ad.streaming,
         format_received=ad.fmt, sample_rate=sr, duration_s=round(dur, 3),
         audio_sha256=hashlib.sha256(wav).hexdigest()[:16],
-        connection="cold" if cold else "warm", http_version=res["http_version"],
-        ttfa_ms=res["ttfa_ms"], ttfb_ms=res["ttfb_ms"], total_ms=res["total_ms"],
+        connection="cold" if res["cold"] else "warm", http_version=res["http_version"],
+        ttfa_ms=res["ttfa_ms"], ttfa_speech_ms=res["ttfa_speech_ms"],
+        ttfb_ms=res["ttfb_ms"], total_ms=res["total_ms"],
         rtfx=round(dur / total_s, 2) if total_s else None,
         vendor_echo=ad.echo(res["headers"], None),
         key_fingerprint=keys.fingerprint(ad.key))
     (pub_dir / f"{name}.json").write_text(json.dumps(base, indent=2), encoding="utf-8")
     req = {k: v for k, v in res["req"].items() if k not in ("headers", "content")}
+    if req.get("params"):
+        req["params"] = {k: v for k, v in req["params"].items() if "key" not in k.lower()}
     priv = dict(base, request=req, response_headers=res["headers"], phases_ms=res["marks"])
     (priv_dir / f"{name}.json").write_text(json.dumps(priv, indent=2), encoding="utf-8")
     ttfa = f"{res['ttfa_ms']:.0f}" if res["ttfa_ms"] else "-"
+    sp = f"{res['ttfa_speech_ms']:.0f}" if res["ttfa_speech_ms"] else "-"
     print(f"{ad.slug:>18} {lens:<8} p{pid} t{take}  {dur:6.2f}s {sr}Hz  "
-          f"ttfa {ttfa:>5}ms total {res['total_ms']:6.0f}ms  {base['connection']}")
+          f"ttfa {ttfa:>5}ms speech {sp:>5}ms total {res['total_ms']:6.0f}ms  "
+          f"{base['connection']}")
     return base
 
 
 def new_client():
-    return httpx.Client(timeout=httpx.Timeout(120.0, connect=15.0), http2=False)
+    # identity: no compressed bodies, so the first chunk is never held back by a decoder.
+    return httpx.Client(timeout=httpx.Timeout(120.0, connect=15.0), http2=False,
+                        headers={"Accept-Encoding": "identity"})
