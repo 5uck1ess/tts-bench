@@ -11,12 +11,15 @@ class BlandSpeech3(Adapter):
     provider = "bland"
     vendor = "Bland"
     model = "btts-3"  # no model param: the voice picks it; x-model response header confirms
-    # /v1/models lists BTTS_V3 as en-only; fr/es voices are BTTS_V2 (a different model).
-    langs = {"en"}
+    # /v1/voices (2026-10-29): no BTTS_V3 voice is tagged French (French voices are V2/legacy,
+    # a different model), so fr is not supported. Spanish has V3 voices; first listed is used.
+    langs = {"en", "es"}
     sr = 24000
+    VOICES = {"en": "29158307-9893-4149-8a75-bc9ce313d64e",  # quickstart "Karen"
+              "es": "6af5e703-9f92-4a5e-b532-39f226897d03"}  # "Brad | Warm Professional ES"
 
     def voice(self, lang):
-        return "29158307-9893-4149-8a75-bc9ce313d64e"  # quickstart "Karen" (General American)
+        return self.VOICES[lang]
 
     def request(self, text, lang, voice):
         return dict(method="POST", url="https://api.bland.ai/v2/tts",
