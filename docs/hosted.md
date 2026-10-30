@@ -63,25 +63,25 @@ minute of speech and marked ≈. Re-check each against the vendor page on publis
 | Cartesia Sonic 3.6 | $38–65 | credits = chars, by plan | TR | $65 Pro · $45 Startup · $38 Scale |
 | Gemini 3.8 Flash TTS | ≈$15 | $0.50/1M text in + $9/1M audio out | TR | ≈$0.0135/min; doubles 2027-01-01 |
 | Inworld TTS-2 | $25 | $25/1M on-demand | TR | → $5 enterprise |
-| Speechify SIMBA 3.5 | **gap** | — | — | homebase has SIMBA 3.2 only ($6–10/1M by plan) |
+| Speechify SIMBA 3.5 | $12–20 (launch $6–10) | $20/$16/$12 per 1M by plan | TR (10-30) | half-price launch, no end date; 2× SIMBA 3.2 |
 | Fish Drama 3 | $10 now, $50 list | per 1M UTF-8 bytes | AR | $10 launch price ends 2026-11-12 |
 | Mistral Voxtral TTS 3 | $16 | $16/1M | PC | AR: Mistral lists Voxtral TTS 3 without a price |
-| xAI TTS | **gap** | — | — | not in homebase |
+| xAI TTS | $15 | $15/1M chars | TR (10-30) | |
 | AssemblyAI TTS-1 | $15 | $15/1M | TR | flat, all voices |
 | Soniox tts-rt-v2 | ≈$14.1 | ≈$0.70/hr of speech | PC | |
 | StepFun stepaudio-3-tts | $36 (≈$18 EN) | $0.36/10k chars, 2 EN letters = 1 char | TR | |
 | Smallest Lightning v3.1 Pro | $19.5 | $0.195/10k | TR | |
 | Deepgram Flux TTS | $45 | $0.045/1k | TR | |
-| MAI-Voice-2.1 | ≈$22 | ≈$1.19 per generated hour | PV | |
+| MAI-Voice-2.1 | $22 | $22/1M on OpenRouter; ≈$1.19/generated hr on Azure | TR (10-30), PV | |
 | VUI Luna | $15 | $15/1M | TR | AA-listed, not a vendor page |
 | OpenAI gpt-4o-mini-tts | ≈$17 | $0.60/1M text in + $12/1M audio out | TR | ≈$0.015/min; retires 2027-01-06 |
 | OpenAI gpt-realtime-2.1 | token-priced | $4/1M text in, $64/1M audio out | PV | |
 | Murf Falcon 2.1 | $10 | $0.01/1k | TR | /api page says "1¢/min", a mismatch |
-| HeyGen Voice 1 | $30 | $30/1M | TR | |
-| MiniMax speech-2.8-hd | $100 | $100/1M (MiniMax direct) | TR | OpenRouter price not in homebase |
+| HeyGen Voice 1 | $30 | $30/1M direct | TR | $15/1M via OpenRouter |
+| MiniMax speech-2.8-hd | $100 | $100/1M on OpenRouter (same as direct) | TR (10-30) | |
 | Bland Speech v3 | $40 | $40/1M | TR | |
 | Gradium | $35.9–57.8 | by plan | PC | |
-| Async Flash v1.5 | ≈$10.1 | AA-listed | PC | not a vendor page |
+| Async Flash v1.5 | ≈$10.1 | AA-listed | PC | vendor page renders prices client-side; unverified |
 
 Already collected: Fish Drama 3 web-app clips in `hosted/drama-3-webapp/` (fidelity check for the `drama3`
 port). These are web-app clips, not API clips, and stay out of the hosted board.
