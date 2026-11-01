@@ -52,8 +52,11 @@ class Gemini38FlashTTS(Adapter):
                     json={"contents": [{"parts": [{"text": text}]}],
                           "generationConfig": {
                               "responseModalities": ["AUDIO"],
-                              "speechConfig": {"voiceConfig": {
-                                  "prebuiltVoiceConfig": {"voiceName": voice}}}}})
+                              "speechConfig": {"voiceConfig": (
+                                  # replicated voices (voice_...) go in voiceConfig.voice;
+                                  # found by probe 2026-11-01, docs only show /interactions
+                                  {"voice": voice} if voice.startswith("voice_") else
+                                  {"prebuiltVoiceConfig": {"voiceName": voice}})}}})
 
     def audio_chunks(self, raw_iter):
         for ev in json_lines(raw_iter):  # inlineData is audio/L16 at 24 kHz
