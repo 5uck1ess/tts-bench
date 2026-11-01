@@ -77,8 +77,10 @@ STYLE = (
     "font-size:.92em}.hgrid.ab{grid-template-columns:minmax(9rem,1.3fr) repeat(5,auto) 2fr}"
     ".hgrid.listen{grid-template-columns:minmax(8rem,1fr) repeat(3,minmax(0,1.4fr))}"
     ".hgrid.listen audio{width:100%;height:32px}.hgrid .wide{grid-column:span 3}"
-    "@media(max-width:760px){.hgrid.ab{grid-template-columns:1fr 1fr}"
-    ".hgrid.ab>div:nth-child(7n){grid-column:span 2}"
+    ".hgrid .lbl{display:none;color:var(--muted)}"
+    "@media(max-width:760px){.hgrid.ab{grid-template-columns:1fr 1fr}.hgrid .lbl{display:inline}"
+    ".hgrid.ab>div:nth-child(7n+1),.hgrid.ab>div:nth-child(7n){grid-column:span 2}"
+    ".hgrid.ab>div:nth-child(-n+7){display:none}"
     ".hgrid.listen{grid-template-columns:1fr}.hgrid .wide{grid-column:auto}}</style>")
 
 
@@ -214,8 +216,11 @@ def _ab_table(samples):
              "<b>calls · err</b>", "<b>Board uses</b>", "<b>Note</b>"]
     for slug in BOTH:
         a, b = _speed(samples, slug, "http"), _speed(samples, slug, "websocket")
-        cells += [escape(CATALOG[slug][0]), _ms(a["med"]), f'{a["n"]} · {a["err"]}',
-                  _ms(b["med"]), f'{b["n"]} · {b["err"]}', escape(transport(ADAPTERS[slug])),
+        lb = lambda t: f'<span class="lbl">{t} </span>'  # labels shown only on phones
+        cells += [f"<b>{escape(CATALOG[slug][0])}</b>", lb("HTTP") + _ms(a["med"]) + " ms",
+                  lb("calls · err") + f'{a["n"]} · {a["err"]}', lb("WS") + _ms(b["med"]) + " ms",
+                  lb("calls · err") + f'{b["n"]} · {b["err"]}',
+                  lb("board uses") + escape(transport(ADAPTERS[slug])),
                   f'<span class="muted">{escape(TRANSPORT_NOTE.get(slug, ""))}</span>']
     return '<div class="hgrid ab">' + "".join(f"<div>{c}</div>" for c in cells) + "</div>"
 

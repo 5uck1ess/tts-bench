@@ -191,7 +191,7 @@ STYLE = """<style>
   .prompt-jumper a { margin-right: 0.6rem; }
 
   /* Lens-to-lens nav tabs at top of each lens page */
-  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem;
+  .lens-tabs { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; margin-right: 0.6rem;
                align-items: center; }
   .lens-tab { display: inline-block; padding: 4px 12px; border-radius: 6px;
               border: 1px solid var(--border); color: var(--text);
