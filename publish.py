@@ -49,7 +49,7 @@ _CPU_OK = frozenset(row[0] for row in _HARNESS_MODELS if "cpu" in row[4])
 
 # Cloning models that ALSO ship selectable preset voices (README: both Predefined
 # and Cloning are ✓). Every other model is clone-only or preset-only via MODEL_KIND.
-# audio8/audio8_fast/audio8_01b: `<|speaker:N|>` selects a real built-in voice on
+# audio8/audio8_fast/audio8_01b/audio8_realistic: `<|speaker:N|>` selects a real built-in voice on
 # both checkpoints (verified on Win-5090), so their no-reference run is a genuine
 # default voice, not a Chris-clone fallback — they belong here, NOT in
 # NO_PRESET_VOICE. Measured F0 spread across the English prompts backs it: the 0.1B
@@ -59,7 +59,7 @@ _CPU_OK = frozenset(row[0] for row in _HARNESS_MODELS if "cpu" in row[4])
 # ming: built-in "US_James" IP voice (task="IP", no reference) on the default lens.
 # kittentts2: 115 built-in voices (default Bruno, the repo's own default_voice).
 _PRESET_AND_CLONE = {"outetts", "voxtral", "audio8", "audio8_fast", "audio8_01b",
-                     "steertts", "steertts_noflow", "ming", "ming_tiny", "kittentts2"}
+                     "audio8_realistic", "steertts", "steertts_noflow", "ming", "ming_tiny", "kittentts2"}
 
 # Models that synthesize more than English — derived from report.MODEL_LANGS (the
 # single source of truth) so the Listen badge can never disagree with the

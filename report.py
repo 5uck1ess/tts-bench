@@ -467,6 +467,7 @@ MODEL_DISPLAY_NAMES = {
     "audio8":        "Audio8 TTS Preview 0.6B",
     "audio8_fast":   "Audio8 TTS 0.6B (compiled)",
     "audio8_01b":    "Audio8 TTS Preview 0.1B",
+    "audio8_realistic": "Audio8 TTS Realistic 0.6B",
     "neutts_air":    "NeuTTS Air",
     "neutts_nano":   "NeuTTS Nano",
     "voxcpm":        "VoxCPM2 2B",
@@ -564,6 +565,7 @@ MODEL_SIZE = {
     "audio8":        "601M",
     "audio8_fast":   "601M",
     "audio8_01b":    "170M",   # 169,779,904 over model.safetensors; ~120M codec decoder not counted
+    "audio8_realistic": "601M",  # 601,159,424 over its own model.safetensors (computed, not copied)
     "indextts":      "1.5B",
     "indextts25":    "0.97B",
     "ming":          "1.48B",
@@ -672,6 +674,7 @@ MODEL_URL = {
     # Same weights as `audio8` — the fastpath repo ships only the inference code.
     "audio8_fast":   _HF + "scrappylabsai/audio8-tts-fastpath",
     "audio8_01b":    _HF + "Audio8/Audio8-TTS-Preview-0.1b",
+    "audio8_realistic": _HF + "Edge0/Audio8-TTS-Realistic-0.6b",
     "indextts":      _HF + "IndexTeam/IndexTTS-2",
     "indextts25":    _HF + "IndexTeam/IndexTTS-2.5",
     "ming":          _HF + "inclusionAI/Ming-3.0-tts-0.5B",
@@ -794,6 +797,7 @@ MODEL_KIND = {
     "audio8":        "cloning",
     "audio8_fast":   "cloning",
     "audio8_01b":    "cloning",   # real <|speaker:N|> presets too — in _PRESET_AND_CLONE, fills both lenses
+    "audio8_realistic": "cloning",  # ditto
     "sesame":        "cloning",
     "miso":          "cloning",
     "longcat_1b":    "cloning",
@@ -870,6 +874,7 @@ MODEL_RELEASE = {
     "audio8":        "2026-07",   # HF repo created 2026-07-28
     "audio8_fast":   "2026-08",   # fastpath repo created 2026-08-02
     "audio8_01b":    "2026-08",   # HF repo created 2026-08-19
+    "audio8_realistic": "2026-10",  # HF repo created 2026-10-14
     "indextts":      "2025-06",
     "indextts25":    "2026-08",
     "ming":          "2026-10",
@@ -999,7 +1004,7 @@ MODEL_SR = {
     "neutts_air": "24k", "neutts_nano": "24k", "omnivoice": "24k", "openvoice": "22.05k",
     "pocket": "24k", "qwentts": "24k", "qwentts_06b": "24k", "qwentts_06b_custom": "24k",
     "qwentts_fast": "24k", "sopro": "24k", "sopro_streaming": "24k",
-    "audio8": "44.1k", "audio8_fast": "44.1k", "audio8_01b": "44.1k", "sesame": "24k",
+    "audio8": "44.1k", "audio8_fast": "44.1k", "audio8_01b": "44.1k", "audio8_realistic": "44.1k", "sesame": "24k",
     "step_editx": "24k", "styletts2": "24k", "vibevoice_15b": "24k", "vibevoice_7b": "24k",
     "voxcpm": "48k", "wavtts": "16k", "zipvoice": "24k", "zonos": "44.1k", "zonos2": "44.1k",
 }
@@ -1040,7 +1045,7 @@ MODEL_EXPRESSIVE = {
     "qwentts_06b_custom": "—", "qwentts_fast": "—",
     "sopro": "—", "sopro_streaming": "—",
     # `<|speaker:N|>` selects a built-in voice; no emotion/style control documented.
-    "audio8": "—", "audio8_fast": "—", "audio8_01b": "—",
+    "audio8": "—", "audio8_fast": "—", "audio8_01b": "—", "audio8_realistic": "—",
     "sesame": "—", "step_editx": "tags + desc",
     "styletts2": "knob", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "desc",
     "wavtts": "—", "zipvoice": "—", "zonos": "emo-ref + knob", "zonos2": "knob",
@@ -1080,7 +1085,7 @@ MODEL_LICENSE = {
     "openvoice": "MIT", "pocket": "Apache 2.0", "qwentts": "Apache 2.0",
     "qwentts_06b": "Apache 2.0", "qwentts_06b_custom": "Apache 2.0", "qwentts_fast": "Apache 2.0 weights / MIT wrapper",
     "sopro": "Apache 2.0", "sopro_streaming": "Apache 2.0",
-    "audio8": "Apache 2.0", "audio8_fast": "Apache 2.0",
+    "audio8": "Apache 2.0", "audio8_fast": "Apache 2.0", "audio8_realistic": "Apache 2.0",
     # The 0.1B is NOT Apache like the 0.6B: revenue-capped custom licence
     # (commercial use permitted only under US$2M annual revenue).
     "audio8_01b": "Audio8 Community v1.0",
@@ -1115,7 +1120,7 @@ MODEL_LANGS = {
     "neutts_air": "—", "neutts_nano": "✓ (4)", "omnivoice": "✓ (600+)", "openvoice": "✓",
     "pocket": "✓ (7)", "qwentts": "✓ (10)", "qwentts_06b": "✓ (10)", "qwentts_06b_custom": "✓ (10)",
     "qwentts_fast": "✓ (10)", "sopro": "✓ (4)", "sopro_streaming": "✓ (4)",
-    "audio8": "✓ (11)", "audio8_fast": "✓ (11)", "audio8_01b": "✓ (11)",
+    "audio8": "✓ (11)", "audio8_fast": "✓ (11)", "audio8_01b": "✓ (11)", "audio8_realistic": "✓ (23)",
     "sesame": "—", "step_editx": "—",
     "styletts2": "—", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "✓ (30)",
     "wavtts": "✓ (zh+en)", "zipvoice": "✓ (zh+en)", "zonos": "✓", "zonos2": "—",
