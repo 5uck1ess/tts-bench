@@ -333,7 +333,7 @@ def _clone_intro(worktree):
             'the longest cut of the recording it accepts, because some models need more audio '
             'for a good clone, so one shared length would be unfair to them. Each row shows the '
             'seconds sent next to the vendor\'s documented minimum and recommended length. '
-            'SIM = speaker similarity to the full reference (WavLM, same as the local board).</div>'
+            'SIM = speaker similarity to a 23 s cut of the reference (WavLM, same as the local board).</div>'
             + player)
 
 
