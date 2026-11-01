@@ -280,3 +280,15 @@ def _gemini(self, client, ref):
 from .batch_a import Gemini38FlashTTS  # noqa: E402
 
 _setup(Gemini38FlashTTS, "30", _gemini)
+
+
+# Speechify: voice created by scripts/hosted/speechify_clone.py (live consent); this only lets
+# prepare_clone reuse the id it recorded. 10-30 s, <5 MB -> 23 s cut.
+from .batch_a import SpeechifySimba35  # noqa: E402
+
+
+def _speechify(self, client, ref):
+    raise RuntimeError("run scripts.hosted.speechify_clone (live consent) first")
+
+
+_setup(SpeechifySimba35, "30", _speechify)
