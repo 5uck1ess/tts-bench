@@ -263,8 +263,8 @@ def _clone_table(scores):
         mn, rec = MIN_REC.get(slug, ("—", "—"))
         langs = cls.clone_langs or cls.langs
         rows.append((sim if sim is not None else -1, [
-            f"<b>{escape(CATALOG[slug][0])}</b>", f'{info["seconds"]:g} s', f"{mn} s",
-            f"{rec} s", "—" if sim is None else f"{sim:.3f}", "—" if um is None else f"{um:.2f}",
+            f"<b>{escape(CATALOG[slug][0])}</b>", f'{info["seconds"]:g} s', (f"{mn} s" if mn != "—" else "—"),
+            (f"{rec} s" if rec != "—" else "—"), "—" if sim is None else f"{sim:.3f}", "—" if um is None else f"{um:.2f}",
             "—" if we is None else f"{we:.3f}", "—" if wx is None else f"{wx:.3f}",
             escape(" ".join(sorted(langs)))]))
     rows.sort(key=lambda r: -r[0])
