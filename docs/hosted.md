@@ -189,7 +189,7 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
   - **No clause found:** the other 15 have no benchmark clause. Conditions: AI disclosure where law
     requires it (ElevenLabs, Rime, Giggy, Microsoft, xAI); paid plan for Fish and ElevenLabs.
     Every vendor that mentions cloning requires the speaker's consent.
-  - Decision pending (Tym).
+  - **Decided 2026-11-01 (Tym): publish all vendors**, after the cloning lens is done; pull any vendor that objects.
 - **Cloning consent.** See open question 1; several vendors require you to attest you have rights to
   the cloned voice.
 
