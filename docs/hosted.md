@@ -200,7 +200,7 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
    `reference/tym.wav` is only 13.6 s, under Gemini's 30 s minimum and ElevenLabs' recommended 1–2 min.
    Proposed: record ~90 s of Tym reading neutral prose (not the bench prompts), 48 kHz mono, quiet room,
    no music, with a verbatim transcript. Cut at sentence boundaries into a 15 s and a 30 s version with
-   matching transcripts; each provider gets the longest it accepts, recorded in the sidecar.
+   matching transcripts; each provider gets the longest it accepts, recorded in the sidecar. **Kept on purpose (Tym 2026-11-01):** the lens measures how well each product can clone, and some need more audio for a good clone, so one shared length would be unfair to them. The page states that sample lengths differ per product and shows each row's length.
    Store it as `reference/hosted_clone{,_15s,_30s}.{wav,txt}`.
    **Published unnamed (2026-10-29):** the page labels it "Reference voice" only; no speaker name in the
    page, sidecars, filenames or commit messages.

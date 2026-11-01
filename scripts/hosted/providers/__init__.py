@@ -18,3 +18,4 @@ ADAPTERS = {a.slug: a for a in (
     XaiTTS, AssemblyTTS1WS, SonioxTTS2, StepAudio3TTS, SmallestLightning31Pro, DeepgramFluxTTS,
     MaiVoice21, VuiLuna, OpenAIMiniTTS, MurfFalcon21, HeyGenVoice1, MiniMaxSpeech28HD,
     OpenAIRealtime21, BlandSpeech3, GradiumTTS, AsyncFlash15, SpeechmaticsTTS)}
+from . import clone  # noqa: E402,F401  (registers cloning on the adapter classes)

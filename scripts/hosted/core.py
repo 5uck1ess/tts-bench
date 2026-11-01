@@ -51,6 +51,17 @@ class Adapter:
     params = {}        # non-default parameters we send, recorded in the public sidecar
     min_interval = 0.0  # seconds between request starts, for vendors with tight rate limits
     _last_start = 0.0
+    # Cloning lens. clone_kind: None (no API cloning) | "voice_id" (create_clone() returns an id,
+    # cached in _private/clones.json) | "inline" (request() sends self.clone_ref every call).
+    # clone_cut: which reference cut to send (REFS key) -- the longest the vendor accepts.
+    clone_kind = None
+    clone_cut = "30"
+    clone_ref = None   # set by prepare_clone: dict(cut, path, text, seconds, wav bytes)
+    clone_langs = None  # languages the cloned voice is documented for; None = same as langs
+
+    def create_clone(self, client, ref):
+        """Create a cloned voice from `ref` (see prepare_clone) and return its voice id."""
+        raise NotImplementedError
 
     def __init__(self, key):
         self.key = key
@@ -226,6 +237,55 @@ def synth(client, ad, text, lang):
                 total_ms=round(total, 1))
 
 
+REF_DIR = ROOT / "reference"
+# Cuts of the consented reference recording (published only as "Reference voice"). Each vendor
+# gets the longest cut it accepts (Adapter.clone_cut); SIM is scored against "full".
+REFS = {"10": "tym_hosted_10", "15": "tym_hosted_15", "30": "tym_hosted_30",
+        "30_24k": "tym_hosted_30_24k", "60": "tym_hosted_60", "full": "tym_hosted_full"}
+CLONES = PRIVATE / "clones.json"
+
+
+def ref(cut):
+    stem = REF_DIR / REFS[cut]
+    data = stem.with_suffix(".wav").read_bytes()
+    with wave.open(io.BytesIO(data)) as w:
+        secs = w.getnframes() / w.getframerate()
+    return dict(cut=cut, path=stem.with_suffix(".wav"), seconds=round(secs, 1), wav=data,
+                text=stem.with_suffix(".txt").read_text(encoding="utf-8").strip())
+
+
+def prepare_clone(client, ad, recreate=False):
+    """Point `ad` at its cloned voice. voice_id adapters create the voice once and reuse the id
+    (some vendors charge per clone); the instance's voice() then returns that id everywhere."""
+    r = ref(ad.clone_cut)
+    ad.clone_ref = r
+    if ad.clone_kind == "inline":
+        return None
+    reg = json.loads(CLONES.read_text(encoding="utf-8")) if CLONES.exists() else {}
+    hit = reg.get(ad.slug)
+    if hit and hit.get("cut") == r["cut"] and not recreate:
+        vid = hit["voice_id"]
+    else:
+        vid = ad.create_clone(client, r)
+        reg[ad.slug] = {"voice_id": vid, "cut": r["cut"], "seconds": r["seconds"],
+                        "utc": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+        CLONES.parent.mkdir(parents=True, exist_ok=True)
+        CLONES.write_text(json.dumps(reg, indent=2), encoding="utf-8")
+    ad.voice = lambda lang, _v=vid: _v
+    return vid
+
+
+def _scrub(obj):
+    """Drop reference audio (base64 or bytes) from a logged request body."""
+    if isinstance(obj, dict):
+        return {k: _scrub(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_scrub(v) for v in obj]
+    if isinstance(obj, (bytes, bytearray)) or (isinstance(obj, str) and len(obj) > 4000):
+        return f"<{len(obj)} chars omitted>"
+    return obj
+
+
 def cell_status(ad, lens, pid, take):
     f = OUT / ad.slug / lens / f"p{pid}_t{take}.json"
     return json.loads(f.read_text(encoding="utf-8")).get("status") if f.exists() else None
@@ -254,7 +314,8 @@ def run_cell(client, ad, lens, pid, lang, text, take):
             "text_sha256": hashlib.sha256(text.encode()).hexdigest()[:16],
             "utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "client_location": "Eastern US"}
-    if lang not in ad.langs:
+    langs = ad.clone_langs if lens == "cloning" and ad.clone_langs else ad.langs
+    if lang not in langs:
         base["status"] = "not_supported"
         (pub_dir / f"{name}.json").write_text(json.dumps(base, indent=2), encoding="utf-8")
         print(f"{ad.slug:>18} {lens:<8} p{pid} t{take}  not supported ({lang})")
@@ -281,8 +342,11 @@ def run_cell(client, ad, lens, pid, lang, text, take):
         rtfx=round(dur / total_s, 2) if total_s else None,
         vendor_echo=ad.echo(res["headers"], None),
         key_fingerprint=keys.fingerprint(ad.key))
+    if lens == "cloning":
+        base.update(clone_kind=ad.clone_kind, ref_cut=ad.clone_ref["cut"],
+                    ref_seconds=ad.clone_ref["seconds"])
     (pub_dir / f"{name}.json").write_text(json.dumps(base, indent=2), encoding="utf-8")
-    req = {k: v for k, v in res["req"].items() if k not in ("headers", "content")}
+    req = _scrub({k: v for k, v in res["req"].items() if k not in ("headers", "content")})
     if req.get("params"):
         req["params"] = {k: v for k, v in req["params"].items() if "key" not in k.lower()}
     priv = dict(base, request=req, response_headers=res["headers"], phases_ms=res["marks"])

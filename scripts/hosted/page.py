@@ -76,11 +76,14 @@ STYLE = (
     "<style>.hgrid{display:grid;gap:.35rem .8rem;align-items:center;margin:.6rem 0 1.2rem;"
     "font-size:.92em}.hgrid.ab{grid-template-columns:minmax(9rem,1.3fr) repeat(5,auto) 2fr}"
     ".hgrid.listen{grid-template-columns:minmax(8rem,1fr) repeat(3,minmax(0,1.4fr))}"
+    ".hgrid.clone{grid-template-columns:minmax(9rem,1.4fr) repeat(8,auto)}"
     ".hgrid.listen audio{width:100%;height:32px}.hgrid .wide{grid-column:span 3}"
     ".hgrid .lbl{display:none;color:var(--muted)}"
     "@media(max-width:760px){.hgrid.ab{grid-template-columns:1fr 1fr}.hgrid .lbl{display:inline}"
     ".hgrid.ab>div:nth-child(7n+1),.hgrid.ab>div:nth-child(7n){grid-column:span 2}"
     ".hgrid.ab>div:nth-child(-n+7){display:none}"
+    ".hgrid.clone{grid-template-columns:1fr 1fr}.hgrid.clone>div:nth-child(9n+1){grid-column:span 2}"
+    ".hgrid.clone>div:nth-child(-n+9){display:none}"
     ".hgrid.listen{grid-template-columns:1fr}.hgrid .wide{grid-column:auto}}</style>")
 
 
@@ -176,7 +179,7 @@ def _main_table(samples, scores):
                   if c.get("connection") == "warm" and c.get("ttfa_speech_ms") is not None]
             sp = dict(med=_med(xs), p90=_p90(xs), n=len(xs), err=0, days=0, sweep=True)
         p3 = [c["total_ms"] / 1000 for c in cars if c["prompt_id"] == 3 and c.get("total_ms")]
-        rs = scores.get(slug, [])
+        rs = [r for r in scores.get(slug, []) if r["mode"] == "default"]
         en = [r for r in rs if r["prompt_id"] in ("1", "2", "3", "4")]
         xx = [r for r in rs if r["prompt_id"] in ("5", "6")]
         um = _med([v for v in (_f(r["utmos"]) for r in en) if v is not None])
@@ -225,37 +228,113 @@ def _ab_table(samples):
     return '<div class="hgrid ab">' + "".join(f"<div>{c}</div>" for c in cells) + "</div>"
 
 
-def _listen(worktree):
+# Vendors without API cloning on our route, and why (docs read 2026-11-01).
+NO_CLONE = {
+    "rime_coda": "enterprise-trained voices only (30–60 min of audio, days)",
+    "giggy_tts": "cloning in the web app only, no API",
+    "assemblyai_tts1": "cloning in the dashboard only, no API",
+    "deepgram_flux_tts": "no voice cloning",
+    "murf_falcon21": "API cloning is Enterprise-plan only",
+    "openai_gpt4o_mini_tts": "custom voices are limited to approved customers",
+    "openai_realtime21": "custom voices are limited to approved customers",
+    "mai_voice21": "needs Microsoft Limited Access approval",
+    "minimax_speech28hd": "no cloning through OpenRouter (our route)",
+}
+
+
+def _clone_slugs():
+    from .core import CLONES
+    reg = json.loads(CLONES.read_text(encoding="utf-8")) if CLONES.exists() else {}
+    return {s: v for s, v in reg.items() if (OUT / s / "cloning").is_dir()}
+
+
+def _clone_table(scores):
+    from .providers.clone import MIN_REC
+    reg = _clone_slugs()
+    rows = []
+    for slug, info in reg.items():
+        cls = ADAPTERS[slug]
+        rs = [r for r in scores.get(slug, []) if r["mode"] == "cloning"]
+        en = [r for r in rs if r["prompt_id"] in ("1", "2", "3", "4")]
+        xx = [r for r in rs if r["prompt_id"] in ("5", "6")]
+        mean = lambda xs, k: (lambda v: st.mean(v) if v else None)(
+            [x for x in (_f(r[k]) for r in xs) if x is not None])
+        sim, um, we, wx = mean(rs, "sim"), mean(en, "utmos"), mean(en, "wer"), mean(xx, "wer")
+        mn, rec = MIN_REC.get(slug, ("—", "—"))
+        langs = cls.clone_langs or cls.langs
+        rows.append((sim if sim is not None else -1, [
+            f"<b>{escape(CATALOG[slug][0])}</b>", f'{info["seconds"]:g} s', f"{mn} s",
+            f"{rec} s", "—" if sim is None else f"{sim:.3f}", "—" if um is None else f"{um:.2f}",
+            "—" if we is None else f"{we:.3f}", "—" if wx is None else f"{wx:.3f}",
+            escape(" ".join(sorted(langs)))]))
+    rows.sort(key=lambda r: -r[0])
+    head = ["Model", "Sample sent", "Min", "Recommended", "SIM ↑", "UTMOS en", "WER en",
+            "WER fr/es", "Langs"]
+    lb = head
+    cells = [f"<b>{h}</b>" for h in head]
+    for _, r in rows:
+        cells += [r[0]] + [f'<span class="lbl">{lb[i]} </span>{v}' for i, v in enumerate(r) if i]
+    grid = '<div class="hgrid clone">' + "".join(f"<div>{c}</div>" for c in cells) + "</div>"
+    missing = [s for s in ADAPTERS if s not in reg and s not in SKIP]
+    why = "".join(
+        f"<li>{escape(CATALOG[s][0])}: {escape(NO_CLONE.get(s, 'pending'))}</li>"
+        for s in missing)
+    return grid + (f'<div class="meta">Not in the cloning lens:</div><ul class="meta">{why}</ul>'
+                   if why else "")
+
+
+def _listen(worktree, lens="default"):
     dest = worktree / "hosted"
     out = []
+    slugs = [s for s in ADAPTERS if s not in SKIP and
+             (lens == "default" or s in _clone_slugs())]
     for pid, lang, text in PROMPTS:
         rows = []
-        for slug, cls in ADAPTERS.items():
-            if slug in SKIP:
-                continue
+        for slug in slugs:
+            cls = ADAPTERS[slug]
             name = CATALOG.get(slug, (slug,))[0]
-            if lang not in cls.langs:
+            langs = (cls.clone_langs or cls.langs) if lens == "cloning" else cls.langs
+            if lang not in langs:
                 rows.append(f'<div>{escape(name)}</div><div class="muted wide">'
                             f'not offered in {escape(lang)}</div>')
                 continue
             cells = []
             for take in (1, 2, 3):
-                src = OUT / slug / "default" / f"p{pid}_t{take}.wav"
+                src = OUT / slug / lens / f"p{pid}_t{take}.wav"
                 if not src.exists():
                     cells.append('<div class="muted">missing</div>')
                     continue
-                d = dest / slug
+                d = dest / slug / lens
                 d.mkdir(parents=True, exist_ok=True)
                 shutil.copy2(src, d / src.name)
                 cells.append(f'<div><audio controls preload="none" '
-                             f'src="hosted/{slug}/{src.name}"></audio></div>')
+                             f'src="hosted/{slug}/{lens}/{src.name}"></audio></div>')
             rows.append(f'<div>{escape(name)}</div>{"".join(cells)}')
-        out.append(f'<details class="panel" id="p{pid}"><summary>Prompt {pid} · {escape(lang)} '
+        out.append(f'<details class="panel" id="{lens[0]}p{pid}"><summary>Prompt {pid} · {escape(lang)} '
                    f'<span class="muted">— {escape(text[:90])}{"…" if len(text) > 90 else ""}'
                    f'</span></summary><div class="hgrid listen"><div><b>Model</b></div><div><b>Take 1</b>'
                    f'</div><div><b>Take 2</b></div><div><b>Take 3</b></div>{"".join(rows)}'
                    f'</div></details>')
     return "".join(out)
+
+
+def _clone_intro(worktree):
+    from .core import REF_DIR
+    ref = REF_DIR / "tym_hosted_full.wav"
+    player = ""
+    if ref.exists():
+        (worktree / "hosted").mkdir(parents=True, exist_ok=True)
+        shutil.copy2(ref, worktree / "hosted" / "_reference.wav")
+        player = ('<div class="meta"><strong>Reference voice</strong> (full recording, consented '
+                  'by the speaker): <audio controls preload="none" src="hosted/_reference.wav">'
+                  '</audio></div>')
+    return ('<div class="meta">Each product clones one consented reference voice through its '
+            'own API. <strong>Sample lengths differ per product on purpose:</strong> each gets '
+            'the longest cut of the recording it accepts, because some models need more audio '
+            'for a good clone, so one shared length would be unfair to them. Each row shows the '
+            'seconds sent next to the vendor\'s documented minimum and recommended length. '
+            'SIM = speaker similarity to the full reference (WavLM, same as the local board).</div>'
+            + player)
 
 
 def build(worktree, head, foot):
@@ -283,6 +362,8 @@ def build(worktree, head, foot):
             'Median time to first speech.</div>',
             _ab_table(samples),
             '<h2>Listen</h2>', _listen(worktree),
+            '<h2>Cloning</h2>', _clone_intro(worktree), _clone_table(scores),
+            '<h3>Listen — cloned voice</h3>', _listen(worktree, "cloning"),
             '<div class="scores-foot">UTMOS <code>utmos22_strong</code>, WER Whisper-large-v3, '
             'same scorers as the local Scores tab. Every clip\'s request, model id sent, voice id '
             'and timings are in its JSON sidecar in the repo.</div>',
