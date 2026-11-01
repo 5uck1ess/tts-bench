@@ -58,9 +58,14 @@ def _fetch_op():
     return {f["label"]: f["value"] for f in fields if f.get("label") and f.get("value")}
 
 
-def _load(refresh=False):
+def _load(refresh=False, stale_ok=False):
     global _cache
     if _cache is not None and not refresh:
+        return _cache
+    if stale_ok:  # unattended runs (speed_sample): any cache age, never prompt via op
+        if not CACHE.exists():
+            raise SystemExit("no key cache; run --refresh-keys interactively first")
+        _cache = json.loads(_dpapi(CACHE.read_bytes(), protect=False))
         return _cache
     if not refresh and CACHE.exists() and time.time() - CACHE.stat().st_mtime < TTL_S:
         try:
@@ -78,9 +83,9 @@ def refresh():
     _load(refresh=True)
 
 
-def get(provider):
+def get(provider, stale_ok=False):
     label = FIELD.get(provider, provider)
-    key = _load().get(label)
+    key = _load(stale_ok=stale_ok).get(label)
     if not key:
         raise SystemExit(f"no '{label}' field in 1Password item '{OP_ITEM}'")
     return key.strip()

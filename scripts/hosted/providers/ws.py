@@ -16,8 +16,10 @@ from urllib.parse import urlencode
 from websockets.sync.client import connect
 
 from ..core import _first_speech_ms
-from .batch_a import CartesiaSonic36
-from .batch_b import AssemblyTTS1, DeepgramFluxTTS, XaiTTS
+from .batch_a import CartesiaSonic36, InworldTTS2
+from .batch_b import (AssemblyTTS1, DeepgramFluxTTS, SmallestLightning31Pro, SonioxTTS2,
+                      StepAudio3TTS, XaiTTS)
+from .batch_c import MurfFalcon21
 
 
 class WsMixin:
@@ -62,7 +64,9 @@ class WsMixin:
         except Exception:
             self._socks.pop(lang, None)  # don't reuse a socket left mid-utterance
             raise
-        total = (time.perf_counter() - t0) * 1000
+        # Total = last audio byte, not the end-of-utterance message: Smallest sends "complete"
+        # ~4 s after its final chunk, which isn't delivery time.
+        total = arrivals[-1][1] if arrivals else (time.perf_counter() - t0) * 1000
         data = b"".join(chunks)
         if not data:
             raise RuntimeError(f"{self.slug}: empty audio")
@@ -160,4 +164,133 @@ class AssemblyTTS1WS(WsMixin, AssemblyTTS1):
             elif e.get("type") == "FlushDone":
                 return
             elif e.get("type") in ("Error", "error"):
+                raise RuntimeError(f"{self.slug}: {e}")
+
+
+# --- Socket twins used only by the speed sampler (scripts/hosted/speed_sample.py). The sweep
+# keeps these vendors on HTTP; the sampler measures both transports over several days.
+
+class InworldTTS2WS(WsMixin, InworldTTS2):
+    def ws_open(self, lang):
+        return connect("wss://api.inworld.ai/tts/v1/voice:streamBidirectional",
+                       additional_headers={"Authorization": f"Basic {self.key}"}, max_size=None)
+
+    def ws_send(self, ws, text, lang, voice):
+        cid = uuid.uuid4().hex[:12]
+        create = {"voiceId": voice, "modelId": self.model,
+                  "audioConfig": {"audioEncoding": "PCM", "sampleRateHertz": self.sr}}
+        if lang != "en":
+            create["language"] = lang
+        ws.send(json.dumps({"create": create, "contextId": cid}))
+        ws.send(json.dumps({"send_text": {"text": text, "flush_context": {}}, "contextId": cid}))
+        ws.send(json.dumps({"close_context": {}, "contextId": cid}))
+
+    def ws_recv(self, ws):
+        while True:
+            e = self._j(ws)
+            r = e.get("result") or {}
+            if e.get("error") or (r.get("status") or {}).get("code"):
+                raise RuntimeError(f"{self.slug}: {e}")
+            a = (r.get("audioChunk") or {}).get("audioContent")
+            if a:
+                yield base64.b64decode(a)
+            if "contextClosed" in r:
+                return
+
+
+class SonioxTTS2WS(WsMixin, SonioxTTS2):
+    def ws_open(self, lang):
+        return connect("wss://tts-rt.soniox.com/tts-websocket",
+                       additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=None)
+
+    def ws_send(self, ws, text, lang, voice):
+        sid = uuid.uuid4().hex[:12]
+        ws.send(json.dumps({"stream_id": sid, "model": self.model, "language": lang,
+                            "voice": voice, "audio_format": "pcm_s16le",
+                            "sample_rate": self.sr}))
+        ws.send(json.dumps({"stream_id": sid, "text": text, "text_end": True}))
+
+    def ws_recv(self, ws):
+        while True:
+            e = self._j(ws)
+            if e.get("error_code") or e.get("error"):
+                raise RuntimeError(f"{self.slug}: {e}")
+            if e.get("audio"):
+                yield base64.b64decode(e["audio"])
+            if e.get("terminated"):  # follows the audio_end chunk
+                return
+
+
+class SmallestLightning31ProWS(WsMixin, SmallestLightning31Pro):
+    def ws_open(self, lang):
+        return connect("wss://api.smallest.ai/waves/v1/tts/live",
+                       additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=None)
+
+    def ws_send(self, ws, text, lang, voice):
+        ws.send(json.dumps({"text": text, "voice_id": voice, "model": self.model,
+                            "sample_rate": self.sr, "language": lang}))
+
+    def ws_recv(self, ws):
+        while True:
+            e = self._j(ws)
+            if e.get("status") == "error":
+                raise RuntimeError(f"{self.slug}: {e}")
+            a = (e.get("data") or {}).get("audio")
+            if a:
+                yield base64.b64decode(a)
+            if e.get("status") in ("complete", "done", "completed"):
+                return
+
+
+class MurfFalcon21WS(WsMixin, MurfFalcon21):
+    def ws_open(self, lang):
+        return connect("wss://global.api.murf.ai/v1/speech/stream-input?" + urlencode(
+            {"api-key": self.key, "model": self.model, "sample_rate": self.sr,
+             "channel_type": "MONO", "format": "PCM"}), max_size=None)
+
+    def ws_send(self, ws, text, lang, voice):
+        cid = uuid.uuid4().hex[:12]
+        ws.send(json.dumps({"voice_config": {"voiceId": voice, "locale": self.VOICES[lang][1]},
+                            "context_id": cid}))
+        ws.send(json.dumps({"text": text, "end": True, "context_id": cid}))
+
+    def ws_recv(self, ws):
+        while True:
+            e = self._j(ws)
+            if e.get("error"):
+                raise RuntimeError(f"{self.slug}: {e}")
+            if e.get("audio"):
+                yield base64.b64decode(e["audio"])
+            if e.get("final"):
+                return
+
+
+class StepAudio3TTSWS(WsMixin, StepAudio3TTS):
+    """Session is created at connect (tts.create); the server drops idle sockets, so a dropped
+    socket surfaces as an error row and the next call reconnects (WsMixin pops it)."""
+    def ws_open(self, lang):
+        ws = connect(f"wss://api.stepfun.ai/v1/realtime/audio?model={self.model}",
+                     additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=None)
+        self._sid = self._j(ws)["data"]["session_id"]
+        ws.send(json.dumps({"type": "tts.create", "data": {
+            "session_id": self._sid, "voice_id": self.voice(lang), "response_format": "pcm",
+            "sample_rate": self.sr, "mode": "sentence"}}))
+        while self._j(ws).get("type") != "tts.response.created":
+            pass
+        return ws
+
+    def ws_send(self, ws, text, lang, voice):
+        ws.send(json.dumps({"type": "tts.text.delta",
+                            "data": {"session_id": self._sid, "text": text}}))
+        ws.send(json.dumps({"type": "tts.text.flush", "data": {"session_id": self._sid}}))
+
+    def ws_recv(self, ws):
+        while True:
+            e = self._j(ws)
+            t = e.get("type", "")
+            if t == "tts.response.audio.delta":
+                yield base64.b64decode((e.get("data") or {})["audio"])
+            elif t == "tts.response.sentence.end":
+                return
+            elif "error" in t:
                 raise RuntimeError(f"{self.slug}: {e}")
