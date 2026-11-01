@@ -178,6 +178,18 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
 
 - **ToS per provider.** Check that publishing generated clips (and benchmarking) is allowed. Recorded
   per provider in this doc before its clips go live.
+- **ToS read 2026-11-01** (vendor terms pages; a reading, not legal advice):
+  - **Prohibit benchmarking/competitive analysis:** AssemblyAI ("engage in competitive analysis or
+    benchmarking"), Deepgram ("benchmarking and other competitive analysis"), HeyGen ("benchmarking,
+    comparative or competitive purposes"), Smallest.ai ("benchmarking or competitive analysis"),
+    Soniox (no "benchmark ... except for internal evaluation").
+  - **Unclear:** Murf ("monitor ... performance ... for any competitive purpose"), xAI (enterprise
+    terms 403), StepFun (no terms found), OpenAI (usage policy allowing benchmarking is marked
+    effective 2026-11-20).
+  - **No clause found:** the other 15 have no benchmark clause. Conditions: AI disclosure where law
+    requires it (ElevenLabs, Rime, Giggy, Microsoft, xAI); paid plan for Fish and ElevenLabs.
+    Every vendor that mentions cloning requires the speaker's consent.
+  - Decision pending (Tym).
 - **Cloning consent.** See open question 1; several vendors require you to attest you have rights to
   the cloned voice.
 
