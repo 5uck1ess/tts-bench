@@ -51,7 +51,6 @@ TRANSPORT_NOTE = {
 # Vendors without API cloning on our route, and why (docs read 2026-11-01).
 NO_CLONE = {
     "rime_coda": "enterprise-trained voices only (30–60 min of audio, days)",
-    "giggy_tts": "cloning in the web app only, no API",
     "assemblyai_tts1": "cloning in the dashboard only, no API",
     "deepgram_flux_tts": "no voice cloning",
     "murf_falcon21": "API cloning is Enterprise-plan only",
