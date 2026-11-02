@@ -59,6 +59,8 @@ CATALOG = {
     "bland_speech3": ("Bland Speech v3", "$40", ""),
     "gradium_tts": ("Gradium", "$35.9–57.8", "by plan"),
     "async_flash15": ("Async Flash v1.5", "≈$9.3", "$0.50 per hour of audio"),
+    "palabra_tts": ("Palabra TTS", "$12", ""),
+    "resemble_ultra": ("Resemble Ultra", "≈$33", "$0.0005 per second of audio (Flex)"),
 }
 
 # Per-vendor transport note for the A/B grid.

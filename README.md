@@ -6,7 +6,7 @@
   </picture>
 </p>
 
-Bench for local text-to-speech (TTS) models. Three lenses, on whatever hardware you put it on:
+Bench for local text-to-speech (TTS) models. Three lenses, on whatever hardware you put it on (paid cloud APIs have their own separate board, see [Hosted TTS APIs](#-hosted-tts-apis)):
 
 - **Speed** — cold + warm **TTFA** (time to first audio), **RTFx** (realtime speed; higher = faster than realtime), memory, on CPU / CUDA / Apple Silicon
 - **Listen** — every model on every prompt, default voice + voice cloning, with inline audio players, so you can pick a model by ear
@@ -207,6 +207,24 @@ Reference-format docs + the blind-vote cloning ranking (28 cloning models, human
 
 ---
 
+## ☁ Hosted TTS APIs
+
+**[5uck1ess.github.io/tts-bench/hosted.html](https://5uck1ess.github.io/tts-bench/hosted.html)** has a separate board for **28 paid cloud TTS APIs**. They are never ranked against the local models above: a hosted call includes the network and the vendor's queue, and you can't run it on your own hardware.
+
+**Measured the same way for every vendor.** Each vendor reads the bench prompts (English, French and Spanish) with its documented default voice.
+- **Speed:** time to first speech (first sample above −40 dBFS), measured from the US East Coast. The board shows warm-connection numbers, sampled over several days. HTTP and WebSocket are compared for vendors that offer both.
+- **Quality:** UTMOS, WER and Health, scored with the same pipeline as the local Scores lens.
+- **Price:** dollars per 1M characters, read from each vendor's pricing page.
+- Every clip is published.
+
+**Cloning lens.** **19 of the 28 can clone over their API or console.** Each clones the same consented reference voice, published as "Reference voice". Each vendor gets the longest sample it accepts, so a product that needs more audio isn't penalised. The page shows each vendor's documented minimum and recommended length, and SIM scores the clone against the reference. The other 9 are listed with the reason they can't clone on our route: enterprise-only, sales-gated, dashboard-only, or none.
+
+**Vendors:** ElevenLabs (v4, v4 Turbo) · Cartesia Sonic 3.6 · Gemini 3.8 Flash TTS · Inworld TTS-2 · Speechify SIMBA 3.5 · Fish Audio Drama 3 · Mistral Voxtral TTS 3 · xAI TTS · Rime Coda · AssemblyAI TTS-1 · Soniox TTS v2 · Giggy TTS · StepFun Step-Audio 3 · Smallest.ai Lightning v3.1 Pro · Deepgram Flux · Microsoft MAI-Voice-2.1 · MiniMax speech-2.8-hd (via OpenRouter) · VUI Labs Luna · OpenAI (gpt-4o-mini-tts, gpt-realtime-2.1) · Murf Falcon 2.1 · HeyGen Voice 1 · Bland Speech v3 · Gradium · Async Flash v1.5 · Palabra TTS · Resemble Ultra.
+
+Collector, adapters and methodology: [docs/hosted.md](docs/hosted.md) and `scripts/hosted/`. Running it needs your own API keys and spends real money (a full sweep costs a few dollars). Some vendors' terms restrict benchmarking; a vendor that objects is removed.
+
+---
+
 ## Test hardware
 
 | Machine | Used for |
@@ -229,6 +247,7 @@ If you reproduce on different hardware, file an issue or PR with your results an
 - [Considered but skipped](docs/considered.md) — models evaluated and excluded
 - [Tasks & pending work](docs/tasks.md) — open issues, planned features
 - [Methodology](docs/methodology.md) — what's measured, why cold + warm, why reproducible
+- [Hosted APIs](docs/hosted.md) — the paid-API board: roster, collector, speed sampling, cloning rules
 
 ---
 

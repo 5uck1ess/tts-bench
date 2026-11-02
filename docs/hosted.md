@@ -40,6 +40,14 @@ hosted board is a measure of *products as a buyer gets them*.
 22. OpenAI gpt-4o-mini-tts (retires 2027-01-06; check for a successor at adapter time)
 23. Murf Falcon 2 ($10/1M)
 
+Added 2026-11-02 after a gap check against the Artificial Analysis provider board:
+- **Palabra TTS** (WebSocket only, API instant clone). It isn't on Artificial Analysis; it showed up
+  in the church-translation research instead.
+- **Resemble Ultra** (HTTP stream; clone made in the console). Resemble's site now leads with
+  deepfake detection, but Ultra is its live TTS; every Chatterbox-era hosted model is end-of-life.
+
+Waiting: Qwen-Audio-3.1-TTS-Plus, until it is offered outside Alibaba's ID-verified Model Studio.
+
 Dropped: Gemini Flash-Lite (cheap tier of the same vendor); Hume Octave 2 (Hume is shutting down its
 TTS voices, per Tym 2026-10-29).
 

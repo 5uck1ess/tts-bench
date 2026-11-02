@@ -8,6 +8,8 @@ from .batch_d import AsyncFlash15, BlandSpeech3, GradiumTTS, SpeechmaticsTTS
 from .elevenlabs import ElevenV4, ElevenV4Turbo
 from .giggy import GiggyTTS
 from .openai_realtime import OpenAIRealtime21
+from .palabra import PalabraTTS
+from .resemble import ResembleUltra
 from .rime import RimeCoda
 from .ws import AssemblyTTS1WS, CartesiaSonic36WS
 
@@ -17,5 +19,6 @@ ADAPTERS = {a.slug: a for a in (
     CartesiaSonic36WS, Gemini38FlashTTS, InworldTTS2, SpeechifySimba35, FishDrama3, Voxtral3TTS,
     XaiTTS, AssemblyTTS1WS, SonioxTTS2, StepAudio3TTS, SmallestLightning31Pro, DeepgramFluxTTS,
     MaiVoice21, VuiLuna, OpenAIMiniTTS, MurfFalcon21, HeyGenVoice1, MiniMaxSpeech28HD,
-    OpenAIRealtime21, BlandSpeech3, GradiumTTS, AsyncFlash15, SpeechmaticsTTS)}
+    OpenAIRealtime21, BlandSpeech3, GradiumTTS, AsyncFlash15, SpeechmaticsTTS, PalabraTTS,
+    ResembleUltra)}
 from . import clone  # noqa: E402,F401  (registers cloning on the adapter classes)
