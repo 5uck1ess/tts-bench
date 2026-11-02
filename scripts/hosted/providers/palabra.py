@@ -7,7 +7,7 @@
   reset_context=true, so a take never inherits intonation from the previous prompt.
 - `default_low` = the docs' example voice and the language's default voice (rule: quickstart voice).
   The docs don't define low/high; measured 2026-11-02 on one English sentence: default_low has a
-  median F0 of 99 Hz, default_high 209 Hz, same 48 kHz output -- a lower vs higher voice, not a quality tier.
+  median F0 of 99 Hz, default_high 209 Hz, same 48 kHz output -- a male vs a female voice (Tym, by ear), not a quality tier.
 - 48 kHz PCM, the top of the documented 8000–48000 range.
 - End of a take = the audio_chunk with data.last_chunk=true (it carries no audio).
 - Price: $0.012 / 1,000 characters (palabra.ai/pricing, read 2026-11-02).
