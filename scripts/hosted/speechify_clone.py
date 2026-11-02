@@ -7,7 +7,7 @@ up with the voice sample. A challenge works once and expires, so run the two ste
     # read the printed phrase aloud, save it as reference/speechify_consent.wav (5-30 s)
     venvs/hosted/Scripts/python.exe -m scripts.hosted.speechify_clone create
 
-`create` sends the 23 s cut (Speechify: 10-30 s, <5 MB) and records the voice id in
+`create` sends the 24.8 s cut (Speechify: 10-30 s, <5 MB) and records the voice id in
 hosted/_private/clones.json, after which `--lens cloning --model speechify_simba35` runs as usual.
 """
 

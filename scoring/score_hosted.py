@@ -22,7 +22,7 @@ from scoring.scores_io import merge_rows, read_scores, write_scores
 _REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _HOSTED = os.path.join(_REPO, "hosted")
 _CSV = os.path.join(_REPO, "scoring", "hosted_scores.csv")
-_REF = os.path.join(_REPO, "reference", "tym_hosted_30.wav")  # SIM target (23 s; the 113 s cut OOMs WavLM on the 3090); published as "Reference voice"
+_REF = os.path.join(_REPO, "reference", "tym_hosted_30.wav")  # SIM target (24.8 s; the 113 s cut OOMs WavLM on the 3090); published as "Reference voice"
 _WAV_RE = re.compile(r"^p(?P<pid>\d+)_t\d+\.wav$")
 
 
