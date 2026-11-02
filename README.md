@@ -209,7 +209,7 @@ Reference-format docs + the blind-vote cloning ranking (28 cloning models, human
 
 ## ☁ Hosted TTS APIs
 
-**[5uck1ess.github.io/tts-bench/hosted.html](https://5uck1ess.github.io/tts-bench/hosted.html)** has a separate board for **28 paid cloud TTS APIs**. They are never ranked against the local models above: a hosted call includes the network and the vendor's queue, and you can't run it on your own hardware.
+**[5uck1ess.github.io/tts-bench/hosted.html](https://5uck1ess.github.io/tts-bench/hosted.html)** has a separate board for **28 paid cloud TTS APIs**. Their speed is never ranked against the local models above: a hosted call includes the network and the vendor's queue, and you can't run it on your own hardware. Quality is a different matter: the same prompts and scorers apply, so the Scores page's Default voice view can show hosted APIs beside the local models (Local / Hosted / Both). Cloning stays separate, because the hosted vendors clone a different reference voice.
 
 **Measured the same way for every vendor.** Each vendor reads the bench prompts (English, French and Spanish) with its documented default voice.
 - **Speed:** time to first speech (first sample above −40 dBFS), measured from the US East Coast. The board shows warm-connection numbers, sampled over several days. HTTP and WebSocket are compared for vendors that offer both.

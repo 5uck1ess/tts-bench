@@ -217,6 +217,10 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
    contiguous from the start and end on a sentence pause: 14.1 / 24.8 / 58.3 / 112.5 s, plus a 9.9 s
    mid-passage cut for StepFun. Mean cloning SIM went from 0.673 to 0.700 (14 of 19 vendors up),
    each lens scored against its own recording. The v1 cuts are kept locally in `reference/_v1/`.
+   **Scores page view (2026-11-02, Tym):** hosted default-voice rows can be shown on the Scores page
+   behind a Local / Hosted / Both switch (Local by default). Both sides use one definition: the mean
+   of UTMOS / WER over every scored clip (hosted: 3 takes of each prompt). Cloning is not mixed:
+   the reference voices differ, so SIM does not compare. Speed and price stay on hosted.html.
    **Published unnamed (2026-10-29):** the page labels it "Reference voice" only; no speaker name in the
    page, sidecars, filenames or commit messages.
 2. **Grok TTS**: confirm which product/model id you mean (AA lists "SpaceXAI TTS").

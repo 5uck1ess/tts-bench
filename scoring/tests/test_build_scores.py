@@ -69,6 +69,7 @@ def test_build_scores_renders_both_lenses(tmp_path, monkeypatch):
 
     monkeypatch.setattr(publish, "WORKTREE", gh)
     monkeypatch.setattr(publish, "SCORES_CSV", scores)
+    monkeypatch.setattr(publish, "HOSTED_SCORES_CSV", tmp_path / "no_hosted.csv")
     publish.build_scores()
 
     html = (gh / "scores.html").read_text(encoding="utf-8")
@@ -90,9 +91,45 @@ def test_build_scores_omits_charts_without_scored_models(tmp_path, monkeypatch):
     monkeypatch.setattr(publish, "LISTEN_DEFAULT_DIRS", ())
     monkeypatch.setattr(publish, "LISTEN_CLONING_DIRS", ())
     monkeypatch.setattr(publish, "SCORES_CSV", tmp_path / "scores.csv")
+    monkeypatch.setattr(publish, "HOSTED_SCORES_CSV", tmp_path / "no_hosted.csv")
 
     publish.build_scores()
 
     html = (tmp_path / "scores.html").read_text(encoding="utf-8")
     assert html.count("No scored models yet.") == 2
     assert 'class="score-chart"' not in html
+
+
+def test_build_scores_adds_hosted_rows_to_default_board_only(tmp_path, monkeypatch):
+    """Hosted APIs join the Default voice board behind the Local / Hosted / Both switch, as
+    the mean over every take; they never reach the Cloning board (different reference)."""
+    hosted = tmp_path / "hosted_scores.csv"
+    hosted.write_text(
+        "dir,wav,model,mode,prompt_id,utmos,wer,sim,health\n"
+        "inworld_tts2/default,p1_t1.wav,inworld_tts2,default,1,4.0,0.10,,\n"
+        "inworld_tts2/default,p1_t2.wav,inworld_tts2,default,1,4.4,0.00,,gap\n"
+        "inworld_tts2/default,p1_t3.wav,inworld_tts2,default,1,,,,gap\n"
+        "inworld_tts2/cloning,p1_t1.wav,inworld_tts2,cloning,1,4.1,0.00,0.61,\n"
+        "not_a_vendor/default,p1_t1.wav,not_a_vendor,default,1,4.9,0.00,,\n",
+        encoding="utf-8")
+    monkeypatch.setattr(publish, "WORKTREE", tmp_path)
+    monkeypatch.setattr(publish, "LISTEN_DEFAULT_DIRS", ())
+    monkeypatch.setattr(publish, "LISTEN_CLONING_DIRS", ())
+    monkeypatch.setattr(publish, "SCORES_CSV", tmp_path / "scores.csv")
+    monkeypatch.setattr(publish, "HOSTED_SCORES_CSV", hosted)
+
+    publish.build_scores()
+
+    html = (tmp_path / "scores.html").read_text(encoding="utf-8")
+    default, cloning = html.split('<div class="subsection cloning"', 1)
+    assert html.count('data-src="hosted"') == 1 + 1  # one row + the CSS selector
+    assert 'data-name="Inworld TTS-2"' in default and 'data-src="hosted"' in default
+    assert 'data-sort="4.2000"' in default          # mean of both takes
+    assert 'data-sort="0.0500"' in default
+    assert "gap (1)" in default                      # same flag on 2 takes of p1 counts once
+    assert 'data-sort="1"><span class="health-flag"' in default
+    assert "not_a_vendor" not in html                 # only catalog vendors reach the board
+    # hosted rows only, no local ones: no switch, so nothing hides the only rows there are
+    assert 'class="source-switch"' not in html
+    assert '<div class="subsection" data-mode="default">' in html
+    assert "Inworld" not in cloning.split("<script>")[0]
