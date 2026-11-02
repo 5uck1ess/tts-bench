@@ -254,6 +254,9 @@ def _plain_rows(path):
         return list(csv.DictReader(f))
 
 
+HOSTED_SCORES_CSV = REPO / "scoring" / "hosted_scores.csv"  # paid-API scores (score_hosted.py)
+
+
 def _read_scores_csv():
     """Index scoring/scores.csv as {(dir, wav): {metric: float|None}}.
     Empty dict if the file is absent (Scores page then renders empty)."""
@@ -534,7 +537,7 @@ _LISTEN_VIEW_STYLE = (
     '.view-toggle{display:inline-flex;gap:.3rem;margin:.2rem 0 1rem;}'
     '.view-toggle button{background:var(--input-bg);color:var(--text);'
     'border:1px solid var(--input-border);border-radius:6px;padding:6px 14px;'
-    'font:inherit;cursor:pointer;}'
+    'font:inherit;cursor:pointer;white-space:nowrap;}'
     '.view-toggle button.active{background:var(--accent);color:var(--bg);border-color:var(--accent);}'
     # at-a-glance metadata badges
     '.badge{display:inline-block;font-size:.72em;padding:1px 7px;border-radius:10px;'
@@ -925,7 +928,9 @@ _SCORES_GUIDE = (
     'not a score). Switch '
     '<strong>Default</strong> / <strong>Cloning</strong> below; click any header to '
     're-sort. Each score is the mean over the exact clips shown on '
-    '<a href="listen.html">Listen</a>. Human votes are the preference ground truth; '
+    '<a href="listen.html">Listen</a>. <strong>Hosted APIs</strong> (paid, default voice only) '
+    'can be shown beside the local models: same prompts and scorers, mean over 3 takes per '
+    'prompt. Human votes are the preference ground truth; '
     'these objective metrics are backstops.</div>'
 )
 
@@ -948,12 +953,14 @@ def _health_cell(flags):
 
 
 def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_models=frozenset(),
-                  show_health=True):
+                  show_health=True, hosted=None):
     """One sortable table. columns = list of (metric_key, header, higher_better).
     Rows aggregated per model; WER>threshold rows get the 'flagged' class.
     show_health appends a non-ranking Health triage column (clip/silent/gap, plus head from the WER pass).
     fallback_dirs/fallback_models: for NO_PRESET_VOICE models on the cloning board,
-    append default dirs so a model benched only in default mode still appears."""
+    append default dirs so a model benched only in default mode still appears.
+    hosted: {display name: aggregate} from scripts.hosted.catalog — paid APIs added as rows
+    tagged data-src="hosted" (the page's Local / Hosted / Both switch shows or hides them)."""
     # Numeric headers get class="num" so they right-align over their right-aligned
     # number cells (td.num); a plain <th> is left-aligned and visibly drifts off its
     # column on wide screens where each column is stretched.
@@ -971,12 +978,20 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
         if agg["n"] == 0:
             continue
         aggs.append((m, agg))
-    for (m, agg) in aggs:
+    rows = [(m, agg, "local") for m, agg in aggs]
+    rows += [(name, {**agg, "health_flags": agg["flags"]}, "hosted")
+             for name, agg in sorted((hosted or {}).items(), key=lambda kv: kv[0].lower())]
+    for (m, agg, src) in rows:
         flagged = agg.get("wer") is not None and agg["wer"] > WER_FAIL_THRESHOLD
-        cls = ' class="flagged"' if flagged else ""
-        cells = [f'<td>{escape(_display_name(m))}</td>',
-                 f'<td class="muted">{escape(MODEL_SIZE.get(m, "—"))}</td>',
-                 _release_td(m)]
+        cls = (' class="flagged"' if flagged else "") + f' data-src="{src}"'
+        if src == "hosted":
+            cells = [f'<td data-name="{escape(m)}">{escape(m)} '
+                     '<span class="src-tag">hosted</span></td>',
+                     '<td class="muted">API</td>', '<td class="muted" data-sort="">—</td>']
+        else:
+            cells = [f'<td>{escape(_display_name(m))}</td>',
+                     f'<td class="muted">{escape(MODEL_SIZE.get(m, "—"))}</td>',
+                     _release_td(m)]
         for (k, _h, _up) in columns:
             v = agg.get(k)
             if v is None:
@@ -994,61 +1009,45 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
             + "".join(body) + '</tbody></table></div>')
 
 
-def build_scores():
-    """Build scores.html — objective metric leaderboard with a Default/Cloning
-    toggle. Charts show UTMOS for Default and SIM+UTMOS for Cloning; WER remains
-    a failure detector in the tables. Reuses _pick_clip so each score matches the
-    clip shown on Listen."""
-    look = _read_scores_csv()
-    raw_default = set().union(*(_ok_models(n) for n in LISTEN_DEFAULT_DIRS)) if LISTEN_DEFAULT_DIRS else set()
-    raw_cloning = set().union(*(_ok_models(n) for n in LISTEN_CLONING_DIRS)) if LISTEN_CLONING_DIRS else set()
-    default_models = raw_default - NO_PRESET_VOICE
-    cloning_models = raw_cloning | (NO_PRESET_VOICE & (raw_default | raw_cloning))
-
-    default_cols = [("utmos", "UTMOS", True), ("wer", "WER", False)]
-    cloning_cols = [("sim", "SIM", True), ("utmos", "UTMOS", True), ("wer", "WER", False)]
-
-    default_tbl = _scores_table(default_models, LISTEN_DEFAULT_DIRS, look, default_cols)
-    # Cloning board: like build_listen, a NO_PRESET_VOICE model benched only in
-    # default mode cloned the reference there, so fall back to its default-dir clip
-    # (SIM will be blank for it since that clip was scored in default mode).
-    cloning_tbl = _scores_table(cloning_models, LISTEN_CLONING_DIRS, look, cloning_cols,
-                                fallback_dirs=LISTEN_DEFAULT_DIRS, fallback_models=NO_PRESET_VOICE)
-
-    scores_style = (
-        '<style>tr.flagged>td{opacity:.55;}'
-        'tr.flagged>td:first-child::after{content:" \\26A0";color:var(--fail);}'
-        '.health-flag{color:var(--fail);white-space:nowrap;}'
-        '.score-chart{margin:.8rem 0 1.4rem;padding:.9rem 1rem;background:var(--panel);'
-        'border:1px solid var(--border);border-radius:8px;}'
-        '.score-chart-head{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;'
-        'margin-bottom:.8rem;}'
-        '.score-chart-label{color:var(--muted);font-size:.9em;}'
-        '.score-metrics{display:inline-flex;gap:.35rem;}'
-        '.score-metrics button{background:var(--input-bg);color:var(--text);'
-        'border:1px solid var(--input-border);border-radius:6px;padding:5px 11px;'
-        'font:inherit;cursor:pointer;}'
-        '.score-metrics button.active{background:var(--accent);color:var(--bg);'
-        'border-color:var(--accent);}'
-        '.score-bars{display:grid;gap:.45rem;}'
-        '.score-bar-row{display:grid;grid-template-columns:minmax(9rem,13rem) 1fr 4.5rem;'
-        'align-items:center;gap:.65rem;font-size:.9em;}'
-        '.score-bar-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
-        '.score-bar-track{height:1rem;background:var(--input-bg);border-radius:3px;overflow:hidden;}'
-        '.score-bar-fill{display:block;height:100%;background:var(--accent);}'
-        '.score-bar-row.flagged{opacity:.55;}'
-        '.score-bar-row.flagged .score-bar-name::after{content:" \\26A0";color:var(--fail);}'
-        '.score-bar-value{text-align:right;color:var(--num);font-variant-numeric:tabular-nums;}'
-        '.score-chart-scale{color:var(--muted);font-size:.78em;margin-top:.7rem;text-align:right;}'
-        '.score-chart-empty{color:var(--muted);font-size:.9em;}'
-        '.scores-table-scroll{max-width:100%;overflow-x:auto;}'
+# Bar chart shared by the Scores page and the Hosted page: it reads the first table in its
+# .subsection (cells marked data-metric, values in data-sort), so chart and table never disagree.
+SCORE_CHART_STYLE = (
+    '<style>'
+    '.score-chart{margin:.8rem 0 1.4rem;padding:.9rem 1rem;background:var(--panel);'
+    'border:1px solid var(--border);border-radius:8px;}'
+    '.score-chart-head{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;'
+    'margin-bottom:.8rem;}'
+    '.score-chart-label{color:var(--muted);font-size:.9em;}'
+    '.score-metrics{display:inline-flex;flex-wrap:wrap;gap:.35rem;}'
+    '.score-metrics button{background:var(--input-bg);color:var(--text);'
+    'border:1px solid var(--input-border);border-radius:6px;padding:5px 11px;'
+    'font:inherit;cursor:pointer;}'
+    '.score-metrics button.active{background:var(--accent);color:var(--bg);'
+    'border-color:var(--accent);}'
+    '.score-bars{display:grid;gap:.45rem;}'
+    '.score-bar-row{display:grid;grid-template-columns:minmax(9rem,13rem) 1fr 4.5rem;'
+    'align-items:center;gap:.65rem;font-size:.9em;}'
+    '.score-bar-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+    '.score-bar-track{height:1rem;background:var(--input-bg);border-radius:3px;overflow:hidden;}'
+    '.score-bar-fill{display:block;height:100%;background:var(--accent);}'
+    '.score-bar-row.hosted .score-bar-fill{background:var(--num);}'
+    '.score-legend{display:inline-flex;gap:.9rem;margin-left:auto;color:var(--muted);font-size:.85em}'
+    '.score-legend[hidden]{display:none}'
+    '.score-legend i{display:inline-block;width:.8em;height:.8em;border-radius:2px;'
+    'margin-right:.35em;vertical-align:-.05em;background:var(--accent)}'
+    '.score-legend i.h{background:var(--num)}'
+    '.score-bar-row.flagged{opacity:.55;}'
+    '.score-bar-row.flagged .score-bar-name::after{content:" \\26A0";color:var(--fail);}'
+    '.score-bar-value{text-align:right;color:var(--num);font-variant-numeric:tabular-nums;}'
+    '.score-chart-scale{color:var(--muted);font-size:.78em;margin-top:.7rem;text-align:right;}'
+    '.score-chart-empty{color:var(--muted);font-size:.9em;}'
+    '.scores-table-scroll{max-width:100%;overflow-x:auto;}'
         '@media(max-width:600px){.score-bar-row{grid-template-columns:minmax(0,1fr) 3.5rem;'
         'gap:.3rem .6rem;}.score-bar-name{white-space:normal}.score-bar-track{grid-column:1/-1;'
         'grid-row:2}.score-bar-value{grid-column:2;grid-row:1}}'
-        '.scores-foot{color:var(--muted);font-size:.85em;margin-top:1.4rem;'
-        'border-top:1px solid var(--border);padding-top:.8rem;line-height:1.5;}'
-        '.scores-foot a{color:var(--accent);}</style>')
-    chart_script = '''<script>
+    '</style>')
+
+SCORE_CHART_SCRIPT = '''<script>
 (function(){
   var limit = 15;
     var metricDomains = {
@@ -1061,21 +1060,26 @@ def build_scores():
       if (!table) { chart.remove(); return; }
         var bars = chart.querySelector('.score-bars');
         var scale = chart.querySelector('.score-chart-scale');
+        var legend = chart.querySelector('.score-legend');
         var buttons = chart.querySelectorAll('[data-chart-metric]');
 
         function render(metric){
+            var btn = chart.querySelector('[data-chart-metric="' + metric + '"]');
+            var asc = btn.dataset.dir === 'asc', dec = Number(btn.dataset.decimals || 3);
+            var unit = btn.dataset.unit || '';
             var rows = [];
             table.querySelectorAll('tbody tr').forEach(function(row){
-                if(row.style.display === 'none') return;
+                if(row.style.display === 'none' || getComputedStyle(row).display === 'none') return;
                 var cell = row.querySelector('[data-metric="' + metric + '"]');
                 if(!cell || !cell.dataset.sort) return;
                 rows.push({
-                    name: row.cells[0].textContent.trim(),
+                    name: row.cells[0].dataset.name || row.cells[0].textContent.trim(),
                     value: Number(cell.dataset.sort),
-                    flagged: row.classList.contains('flagged')
+                    flagged: row.classList.contains('flagged'),
+                    hosted: row.dataset.src === 'hosted'
                 });
             });
-            rows.sort(function(a, b){ return b.value - a.value; });
+            rows.sort(function(a, b){ return asc ? a.value - b.value : b.value - a.value; });
             rows = rows.slice(0, limit);
             bars.replaceChildren();
             if(!rows.length){
@@ -1086,14 +1090,20 @@ def build_scores():
                 scale.textContent = '';
                 return;
             }
-            var domain = metricDomains[metric];
-            scale.textContent = metric.toUpperCase() + ' scale: ' + domain.min + '–' + domain.max;
+            var domain = metricDomains[metric] ||
+                {min: 0, max: Math.max.apply(null, rows.map(function(r){ return r.value; }))};
+            var mixed = rows.some(function(r){ return r.hosted; }) &&
+                rows.some(function(r){ return !r.hosted; });
+            legend.hidden = !mixed;
+            scale.textContent = asc ? (btn.textContent.replace(/ [↑↓]$/, '') + ': shorter bar is better')
+                : metric.toUpperCase() + ' scale: ' + domain.min + '–' + domain.max;
             rows.forEach(function(row){
                 var item = document.createElement('div');
-                item.className = 'score-bar-row' + (row.flagged ? ' flagged' : '');
+                item.className = 'score-bar-row' + (row.flagged ? ' flagged' : '')
+                    + (row.hosted ? ' hosted' : '');
                 item.setAttribute('role', 'img');
                 item.setAttribute('aria-label', row.name + ': ' + metric.toUpperCase() + ' '
-                    + row.value.toFixed(3) + (row.flagged ? '; high WER warning' : ''));
+                    + row.value.toFixed(dec) + unit + (row.hosted ? '; hosted API' : '') + (row.flagged ? '; high WER warning' : ''));
                 var name = document.createElement('span');
                 name.className = 'score-bar-name';
                 name.title = row.name;
@@ -1107,7 +1117,7 @@ def build_scores():
                 track.appendChild(fill);
                 var value = document.createElement('span');
                 value.className = 'score-bar-value';
-                value.textContent = row.value.toFixed(3);
+                value.textContent = row.value.toFixed(dec) + unit;
                 item.append(name, track, value);
                 bars.appendChild(item);
             });
@@ -1127,25 +1137,89 @@ def build_scores():
         if(reset) reset.addEventListener('click', function(){
             setTimeout(function(){ render(activeMetric()); }, 0);
         });
+        document.addEventListener('score-rows-changed', function(){ render(activeMetric()); });
         function activeMetric(){ return chart.querySelector('[data-chart-metric].active').dataset.chartMetric; }
       });
 })();
 </script>'''
 
-    def _chart(metrics):
-        buttons = "".join(
-            f'<button type="button" data-chart-metric="{escape(metric)}"'
-            f'{" class=active" if i == 0 else ""}>{escape(label)}</button>'
-            for i, (metric, label) in enumerate(metrics)
-        )
-        return ('<div class="score-chart"><div class="score-chart-head">'
-                '<span class="score-chart-label">Top 15 · metric:</span>'
-                f'<div class="score-metrics">{buttons}</div></div>'
-            '<div class="score-bars"></div>'
-            '<div class="score-chart-scale"></div></div>')
 
-    default_chart = _chart([("utmos", "UTMOS ↑")]) if "<table" in default_tbl else ""
-    cloning_chart = _chart([("sim", "SIM ↑"), ("utmos", "UTMOS ↑")]) if "<table" in cloning_tbl else ""
+def score_chart(metrics, label="Top 15"):
+    """metrics: (key, label) or (key, label, opts) with opts dir="asc" (lower is better),
+    decimals, unit."""
+    buttons = []
+    for i, m in enumerate(metrics):
+        key, text, opts = (m + ({},))[:3]
+        extra = "".join(f' data-{k}="{escape(str(v))}"' for k, v in opts.items())
+        buttons.append(f'<button type="button" data-chart-metric="{escape(key)}"{extra}'
+                       f'{" class=active" if i == 0 else ""}>{escape(text)}</button>')
+    return ('<div class="score-chart"><div class="score-chart-head">'
+            f'<span class="score-chart-label">{escape(label)} · metric:</span>'
+            f'<div class="score-metrics">{"".join(buttons)}</div>'
+            '<span class="score-legend" hidden><span><i></i>local</span>'
+            '<span><i class="h"></i>hosted API</span></span></div>'
+            '<div class="score-bars"></div><div class="score-chart-scale"></div></div>')
+
+
+
+def build_scores():
+    """Build scores.html — objective metric leaderboard with a Default/Cloning
+    toggle. Charts show UTMOS for Default and SIM+UTMOS for Cloning; WER remains
+    a failure detector in the tables. Reuses _pick_clip so each score matches the
+    clip shown on Listen."""
+    look = _read_scores_csv()
+    raw_default = set().union(*(_ok_models(n) for n in LISTEN_DEFAULT_DIRS)) if LISTEN_DEFAULT_DIRS else set()
+    raw_cloning = set().union(*(_ok_models(n) for n in LISTEN_CLONING_DIRS)) if LISTEN_CLONING_DIRS else set()
+    default_models = raw_default - NO_PRESET_VOICE
+    cloning_models = raw_cloning | (NO_PRESET_VOICE & (raw_default | raw_cloning))
+
+    default_cols = [("utmos", "UTMOS", True), ("wer", "WER", False)]
+    cloning_cols = [("sim", "SIM", True), ("utmos", "UTMOS", True), ("wer", "WER", False)]
+
+    # Paid APIs join the Default voice board behind a Local / Hosted / Both switch (Tym,
+    # 2026-11-02). Same prompts and scorers, so UTMOS / WER compare. Cloning stays local-only:
+    # hosted vendors clone a different reference voice, so their SIM is not comparable.
+    from scripts.hosted.catalog import CATALOG as HOSTED_CATALOG, score_aggregates
+    hosted = {HOSTED_CATALOG.get(slug, (slug,))[0]: agg for slug, agg in
+              score_aggregates(HOSTED_SCORES_CSV, "default").items()}
+    default_tbl = _scores_table(default_models, LISTEN_DEFAULT_DIRS, look, default_cols,
+                                hosted=hosted)
+    # Cloning board: like build_listen, a NO_PRESET_VOICE model benched only in
+    # default mode cloned the reference there, so fall back to its default-dir clip
+    # (SIM will be blank for it since that clip was scored in default mode).
+    cloning_tbl = _scores_table(cloning_models, LISTEN_CLONING_DIRS, look, cloning_cols,
+                                fallback_dirs=LISTEN_DEFAULT_DIRS, fallback_models=NO_PRESET_VOICE)
+
+    scores_style = (
+        '<style>tr.flagged>td{opacity:.55;}'
+        'tr.flagged>td:first-child::after{content:" \\26A0";color:var(--fail);}'
+        '.health-flag{color:var(--fail);white-space:nowrap;}'
+        '.scores-foot{color:var(--muted);font-size:.85em;margin-top:1.4rem;'
+        'border-top:1px solid var(--border);padding-top:.8rem;line-height:1.5;}'
+        '.scores-foot a{color:var(--accent);}'
+        '.src-tag{color:var(--muted);font-size:.8em;border:1px solid var(--border);'
+        'border-radius:4px;padding:0 .35em;margin-left:.3em;white-space:nowrap}'
+        '.source-switch{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;margin:.2rem 0 .6rem}'
+        '.subsection[data-source="local"] tr[data-src="hosted"],'
+        '.subsection[data-source="hosted"] tr[data-src="local"]{display:none}</style>')
+
+
+    source_script = (
+        '<script>(function(){var sec=document.querySelector(\'.subsection[data-mode="default"]\');'
+        'if(!sec)return;var bs=sec.querySelectorAll("[data-source-pick]");'
+        'bs.forEach(function(b){b.addEventListener("click",function(){'
+        'bs.forEach(function(o){o.classList.toggle("active",o===b);});'
+        'sec.dataset.source=b.dataset.sourcePick;'
+        'document.dispatchEvent(new Event("score-rows-changed"));});});})();</script>')
+    source_switch = (
+        '<div class="source-switch"><span class="score-chart-label">Show:</span>'
+        '<div class="score-metrics">'
+        '<button type="button" data-source-pick="local" class="active">Local models</button>'
+        '<button type="button" data-source-pick="hosted">Hosted APIs</button>'
+        '<button type="button" data-source-pick="both">Both</button></div>'
+        '<a class="muted" href="hosted.html">Hosted speed, price and cloning →</a></div>')
+    default_chart = score_chart([("utmos", "UTMOS ↑")]) if "<table" in default_tbl else ""
+    cloning_chart = score_chart([("sim", "SIM ↑"), ("utmos", "UTMOS ↑")]) if "<table" in cloning_tbl else ""
     foot = (
         '<div class="scores-foot">Scored over the 5 bench prompts (thin — WER is a '
         'failure-detector, not a fine ranking). Checkpoints: UTMOS '
@@ -1159,7 +1233,7 @@ def build_scores():
            '<meta name="viewport" content="width=device-width, initial-scale=1">',
            '<title>tts-bench — Scores</title>',
            FAVICON_LINK, STYLE, LOGO_STYLE, _SUBSECTION_STYLE, _SPEED_HUB_STYLE,
-           scores_style,
+           scores_style, SCORE_CHART_STYLE,
            '</head><body>', _top_controls("scores"), LOGO_HEADER,
            '<h1>Scores</h1>', _SCORES_GUIDE,
            '<div class="mode-select"><span class="rig-select-label">Voice:</span>'
@@ -1167,9 +1241,10 @@ def build_scores():
            '<a class="lens-tab active" data-mode="default" href="#">Default voice</a>'
            '<a class="lens-tab" data-mode="cloning" href="#">Cloning</a>'
            '</div></div>',
-           f'<div class="subsection" data-mode="default"><h3 class="sub-head">Default voice '
+           f'<div class="subsection" data-mode="default" data-source="local">'
+           f'<h3 class="sub-head">Default voice '
            f'<span class="muted">· naturalness + intelligibility</span></h3>'
-           f'{default_chart}{default_tbl}</div>',
+           f'{source_switch}{default_chart}{default_tbl}</div>',
            f'<div class="subsection cloning" data-mode="cloning" style="display:none">'
            f'<h3 class="sub-head">Cloning <span class="muted">· fidelity + naturalness + '
            f'intelligibility</span></h3>{cloning_chart}{cloning_tbl}</div>',
@@ -1177,7 +1252,7 @@ def build_scores():
            # colIdx 3 = first metric column (after Model/Size/Released): UTMOS on
            # the default board, SIM on the cloning board — keep the metric-led sort.
            '<script>window.__defaultSort = {colIdx: 3, dir: -1};</script>',
-           SCRIPT, _MODE_TAB_SCRIPT, chart_script, '</body></html>']
+           SCRIPT, _MODE_TAB_SCRIPT, SCORE_CHART_SCRIPT, source_script, '</body></html>']
     (WORKTREE / "scores.html").write_text("\n".join(out), encoding="utf-8")
 
 
@@ -1532,10 +1607,10 @@ def build_hosted():
     head = "\n".join(['<!doctype html>', '<html lang="en"><head><meta charset="utf-8">',
                       '<meta name="viewport" content="width=device-width, initial-scale=1">',
                       '<title>tts-bench — Hosted APIs</title>', FAVICON_LINK, STYLE, LOGO_STYLE,
-                      _SUBSECTION_STYLE, _SPEED_HUB_STYLE, _SCORES_STYLE_HOSTED,
+                      _SUBSECTION_STYLE, _SPEED_HUB_STYLE, _SCORES_STYLE_HOSTED, SCORE_CHART_STYLE,
                       '</head><body>', _top_controls("hosted"),
                       LOGO_HEADER])
-    page.build(WORKTREE, head, SCRIPT + "\n</body></html>")
+    page.build(WORKTREE, head, SCRIPT + SCORE_CHART_SCRIPT + "\n</body></html>")
 
 
 # Same table chrome as the Scores page (health flag, scroll wrapper, footer rule).
