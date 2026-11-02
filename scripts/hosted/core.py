@@ -128,6 +128,27 @@ def _trace(marks, t0):
     return cb
 
 
+def wav_data_offset(data):
+    """Byte offset where a RIFF/WAVE body's `data` chunk payload starts, found by walking the chunk
+    list (id + little-endian size) from byte 12. A bare `find(b"data")` is wrong: a chunk before the
+    audio (Resemble's stream sends cue/LIST metadata first) can contain those four bytes, and the
+    metadata would then be read as samples. Returns None until the header has fully arrived."""
+    return _wav_walk(data)[0]
+
+
+def _wav_walk(data):
+    """(data payload offset or None, sample rate from the `fmt ` chunk or None)."""
+    i, rate = 12, None
+    while i + 8 <= len(data):
+        cid, size = data[i:i + 4], int.from_bytes(data[i + 4:i + 8], "little")
+        if cid == b"fmt " and i + 16 <= len(data):
+            rate = int.from_bytes(data[i + 12:i + 16], "little")
+        if cid == b"data":
+            return i + 8, rate
+        i += 8 + size + (size & 1)
+    return None, rate
+
+
 def to_wav(data, fmt, sr):
     """Return (wav_bytes, sr, duration_s). pcm16 gets a header; wav/mp3 are decoded to check."""
     if fmt == "pcm_f32":
@@ -136,7 +157,10 @@ def to_wav(data, fmt, sr):
         data = (np.clip(f, -1.0, 1.0) * 32767).astype("<i2").tobytes()
         fmt = "pcm16"
     if fmt == "pcm16" and data[:4] == b"RIFF":  # vendor wrapped it in WAV after all
-        fmt = "wav"
+        head, rate = _wav_walk(data)
+        if head is None:
+            raise RuntimeError("WAV stream ended before its data chunk")
+        data, sr = data[head:], rate or sr  # PCM payload only; streamed sizes are placeholders
     if fmt == "pcm16":
         if len(data) % 2:
             data = data[:-1]
@@ -163,9 +187,10 @@ def _first_speech_ms(data, fmt, arrivals):
     per byte offset)."""
     import numpy as np
     head = 0
-    if fmt == "pcm16" and data[:4] == b"RIFF":  # e.g. Deepgram wraps linear16 in WAV
-        i = data.find(b"data", 12)
-        head = i + 8 if i > 0 else 44
+    if fmt == "pcm16" and data[:4] == b"RIFF":  # Deepgram / Resemble wrap PCM16 in WAV
+        head = wav_data_offset(data)
+        if head is None:
+            return None
     if fmt == "pcm16":
         body = data[head:]
         a, width = np.frombuffer(body[:len(body) // 2 * 2], dtype="<i2") / 32768.0, 2
