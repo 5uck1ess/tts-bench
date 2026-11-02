@@ -15,6 +15,7 @@ Clips are copied to <worktree>/hosted/<slug>/<lens>/p<N>_t<take>.wav (all takes:
 
 import csv
 import json
+import re
 import shutil
 import statistics as st
 from collections import defaultdict
@@ -98,8 +99,7 @@ STYLE = """<style>
 .hgrid .wide{grid-column:span 3}
 .hgrid .num{text-align:right;font-variant-numeric:tabular-nums}
 .hgrid .lbl{display:none;color:var(--muted)}
-.hosted-board td,.hosted-board th{white-space:nowrap}
-.hosted-board td .sub{color:var(--muted);font-size:.8em}
+.scores-table-scroll{max-width:100%;overflow-x:auto}
 .prompt-jumper{margin:.3rem 0 .9rem;color:var(--muted);font-size:.9em}
 details.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin-bottom:.8rem;padding:0 1.1rem}
 details.panel>summary{cursor:pointer;padding:.75rem 0;font-weight:600;list-style:none}
@@ -170,6 +170,12 @@ def _fmt(v, spec):
 
 def _ds(v):
     return f' data-sort="{v:.4f}"' if v is not None else ' data-sort=""'
+
+
+def _price_sort(price):
+    """First number in a price label ("$12–20" -> 12, "≈$9.3" -> 9.3); None for "token"."""
+    m = re.search(r"\d+(?:\.\d+)?", price)
+    return float(m.group()) if m else None
 
 
 def _lbl(t):  # inline label, shown only on phones where grid headers are hidden
@@ -249,9 +255,12 @@ def _row_data(samples, scores):
 
 def _main_table(rows):
     # Plain-text headers: the shared sort script rewrites th.textContent (drops markup).
-    cols = ["Model", "First speech ms", "UTMOS", "WER en", "WER fr/es", "Langs", "$ / 1M chars"]
+    # Same cell hierarchy as the Scores table: one plain line per row, metrics as td.num,
+    # descriptive text muted, direction arrows in the headers.
+    cols = ["Model", "First speech ms ↓", "UTMOS ↑", "WER en ↓", "WER fr/es ↓",
+            "$ / 1M chars", "Langs"]
     head = "<thead><tr>" + "".join(
-        f'<th{" class=num" if 0 < i < 5 else ""}>{escape(c)}</th>'
+        f'<th{" class=num" if 0 < i < 6 else ""}>{escape(c)}</th>'
         for i, c in enumerate(cols)) + "</tr></thead>"
     body = []
     for d in rows:
@@ -263,16 +272,16 @@ def _main_table(rows):
                 if sp.get("sweep") else "")
         tip = f'p90 {_ms(sp["p90"])} ms · {sp["n"]} calls · {sp["err"]} errors · {d["tr"]}'
         via = " · via OpenRouter" if cls.route == "openrouter" else ""
-        note = ' <span class="muted">*</span>' if d["pnote"] else ""
+        note = "*" if d["pnote"] else ""
+        ptitle = f' title="{escape(d["pnote"])}"' if d["pnote"] else ""
         body.append(
-            f'<tr><td><strong>{escape(d["name"])}</strong>{warn}<br>'
-            f'<span class="sub">{escape(cls.model)}{via}</span></td>'
+            f'<tr><td title="model id: {escape(cls.model)}{via}">{escape(d["name"])}{warn}</td>'
             f'<td class="num"{_ds(sp["med"])} title="{escape(tip)}">{_ms(sp["med"])}{mark}</td>'
-            f'<td class="num"{_ds(d["um"])}>{_fmt(d["um"], ".2f")}</td>'
+            f'<td class="num"{_ds(d["um"])}>{_fmt(d["um"], ".3f")}</td>'
             f'<td class="num"{_ds(d["we"])}>{_fmt(d["we"], ".3f")}</td>'
             f'<td class="num"{_ds(d["wx"])}>{_fmt(d["wx"], ".3f")}</td>'
-            f'<td>{escape(" ".join(sorted(cls.langs)))}</td>'
-            f'<td title="{escape(d["pnote"])}">{escape(d["price"])}{note}</td></tr>')
+            f'<td class="num"{_ds(_price_sort(d["price"]))}{ptitle}>{escape(d["price"])}{note}'
+            f'</td><td class="muted">{escape(" ".join(sorted(cls.langs)))}</td></tr>')
     return (f'<div class="scores-table-scroll"><table class="hosted-board">{head}<tbody>'
             f'{"".join(body)}</tbody></table></div>')
 
@@ -427,7 +436,9 @@ def build(worktree, head, foot):
         'better) use the same scorers as the Scores tab. Prices are list $/1M characters; '
         '* = hover for a note.</div>',
         f'<div class="mode-select"><div class="lens-tabs" id="mode-tabs">{tab_links}</div></div>',
-        '<div class="subsection" data-mode="board">', _main_table(rows), '</div>',
+        '<div class="subsection" data-mode="board"><h3 class="sub-head">Default voice '
+        '<span class="muted">· speed, naturalness, intelligibility, price</span></h3>',
+        _main_table(rows), '</div>',
         '<div class="subsection" data-mode="listen" style="display:none">',
         '<div class="meta">Every take of every prompt, nothing cherry-picked.</div>',
         _listen(worktree), '</div>',

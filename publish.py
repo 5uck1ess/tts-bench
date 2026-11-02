@@ -1532,14 +1532,18 @@ def build_hosted():
     head = "\n".join(['<!doctype html>', '<html lang="en"><head><meta charset="utf-8">',
                       '<meta name="viewport" content="width=device-width, initial-scale=1">',
                       '<title>tts-bench — Hosted APIs</title>', FAVICON_LINK, STYLE, LOGO_STYLE,
-                      _SCORES_STYLE_HOSTED, '</head><body>', _top_controls("hosted"),
+                      _SUBSECTION_STYLE, _SPEED_HUB_STYLE, _SCORES_STYLE_HOSTED,
+                      '</head><body>', _top_controls("hosted"),
                       LOGO_HEADER])
     page.build(WORKTREE, head, SCRIPT + "\n</body></html>")
 
 
-_SCORES_STYLE_HOSTED = ('<style>.health-flag{color:var(--fail);font-size:.85em}'
-                        '.scores-foot{color:var(--muted);font-size:.85em;margin-top:1rem}'
-                        'details.panel{margin:.4rem 0}</style>')
+# Same table chrome as the Scores page (health flag, scroll wrapper, footer rule).
+_SCORES_STYLE_HOSTED = ('<style>.health-flag{color:var(--fail);white-space:nowrap}'
+                        '.scores-table-scroll{max-width:100%;overflow-x:auto}'
+                        '.scores-foot{color:var(--muted);font-size:.85em;margin-top:1.4rem;'
+                        'border-top:1px solid var(--border);padding-top:.8rem;line-height:1.5}'
+                        '</style>')
 
 
 def build_top_level():
