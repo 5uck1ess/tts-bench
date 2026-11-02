@@ -152,8 +152,10 @@ const FRAMING={
   cloning:"<b>Play the target voice</b> at the top, then <b>Left</b> and <b>Right</b>. Pick whichever sounds <b>more like the target</b> — same person and tone — and cleaner. <b>Ignore accuracy</b> — a mispronounced or wrong word is measured separately (WER on the Scores board), so don't let it decide your vote. Tie if you can't tell; Both bad if both are unusable. Order is random, names hidden.",
   default:"<b>Play Left, then Right.</b> Pick whichever sounds <b>more natural and higher quality</b> — clearer, smoother, more human. Judge the voice itself, not which you'd personally prefer. <b>Ignore accuracy</b> — a mispronounced or wrong word is measured separately (WER on the Scores board), so don't let it decide your vote. Tie if equal. Order is random, names hidden."
 };
-const MODE_LABEL={cloning:"🎯 Cloning",default:"🗣 Default voice"};
-const LENS_TITLE={cloning:"Cloning fidelity vote",default:"Voice quality vote"};
+FRAMING["hosted-default"]=FRAMING.default+" These are <b>paid cloud APIs</b>, each on its documented default voice. They have their own leaderboard and never meet a local model.";
+FRAMING["hosted-cloning"]=FRAMING.cloning+" These are <b>paid cloud APIs</b>, cloning a different target voice than the local pool. They have their own leaderboard.";
+const MODE_LABEL={cloning:"🎯 Cloning",default:"🗣 Default voice","hosted-default":"☁ Hosted APIs","hosted-cloning":"☁ Hosted cloning"};
+const LENS_TITLE={cloning:"Cloning fidelity vote",default:"Voice quality vote","hosted-default":"Hosted API quality vote","hosted-cloning":"Hosted API cloning vote"};
 let cur=null, busy=false, renderTs=0, turnstileToken="";
 let playedA=false, playedB=false;
 let mode=(localStorage.getItem('arena_mode')||'').trim().toLowerCase();
@@ -170,7 +172,7 @@ let session_id=uuid();
 const A=document.getElementById('aA'), B=document.getElementById('aB'), R=document.getElementById('aR');
 window.onTurnstile=function(t){ turnstileToken=t; updateGate(); };
 
-function hasRef(){ return mode==='cloning' && HASREF[mode]; }
+function hasRef(){ return mode.endsWith('cloning') && HASREF[mode]; }
 function gateReady(){ return playedA && playedB && (!SITEKEY || !!turnstileToken); }
 function updateGate(){
   const ok=gateReady();
@@ -279,7 +281,7 @@ async function refreshRank(){
   const r=await fetch('/api/ranking?mode='+mode); const d=await r.json();
   const tb=document.querySelector('#rank tbody');
   tb.innerHTML='<tr><th>#</th><th>model</th><th class="n">elo</th><th class="n">games</th></tr>'+
-    d.ranking.map((x,i)=>`<tr><td>${i+1}</td><td>${x.model}</td><td class="n">${x.elo}</td><td class="n">${x.games}</td></tr>`).join('');
+    d.ranking.map((x,i)=>`<tr><td>${i+1}</td><td>${esc(x.name||x.model)}</td><td class="n">${x.elo}</td><td class="n">${x.games}</td></tr>`).join('');
 }
 document.getElementById('pA').onclick=()=>playOne(A);
 document.getElementById('pB').onclick=()=>playOne(B);

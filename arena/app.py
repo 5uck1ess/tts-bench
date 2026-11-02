@@ -98,7 +98,11 @@ app = FastAPI()
 _conn = _open_db()
 _db_lock = threading.Lock()  # serializes all access to the shared sqlite _conn
 _STATES = {}
-for _m in ("default", "cloning"):
+# Every lens in the manifest gets its own state: default, cloning and, when published, the
+# hosted pools. Pairs are only ever drawn within one lens, so a hosted API never meets a
+# local model.
+for _m in [m for m in ("default", "cloning", "hosted-default", "hosted-cloning")
+           if m in _MANIFEST["modes"]]:
     _inv = load_inventory(_MANIFEST, _m, SETTINGS.langs)
     if _inv.by_prompt:
         _STATES[_m] = ModeState(_m, _inv, _conn)
@@ -184,8 +188,8 @@ def reference(mode: str = _INITIAL):
 def api_ranking(mode: str = _INITIAL):
     st = _STATES.get(mode) or _STATES[_INITIAL]
     with st.lock:
-        rows = [{"model": m, "elo": round(st.elo[m]), "games": st.games[m]}
-                for m in st.inv.models]
+        rows = [{"model": m, "name": _reveal_meta(m)["name"], "elo": round(st.elo[m]),
+                 "games": st.games[m]} for m in st.inv.models]
     rows.sort(key=lambda r: -r["elo"])
     with _db_lock:
         votes = dbmod.clean_vote_count(_conn, st.mode)  # all good-faith votes (incl tie/bad)

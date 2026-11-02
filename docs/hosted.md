@@ -164,7 +164,7 @@ List $/1M chars and the measured cost of one sweep, with the date the price was 
 
 ## Arena
 
-Two new pools, `hosted-default` and `hosted-cloning`, each with its own Elo and vote counter. Same
+**Built 2026-11-02.** Two new pools, `hosted-default` and `hosted-cloning`, each with its own Elo and vote counter. Take 1 of each prompt (one clip per prompt, as locally), board vendors only (`scripts/hosted/catalog.py`), slugs namespaced `hosted:<slug>` so no ranking row or reveal can collide with a local model. Same
 gates, nonce and Turnstile as the local pools. Pairs are drawn only within a pool. Clips go through
 `build_manifest.py` from `hosted/`, with `HOLD_CLIPS` available as on the local pools.
 

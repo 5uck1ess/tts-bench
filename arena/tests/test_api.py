@@ -200,3 +200,33 @@ def test_distinct_voters_each_get_a_clean_vote(client):
                 "pair_nonce": d["pair_nonce"]}
         results.append(client.post("/api/vote", json=body).json()["clean"])
     assert results == [True, True]
+
+
+def test_hosted_pool_is_its_own_lens(tmp_path, monkeypatch):
+    """A hosted-default block becomes its own mode: pairs only from hosted clips, and the
+    ranking carries display names."""
+    import copy
+    man = copy.deepcopy(MANIFEST)
+    man["modes"]["hosted-default"] = {"reference_url": None, "clips": [
+        {"model": "hosted:vui_luna", "prompt": 1, "url": "https://gh.test/tts-bench/hosted/vui_luna/default/p1_t1.wav"},
+        {"model": "hosted:rime_coda", "prompt": 1, "url": "https://gh.test/tts-bench/hosted/rime_coda/default/p1_t1.wav"},
+    ]}
+    man["models"]["hosted:vui_luna"] = {"name": "VUI Labs Luna", "url": None}
+    mpath = tmp_path / "manifest.json"
+    mpath.write_text(json.dumps(man), encoding="utf-8")
+    monkeypatch.setenv("ARENA_MANIFEST", str(mpath))
+    monkeypatch.setenv("ARENA_DB", str(tmp_path / "arena.db"))
+    monkeypatch.setenv("TURNSTILE_SECRET", "")
+    monkeypatch.setenv("HMAC_SECRET", "test-hmac")
+    import arena.app as appmod
+    import importlib
+    importlib.reload(appmod)
+    with TestClient(appmod.app) as c:
+        assert '"hosted-default"' in c.get("/").text
+        for _ in range(5):
+            d = c.get("/api/next?mode=hosted-default").json()
+            urls = {c.get(d["left_url"], follow_redirects=False).headers["location"],
+                    c.get(d["right_url"], follow_redirects=False).headers["location"]}
+            assert all("/hosted/" in u for u in urls)
+        names = {r["name"] for r in c.get("/api/ranking?mode=hosted-default").json()["ranking"]}
+        assert names == {"VUI Labs Luna", "hosted:rime_coda"}
