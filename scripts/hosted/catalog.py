@@ -60,4 +60,6 @@ def score_aggregates(path, mode):
                     a[k].append(float(r[k]))
             a["flags"] += [(r["prompt_id"], x) for x in (r.get("health") or "").split(";") if x]
     return {s: {**{k: (sum(a[k]) / len(a[k]) if a[k] else None) for k in ("utmos", "wer", "sim")},
-                "flags": a["flags"], "n": a["n"]} for s, a in acc.items()}
+                # one flag per (prompt, flag): 3 takes with the same defect count once, as
+                # the local board's one clip per prompt would
+                "flags": sorted(set(a["flags"])), "n": a["n"]} for s, a in acc.items()}

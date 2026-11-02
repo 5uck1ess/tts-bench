@@ -309,6 +309,13 @@ def _clone_slugs():
     return {s: v for s, v in reg.items() if (OUT / s / "cloning").is_dir()}
 
 
+def _first_num(v):
+    """Sort key for MIN_REC strings such as "≤60" or "60–120": the first number, else None."""
+    import re
+    m = re.search(r"\d+(?:\.\d+)?", str(v))
+    return float(m.group()) if m else None
+
+
 def _clone_table(scores):
     """Same layout as the default table: metrics first (SIM, UTMOS, WER, Health), then the
     sample each vendor was sent against its documented minimum."""
@@ -330,7 +337,8 @@ def _clone_table(scores):
             + _metric_td("utmos", sc.get("utmos")) + _metric_td("wer", sc.get("wer"))
             + _health_td(sc.get("flags", []))
             + f'<td class="num" data-sort="{info["seconds"]}">{info["seconds"]:g} s</td>'
-            f'<td class="num muted">{sec(mn)}</td><td class="num muted">{sec(rec)}</td>'
+            f'<td class="num muted"{_ds(_first_num(mn))}>{sec(mn)}</td>'
+            f'<td class="num muted"{_ds(_first_num(rec))}>{sec(rec)}</td>'
             f'<td class="muted">{escape(" ".join(sorted(cls.clone_langs or cls.langs)))}</td></tr>')
     table = (f'<div class="scores-table-scroll"><table class="hosted-board">{head}<tbody>'
              f'{"".join(body)}</tbody></table></div>')

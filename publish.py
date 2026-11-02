@@ -1029,7 +1029,7 @@ SCORE_CHART_STYLE = (
     'align-items:center;gap:.65rem;font-size:.9em;}'
     '.score-bar-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
     '.score-bar-track{height:1rem;background:var(--input-bg);border-radius:3px;overflow:hidden;}'
-    '.score-bar-fill{display:block;height:100%;background:var(--accent);}'
+    '.score-bar-fill{display:block;width:0;height:100%;background:var(--accent);}'
     '.score-bar-row.hosted .score-bar-fill{background:var(--num);}'
     '.score-legend{display:inline-flex;gap:.9rem;margin-left:auto;color:var(--muted);font-size:.85em}'
     '.score-legend[hidden]{display:none}'
@@ -1088,6 +1088,7 @@ SCORE_CHART_SCRIPT = '''<script>
                 empty.textContent = 'No scored models match the current filter.';
                 bars.appendChild(empty);
                 scale.textContent = '';
+                legend.hidden = true;
                 return;
             }
             var domain = metricDomains[metric] ||
@@ -1100,7 +1101,7 @@ SCORE_CHART_SCRIPT = '''<script>
             rows.forEach(function(row){
                 var item = document.createElement('div');
                 item.className = 'score-bar-row' + (row.flagged ? ' flagged' : '')
-                    + (row.hosted ? ' hosted' : '');
+                    + (mixed && row.hosted ? ' hosted' : '');
                 item.setAttribute('role', 'img');
                 item.setAttribute('aria-label', row.name + ': ' + metric.toUpperCase() + ' '
                     + row.value.toFixed(dec) + unit + (row.hosted ? '; hosted API' : '') + (row.flagged ? '; high WER warning' : ''));
@@ -1112,8 +1113,9 @@ SCORE_CHART_SCRIPT = '''<script>
                 track.className = 'score-bar-track';
                 var fill = document.createElement('span');
                 fill.className = 'score-bar-fill';
-                fill.style.width = Math.max(0, Math.min(100,
-                    (row.value - domain.min) / (domain.max - domain.min) * 100)) + '%';
+                var span = domain.max - domain.min;
+                fill.style.width = (span > 0 ? Math.max(0, Math.min(100,
+                    (row.value - domain.min) / span * 100)) : 0) + '%';
                 track.appendChild(fill);
                 var value = document.createElement('span');
                 value.className = 'score-bar-value';
@@ -1180,8 +1182,9 @@ def build_scores():
     # 2026-11-02). Same prompts and scorers, so UTMOS / WER compare. Cloning stays local-only:
     # hosted vendors clone a different reference voice, so their SIM is not comparable.
     from scripts.hosted.catalog import CATALOG as HOSTED_CATALOG, score_aggregates
-    hosted = {HOSTED_CATALOG.get(slug, (slug,))[0]: agg for slug, agg in
-              score_aggregates(HOSTED_SCORES_CSV, "default").items()}
+    hosted = {HOSTED_CATALOG[slug][0]: agg for slug, agg in
+              score_aggregates(HOSTED_SCORES_CSV, "default").items()
+              if slug in HOSTED_CATALOG}  # board vendors only (a scored test dir never leaks)
     default_tbl = _scores_table(default_models, LISTEN_DEFAULT_DIRS, look, default_cols,
                                 hosted=hosted)
     # Cloning board: like build_listen, a NO_PRESET_VOICE model benched only in
@@ -1218,6 +1221,12 @@ def build_scores():
         '<button type="button" data-source-pick="hosted">Hosted APIs</button>'
         '<button type="button" data-source-pick="both">Both</button></div>'
         '<a class="muted" href="hosted.html">Hosted speed, price and cloning →</a></div>')
+    # The switch only appears when both kinds of row exist; otherwise every row shows.
+    has_local, has_hosted = 'data-src="local"' in default_tbl, 'data-src="hosted"' in default_tbl
+    if not (has_local and has_hosted):
+        source_switch = source_script = source_attr = ""
+    else:
+        source_attr = ' data-source="local"'
     default_chart = score_chart([("utmos", "UTMOS ↑")]) if "<table" in default_tbl else ""
     cloning_chart = score_chart([("sim", "SIM ↑"), ("utmos", "UTMOS ↑")]) if "<table" in cloning_tbl else ""
     foot = (
@@ -1241,7 +1250,7 @@ def build_scores():
            '<a class="lens-tab active" data-mode="default" href="#">Default voice</a>'
            '<a class="lens-tab" data-mode="cloning" href="#">Cloning</a>'
            '</div></div>',
-           f'<div class="subsection" data-mode="default" data-source="local">'
+           f'<div class="subsection" data-mode="default"{source_attr}>'
            f'<h3 class="sub-head">Default voice '
            f'<span class="muted">· naturalness + intelligibility</span></h3>'
            f'{source_switch}{default_chart}{default_tbl}</div>',
