@@ -216,6 +216,26 @@ STYLE = """<style>
                    border-radius: 4px; font-size: 0.88em; color: var(--text); }
   .reading-guide strong { color: var(--accent); }
   .reading-guide a { color: var(--accent); }
+
+  /* Phones: a table wider than the screen scrolls in its own box (wrapped by SCRIPT) rather
+     than widening the page; the controls bar scrolls away instead of pinning a fifth of the
+     screen; 16px side gutters. */
+  .table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  @media (max-width: 760px) {
+    body { padding: 0.75rem 1rem 2.5rem; }
+    .controls { position: static; gap: 0.5rem; }
+    .controls input { min-width: 0; flex: 1 1 100%; }
+    .controls .hint { display: none; }
+    .prompt-jumper { top: 0; z-index: 5; }
+    th, td { padding: 6px 8px; }
+    /* The model name stays in view while a wide table scrolls sideways. */
+    .table-scroll th:first-child, .table-scroll td:first-child,
+    .scores-table-scroll th:first-child, .scores-table-scroll td:first-child {
+      position: sticky; left: 0; z-index: 1; background: var(--bg); }
+    .table-scroll th:first-child, .scores-table-scroll th:first-child {
+      background: var(--th-bg); }
+  }
 </style>"""
 
 
@@ -247,6 +267,15 @@ SCRIPT = r'''<script>
 
   // ---------- sort + filter ----------
   const tables = document.querySelectorAll('table');
+  // Wide tables scroll inside their own box instead of widening the page: on a phone a
+  // too-wide table makes the browser zoom the whole page out until nothing is readable.
+  tables.forEach(table => {
+    if (table.parentElement.closest('.table-scroll, .scores-table-scroll')) return;
+    const box = document.createElement('div');
+    box.className = 'table-scroll';
+    table.parentNode.insertBefore(box, table);
+    box.appendChild(table);
+  });
   const filterInput = document.getElementById('filter');
   const resetBtn = document.getElementById('reset-sort');
 
@@ -1443,7 +1472,7 @@ def _render_lens_picker(ctx):
     """Render the per-rig landing card with three lens links."""
     meta = ctx["meta"]
     out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
+           '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
            f'<title>TTS Bench — {escape(ctx["run_name"])}</title>',
            STYLE,
            '</head><body>',
@@ -1594,12 +1623,17 @@ def _speed_table_html(ctx):
                        '</tr>')
             continue
         out.append(f'<tr id="{escape(row_id)}">')
-        out.append(f'<td>{escape(_display_name(model))}{partial_tag}</td>'
+        # data-name / data-metric feed the speed hub's bar chart (publish.SCORE_CHART_SCRIPT);
+        # the device goes in the name because a model can have a cpu and a cuda row.
+        out.append(f'<td data-name="{escape(_display_name(model))} · {escape(dev)}">'
+                   f'{escape(_display_name(model))}{partial_tag}</td>'
                    f'<td class="{dev_class}">{escape(dev)}</td>')
         out.append(f'<td class="num"{_ds(a["ttfa_cold"])}>{_fmt_ttfa(a["ttfa_cold"])}</td>')
-        out.append(f'<td class="num"{_ds(a["ttfa_warm"])}>{_fmt_ttfa(a["ttfa_warm"])}</td>')
+        out.append(f'<td class="num" data-metric="ttfa"{_ds(a["ttfa_warm"])}>'
+                   f'{_fmt_ttfa(a["ttfa_warm"])}</td>')
         out.append(f'<td class="num"{_ds(a["rtf_cold"])}>{_fmt_rtf(a["rtf_cold"])}</td>')
-        out.append(f'<td class="num"{_ds(a["rtf_warm"])}>{_fmt_rtf(a["rtf_warm"])}</td>')
+        out.append(f'<td class="num" data-metric="rtf"{_ds(a["rtf_warm"])}>'
+                   f'{_fmt_rtf(a["rtf_warm"])}</td>')
         out.append(f'<td class="num"{_ds(a["peak_mem"])}>{_fmt_mb(a["peak_mem"])}</td>')
         out.append(f'<td class="num"{_ds(a["peak_vram"])}>{_fmt_mb(a["peak_vram"])}</td>')
         out.append(f'<td class="muted">{escape(size_str)}</td>')
@@ -1614,7 +1648,7 @@ def _render_speed(ctx):
     meta = ctx["meta"]
     has_ref = bool((meta or {}).get("reference"))
     out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
+           '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
            f'<title>TTS Bench — Speed — {escape(ctx["run_name"])}</title>',
            STYLE,
            '</head><body>',
@@ -1667,7 +1701,7 @@ def _render_samples(ctx):
     meta = ctx["meta"]
     prompts = ctx["prompts_seen"]
     out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
+           '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
            f'<title>TTS Bench — Samples — {escape(ctx["run_name"])}</title>',
            STYLE,
            '</head><body>',
@@ -1775,7 +1809,7 @@ def build_report(run_dir: Path) -> Path:
     # Legacy report.html — emit a small redirect stub so any external link still works.
     legacy = run_dir / "report.html"
     legacy.write_text(
-        '<!doctype html><html><head><meta charset="utf-8">'
+        '<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">'
         '<meta http-equiv="refresh" content="0; url=index.html">'
         '<title>Redirecting…</title></head>'
         '<body><a href="index.html">Lens picker</a></body></html>',
@@ -1816,7 +1850,7 @@ def build_index() -> Path:
         })
 
     out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
+           '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
            '<title>TTS Bench — All Runs</title>',
            STYLE,
            '</head><body>',
