@@ -210,6 +210,13 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
    no music, with a verbatim transcript. Cut at sentence boundaries into a 15 s and a 30 s version with
    matching transcripts; each provider gets the longest it accepts, recorded in the sidecar. **Kept on purpose (Tym 2026-11-01):** the lens measures how well each product can clone, and some need more audio for a good clone, so one shared length would be unfair to them. The page states that sample lengths differ per product and shows each row's length.
    Store it as `reference/hosted_clone{,_15s,_30s}.{wav,txt}`.
+   **Re-recorded 2026-11-02 (v2).** The first recording was made with the mic's "Deep" EQ preset, which
+   boosted low-mids and rolled off the highs (12–16 kHz about 17 dB lower than the new take), so every
+   clone inherited the muffle. It was re-recorded on a flat low-cut EQ, and all 19 clones were re-made from it and re-scored.
+   Two test clones (Cartesia, ElevenLabs) were checked by ear first and judged clearly cleaner. Cuts are
+   contiguous from the start and end on a sentence pause: 14.1 / 24.8 / 58.3 / 112.5 s, plus a 9.9 s
+   mid-passage cut for StepFun. Mean cloning SIM went from 0.673 to 0.700 (14 of 19 vendors up),
+   each lens scored against its own recording. The v1 cuts are kept locally in `reference/_v1/`.
    **Published unnamed (2026-10-29):** the page labels it "Reference voice" only; no speaker name in the
    page, sidecars, filenames or commit messages.
 2. **Grok TTS**: confirm which product/model id you mean (AA lists "SpaceXAI TTS").

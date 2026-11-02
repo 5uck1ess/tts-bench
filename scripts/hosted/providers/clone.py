@@ -193,7 +193,7 @@ def _vui(self, client, ref):
                             files={"file": (WAV, ref["wav"], "audio/wav")}), self.slug)
     d = up.get("data") or up
     key = d.get("object_key") or d.get("key") or d.get("url")
-    vid = "ttsbench_ref"
+    vid = f"ttsbench_ref_{int(time.time())}"  # caller-chosen id; a reused id is rejected (400)
     _check(client.post("https://api.vuilabs.ai/v1/voice/save", headers=h,
                        json={"voice_id": vid, "ref_audio": key}), self.slug)
     return vid
