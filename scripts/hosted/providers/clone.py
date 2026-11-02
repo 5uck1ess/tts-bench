@@ -292,3 +292,55 @@ def _speechify(self, client, ref):
 
 
 _setup(SpeechifySimba35, "30", _speechify)
+
+
+# Palabra: instant clone, >=30 s, <=10 MB, one sample (platform.palabra.ai/docs/assets/voices,
+# read 2026-11-02) -> full cut. The 113 s WAV is 10.8 MB, so it goes up as lossless FLAC (same
+# samples). Flow: POST metadata -> POST the file to the returned pre-signed S3 form -> poll ready.
+from .palabra import PalabraTTS  # noqa: E402
+
+
+def _palabra(self, client, ref):
+    import io
+    import soundfile as sf
+    audio, sr = sf.read(io.BytesIO(ref["wav"]), dtype="int16")
+    buf = io.BytesIO()
+    sf.write(buf, audio, sr, format="FLAC")
+    flac = buf.getvalue()
+    if len(flac) > 10 * 1024 * 1024:
+        raise RuntimeError(f"{self.slug} clone: FLAC is {len(flac)} bytes, over the 10 MB cap")
+    h = {"Authorization": f"Bearer {self.key}"}
+    # The live API wants the documented payload wrapped in {"data": ...} (422 "Field required:
+    # body.data" otherwise) and answers in the same envelope.
+    j = _check(client.post("https://api.palabra.ai/saas/voice/clone", headers=h, json={"data": {
+        "name": NAME, "samples": [{"filename": "reference.flac", "mime_type": "audio/flac",
+                                   "denoise": False, "speech_normalization": False,
+                                   "lang_code": "en"}]}}), self.slug)
+    j = j.get("data") or j
+    vid, s = j["voice_id"], j["samples"][0]
+    up = client.post(s["url"], data=s["form_data"],
+                     files={"file": ("reference.flac", flac, "audio/flac")})
+    if up.status_code >= 300:
+        raise RuntimeError(f"{self.slug} clone upload: HTTP {up.status_code}: {up.text[:300]}")
+    _poll(client, self.slug, f"https://api.palabra.ai/saas/voice/m/{vid}", h,
+          lambda r: {"ready": True, "failed": False}.get((r.get("data") or {})
+                                                       .get("processing_status")),
+          every=5.0, limit=600)
+    return vid
+
+
+_setup(PalabraTTS, "full", _palabra)
+MIN_REC["palabra_tts"] = ("30", "—")
+
+
+# Resemble: voice made in Resemble's console ("Voice Clone", requires 30 s); this only lets
+# prepare_clone reuse the uuid recorded in _private/clones.json.
+from .resemble import ResembleUltra  # noqa: E402
+
+
+def _resemble(self, client, ref):
+    raise RuntimeError("make the clone in Resemble's console and record its uuid in clones.json")
+
+
+_setup(ResembleUltra, "full", _resemble)
+MIN_REC["resemble_ultra"] = ("30", "—")
