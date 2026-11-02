@@ -53,3 +53,23 @@ def test_to_wav_strips_header_and_keeps_rate():
 def test_incomplete_header_has_no_speech_time():
     data, arrivals = _stream(b"m" * 100)
     assert core._first_speech_ms(data[:30], "pcm16", arrivals) is None
+
+
+def test_trailing_chunk_after_finite_data_is_not_audio():
+    pcm = struct.pack("<2h", 1000, -1000)                         # two frames
+    data = _riff([_fmt(), (b"data", pcm), (b"LIST", b"INFOISFT" + struct.pack("<I", 8) + b"vendorxx")])
+    wav, sr, dur = core.to_wav(data, "pcm16", SR)
+    assert abs(dur - 2 / SR) < 1e-9
+    loud = _riff([_fmt(), (b"data", b"\0\0" * 10), (b"LIST", bytes([0, 0x7F]) * 50)])
+    assert core._first_speech_ms(loud, "pcm16", [(len(loud), 50.0)]) is None
+
+
+def test_palabra_upload_url_must_be_https_s3():
+    import pytest
+    from scripts.hosted.providers.clone import _check_upload_url
+    _check_upload_url("https://palabra-prod-web-cdn.s3.amazonaws.com/", "p")
+    for bad in ("http://palabra-prod-web-cdn.s3.amazonaws.com/", "https://127.0.0.1:8765/import",
+                "https://192.168.1.10/", "https://localhost/", "https://evil.example/x.amazonaws.com",
+                "https://amazonaws.com.evil.example/"):
+        with pytest.raises(RuntimeError):
+            _check_upload_url(bad, "p")

@@ -300,6 +300,17 @@ _setup(SpeechifySimba35, "30", _speechify)
 from .palabra import PalabraTTS  # noqa: E402
 
 
+def _check_upload_url(url, slug):
+    """The pre-signed upload target comes from the vendor's response; only POST the reference to
+    an HTTPS S3 bucket host (Palabra's docs show palabra-prod-web-cdn.s3.amazonaws.com), never to
+    an IP literal, localhost or LAN name a bad response could name."""
+    from urllib.parse import urlsplit
+    u = urlsplit(url)
+    host = (u.hostname or "").lower()
+    if u.scheme != "https" or not (host == "s3.amazonaws.com" or host.endswith(".amazonaws.com")):
+        raise RuntimeError(f"{slug} clone: refusing upload to unexpected URL host {host!r}")
+
+
 def _palabra(self, client, ref):
     import io
     import soundfile as sf
@@ -318,6 +329,7 @@ def _palabra(self, client, ref):
                                    "lang_code": "en"}]}}), self.slug)
     j = j.get("data") or j
     vid, s = j["voice_id"], j["samples"][0]
+    _check_upload_url(s["url"], self.slug)
     up = client.post(s["url"], data=s["form_data"],
                      files={"file": ("reference.flac", flac, "audio/flac")})
     if up.status_code >= 300:

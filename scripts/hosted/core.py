@@ -137,16 +137,21 @@ def wav_data_offset(data):
 
 
 def _wav_walk(data):
-    """(data payload offset or None, sample rate from the `fmt ` chunk or None)."""
+    """(data payload offset or None, sample rate from the `fmt ` chunk or None, payload end).
+    The end honours the data chunk's declared size, so chunks after the audio (a trailing LIST)
+    are never read as samples; a streamed placeholder size (0, 0xFFFFFFFF, or past the bytes we
+    have) means "to the end of the body"."""
     i, rate = 12, None
     while i + 8 <= len(data):
         cid, size = data[i:i + 4], int.from_bytes(data[i + 4:i + 8], "little")
         if cid == b"fmt " and i + 16 <= len(data):
             rate = int.from_bytes(data[i + 12:i + 16], "little")
         if cid == b"data":
-            return i + 8, rate
+            start = i + 8
+            end = start + size if 0 < size < 0xFFFFFFFF and start + size <= len(data) else len(data)
+            return start, rate, end
         i += 8 + size + (size & 1)
-    return None, rate
+    return None, rate, len(data)
 
 
 def to_wav(data, fmt, sr):
@@ -157,10 +162,10 @@ def to_wav(data, fmt, sr):
         data = (np.clip(f, -1.0, 1.0) * 32767).astype("<i2").tobytes()
         fmt = "pcm16"
     if fmt == "pcm16" and data[:4] == b"RIFF":  # vendor wrapped it in WAV after all
-        head, rate = _wav_walk(data)
+        head, rate, end = _wav_walk(data)
         if head is None:
             raise RuntimeError("WAV stream ended before its data chunk")
-        data, sr = data[head:], rate or sr  # PCM payload only; streamed sizes are placeholders
+        data, sr = data[head:end], rate or sr  # the data chunk's PCM only
     if fmt == "pcm16":
         if len(data) % 2:
             data = data[:-1]
@@ -188,9 +193,10 @@ def _first_speech_ms(data, fmt, arrivals):
     import numpy as np
     head = 0
     if fmt == "pcm16" and data[:4] == b"RIFF":  # Deepgram / Resemble wrap PCM16 in WAV
-        head = wav_data_offset(data)
+        head, _, end = _wav_walk(data)
         if head is None:
             return None
+        data = data[:end]  # arrival offsets stay valid: only bytes after the audio are cut
     if fmt == "pcm16":
         body = data[head:]
         a, width = np.frombuffer(body[:len(body) // 2 * 2], dtype="<i2") / 32768.0, 2
