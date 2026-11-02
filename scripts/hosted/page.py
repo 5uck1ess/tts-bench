@@ -125,9 +125,14 @@ details.panel .summ-text{color:var(--muted);font-style:italic;font-weight:400}
 
 TAB_SCRIPT = """<script>
 (function(){
+  // Only one clip plays at a time, same as the Listen page. 'play' doesn't bubble, so capture it.
+  document.addEventListener('play', function(e){
+    document.querySelectorAll('audio').forEach(function(a){ if(a !== e.target) a.pause(); });
+  }, true);
   var tabs = document.querySelectorAll('#mode-tabs .lens-tab');
   var subs = document.querySelectorAll('.subsection[data-mode]');
   function show(m){
+    document.querySelectorAll('audio').forEach(function(a){ a.pause(); });
     subs.forEach(function(s){ s.style.display = s.dataset.mode === m ? '' : 'none'; });
     tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.mode === m); });
     try { history.replaceState(null, '', '#' + m); } catch (e) {}
