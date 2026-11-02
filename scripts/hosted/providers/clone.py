@@ -333,7 +333,7 @@ _setup(PalabraTTS, "full", _palabra)
 MIN_REC["palabra_tts"] = ("30", "—")
 
 
-# Resemble: voice made in Resemble's console ("Voice Clone", requires 30 s); this only lets
+# Resemble: voice made in the console upload flow (5 s min, 1 min max, 25 MB, Enhance Audio off) -> 58 s cut; this only lets
 # prepare_clone reuse the uuid recorded in _private/clones.json.
 from .resemble import ResembleUltra  # noqa: E402
 
@@ -342,5 +342,5 @@ def _resemble(self, client, ref):
     raise RuntimeError("make the clone in Resemble's console and record its uuid in clones.json")
 
 
-_setup(ResembleUltra, "full", _resemble)
-MIN_REC["resemble_ultra"] = ("30", "—")
+_setup(ResembleUltra, "60", _resemble)
+MIN_REC["resemble_ultra"] = ("5", "≤60")
