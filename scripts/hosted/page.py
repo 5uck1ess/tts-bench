@@ -2,10 +2,15 @@
 build_top_level(); reads only hosted data, never the local board's:
 
     hosted/<slug>/default/p<N>_t<take>.{wav,json}   clips + sidecars (the sweep)
+    hosted/<slug>/cloning/p<N>_t<take>.{wav,json}   cloned-voice clips (the cloning lens)
     hosted/speed/samples.jsonl                      multi-day speed sampler (speed_sample.py)
-    scoring/hosted_scores.csv                       UTMOS / WER / Health (score_hosted.py, Linux)
+    scoring/hosted_scores.csv                       UTMOS / WER / SIM / Health (score_hosted.py, Linux)
 
-Clips are copied to <worktree>/hosted/<slug>/p<N>_t<take>.wav (all takes: no cherry-picking).
+Layout follows the Scores/Speed pages: one short reading guide, then tabs (Board / Listen /
+Cloning / Speed detail). Only the board is a <table>: the shared sort script sorts every table
+on a page by one column index, so the other sections are CSS grids.
+
+Clips are copied to <worktree>/hosted/<slug>/<lens>/p<N>_t<take>.wav (all takes: no cherry-picking).
 """
 
 import csv
@@ -14,7 +19,6 @@ import shutil
 import statistics as st
 from collections import defaultdict
 from html import escape
-from pathlib import Path
 
 from scoring.prompts import PROMPTS
 
@@ -56,35 +60,83 @@ CATALOG = {
     "async_flash15": ("Async Flash v1.5", "≈$9.3", "$0.50 per hour of audio"),
 }
 
-# Per-vendor transport note for the A/B table.
+# Per-vendor transport note for the A/B grid.
 TRANSPORT_NOTE = {
     "cartesia_sonic36": "Socket clearly faster to first audio; board uses it.",
     "assemblyai_tts1": "Both fast; socket a little faster; board uses it.",
-    "deepgram_flux_tts": "Socket sends ~0.6 s of silence before speech, so first *speech* is "
+    "deepgram_flux_tts": "Socket sends ~0.6 s of silence before speech, so first speech is "
                          "slower than HTTP; board uses HTTP.",
     "xai_tts": "Close; HTTP kept.",
     "inworld_tts2": "Close; HTTP kept.",
-    "soniox_tts2": "Socket somewhat faster in sampling; both pace audio near playback speed.",
-    "smallest_lightning31pro": "Close on first audio; socket's 'complete' message lags ~4 s "
-                               "(total measured to last audio byte).",
-    "murf_falcon21": "Socket somewhat faster in sampling.",
+    "soniox_tts2": "Socket somewhat faster; both pace audio near playback speed.",
+    "smallest_lightning31pro": "Close on first audio; socket's 'complete' message lags ~4 s.",
+    "murf_falcon21": "Socket somewhat faster.",
     "stepaudio3_tts": "Socket session drops or stalls often; HTTP kept.",
 }
 
+# Vendors without API cloning on our route, and why (docs read 2026-11-01).
+NO_CLONE = {
+    "rime_coda": "enterprise-trained voices only (30–60 min of audio, days)",
+    "giggy_tts": "cloning in the web app only, no API",
+    "assemblyai_tts1": "cloning in the dashboard only, no API",
+    "deepgram_flux_tts": "no voice cloning",
+    "murf_falcon21": "API cloning is Enterprise-plan only",
+    "openai_gpt4o_mini_tts": "custom voices are limited to approved customers",
+    "openai_realtime21": "custom voices are limited to approved customers",
+    "mai_voice21": "needs Microsoft Limited Access approval",
+    "minimax_speech28hd": "no cloning through OpenRouter (our route)",
+}
 
-STYLE = (
-    "<style>.hgrid{display:grid;gap:.35rem .8rem;align-items:center;margin:.6rem 0 1.2rem;"
-    "font-size:.92em}.hgrid.ab{grid-template-columns:minmax(9rem,1.3fr) repeat(5,auto) 2fr}"
-    ".hgrid.listen{grid-template-columns:minmax(8rem,1fr) repeat(3,minmax(0,1.4fr))}"
-    ".hgrid.clone{grid-template-columns:minmax(9rem,1.4fr) repeat(8,auto)}"
-    ".hgrid.listen audio{width:100%;height:32px}.hgrid .wide{grid-column:span 3}"
-    ".hgrid .lbl{display:none;color:var(--muted)}"
-    "@media(max-width:760px){.hgrid.ab{grid-template-columns:1fr 1fr}.hgrid .lbl{display:inline}"
-    ".hgrid.ab>div:nth-child(7n+1),.hgrid.ab>div:nth-child(7n){grid-column:span 2}"
-    ".hgrid.ab>div:nth-child(-n+7){display:none}"
-    ".hgrid.clone{grid-template-columns:1fr 1fr}.hgrid.clone>div:nth-child(9n+1){grid-column:span 2}"
-    ".hgrid.clone>div:nth-child(-n+9){display:none}"
-    ".hgrid.listen{grid-template-columns:1fr}.hgrid .wide{grid-column:auto}}</style>")
+STYLE = """<style>
+.hgrid{display:grid;gap:.4rem .9rem;align-items:center;margin:.6rem 0 1.2rem;font-size:.92em}
+.hgrid>div.h{color:var(--muted);font-size:.85em;border-bottom:1px solid var(--border);padding-bottom:.3rem}
+.hgrid.ab{grid-template-columns:minmax(9rem,1.2fr) repeat(3,auto) minmax(10rem,2fr)}
+.hgrid.det{grid-template-columns:minmax(10rem,1.5fr) repeat(6,auto)}
+.hgrid.clone{grid-template-columns:minmax(10rem,1.5fr) repeat(7,auto)}
+.hgrid.listen{grid-template-columns:minmax(9rem,1fr) repeat(3,minmax(0,1.3fr));margin:.4rem 0 .9rem}
+.hgrid.listen audio{width:100%;height:32px}
+.hgrid .wide{grid-column:span 3}
+.hgrid .num{text-align:right;font-variant-numeric:tabular-nums}
+.hgrid .lbl{display:none;color:var(--muted)}
+.hosted-board td,.hosted-board th{white-space:nowrap}
+.hosted-board td .sub{color:var(--muted);font-size:.8em}
+.prompt-jumper{margin:.3rem 0 .9rem;color:var(--muted);font-size:.9em}
+details.panel{background:var(--panel);border:1px solid var(--border);border-radius:10px;margin-bottom:.8rem;padding:0 1.1rem}
+details.panel>summary{cursor:pointer;padding:.75rem 0;font-weight:600;list-style:none}
+details.panel>summary::-webkit-details-marker{display:none}
+details.panel>summary::before{content:"\\25B8";color:var(--accent);margin-right:.5rem;display:inline-block;transition:transform .12s}
+details.panel[open]>summary::before{transform:rotate(90deg)}
+details.panel .summ-text{color:var(--muted);font-style:italic;font-weight:400}
+.ref-row{margin:.4rem 0 1rem;display:flex;align-items:center;gap:.6rem;flex-wrap:wrap}
+.ref-row audio{width:280px;height:32px}
+.ref-row .ref-label{color:var(--accent);font-weight:600}
+@media(max-width:760px){
+ .hgrid .lbl{display:inline}
+ .hgrid.ab,.hgrid.det,.hgrid.clone{grid-template-columns:1fr 1fr}
+ .hgrid>div.h{display:none}
+ .hgrid>div.name{grid-column:1/-1;margin-top:.6rem;font-weight:600}
+ .hgrid.ab>div.note{grid-column:1/-1}
+ .hgrid.listen{grid-template-columns:1fr}
+ .hgrid .wide{grid-column:auto}
+}
+</style>"""
+
+TAB_SCRIPT = """<script>
+(function(){
+  var tabs = document.querySelectorAll('#mode-tabs .lens-tab');
+  var subs = document.querySelectorAll('.subsection[data-mode]');
+  function show(m){
+    subs.forEach(function(s){ s.style.display = s.dataset.mode === m ? '' : 'none'; });
+    tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.mode === m); });
+    try { history.replaceState(null, '', '#' + m); } catch (e) {}
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(e){ e.preventDefault(); show(t.dataset.mode); });
+  });
+  var h = location.hash.slice(1);
+  show(['board', 'listen', 'cloning', 'speed'].indexOf(h) >= 0 ? h : 'board');
+})();
+</script>"""
 
 
 def _f(v):
@@ -98,6 +150,10 @@ def _med(xs):
     return st.median(xs) if xs else None
 
 
+def _mean(xs):
+    return st.mean(xs) if xs else None
+
+
 def _p90(xs):
     if len(xs) < 2:
         return None
@@ -108,8 +164,16 @@ def _ms(v):
     return "—" if v is None else f"{v:,.0f}"
 
 
+def _fmt(v, spec):
+    return "—" if v is None else format(v, spec)
+
+
 def _ds(v):
     return f' data-sort="{v:.4f}"' if v is not None else ' data-sort=""'
+
+
+def _lbl(t):  # inline label, shown only on phones where grid headers are hidden
+    return f'<span class="lbl">{t} </span>'
 
 
 def _sidecars(slug):
@@ -154,29 +218,15 @@ def _speed(samples, slug, tr):
     return dict(med=_med(ok), p90=_p90(ok), n=len(ok), err=err, days=len(days))
 
 
-def _health_td(rs):
-    flags = sorted({(r["prompt_id"], f) for r in rs for f in r["health"].split(";") if f})
-    if not flags:
-        return '<td class="num muted" data-sort="0">✓</td>'
-    label = "; ".join(f"{f} (p{p})" for p, f in flags)
-    return (f'<td class="num" data-sort="{len(flags)}"><span class="health-flag" '
-            f'title="mechanical defect in a clip — listen before trusting">⚠ {escape(label)}'
-            f'</span></td>')
-
-
-def _main_table(samples, scores):
-    # Plain-text headers: the shared sort script rewrites th.textContent (drops markup).
-    cols = ["Model", "Transport", "First speech ms (median)", "p90", "Calls", "Errors",
-            "Delivery p3 s (incl. pacing)", "UTMOS en", "WER en", "WER fr/es", "Health",
-            "Langs", "SR", "$/1M chars"]
-    head = "<thead><tr>" + "".join(f"<th>{escape(c)}</th>" for c in cols) + "</tr></thead>"
-    body = []
+def _row_data(samples, scores):
+    """Per model: name, speed aggregate, scores, price — shared by the board and the detail grid."""
+    out = []
     for slug, cls in ADAPTERS.items():
         if slug in SKIP:
             continue
         name, price, pnote = CATALOG.get(slug, (slug, "?", ""))
-        ad_tr = transport(cls)
-        sp = _speed(samples, slug, ad_tr)
+        tr = transport(cls)
+        sp = _speed(samples, slug, tr)
         cars = [c for c in _sidecars(slug) if c.get("status") == "ok"]
         if not sp["n"]:  # no sampler data yet: warm sweep calls, marked
             xs = [c["ttfa_speech_ms"] for c in cars
@@ -187,64 +237,79 @@ def _main_table(samples, scores):
         rs = [r for r in scores.get(slug, []) if r["mode"] == "default"]
         en = [r for r in rs if r["prompt_id"] in ("1", "2", "3", "4")]
         xx = [r for r in rs if r["prompt_id"] in ("5", "6")]
-        um = _med([v for v in (_f(r["utmos"]) for r in en) if v is not None])
-        we = [v for v in (_f(r["wer"]) for r in en) if v is not None]
-        wx = [v for v in (_f(r["wer"]) for r in xx) if v is not None]
-        we, wx = (st.mean(we) if we else None), (st.mean(wx) if wx else None)
         srs = {c.get("sample_rate") for c in cars if c.get("sample_rate")}
-        sr = max(srs) if srs else None
-        route = " · via OpenRouter" if cls.route == "openrouter" else ""
-        model_id = escape(cls.model)
-        mark = ' <span class="muted" title="sweep calls; multi-day sampling pending">†</span>' \
-            if sp.get("sweep") else ""
+        out.append(dict(
+            slug=slug, cls=cls, name=name, price=price, pnote=pnote, tr=tr, sp=sp, rs=rs,
+            p3=_med(p3), sr=max(srs) if srs else None,
+            um=_med([v for v in (_f(r["utmos"]) for r in en) if v is not None]),
+            we=_mean([v for v in (_f(r["wer"]) for r in en) if v is not None]),
+            wx=_mean([v for v in (_f(r["wer"]) for r in xx) if v is not None])))
+    return out
+
+
+def _main_table(rows):
+    # Plain-text headers: the shared sort script rewrites th.textContent (drops markup).
+    cols = ["Model", "First speech ms", "UTMOS", "WER en", "WER fr/es", "Langs", "$ / 1M chars"]
+    head = "<thead><tr>" + "".join(
+        f'<th{" class=num" if 0 < i < 5 else ""}>{escape(c)}</th>'
+        for i, c in enumerate(cols)) + "</tr></thead>"
+    body = []
+    for d in rows:
+        sp, cls = d["sp"], d["cls"]
+        flags = sorted({f for r in d["rs"] for f in r["health"].split(";") if f})
+        warn = (f' <span class="health-flag" title="clip defect: {escape(", ".join(flags))} '
+                f'— listen before trusting">⚠</span>') if flags else ""
+        mark = (' <span class="muted" title="from the sweep; multi-day sampling pending">†</span>'
+                if sp.get("sweep") else "")
+        tip = f'p90 {_ms(sp["p90"])} ms · {sp["n"]} calls · {sp["err"]} errors · {d["tr"]}'
+        via = " · via OpenRouter" if cls.route == "openrouter" else ""
+        note = ' <span class="muted">*</span>' if d["pnote"] else ""
         body.append(
-            f'<tr><td><strong>{escape(name)}</strong><br><span class="muted"><code>{model_id}'
-            f'</code>{route}</span></td><td>{escape(ad_tr)}</td>'
-            f'<td class="num"{_ds(sp["med"])}>{_ms(sp["med"])}{mark}</td>'
-            f'<td class="num"{_ds(sp["p90"])}>{_ms(sp["p90"])}</td>'
-            f'<td class="num" data-sort="{sp["n"]}">{sp["n"]}</td>'
-            f'<td class="num" data-sort="{sp["err"]}">{sp["err"] or "—"}</td>'
-            f'<td class="num"{_ds(_med(p3))}>'
-            f'{"—" if not p3 else f"{_med(p3):.1f}"}</td>'
-            f'<td class="num"{_ds(um)}>{"—" if um is None else f"{um:.2f}"}</td>'
-            f'<td class="num"{_ds(we)}>{"—" if we is None else f"{we:.3f}"}</td>'
-            f'<td class="num"{_ds(wx)}>{"—" if wx is None else f"{wx:.3f}"}</td>'
-            f'{_health_td(rs)}'
-            f'<td style="white-space:nowrap">{escape(" ".join(sorted(cls.langs)))}</td>'
-            f'<td class="num"{_ds(sr)}>{"—" if not sr else f"{sr / 1000:g}k"}</td>'
-            f'<td title="{escape(pnote)}">{escape(price)}'
-            f'{"" if not pnote else f"<br><span class=muted>{escape(pnote)}</span>"}</td></tr>')
-    return (f'<div style="overflow-x:auto"><table class="sortable">{head}<tbody>'
+            f'<tr><td><strong>{escape(d["name"])}</strong>{warn}<br>'
+            f'<span class="sub">{escape(cls.model)}{via}</span></td>'
+            f'<td class="num"{_ds(sp["med"])} title="{escape(tip)}">{_ms(sp["med"])}{mark}</td>'
+            f'<td class="num"{_ds(d["um"])}>{_fmt(d["um"], ".2f")}</td>'
+            f'<td class="num"{_ds(d["we"])}>{_fmt(d["we"], ".3f")}</td>'
+            f'<td class="num"{_ds(d["wx"])}>{_fmt(d["wx"], ".3f")}</td>'
+            f'<td>{escape(" ".join(sorted(cls.langs)))}</td>'
+            f'<td title="{escape(d["pnote"])}">{escape(d["price"])}{note}</td></tr>')
+    return (f'<div class="scores-table-scroll"><table class="hosted-board">{head}<tbody>'
             f'{"".join(body)}</tbody></table></div>')
 
 
+def _detail_grid(rows):
+    head = ["Model", "Transport", "Median ms", "p90 ms", "Calls · errors",
+            "Delivery p3", "Sample rate"]
+    cells = [f'<div class="h">{h}</div>' for h in head]
+    key = lambda d: d["sp"]["med"] if d["sp"]["med"] is not None else float("inf")
+    for d in sorted(rows, key=key):
+        sp = d["sp"]
+        mark = " †" if sp.get("sweep") else ""
+        sr = "—" if not d["sr"] else f'{d["sr"] / 1000:g} kHz'
+        cells += [
+            f'<div class="name">{escape(d["name"])}</div>',
+            f'<div>{_lbl("transport")}{escape(d["tr"])}</div>',
+            f'<div class="num">{_lbl("median")}{_ms(sp["med"])}{mark}</div>',
+            f'<div class="num">{_lbl("p90")}{_ms(sp["p90"])}</div>',
+            f'<div class="num">{_lbl("calls · errors")}{sp["n"]} · {sp["err"]}</div>',
+            f'<div class="num">{_lbl("delivery")}{_fmt(d["p3"], ".1f")} s</div>',
+            f'<div class="num">{_lbl("SR")}{sr}</div>']
+    return '<div class="hgrid det">' + "".join(cells) + "</div>"
+
+
 def _ab_table(samples):
-    # Grids, not <table>s: the shared sort script re-sorts every table on the page together.
-    cells = ["<b>Vendor</b>", "<b>HTTP ms</b>", "<b>calls · err</b>", "<b>WebSocket ms</b>",
-             "<b>calls · err</b>", "<b>Board uses</b>", "<b>Note</b>"]
+    cells = [f'<div class="h">{h}</div>' for h in
+             ("Vendor", "HTTP ms", "WebSocket ms", "Board uses", "Note")]
     for slug in BOTH:
         a, b = _speed(samples, slug, "http"), _speed(samples, slug, "websocket")
-        lb = lambda t: f'<span class="lbl">{t} </span>'  # labels shown only on phones
-        cells += [f"<b>{escape(CATALOG[slug][0])}</b>", lb("HTTP") + _ms(a["med"]) + " ms",
-                  lb("calls · err") + f'{a["n"]} · {a["err"]}', lb("WS") + _ms(b["med"]) + " ms",
-                  lb("calls · err") + f'{b["n"]} · {b["err"]}',
-                  lb("board uses") + escape(transport(ADAPTERS[slug])),
-                  f'<span class="muted">{escape(TRANSPORT_NOTE.get(slug, ""))}</span>']
-    return '<div class="hgrid ab">' + "".join(f"<div>{c}</div>" for c in cells) + "</div>"
-
-
-# Vendors without API cloning on our route, and why (docs read 2026-11-01).
-NO_CLONE = {
-    "rime_coda": "enterprise-trained voices only (30–60 min of audio, days)",
-    "giggy_tts": "cloning in the web app only, no API",
-    "assemblyai_tts1": "cloning in the dashboard only, no API",
-    "deepgram_flux_tts": "no voice cloning",
-    "murf_falcon21": "API cloning is Enterprise-plan only",
-    "openai_gpt4o_mini_tts": "custom voices are limited to approved customers",
-    "openai_realtime21": "custom voices are limited to approved customers",
-    "mai_voice21": "needs Microsoft Limited Access approval",
-    "minimax_speech28hd": "no cloning through OpenRouter (our route)",
-}
+        cells += [f'<div class="name">{escape(CATALOG[slug][0])}</div>',
+                  f'<div class="num">{_lbl("HTTP")}{_ms(a["med"])} '
+                  f'<span class="muted">({a["n"]}/{a["err"]})</span></div>',
+                  f'<div class="num">{_lbl("WS")}{_ms(b["med"])} '
+                  f'<span class="muted">({b["n"]}/{b["err"]})</span></div>',
+                  f'<div>{_lbl("board uses")}{escape(transport(ADAPTERS[slug]))}</div>',
+                  f'<div class="muted note">{escape(TRANSPORT_NOTE.get(slug, ""))}</div>']
+    return '<div class="hgrid ab">' + "".join(cells) + "</div>"
 
 
 def _clone_slugs():
@@ -261,31 +326,31 @@ def _clone_table(scores):
         cls = ADAPTERS[slug]
         rs = [r for r in scores.get(slug, []) if r["mode"] == "cloning"]
         en = [r for r in rs if r["prompt_id"] in ("1", "2", "3", "4")]
-        xx = [r for r in rs if r["prompt_id"] in ("5", "6")]
-        mean = lambda xs, k: (lambda v: st.mean(v) if v else None)(
-            [x for x in (_f(r[k]) for r in xs) if x is not None])
-        sim, um, we, wx = mean(rs, "sim"), mean(en, "utmos"), mean(en, "wer"), mean(xx, "wer")
+        mean = lambda xs, k: _mean([x for x in (_f(r[k]) for r in xs) if x is not None])
+        sim, um, we = mean(rs, "sim"), mean(en, "utmos"), mean(en, "wer")
         mn, rec = MIN_REC.get(slug, ("—", "—"))
-        langs = cls.clone_langs or cls.langs
+        sec = lambda v: f"{v} s" if v != "—" else "—"
         rows.append((sim if sim is not None else -1, [
-            f"<b>{escape(CATALOG[slug][0])}</b>", f'{info["seconds"]:g} s', (f"{mn} s" if mn != "—" else "—"),
-            (f"{rec} s" if rec != "—" else "—"), "—" if sim is None else f"{sim:.3f}", "—" if um is None else f"{um:.2f}",
-            "—" if we is None else f"{we:.3f}", "—" if wx is None else f"{wx:.3f}",
-            escape(" ".join(sorted(langs)))]))
+            escape(CATALOG[slug][0]), f'{info["seconds"]:g} s', sec(mn), sec(rec),
+            "—" if sim is None else f"<b>{sim:.3f}</b>", _fmt(um, ".2f"), _fmt(we, ".3f"),
+            escape(" ".join(sorted(cls.clone_langs or cls.langs)))]))
     rows.sort(key=lambda r: -r[0])
-    head = ["Model", "Sample sent", "Min", "Recommended", "SIM ↑", "UTMOS en", "WER en",
-            "WER fr/es", "Langs"]
-    lb = head
-    cells = [f"<b>{h}</b>" for h in head]
+    head = ["Model", "Sample sent", "Vendor min", "Recommended", "SIM ↑", "UTMOS", "WER en",
+            "Clone langs"]
+    cells = [f'<div class="h">{h}</div>' for h in head]
     for _, r in rows:
-        cells += [r[0]] + [f'<span class="lbl">{lb[i]} </span>{v}' for i, v in enumerate(r) if i]
-    grid = '<div class="hgrid clone">' + "".join(f"<div>{c}</div>" for c in cells) + "</div>"
+        cells.append(f'<div class="name">{r[0]}</div>')
+        cells += [f'<div class="{"num" if i < 7 else ""}">{_lbl(head[i])}{v}</div>'
+                  for i, v in enumerate(r) if i]
+    grid = '<div class="hgrid clone">' + "".join(cells) + "</div>"
     missing = [s for s in ADAPTERS if s not in reg and s not in SKIP]
-    why = "".join(
-        f"<li>{escape(CATALOG[s][0])}: {escape(NO_CLONE.get(s, 'pending'))}</li>"
-        for s in missing)
-    return grid + (f'<div class="meta">Not in the cloning lens:</div><ul class="meta">{why}</ul>'
-                   if why else "")
+    why = "".join(f"<li>{escape(CATALOG[s][0])}: {escape(NO_CLONE.get(s, 'pending'))}</li>"
+                  for s in missing)
+    if not why:
+        return grid
+    return (grid + f'<details class="panel"><summary>Not in the cloning lens <span '
+            f'class="summ-text">({len(missing)}: no API cloning on our route)</span></summary>'
+            f'<ul class="meta">{why}</ul></details>')
 
 
 def _listen(worktree, lens="default"):
@@ -297,11 +362,11 @@ def _listen(worktree, lens="default"):
         rows = []
         for slug in slugs:
             cls = ADAPTERS[slug]
-            name = CATALOG.get(slug, (slug,))[0]
+            name = escape(CATALOG.get(slug, (slug,))[0])
             langs = (cls.clone_langs or cls.langs) if lens == "cloning" else cls.langs
             if lang not in langs:
-                rows.append(f'<div>{escape(name)}</div><div class="muted wide">'
-                            f'not offered in {escape(lang)}</div>')
+                rows.append(f'<div>{name}</div><div class="muted wide">not offered in '
+                            f'{escape(lang)}</div>')
                 continue
             cells = []
             for take in (1, 2, 3):
@@ -314,13 +379,15 @@ def _listen(worktree, lens="default"):
                 shutil.copy2(src, d / src.name)
                 cells.append(f'<div><audio controls preload="none" '
                              f'src="hosted/{slug}/{lens}/{src.name}"></audio></div>')
-            rows.append(f'<div>{escape(name)}</div>{"".join(cells)}')
-        out.append(f'<details class="panel" id="{lens[0]}p{pid}"><summary>Prompt {pid} · {escape(lang)} '
-                   f'<span class="muted">— {escape(text[:90])}{"…" if len(text) > 90 else ""}'
-                   f'</span></summary><div class="hgrid listen"><div><b>Model</b></div><div><b>Take 1</b>'
-                   f'</div><div><b>Take 2</b></div><div><b>Take 3</b></div>{"".join(rows)}'
-                   f'</div></details>')
-    return "".join(out)
+            rows.append(f'<div>{name}</div>{"".join(cells)}')
+        short = escape(text[:90]) + ("…" if len(text) > 90 else "")
+        out.append(f'<details class="panel" id="{lens[0]}p{pid}"{" open" if pid == 1 else ""}>'
+                   f'<summary>Prompt {pid} <span class="summ-text">[{escape(lang)}] "{short}"'
+                   f'</span></summary><div class="hgrid listen"><div class="h">Model</div>'
+                   f'<div class="h">Take 1</div><div class="h">Take 2</div>'
+                   f'<div class="h">Take 3</div>{"".join(rows)}</div></details>')
+    jump = " · ".join(f'<a href="#{lens[0]}p{pid}">P{pid}</a>' for pid, _, _ in PROMPTS)
+    return f'<nav class="prompt-jumper">Jump to: {jump}</nav>' + "".join(out)
 
 
 def _clone_intro(worktree):
@@ -330,16 +397,13 @@ def _clone_intro(worktree):
     if ref.exists():
         (worktree / "hosted").mkdir(parents=True, exist_ok=True)
         shutil.copy2(ref, worktree / "hosted" / "_reference.wav")
-        player = ('<div class="meta"><strong>Reference voice</strong> (full recording, consented '
-                  'by the speaker): <audio controls preload="none" src="hosted/_reference.wav">'
-                  '</audio></div>')
-    return ('<div class="meta">Each product clones one consented reference voice through its '
-            'own API. <strong>Sample lengths differ per product on purpose:</strong> each gets '
-            'the longest cut of the recording it accepts, because some models need more audio '
-            'for a good clone, so one shared length would be unfair to them. Each row shows the '
-            'seconds sent next to the vendor\'s documented minimum and recommended length. '
-            'SIM = speaker similarity to a 23 s cut of the reference (WavLM, same as the local board).</div>'
-            + player)
+        player = ('<div class="ref-row"><span class="ref-label">Reference voice</span>'
+                  '<audio controls preload="none" src="hosted/_reference.wav"></audio>'
+                  '<span class="muted">full recording, consented by the speaker</span></div>')
+    return ('<div class="meta">Each product clones the same consented voice through its own '
+            'API. <strong>Sample lengths differ on purpose:</strong> each gets the longest cut it '
+            'accepts, because some need more audio for a good clone. SIM = speaker similarity '
+            'to the reference (WavLM, same as the local board), higher is closer.</div>' + player)
 
 
 def build(worktree, head, foot):
@@ -348,29 +412,37 @@ def build(worktree, head, foot):
     samples, scores = _samples(), _scores()
     days = sorted({r["ts"][:10] for r in samples})
     span = f"{days[0]} → {days[-1]}" if days else "sampling pending"
-    n_models = sum(1 for s in ADAPTERS if s not in SKIP)
-    page = [head, STYLE, '<h1>Hosted APIs</h1>',
-            '<div class="meta">Paid TTS APIs as a buyer gets them: each vendor\'s documented '
-            'default voice, the same 6 prompts as the local board, 3 takes each, all shown. '
-            f'{n_models} models. <strong>Never ranked against the local models</strong> — '
-            'different question (products vs. models on known hardware).</div>',
-            '<h2>Board</h2>',
-            f'<div class="meta">Speed <strong>measured from Eastern US</strong> ({escape(span)}), '
-            'warm connection, one fixed English sentence. <em>First speech</em> = first sample '
-            'above −40 dBFS, so leading silence doesn\'t count; that is the speed ranking. '
-            '<em>Delivery</em> includes vendor pacing (some stream at about playback speed) — '
-            'don\'t rank by it. Prices are list $/1M characters; check the vendor page before '
-            'buying.</div>',
-            _main_table(samples, scores),
-            '<h2>HTTP vs WebSocket</h2>',
-            '<div class="meta">Vendors offering both, sampled on both in alternating calls. '
-            'Median time to first speech.</div>',
-            _ab_table(samples),
-            '<h2>Listen</h2>', _listen(worktree),
-            '<h2>Cloning</h2>', _clone_intro(worktree), _clone_table(scores),
-            '<h3>Listen — cloned voice</h3>', _listen(worktree, "cloning"),
-            '<div class="scores-foot">UTMOS <code>utmos22_strong</code>, WER Whisper-large-v3, '
-            'same scorers as the local Scores tab. Every clip\'s request, model id sent, voice id '
-            'and timings are in its JSON sidecar in the repo.</div>',
-            '<script>window.__defaultSort = {colIdx: 2, dir: 1};</script>', foot]
+    rows = _row_data(samples, scores)
+    tabs = [("board", "Board"), ("listen", "Listen"),
+            ("cloning", f"Cloning ({len(_clone_slugs())})"), ("speed", "Speed detail")]
+    tab_links = "".join(f'<a class="lens-tab{" active" if k == "board" else ""}" '
+                        f'data-mode="{k}" href="#{k}">{v}</a>' for k, v in tabs)
+    page = [
+        head, STYLE, '<h1>Hosted APIs</h1>',
+        f'<div class="reading-guide">{len(rows)} paid TTS APIs, each with its documented default '
+        'voice, on the same prompts as the local board. <strong>Not ranked against the local '
+        'models.</strong> <strong>First speech</strong> = ms until audible speech on a warm '
+        f'connection, measured from Eastern US ({escape(span)}); hover it for p90 and call '
+        'counts. <strong>UTMOS</strong> (higher is better) and <strong>WER</strong> (lower is '
+        'better) use the same scorers as the Scores tab. Prices are list $/1M characters; '
+        '* = hover for a note.</div>',
+        f'<div class="mode-select"><div class="lens-tabs" id="mode-tabs">{tab_links}</div></div>',
+        '<div class="subsection" data-mode="board">', _main_table(rows), '</div>',
+        '<div class="subsection" data-mode="listen" style="display:none">',
+        '<div class="meta">Every take of every prompt, nothing cherry-picked.</div>',
+        _listen(worktree), '</div>',
+        '<div class="subsection cloning" data-mode="cloning" style="display:none">',
+        _clone_intro(worktree), _clone_table(scores),
+        '<h3 class="sub-head">Listen: cloned voice</h3>', _listen(worktree, "cloning"), '</div>',
+        '<div class="subsection" data-mode="speed" style="display:none">',
+        '<div class="meta">Warm calls on one fixed English sentence, fastest first. '
+        '<em>Delivery p3</em> = the full prompt-3 clip including vendor pacing (some stream at '
+        'about playback speed), so don\'t rank by it. † = sweep calls only.</div>',
+        _detail_grid(rows),
+        '<h3 class="sub-head">HTTP vs WebSocket</h3>',
+        '<div class="meta">Vendors offering both, sampled in alternating calls: median ms to '
+        'first speech (calls/errors).</div>', _ab_table(samples), '</div>',
+        '<div class="scores-foot">Each clip\'s request, model id, voice id and timings are in '
+        'its JSON sidecar.</div>',
+        '<script>window.__defaultSort = {colIdx: 1, dir: 1};</script>', TAB_SCRIPT, foot]
     (worktree / "hosted.html").write_text("\n".join(page), encoding="utf-8")
