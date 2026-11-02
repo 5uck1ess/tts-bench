@@ -2741,6 +2741,1366 @@
           "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/zonos2_cuda_p4.wav"
         }
       ]
+    },
+    "hosted-default": {
+      "reference_url": null,
+      "clips": [
+        {
+          "model": "hosted:assemblyai_tts1",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/assemblyai_tts1/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:assemblyai_tts1",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/assemblyai_tts1/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:assemblyai_tts1",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/assemblyai_tts1/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:assemblyai_tts1",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/assemblyai_tts1/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:assemblyai_tts1",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/assemblyai_tts1/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:assemblyai_tts1",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/assemblyai_tts1/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:bland_speech3",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/bland_speech3/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:bland_speech3",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/bland_speech3/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:bland_speech3",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/bland_speech3/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:bland_speech3",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/bland_speech3/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:bland_speech3",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/bland_speech3/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:deepgram_flux_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/deepgram_flux_tts/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:deepgram_flux_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/deepgram_flux_tts/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:deepgram_flux_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/deepgram_flux_tts/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:deepgram_flux_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/deepgram_flux_tts/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:deepgram_flux_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/deepgram_flux_tts/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:deepgram_flux_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/deepgram_flux_tts/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:giggy_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/giggy_tts/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:giggy_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/giggy_tts/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:giggy_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/giggy_tts/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:giggy_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/giggy_tts/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:mai_voice21",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/mai_voice21/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:mai_voice21",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/mai_voice21/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:mai_voice21",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/mai_voice21/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:mai_voice21",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/mai_voice21/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:mai_voice21",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/mai_voice21/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:mai_voice21",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/mai_voice21/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:minimax_speech28hd",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/minimax_speech28hd/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:minimax_speech28hd",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/minimax_speech28hd/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:minimax_speech28hd",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/minimax_speech28hd/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:minimax_speech28hd",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/minimax_speech28hd/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:murf_falcon21",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/murf_falcon21/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:murf_falcon21",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/murf_falcon21/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:murf_falcon21",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/murf_falcon21/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:murf_falcon21",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/murf_falcon21/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:murf_falcon21",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/murf_falcon21/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:murf_falcon21",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/murf_falcon21/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:openai_gpt4o_mini_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_gpt4o_mini_tts/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:openai_gpt4o_mini_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_gpt4o_mini_tts/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:openai_gpt4o_mini_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_gpt4o_mini_tts/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:openai_gpt4o_mini_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_gpt4o_mini_tts/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:openai_gpt4o_mini_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_gpt4o_mini_tts/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:openai_gpt4o_mini_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_gpt4o_mini_tts/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:openai_realtime21",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_realtime21/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:openai_realtime21",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_realtime21/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:openai_realtime21",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_realtime21/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:openai_realtime21",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_realtime21/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:openai_realtime21",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_realtime21/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:openai_realtime21",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/openai_realtime21/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:rime_coda",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/rime_coda/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:rime_coda",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/rime_coda/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:rime_coda",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/rime_coda/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:rime_coda",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/rime_coda/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:rime_coda",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/rime_coda/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:rime_coda",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/rime_coda/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:stepaudio3_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:stepaudio3_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:stepaudio3_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:stepaudio3_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:stepaudio3_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:stepaudio3_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/default/p6_t1.wav"
+        },
+        {
+          "model": "hosted:vui_luna",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/vui_luna/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:vui_luna",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/vui_luna/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:vui_luna",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/vui_luna/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:vui_luna",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/vui_luna/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/default/p6_t1.wav"
+        }
+      ]
+    },
+    "hosted-cloning": {
+      "reference_url": "https://5uck1ess.github.io/tts-bench/hosted/_reference.wav",
+      "clips": [
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:async_flash15",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:bland_speech3",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/bland_speech3/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:bland_speech3",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/bland_speech3/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:bland_speech3",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/bland_speech3/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:bland_speech3",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/bland_speech3/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:bland_speech3",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/bland_speech3/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:cartesia_sonic36",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/cartesia_sonic36/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:eleven_v4_turbo",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/eleven_v4_turbo/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:fish_drama3",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/fish_drama3/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:gemini38_flash_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:gradium_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/gradium_tts/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:heygen_voice1",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/heygen_voice1/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:inworld_tts2",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/inworld_tts2/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:palabra_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:resemble_ultra",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:smallest_lightning31pro",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/smallest_lightning31pro/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:soniox_tts2",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/soniox_tts2/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:speechify_simba35",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/speechify_simba35/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:stepaudio3_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:stepaudio3_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:stepaudio3_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:stepaudio3_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:voxtral3_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:vui_luna",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/vui_luna/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:vui_luna",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/vui_luna/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:vui_luna",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/vui_luna/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:vui_luna",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/vui_luna/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:xai_tts",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/xai_tts/cloning/p6_t1.wav"
+        }
+      ]
     }
   },
   "models": {
@@ -2839,6 +4199,118 @@
     "hojo_80m": {
       "name": "Hojo-TTS-Light 80M",
       "url": "https://huggingface.co/HojoAI/Hojo-TTS-Light"
+    },
+    "hosted:assemblyai_tts1": {
+      "name": "AssemblyAI TTS-1",
+      "url": null
+    },
+    "hosted:async_flash15": {
+      "name": "Async Flash v1.5",
+      "url": null
+    },
+    "hosted:bland_speech3": {
+      "name": "Bland Speech v3",
+      "url": null
+    },
+    "hosted:cartesia_sonic36": {
+      "name": "Cartesia Sonic 3.6",
+      "url": null
+    },
+    "hosted:deepgram_flux_tts": {
+      "name": "Deepgram Flux TTS",
+      "url": null
+    },
+    "hosted:eleven_v4": {
+      "name": "ElevenLabs Eleven v4",
+      "url": null
+    },
+    "hosted:eleven_v4_turbo": {
+      "name": "ElevenLabs Eleven v4 Turbo",
+      "url": null
+    },
+    "hosted:fish_drama3": {
+      "name": "Fish Audio Drama 3",
+      "url": null
+    },
+    "hosted:gemini38_flash_tts": {
+      "name": "Gemini 3.8 Flash TTS",
+      "url": null
+    },
+    "hosted:giggy_tts": {
+      "name": "Giggy TTS",
+      "url": null
+    },
+    "hosted:gradium_tts": {
+      "name": "Gradium",
+      "url": null
+    },
+    "hosted:heygen_voice1": {
+      "name": "HeyGen Voice 1",
+      "url": null
+    },
+    "hosted:inworld_tts2": {
+      "name": "Inworld TTS-2",
+      "url": null
+    },
+    "hosted:mai_voice21": {
+      "name": "Microsoft MAI-Voice-2.1",
+      "url": null
+    },
+    "hosted:minimax_speech28hd": {
+      "name": "MiniMax speech-2.8-hd",
+      "url": null
+    },
+    "hosted:murf_falcon21": {
+      "name": "Murf Falcon 2.1",
+      "url": null
+    },
+    "hosted:openai_gpt4o_mini_tts": {
+      "name": "OpenAI gpt-4o-mini-tts",
+      "url": null
+    },
+    "hosted:openai_realtime21": {
+      "name": "OpenAI gpt-realtime-2.1",
+      "url": null
+    },
+    "hosted:palabra_tts": {
+      "name": "Palabra TTS",
+      "url": null
+    },
+    "hosted:resemble_ultra": {
+      "name": "Resemble Ultra",
+      "url": null
+    },
+    "hosted:rime_coda": {
+      "name": "Rime Coda",
+      "url": null
+    },
+    "hosted:smallest_lightning31pro": {
+      "name": "Smallest.ai Lightning v3.1 Pro",
+      "url": null
+    },
+    "hosted:soniox_tts2": {
+      "name": "Soniox TTS v2",
+      "url": null
+    },
+    "hosted:speechify_simba35": {
+      "name": "Speechify SIMBA 3.5",
+      "url": null
+    },
+    "hosted:stepaudio3_tts": {
+      "name": "StepFun Step-Audio 3 TTS",
+      "url": null
+    },
+    "hosted:voxtral3_tts": {
+      "name": "Mistral Voxtral TTS 3",
+      "url": null
+    },
+    "hosted:vui_luna": {
+      "name": "VUI Labs Luna",
+      "url": null
+    },
+    "hosted:xai_tts": {
+      "name": "xAI TTS",
+      "url": null
     },
     "indextts": {
       "name": "IndexTTS-2",

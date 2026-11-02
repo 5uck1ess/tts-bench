@@ -1,4 +1,4 @@
-"""LOCAL build tool: scan _gh-pages canonicals -> arena/clips_manifest.json.
+"""LOCAL build tool: scan _gh-pages canonicals (+ hosted/) -> arena/clips_manifest.json.
 
 Replicates naq_lab/vote.py build_inventory selection rules (rig/device priority,
 NO_PRESET_VOICE drop, Mac-cloning exclusion, cloning->default fallback) but emits
@@ -149,7 +149,41 @@ def scan_dirs(gh_root, mode: str, base_url: str):
     return clips, reference_url
 
 
-def build_manifest(gh_root, base_url, prompts: dict, model_meta: dict | None = None) -> dict:
+# Hosted pools (paid APIs, hosted.html): their own lenses with their own Elo, never paired
+# with a local model. Slugs are namespaced so a vendor can never share a name, a ranking row
+# or a reveal entry with a local model. Take 1 of each prompt only, so every model offers one
+# clip per prompt, as in the local pools.
+HOSTED_PREFIX = "hosted:"
+HOSTED_MODES = {"hosted-default": "default", "hosted-cloning": "cloning"}
+_HOSTED_WAV_RE = re.compile(r"p(\d+)_t1\.wav$")
+
+
+def scan_hosted(gh_root, lens: str, base_url: str, slugs) -> tuple:
+    """Return ``(clips, reference_url)`` for a hosted lens ("default" | "cloning").
+
+    Only ``slugs`` (the board vendors) are read, so a scored test folder never enters the
+    pool. ``HOLD_FROM_POOL`` / ``HOLD_CLIPS`` take the namespaced slug, as in the clips."""
+    root = os.path.join(str(gh_root), "hosted")
+    clips = []
+    for slug in sorted(slugs):
+        model = HOSTED_PREFIX + slug
+        if model in HOLD_FROM_POOL:
+            continue
+        for w in sorted(glob.glob(os.path.join(root, slug, lens, "p*_t1.wav"))):
+            m = _HOSTED_WAV_RE.search(os.path.basename(w))
+            if not m or (model, int(m.group(1))) in HOLD_CLIPS:
+                continue
+            clips.append({"model": model, "prompt": int(m.group(1)),
+                          "url": f"{base_url}hosted/{slug}/{lens}/{os.path.basename(w)}"})
+    clips.sort(key=lambda c: (c["model"], c["prompt"]))
+    ref = None
+    if lens == "cloning" and os.path.exists(os.path.join(root, "_reference.wav")):
+        ref = base_url + "hosted/_reference.wav"
+    return clips, ref
+
+
+def build_manifest(gh_root, base_url, prompts: dict, model_meta: dict | None = None,
+                   hosted: dict | None = None) -> dict:
     """model_meta: {slug: {"name": display, "url": checkpoint_url}} — embedded so
     the Space can reveal model names+links AFTER a vote without importing report.py.
     Only slugs that actually appear in the clips are emitted."""
@@ -159,7 +193,17 @@ def build_manifest(gh_root, base_url, prompts: dict, model_meta: dict | None = N
         clips, ref = scan_dirs(gh_root, mode, base_url)
         modes[mode] = {"reference_url": ref, "clips": clips}
         slugs.update(c["model"] for c in clips)
-    models = {s: (model_meta or {}).get(s, {"name": s, "url": None}) for s in sorted(slugs)}
+    # hosted: {slug: display name} of the board vendors; None/empty = no hosted pools.
+    for mode, lens in HOSTED_MODES.items():
+        if not hosted:
+            break
+        clips, ref = scan_hosted(gh_root, lens, base_url, hosted)
+        if clips:
+            modes[mode] = {"reference_url": ref, "clips": clips}
+            slugs.update(c["model"] for c in clips)
+    meta = dict(model_meta or {})
+    meta.update({HOSTED_PREFIX + s: {"name": n, "url": None} for s, n in (hosted or {}).items()})
+    models = {s: meta.get(s, {"name": s, "url": None}) for s in sorted(slugs)}
     return {"base_url": base_url, "prompts": prompts, "modes": modes, "models": models}
 
 
@@ -176,7 +220,10 @@ def main():
     meta = {s: {"name": MODEL_DISPLAY_NAMES.get(s, s), "url": MODEL_URL.get(s)}
             for s in set(MODEL_DISPLAY_NAMES) | set(MODEL_URL)}
 
-    manifest = build_manifest(args.gh_root, _base_url(), prompts, meta)
+    from scripts.hosted.catalog import CATALOG  # board vendors + display names — public
+    hosted = {slug: row[0] for slug, row in CATALOG.items()}
+
+    manifest = build_manifest(args.gh_root, _base_url(), prompts, meta, hosted)
     with open(args.out, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
     n = {m: len(b["clips"]) for m, b in manifest["modes"].items()}

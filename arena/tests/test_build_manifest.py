@@ -71,3 +71,34 @@ def test_build_manifest_embeds_model_meta_for_present_slugs(tmp_path):
     assert set(m["models"]) == {"kokoro", "echo"}
     assert m["models"]["kokoro"]["url"] == "https://hf.test/hexgrad/Kokoro-82M"
     assert m["models"]["echo"] == {"name": "echo", "url": None}
+
+
+def test_hosted_pools_are_separate_namespaced_take1_board_only(tmp_path):
+    """Hosted APIs get their own lenses: take 1 of each prompt, board vendors only, slugs
+    namespaced so they never share a ranking row or reveal entry with a local model."""
+    from arena.build_manifest import build_manifest
+    base = "https://x.test/tts-bench/"
+    _touch(tmp_path / "windows-default" / "kokoro_cpu_p1.wav")
+    for t in (1, 2, 3):
+        _touch(tmp_path / "hosted" / "vui_luna" / "default" / f"p1_t{t}.wav")
+        _touch(tmp_path / "hosted" / "rime_coda" / "default" / f"p1_t{t}.wav")
+    _touch(tmp_path / "hosted" / "vui_luna" / "cloning" / "p2_t1.wav")
+    _touch(tmp_path / "hosted" / "not_on_board" / "default" / "p1_t1.wav")
+    _touch(tmp_path / "hosted" / "_reference.wav")
+    m = build_manifest(tmp_path, base, {"1": ["en", "hi"]}, {},
+                       {"vui_luna": "VUI Labs Luna", "rime_coda": "Rime Coda"})
+    hd = m["modes"]["hosted-default"]["clips"]
+    assert [(c["model"], c["prompt"]) for c in hd] == [("hosted:rime_coda", 1), ("hosted:vui_luna", 1)]
+    assert hd[1]["url"] == base + "hosted/vui_luna/default/p1_t1.wav"
+    assert m["modes"]["hosted-cloning"]["reference_url"] == base + "hosted/_reference.wav"
+    assert all(c["model"] == "kokoro" for c in m["modes"]["default"]["clips"])  # never mixed
+    assert m["models"]["hosted:vui_luna"] == {"name": "VUI Labs Luna", "url": None}
+    assert not any("not_on_board" in s for s in m["models"])
+
+
+def test_no_hosted_arg_means_no_hosted_pools(tmp_path):
+    from arena.build_manifest import build_manifest
+    _touch(tmp_path / "windows-default" / "kokoro_cpu_p1.wav")
+    _touch(tmp_path / "hosted" / "vui_luna" / "default" / "p1_t1.wav")
+    m = build_manifest(tmp_path, "https://x.test/", {"1": ["en", "hi"]}, {})
+    assert set(m["modes"]) == {"default", "cloning"}
