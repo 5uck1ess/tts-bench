@@ -40,7 +40,7 @@ CATALOG = {
 }
 
 
-# slug -> the exact model id our adapter sends (scripts/hosted/providers). Several display
+# slug -> the exact model id our adapter sends for English (Adapter.model_sent("en")). Several display
 # names are only the company ("Gradium", "Palabra TTS"), so every hosted row also shows this.
 # Kept here, dependency-free, for the Scores page; a test keeps it equal to the adapters.
 MODEL_ID = {
@@ -59,7 +59,7 @@ MODEL_ID = {
     "soniox_tts2": "tts-rt-v2",
     "stepaudio3_tts": "stepaudio-3-tts",
     "smallest_lightning31pro": "lightning_v3.1_pro",
-    "deepgram_flux_tts": "flux-tts",
+    "deepgram_flux_tts": "flux-haley-en",
     "mai_voice21": "MAI-Voice-2.1",
     "vui_luna": "luna-tts",
     "openai_gpt4o_mini_tts": "gpt-4o-mini-tts-2025-12-15",
@@ -86,14 +86,27 @@ MODEL_NOTE = {
 }
 
 
+# Vendors that send a different model id per language (Deepgram encodes voice + language in
+# it). slug -> {lang: id sent}; MODEL_ID holds the English one.
+MODEL_BY_LANG = {
+    "deepgram_flux_tts": {"en": "flux-haley-en", "es": "flux-aina-es", "fr": "flux-arnaud-fr"},
+}
+
+
 def model_shown(slug):
-    """The model id as shown on the boards; an unpinned alias says the vendor picks."""
-    return MODEL_ID[slug] + (" · vendor picks" if slug in MODEL_NOTE else "")
+    """The model id as shown on the boards: the English id sent, flagged when it varies by
+    language, and an unpinned alias says the vendor picks."""
+    return (MODEL_ID[slug] + (" · per language" if slug in MODEL_BY_LANG else "")
+            + (" · vendor picks" if slug in MODEL_NOTE else ""))
 
 
 def model_title(slug):
-    """Hover text for the model id."""
-    return f"model id sent: {MODEL_ID[slug]}" + (f" — {MODEL_NOTE[slug]}" if slug in MODEL_NOTE else "")
+    """Hover text for the model id: every id actually sent."""
+    if slug in MODEL_BY_LANG:
+        sent = ", ".join(f"{lang}: {m}" for lang, m in sorted(MODEL_BY_LANG[slug].items()))
+    else:
+        sent = MODEL_ID[slug]
+    return f"model id sent: {sent}" + (f" — {MODEL_NOTE[slug]}" if slug in MODEL_NOTE else "")
 
 
 def label(slug):
