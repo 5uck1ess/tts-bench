@@ -1,5 +1,5 @@
-import httpx
 
+from .. import core
 from ..core import Adapter
 
 BASE = "https://api.giggy.ai/v1"
@@ -24,7 +24,8 @@ class GiggyTTS(Adapter):
 
     def _catalog(self):
         if self._voices is None:
-            r = httpx.get(f"{BASE}/voices", headers={"xi-api-key": self.key}, timeout=30)
+            with core.new_client() as c:  # bounded transport, like every other call
+                r = c.get(f"{BASE}/voices", headers={"xi-api-key": self.key})
             r.raise_for_status()
             self._voices = r.json()["voices"]
         return self._voices

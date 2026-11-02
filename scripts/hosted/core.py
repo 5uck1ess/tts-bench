@@ -24,6 +24,7 @@ import io
 import json
 import time
 import wave
+import zlib
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -397,26 +398,46 @@ def head(r, n):
 
 
 class _BoundedStream(httpx.SyncByteStream):
-    def __init__(self, inner, url):
-        self._inner, self._url = inner, url
+    """Yields the decoded body; raises once decoded bytes or elapsed time pass the ceilings."""
+
+    def __init__(self, inner, host, encoding):
+        self._inner, self._host = inner, host
+        wbits = {"gzip": 16 + zlib.MAX_WBITS, "deflate": zlib.MAX_WBITS}.get(encoding)
+        self._z = zlib.decompressobj(wbits) if wbits else None
 
     def __iter__(self):
         t0, n = time.perf_counter(), 0
         for b in self._inner:
+            if self._z is not None:
+                # never inflate more than the remaining budget (+1 so overflow still trips)
+                b = self._z.decompress(b, MAX_RAW_BYTES - n + 1)
             n += len(b)
-            guard(n, t0, self._url, MAX_RAW_BYTES)
-            yield b
+            guard(n, t0, self._host, MAX_RAW_BYTES)
+            if b:
+                yield b
+        if self._z is not None:
+            tail = self._z.flush()
+            n += len(tail)
+            guard(n, t0, self._host, MAX_RAW_BYTES)
+            if tail:
+                yield tail
 
     def close(self):
         self._inner.close()
 
 
 class BoundedTransport(httpx.HTTPTransport):
-    """HTTPTransport whose response bodies stop at MAX_RAW_BYTES / MAX_CALL_S."""
+    """HTTPTransport whose response bodies stop at MAX_RAW_BYTES (decoded) / MAX_CALL_S."""
 
     def handle_request(self, request):
         r = super().handle_request(request)
-        r.stream = _BoundedStream(r.stream, request.url.host)
+        enc = r.headers.get("content-encoding", "identity").strip().lower()
+        if enc not in ("", "identity", "gzip", "deflate"):
+            r.close()
+            raise RuntimeError(f"{request.url.host}: unsupported Content-Encoding {enc!r}")
+        if enc in ("gzip", "deflate"):
+            del r.headers["content-encoding"]  # decoded here, bounded; httpx must not re-inflate
+        r.stream = _BoundedStream(r.stream, request.url.host, enc)
         return r
 
 
