@@ -980,12 +980,15 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
         aggs.append((m, agg))
     rows = [(m, agg, "local") for m, agg in aggs]
     rows += [(name, {**agg, "health_flags": agg["flags"]}, "hosted")
-             for name, agg in sorted((hosted or {}).items(), key=lambda kv: kv[0].lower())]
+             for name, agg in sorted((hosted or {}).items(), key=lambda kv: kv[0][0].lower())]
     for (m, agg, src) in rows:
         flagged = agg.get("wer") is not None and agg["wer"] > WER_FAIL_THRESHOLD
         cls = (' class="flagged"' if flagged else "") + f' data-src="{src}"'
         if src == "hosted":
-            cells = [f'<td data-name="{escape(m)}">{escape(m)} '
+            name, model_id, mtitle = m
+            cells = [f'<td data-name="{escape(name)}" data-model="{escape(model_id)}" '
+                     f'title="{escape(mtitle)}">{escape(name)}'
+                     f'<code class="model-id">{escape(model_id)}</code> '
                      '<span class="src-tag">hosted</span></td>',
                      '<td class="muted">API</td>', '<td class="muted" data-sort="">—</td>']
         else:
@@ -1028,6 +1031,8 @@ SCORE_CHART_STYLE = (
     '.score-bar-row{display:grid;grid-template-columns:minmax(9rem,13rem) 1fr 4.5rem;'
     'align-items:center;gap:.65rem;font-size:.9em;}'
     '.score-bar-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}'
+    '.score-bar-id{display:block;color:var(--muted);font-size:.78em;line-height:1.2;'
+    'overflow:hidden;text-overflow:ellipsis;}'
     '.score-bar-track{height:1rem;background:var(--input-bg);border-radius:3px;overflow:hidden;}'
     '.score-bar-fill{display:block;width:0;height:100%;background:var(--accent);}'
     '.score-bar-row.hosted .score-bar-fill{background:var(--num);}'
@@ -1074,6 +1079,7 @@ SCORE_CHART_SCRIPT = '''<script>
                 if(!cell || !cell.dataset.sort) return;
                 rows.push({
                     name: row.cells[0].dataset.name || row.cells[0].textContent.trim(),
+                    modelId: row.cells[0].dataset.model || '',
                     value: Number(cell.dataset.sort),
                     flagged: row.classList.contains('flagged'),
                     hosted: row.dataset.src === 'hosted'
@@ -1103,12 +1109,19 @@ SCORE_CHART_SCRIPT = '''<script>
                 item.className = 'score-bar-row' + (row.flagged ? ' flagged' : '')
                     + (mixed && row.hosted ? ' hosted' : '');
                 item.setAttribute('role', 'img');
-                item.setAttribute('aria-label', row.name + ': ' + metric.toUpperCase() + ' '
+                item.setAttribute('aria-label', row.name + (row.modelId ? ' (' + row.modelId + ')' : '') + ': ' + metric.toUpperCase() + ' '
                     + row.value.toFixed(dec) + unit + (row.hosted ? '; hosted API' : '') + (row.flagged ? '; high WER warning' : ''));
                 var name = document.createElement('span');
                 name.className = 'score-bar-name';
-                name.title = row.name;
+                var full = row.name + (row.modelId ? ' · ' + row.modelId : '');
+                name.title = full;
                 name.textContent = row.name;
+                if (row.modelId) {  // hosted: the model id called, on its own muted line
+                    var mid = document.createElement('span');
+                    mid.className = 'score-bar-id';
+                    mid.textContent = row.modelId;
+                    name.appendChild(mid);
+                }
                 var track = document.createElement('span');
                 track.className = 'score-bar-track';
                 var fill = document.createElement('span');
@@ -1181,8 +1194,10 @@ def build_scores():
     # Paid APIs join the Default voice board behind a Local / Hosted / Both switch (Tym,
     # 2026-11-02). Same prompts and scorers, so UTMOS / WER compare. Cloning stays local-only:
     # hosted vendors clone a different reference voice, so their SIM is not comparable.
-    from scripts.hosted.catalog import CATALOG as HOSTED_CATALOG, score_aggregates
-    hosted = {HOSTED_CATALOG[slug][0]: agg for slug, agg in
+    from scripts.hosted.catalog import (CATALOG as HOSTED_CATALOG, model_shown,
+                                        model_title, score_aggregates)
+    hosted = {(HOSTED_CATALOG[slug][0], model_shown(slug), model_title(slug)): agg
+              for slug, agg in
               score_aggregates(HOSTED_SCORES_CSV, "default").items()
               if slug in HOSTED_CATALOG}  # board vendors only (a scored test dir never leaks)
     default_tbl = _scores_table(default_models, LISTEN_DEFAULT_DIRS, look, default_cols,
@@ -1202,6 +1217,7 @@ def build_scores():
         '.scores-foot a{color:var(--accent);}'
         '.src-tag{color:var(--muted);font-size:.8em;border:1px solid var(--border);'
         'border-radius:4px;padding:0 .35em;margin-left:.3em;white-space:nowrap}'
+        '.model-id{color:var(--muted);font-size:.82em;margin-left:.35em;white-space:nowrap}'
         '.source-switch{display:flex;align-items:center;gap:.65rem;flex-wrap:wrap;margin:.2rem 0 .6rem}'
         '.subsection[data-source="local"] tr[data-src="hosted"],'
         '.subsection[data-source="hosted"] tr[data-src="local"]{display:none}</style>')

@@ -40,6 +40,80 @@ CATALOG = {
 }
 
 
+# slug -> the exact model id our adapter sends for English (Adapter.model_sent("en")). Several display
+# names are only the company ("Gradium", "Palabra TTS"), so every hosted row also shows this.
+# Kept here, dependency-free, for the Scores page; a test keeps it equal to the adapters.
+MODEL_ID = {
+    "eleven_v4": "eleven_v4",
+    "eleven_v4_turbo": "eleven_v4_turbo",
+    "rime_coda": "coda",
+    "giggy_tts": "giggyspeech",
+    "cartesia_sonic36": "sonic-3.6",
+    "gemini38_flash_tts": "gemini-3.8-flash-tts",
+    "inworld_tts2": "inworld-tts-2",
+    "speechify_simba35": "simba-3.5",
+    "fish_drama3": "drama-3",
+    "voxtral3_tts": "voxtral-mini-tts-3-0",
+    "xai_tts": "xai-tts",
+    "assemblyai_tts1": "assemblyai-tts-1",
+    "soniox_tts2": "tts-rt-v2",
+    "stepaudio3_tts": "stepaudio-3-tts",
+    "smallest_lightning31pro": "lightning_v3.1_pro",
+    "deepgram_flux_tts": "flux-haley-en",
+    "mai_voice21": "MAI-Voice-2.1",
+    "vui_luna": "luna-tts",
+    "openai_gpt4o_mini_tts": "gpt-4o-mini-tts-2025-12-15",
+    "openai_realtime21": "gpt-realtime-2.1",
+    "murf_falcon21": "falcon-2.1",
+    "heygen_voice1": "heygen-voice-1",
+    "minimax_speech28hd": "minimax/speech-2.8-hd",
+    "bland_speech3": "btts-3",
+    "gradium_tts": "default",
+    "async_flash15": "async_flash_v1.5",
+    "palabra_tts": "auto",
+    "resemble_ultra": "resemble-ultra",
+}
+
+
+# Vendors whose API takes no pinned model: the id we send is an alias the vendor resolves to
+# whatever it serves now, so a later re-run may hit a different model under the same label.
+# Checked against each vendor's docs 2026-11-02.
+MODEL_NOTE = {
+    "gradium_tts": "Gradium's production alias (docs: model_name defaults to \"default\"); "
+                   "no pinned version is offered, so Gradium picks the model",
+    "palabra_tts": "Palabra's documented selector (\"use auto to select the best model for the "
+                   "language\"); no other model id is documented, so Palabra picks the model",
+}
+
+
+# Vendors that send a different model id per language (Deepgram encodes voice + language in
+# it). slug -> {lang: id sent}; MODEL_ID holds the English one.
+MODEL_BY_LANG = {
+    "deepgram_flux_tts": {"en": "flux-haley-en", "es": "flux-aina-es", "fr": "flux-arnaud-fr"},
+}
+
+
+def model_shown(slug):
+    """The model id as shown on the boards: the English id sent, flagged when it varies by
+    language, and an unpinned alias says the vendor picks."""
+    return (MODEL_ID[slug] + (" · per language" if slug in MODEL_BY_LANG else "")
+            + (" · vendor picks" if slug in MODEL_NOTE else ""))
+
+
+def model_title(slug):
+    """Hover text for the model id: every id actually sent."""
+    if slug in MODEL_BY_LANG:
+        sent = ", ".join(f"{lang}: {m}" for lang, m in sorted(MODEL_BY_LANG[slug].items()))
+    else:
+        sent = MODEL_ID[slug]
+    return f"model id sent: {sent}" + (f" — {MODEL_NOTE[slug]}" if slug in MODEL_NOTE else "")
+
+
+def label(slug):
+    """Display name plus the model id actually called, e.g. "Rime Coda · coda"."""
+    return f"{CATALOG[slug][0]} · {model_shown(slug)}"
+
+
 def score_aggregates(path, mode):
     """{slug: {"utmos", "wer", "sim": mean or None, "flags": [(pid, flag)], "n": clips}} over
     every scored clip of one lens (all prompts, all takes). Same definition as the Scores page:
