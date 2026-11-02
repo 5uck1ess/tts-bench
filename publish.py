@@ -985,8 +985,9 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
         flagged = agg.get("wer") is not None and agg["wer"] > WER_FAIL_THRESHOLD
         cls = (' class="flagged"' if flagged else "") + f' data-src="{src}"'
         if src == "hosted":
-            name, model_id = m
-            cells = [f'<td data-name="{escape(name)}" data-model="{escape(model_id)}">{escape(name)}'
+            name, model_id, mtitle = m
+            cells = [f'<td data-name="{escape(name)}" data-model="{escape(model_id)}" '
+                     f'title="{escape(mtitle)}">{escape(name)}'
                      f'<code class="model-id">{escape(model_id)}</code> '
                      '<span class="src-tag">hosted</span></td>',
                      '<td class="muted">API</td>', '<td class="muted" data-sort="">—</td>']
@@ -1193,9 +1194,10 @@ def build_scores():
     # Paid APIs join the Default voice board behind a Local / Hosted / Both switch (Tym,
     # 2026-11-02). Same prompts and scorers, so UTMOS / WER compare. Cloning stays local-only:
     # hosted vendors clone a different reference voice, so their SIM is not comparable.
-    from scripts.hosted.catalog import (CATALOG as HOSTED_CATALOG, MODEL_ID as HOSTED_MODEL_ID,
-                                        score_aggregates)
-    hosted = {(HOSTED_CATALOG[slug][0], HOSTED_MODEL_ID[slug]): agg for slug, agg in
+    from scripts.hosted.catalog import (CATALOG as HOSTED_CATALOG, model_shown,
+                                        model_title, score_aggregates)
+    hosted = {(HOSTED_CATALOG[slug][0], model_shown(slug), model_title(slug)): agg
+              for slug, agg in
               score_aggregates(HOSTED_SCORES_CSV, "default").items()
               if slug in HOSTED_CATALOG}  # board vendors only (a scored test dir never leaks)
     default_tbl = _scores_table(default_models, LISTEN_DEFAULT_DIRS, look, default_cols,

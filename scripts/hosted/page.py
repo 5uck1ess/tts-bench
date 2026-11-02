@@ -24,7 +24,7 @@ from html import escape
 
 from scoring.prompts import PROMPTS
 
-from .catalog import CATALOG, label, score_aggregates
+from .catalog import CATALOG, label, model_shown, model_title, score_aggregates
 from .core import OUT
 from .providers import ADAPTERS
 from .speed_sample import BOTH, SKIP, transport
@@ -202,9 +202,9 @@ def _health_td(flags):
 
 def _name_td(slug, via=""):
     """Vendor name plus the model id we called; the chart reads data-name."""
-    model = ADAPTERS[slug].model
+    model = model_shown(slug)
     return (f'<td data-name="{escape(CATALOG[slug][0])}" data-model="{escape(model)}" '
-            f'title="{escape(label(slug))}{via}">'
+            f'title="{escape(model_title(slug))}{via}">'
             f'{escape(CATALOG[slug][0])}<code class="model-id">{escape(model)}</code></td>')
 
 

@@ -1,4 +1,4 @@
-from scripts.hosted.catalog import CATALOG, MODEL_ID, label
+from scripts.hosted.catalog import CATALOG, MODEL_ID, MODEL_NOTE, label
 from scripts.hosted.providers import ADAPTERS
 
 
@@ -9,4 +9,12 @@ def test_model_id_matches_what_the_adapters_send():
 
 
 def test_label_names_the_model_not_just_the_company():
-    assert label("gradium_tts") == "Gradium · default"
+    assert label("rime_coda") == "Rime Coda · coda"
+
+
+def test_unpinned_aliases_say_the_vendor_picks():
+    """Gradium ("default") and Palabra ("auto") take no pinned model id, so the board must not
+    present the alias as if it were a model."""
+    assert label("gradium_tts") == "Gradium · default · vendor picks"
+    assert label("palabra_tts") == "Palabra TTS · auto · vendor picks"
+    assert set(MODEL_NOTE) <= set(CATALOG)

@@ -75,9 +75,30 @@ MODEL_ID = {
 }
 
 
+# Vendors whose API takes no pinned model: the id we send is an alias the vendor resolves to
+# whatever it serves now, so a later re-run may hit a different model under the same label.
+# Checked against each vendor's docs 2026-11-02.
+MODEL_NOTE = {
+    "gradium_tts": "Gradium's production alias (docs: model_name defaults to \"default\"); "
+                   "no pinned version is offered, so Gradium picks the model",
+    "palabra_tts": "Palabra's documented selector (\"use auto to select the best model for the "
+                   "language\"); no other model id is documented, so Palabra picks the model",
+}
+
+
+def model_shown(slug):
+    """The model id as shown on the boards; an unpinned alias says the vendor picks."""
+    return MODEL_ID[slug] + (" · vendor picks" if slug in MODEL_NOTE else "")
+
+
+def model_title(slug):
+    """Hover text for the model id."""
+    return f"model id sent: {MODEL_ID[slug]}" + (f" — {MODEL_NOTE[slug]}" if slug in MODEL_NOTE else "")
+
+
 def label(slug):
-    """Display name plus the model id actually called, e.g. "Gradium · default"."""
-    return f"{CATALOG[slug][0]} · {MODEL_ID[slug]}"
+    """Display name plus the model id actually called, e.g. "Rime Coda · coda"."""
+    return f"{CATALOG[slug][0]} · {model_shown(slug)}"
 
 
 def score_aggregates(path, mode):
