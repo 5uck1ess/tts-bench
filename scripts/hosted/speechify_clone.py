@@ -29,8 +29,8 @@ def _h():
 
 
 def challenge(full_name):
-    r = httpx.post(f"{API}/consent-challenges", headers=_h(), json={"full_name": full_name},
-                   timeout=30)
+    with core.new_client() as c:  # bounded transport
+        r = c.post(f"{API}/consent-challenges", headers=_h(), json={"full_name": full_name})
     if r.status_code >= 300:
         sys.exit(f"HTTP {r.status_code}: {r.text[:400]}")
     j = r.json()
@@ -43,7 +43,8 @@ def challenge(full_name):
 def create():
     ch = json.loads(STATE.read_text(encoding="utf-8"))
     ref = core.ref("30")
-    r = httpx.post(API, headers=_h(), timeout=120,
+    with core.new_client() as c:
+        r = c.post(API, headers=_h(),
                    data={"name": "tts-bench reference voice", "gender": "male",
                          "consent_challenge_id": ch["id"], "locale": "en-US"},
                    files={"sample": ("reference.wav", ref["wav"], "audio/wav"),

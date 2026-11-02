@@ -396,10 +396,34 @@ def head(r, n):
     return out[:n]
 
 
+class _BoundedStream(httpx.SyncByteStream):
+    def __init__(self, inner, url):
+        self._inner, self._url = inner, url
+
+    def __iter__(self):
+        t0, n = time.perf_counter(), 0
+        for b in self._inner:
+            n += len(b)
+            guard(n, t0, self._url, MAX_RAW_BYTES)
+            yield b
+
+    def close(self):
+        self._inner.close()
+
+
+class BoundedTransport(httpx.HTTPTransport):
+    """HTTPTransport whose response bodies stop at MAX_RAW_BYTES / MAX_CALL_S."""
+
+    def handle_request(self, request):
+        r = super().handle_request(request)
+        r.stream = _BoundedStream(r.stream, request.url.host)
+        return r
+
+
 def new_client():
     # identity: no compressed bodies, so the first chunk is never held back by a decoder.
     # keepalive_expiry above the longest min_interval, or paced vendors reconnect every call
     # and "warm" calls are really cold ones.
-    return httpx.Client(timeout=httpx.Timeout(120.0, connect=15.0), http2=False,
-                        limits=httpx.Limits(keepalive_expiry=60.0),
+    return httpx.Client(timeout=httpx.Timeout(120.0, connect=15.0),
+                        transport=BoundedTransport(limits=httpx.Limits(keepalive_expiry=60.0)),
                         headers={"Accept-Encoding": "identity"})

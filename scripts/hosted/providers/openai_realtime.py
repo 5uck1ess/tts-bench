@@ -46,6 +46,7 @@ class OpenAIRealtime21(Adapter):
             "audio": {"output": {"format": {"type": "audio/pcm", "rate": self.sr},
                                  "voice": self.voice("en")}}}}))
         while True:
+            core.guard(0, t0, self.slug)  # session setup can't stall past the call ceiling
             ev = json.loads(ws.recv(timeout=30))
             if ev["type"] == "error":
                 raise RuntimeError(f"{self.slug}: {ev.get('error')}")

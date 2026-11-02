@@ -39,7 +39,14 @@ class WsMixin:
     def ws_recv(self, ws):  # yields audio bytes until the end-of-utterance message
         raise NotImplementedError
 
+    _deadline = None
+
     def _j(self, ws, timeout=60):
+        if self._deadline is not None:
+            left = self._deadline - time.perf_counter()
+            if left <= 0:
+                raise RuntimeError(f"{self.slug}: call over {core.MAX_CALL_S} s, aborted")
+            timeout = min(timeout, left)
         m = ws.recv(timeout=timeout)
         return m if isinstance(m, bytes) else json.loads(m)
 
@@ -47,6 +54,7 @@ class WsMixin:
         if self._socks is None:
             self._socks = {}
         cold, marks = lang not in self._socks, {}
+        self._deadline = time.perf_counter() + core.MAX_CALL_S  # covers connect + session setup
         if cold:
             t = time.perf_counter()
             self._socks[lang] = self.ws_open(lang)
