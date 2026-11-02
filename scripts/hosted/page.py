@@ -96,6 +96,7 @@ STYLE = """<style>
 .hgrid.ab{grid-template-columns:minmax(9rem,1.2fr) repeat(3,auto) minmax(10rem,2fr)}
 .hgrid.det{grid-template-columns:minmax(10rem,1.5fr) repeat(6,auto)}
 .hgrid.clone{grid-template-columns:minmax(10rem,1.5fr) repeat(7,auto)}
+.hgrid.dscore{grid-template-columns:minmax(10rem,1.5fr) repeat(4,auto)}
 .hgrid.listen{grid-template-columns:minmax(9rem,1fr) repeat(3,minmax(0,1.3fr));margin:.4rem 0 .9rem}
 .hgrid.listen audio{width:100%;height:32px}
 .hgrid .wide{grid-column:span 3}
@@ -114,7 +115,7 @@ details.panel .summ-text{color:var(--muted);font-style:italic;font-weight:400}
 .ref-row .ref-label{color:var(--accent);font-weight:600}
 @media(max-width:760px){
  .hgrid .lbl{display:inline}
- .hgrid.ab,.hgrid.det,.hgrid.clone{grid-template-columns:1fr 1fr}
+ .hgrid.ab,.hgrid.det,.hgrid.clone,.hgrid.dscore{grid-template-columns:1fr 1fr}
  .hgrid>div.h{display:none}
  .hgrid>div.name{grid-column:1/-1;margin-top:.6rem;font-weight:600}
  .hgrid.ab>div.note{grid-column:1/-1}
@@ -125,9 +126,14 @@ details.panel .summ-text{color:var(--muted);font-style:italic;font-weight:400}
 
 TAB_SCRIPT = """<script>
 (function(){
+  // Only one clip plays at a time, same as the Listen page. 'play' doesn't bubble, so capture it.
+  document.addEventListener('play', function(e){
+    document.querySelectorAll('audio').forEach(function(a){ if(a !== e.target) a.pause(); });
+  }, true);
   var tabs = document.querySelectorAll('#mode-tabs .lens-tab');
   var subs = document.querySelectorAll('.subsection[data-mode]');
   function show(m){
+    document.querySelectorAll('audio').forEach(function(a){ a.pause(); });
     subs.forEach(function(s){ s.style.display = s.dataset.mode === m ? '' : 'none'; });
     tabs.forEach(function(t){ t.classList.toggle('active', t.dataset.mode === m); });
     try { history.replaceState(null, '', '#' + m); } catch (e) {}
@@ -323,6 +329,19 @@ def _ab_table(samples):
     return '<div class="hgrid ab">' + "".join(cells) + "</div>"
 
 
+def _default_score_table(rows):
+    """Score summary above the default-voice clips, in the same layout as the cloning tab's."""
+    head = ["Model", "UTMOS ↑", "WER en ↓", "WER fr/es ↓", "Langs"]
+    cells = [f'<div class="h">{h}</div>' for h in head]
+    for d in sorted(rows, key=lambda d: -(d["um"] if d["um"] is not None else -1)):
+        vals = [_fmt(d["um"], ".3f"), _fmt(d["we"], ".3f"), _fmt(d["wx"], ".3f"),
+                escape(" ".join(sorted(d["cls"].langs)))]
+        cells.append(f'<div class="name">{escape(d["name"])}</div>')
+        cells += [f'<div class="{"num" if i < 3 else ""}">{_lbl(head[i + 1])}{v}</div>'
+                  for i, v in enumerate(vals)]
+    return '<div class="hgrid dscore">' + "".join(cells) + "</div>"
+
+
 def _clone_slugs():
     from .core import CLONES
     reg = json.loads(CLONES.read_text(encoding="utf-8")) if CLONES.exists() else {}
@@ -442,8 +461,10 @@ def build(worktree, head, foot):
         '<span class="muted">· speed, naturalness, intelligibility, price</span></h3>',
         _main_table(rows), '</div>',
         '<div class="subsection" data-mode="listen" style="display:none">',
-        '<div class="meta">Every take of every prompt, nothing cherry-picked.</div>',
-        _listen(worktree), '</div>',
+        '<div class="meta">Every take of every prompt, nothing cherry-picked. Scores are the '
+        'same numbers as the Board: UTMOS median and WER mean over the English prompts (fr/es: prompts 5-6).</div>',
+        _default_score_table(rows),
+        '<h3 class="sub-head">Listen: default voice</h3>', _listen(worktree), '</div>',
         '<div class="subsection cloning" data-mode="cloning" style="display:none">',
         _clone_intro(worktree), _clone_table(scores),
         '<h3 class="sub-head">Listen: cloned voice</h3>', _listen(worktree, "cloning"), '</div>',
