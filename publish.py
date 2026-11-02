@@ -553,7 +553,7 @@ def _top_controls(active):
     tabs = "".join(
         f'<a class="lens-tab{" active" if s == active else ""}" href="{s}.html">{l}</a>'
         for s, l in (("listen", "Listen"), ("speed", "Speed"), ("scores", "Scores"),
-                     ("capabilities", "Capabilities"))
+                     ("capabilities", "Capabilities"), ("hosted", "Hosted"))
     )
     # Vote is an external link to the HF arena (not a local data view), so it
     # opens in a new tab and never takes the "active" state.
@@ -1413,6 +1413,10 @@ def build_landing():
            '<p>What each model can actually do — voice cloning, cross-lingual cloning, '
            'languages, expressive control, sample rate, license, CPU support. Toggle '
            'filters that combine, plus sort by any column.</p></a></div>',
+           '<div class="home-card"><a href="hosted.html"><h2>▶ Hosted</h2>'
+           '<p>Paid TTS APIs (ElevenLabs, Cartesia, Gemini, OpenAI and 22 more) on the same '
+           'prompts: clips, time to first speech, scores and price. A separate board, never '
+           'ranked against the local models.</p></a></div>',
            '<div class="home-card"><a href="https://5uck1ess-tts-arena.hf.space" '
            'target="_blank" rel="noopener"><h2>🗳 Vote ↗</h2>'
            '<p>Hear two clips blind and pick the better one — default voice or voice '
@@ -1514,6 +1518,30 @@ def build_archive_index():
     (WORKTREE / "archive.html").write_text("\n".join(out), encoding="utf-8")
 
 
+def build_hosted():
+    """Build hosted.html (docs/hosted.md) — skipped when there are no hosted clips."""
+    # Needs the sweep's sidecars, which live only on the Windows collector (hosted/ is gitignored);
+    # elsewhere the published hosted.html is left as it is.
+    if not list((REPO / "hosted").glob("*/default/p1_t1.json")):
+        return
+    try:
+        from scripts.hosted import page
+    except ImportError as e:  # hosted venv deps (websockets) absent on this machine
+        print(f"  skip hosted.html: {e}")
+        return
+    head = "\n".join(['<!doctype html>', '<html lang="en"><head><meta charset="utf-8">',
+                      '<meta name="viewport" content="width=device-width, initial-scale=1">',
+                      '<title>tts-bench — Hosted APIs</title>', FAVICON_LINK, STYLE, LOGO_STYLE,
+                      _SCORES_STYLE_HOSTED, '</head><body>', _top_controls("hosted"),
+                      LOGO_HEADER])
+    page.build(WORKTREE, head, SCRIPT + "\n</body></html>")
+
+
+_SCORES_STYLE_HOSTED = ('<style>.health-flag{color:var(--fail);font-size:.85em}'
+                        '.scores-foot{color:var(--muted);font-size:.85em;margin-top:1rem}'
+                        'details.panel{margin:.4rem 0}</style>')
+
+
 def build_top_level():
     """Regenerate every top-level landing page from the canonical dirs in the worktree."""
     _copy_branding_assets()
@@ -1521,6 +1549,7 @@ def build_top_level():
     build_speed_hub()
     build_scores()
     build_capabilities()
+    build_hosted()
     build_archive_index()
     build_landing()  # last: counts depend on the dirs, not the other pages
 

@@ -64,5 +64,5 @@ _listen_*/
 *.bak
 
 # Hosted-API samples (scripts/collect_hosted.py) — unpublished, API ToS unchecked.
-hosted/
+/hosted/
 reference/.refcheck.json
