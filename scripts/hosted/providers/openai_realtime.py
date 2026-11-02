@@ -54,6 +54,18 @@ class OpenAIRealtime21(Adapter):
         return ws, True
 
     def synth_ws(self, text, lang):
+        try:
+            return self._synth_once(text, lang)
+        except Exception:
+            # a closed or mid-response session must not be reused: next call reconnects
+            ws, self._ws = self._ws, None
+            try:
+                ws and ws.close()
+            except Exception:  # noqa: BLE001
+                pass
+            raise
+
+    def _synth_once(self, text, lang):
         ws, cold = self._session()
         t0 = time.perf_counter()
         ws.send(json.dumps({"type": "response.create", "response": {

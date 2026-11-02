@@ -361,5 +361,8 @@ def run_cell(client, ad, lens, pid, lang, text, take):
 
 def new_client():
     # identity: no compressed bodies, so the first chunk is never held back by a decoder.
+    # keepalive_expiry above the longest min_interval, or paced vendors reconnect every call
+    # and "warm" calls are really cold ones.
     return httpx.Client(timeout=httpx.Timeout(120.0, connect=15.0), http2=False,
+                        limits=httpx.Limits(keepalive_expiry=60.0),
                         headers={"Accept-Encoding": "identity"})

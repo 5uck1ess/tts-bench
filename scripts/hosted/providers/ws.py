@@ -51,9 +51,9 @@ class WsMixin:
             marks["ws_connect_ms"] = round((time.perf_counter() - t) * 1000, 1)
         ws, voice = self._socks[lang], self.voice(lang)
         t0 = time.perf_counter()
-        self.ws_send(ws, text, lang, voice)
         chunks, arrivals, n, ttfa = [], [], 0, None
         try:
+            self.ws_send(ws, text, lang, voice)
             for b in self.ws_recv(ws):
                 if b:
                     now = (time.perf_counter() - t0) * 1000
@@ -62,7 +62,12 @@ class WsMixin:
                     n += len(b)
                     arrivals.append((n, now))
         except Exception:
-            self._socks.pop(lang, None)  # don't reuse a socket left mid-utterance
+            # closed or left mid-utterance: drop it so the next call reconnects
+            dead = self._socks.pop(lang, None)
+            try:
+                dead and dead.close()
+            except Exception:  # noqa: BLE001
+                pass
             raise
         # Total = last audio byte, not the end-of-utterance message: Smallest sends "complete"
         # ~4 s after its final chunk, which isn't delivery time.

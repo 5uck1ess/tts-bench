@@ -131,7 +131,7 @@ def _samples():
                 rows.append(json.loads(line))
             except ValueError:
                 pass
-    return [r for r in rows if r.get("call", 0) > 0]  # call 0 = failed warmup, counted below
+    return rows  # call 0 rows are failed warmups: counted as errors in _speed
 
 
 def _scores():
@@ -145,9 +145,13 @@ def _scores():
 
 def _speed(samples, slug, tr):
     rs = [r for r in samples if r["slug"] == slug and r["transport"] == tr]
-    ok = [r["ttfa_speech_ms"] for r in rs if not r["error"] and r["ttfa_speech_ms"] is not None]
+    err = sum(1 for r in rs if r["error"])
+    # Warm ranking = calls on a reused connection. A call that had to reconnect (cold) is neither
+    # an error nor a warm sample; neither is a success with no speech onset to time.
+    ok = [r["ttfa_speech_ms"] for r in rs if not r["error"] and not r.get("cold")
+          and r.get("call", 0) > 0 and r["ttfa_speech_ms"] is not None]
     days = {r["ts"][:10] for r in rs}
-    return dict(med=_med(ok), p90=_p90(ok), n=len(ok), err=len(rs) - len(ok), days=len(days))
+    return dict(med=_med(ok), p90=_p90(ok), n=len(ok), err=err, days=len(days))
 
 
 def _health_td(rs):
@@ -177,7 +181,8 @@ def _main_table(samples, scores):
         if not sp["n"]:  # no sampler data yet: warm sweep calls, marked
             xs = [c["ttfa_speech_ms"] for c in cars
                   if c.get("connection") == "warm" and c.get("ttfa_speech_ms") is not None]
-            sp = dict(med=_med(xs), p90=_p90(xs), n=len(xs), err=0, days=0, sweep=True)
+            sp = dict(med=_med(xs), p90=_p90(xs), n=len(xs), err=sp["err"], days=sp["days"],
+                      sweep=True)  # keep the sampler's failures visible
         p3 = [c["total_ms"] / 1000 for c in cars if c["prompt_id"] == 3 and c.get("total_ms")]
         rs = [r for r in scores.get(slug, []) if r["mode"] == "default"]
         en = [r for r in rs if r["prompt_id"] in ("1", "2", "3", "4")]
