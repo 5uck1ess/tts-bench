@@ -30,9 +30,14 @@ class GiggyTTS(Adapter):
             self._voices = r.json()["voices"]
         return self._voices
 
+    # Dawn F., public catalog voice, named by Giggy (Henry, 2026-11-02) since its docs publish no
+    # quickstart voice. Was the rule fallback (first English catalog voice, Aaliyah Carter).
+    VOICE = {"en": "205226e8-9e86-5532-90ee-5c3441002005"}
+
     def voice(self, lang):
-        # No quickstart voice id is published; rule fallback = first catalog voice whose
-        # labels.language is exactly this language.
+        if lang in self.VOICE:
+            return self.VOICE[lang]
+        # Otherwise rule fallback = first catalog voice whose labels.language is this language.
         for v in self._catalog():
             if (v.get("labels") or {}).get("language", "").lower() == LANG_NAME[lang]:
                 return v["voice_id"]

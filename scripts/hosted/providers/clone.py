@@ -5,7 +5,7 @@ Read from each vendor's API docs 2026-11-01. Every vendor gets the LONGEST cut i
 MIN_REC records each vendor's documented minimum / recommended seconds for the page.
 
 No API cloning on our route (listed on the page, not run): Rime (enterprise training only),
-Giggy + AssemblyAI (dashboard only), Deepgram (none), Murf (Enterprise plan), OpenAI (sales-gated),
+Deepgram (none), Murf (Enterprise plan), OpenAI (sales-gated),
 Microsoft MAI (Limited Access approval + its own consent statement), MiniMax via OpenRouter (no
 cloning on that route), Speechify (needs a live consent recording: scripts/hosted/speechify_clone).
 """
@@ -356,3 +356,30 @@ def _resemble(self, client, ref):
 
 _setup(ResembleUltra, "60", _resemble)
 MIN_REC["resemble_ultra"] = ("5", "≤60")
+
+
+# Giggy: no clone endpoint in the API (openapi.json 2026-11-02 has only GET /voices, /my-voices).
+# Voice made in the web app (3-10 s upload, English) from the 10 s cut; uuid in _private/clones.json.
+from .giggy import GiggyTTS  # noqa: E402
+
+
+def _giggy(self, client, ref):
+    raise RuntimeError("make the clone in Giggy's web app and record its uuid in clones.json")
+
+
+_setup(GiggyTTS, "10", _giggy)
+MIN_REC["giggy_tts"] = ("3", "3–10")
+
+
+# AssemblyAI: cloning in the dashboard only (3-30 s upload, 10-20 s recommended, "the language
+# you'll generate speech in"). Made from the 30 s cut, trimmed to 19 s in the dashboard; English.
+# AssemblyTTS1WS (the board's transport) inherits this.
+from .batch_b import AssemblyTTS1  # noqa: E402
+
+
+def _assembly(self, client, ref):
+    raise RuntimeError("make the clone in AssemblyAI's dashboard and record its id in clones.json")
+
+
+_setup(AssemblyTTS1, "30", _assembly, langs={"en"})
+MIN_REC["assemblyai_tts1"] = ("3", "10–20")

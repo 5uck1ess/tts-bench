@@ -298,6 +298,10 @@ def prepare_clone(client, ad, recreate=False):
     hit = reg.get(ad.slug)
     if hit and hit.get("cut") == r["cut"] and not recreate:
         vid = hit["voice_id"]
+        # A console-made clone may have been trimmed in the vendor's UI (AssemblyAI: 24.8 s cut
+        # -> 19 s); the registry's seconds is what the vendor got, so sidecars report that.
+        if hit.get("seconds") is not None:
+            ad.clone_ref = r = {**r, "seconds": hit["seconds"]}
     else:
         vid = ad.create_clone(client, r)
         reg[ad.slug] = {"voice_id": vid, "cut": r["cut"], "seconds": r["seconds"],
