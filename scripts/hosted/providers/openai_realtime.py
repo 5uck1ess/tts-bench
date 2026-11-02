@@ -8,6 +8,8 @@ import time
 
 from websockets.sync.client import connect
 
+from .. import core
+
 from ..core import Adapter, _first_speech_ms
 
 INSTRUCTIONS = ("You are a text-to-speech engine. Read the user's text aloud exactly as written, "
@@ -37,7 +39,7 @@ class OpenAIRealtime21(Adapter):
         t0 = time.perf_counter()
         ws = connect(f"wss://api.openai.com/v1/realtime?model={self.model}",
                      additional_headers={"Authorization": f"Bearer {self.key}"},
-                     max_size=None, open_timeout=15)
+                     max_size=core.MAX_RAW_BYTES, open_timeout=15)
         ws.send(json.dumps({"type": "session.update", "session": {
             "type": "realtime", "model": self.model, "output_modalities": ["audio"],
             "instructions": INSTRUCTIONS,
@@ -75,6 +77,7 @@ class OpenAIRealtime21(Adapter):
         chunks, arrivals, nbytes, ttfa, transcript = [], [], 0, None, ""
         while True:
             ev = json.loads(ws.recv(timeout=120))
+            core.guard(nbytes, t0, self.slug)  # time ceiling also covers audio-less events
             t = ev["type"]
             if t == "response.output_audio.delta":
                 now = (time.perf_counter() - t0) * 1000
@@ -82,6 +85,7 @@ class OpenAIRealtime21(Adapter):
                 b = base64.b64decode(ev["delta"])
                 chunks.append(b)
                 nbytes += len(b)
+                core.guard(nbytes, t0, self.slug)
                 arrivals.append((nbytes, now))
             elif t == "response.output_audio_transcript.done":
                 transcript = ev.get("transcript", "")

@@ -15,6 +15,8 @@ from urllib.parse import urlencode
 
 from websockets.sync.client import connect
 
+from .. import core
+
 from ..core import _first_speech_ms
 from .batch_a import CartesiaSonic36, InworldTTS2
 from .batch_b import (AssemblyTTS1, DeepgramFluxTTS, SmallestLightning31Pro, SonioxTTS2,
@@ -55,11 +57,13 @@ class WsMixin:
         try:
             self.ws_send(ws, text, lang, voice)
             for b in self.ws_recv(ws):
+                core.guard(n, t0, self.slug)  # time ceiling also covers audio-less messages
                 if b:
                     now = (time.perf_counter() - t0) * 1000
                     ttfa = ttfa or now
                     chunks.append(b)
                     n += len(b)
+                    core.guard(n, t0, self.slug)
                     arrivals.append((n, now))
         except Exception:
             # closed or left mid-utterance: drop it so the next call reconnects
@@ -84,7 +88,7 @@ class WsMixin:
 class CartesiaSonic36WS(WsMixin, CartesiaSonic36):
     def ws_open(self, lang):
         return connect("wss://api.cartesia.ai/tts/websocket?" + urlencode(
-            {"api_key": self.key, "cartesia_version": "2026-08-14"}), max_size=None)
+            {"api_key": self.key, "cartesia_version": "2026-08-14"}), max_size=core.MAX_RAW_BYTES)
 
     def ws_send(self, ws, text, lang, voice):
         ws.send(json.dumps({"model_id": self.model, "transcript": text, "language": lang,
@@ -108,7 +112,7 @@ class DeepgramFluxTTSWS(WsMixin, DeepgramFluxTTS):
     def ws_open(self, lang):
         return connect("wss://api.deepgram.com/v2/speak?" + urlencode(
             {"model": self.model_sent(lang), "encoding": "linear16", "sample_rate": self.sr}),
-            additional_headers={"Authorization": f"Token {self.key}"}, max_size=None)
+            additional_headers={"Authorization": f"Token {self.key}"}, max_size=core.MAX_RAW_BYTES)
 
     def ws_send(self, ws, text, lang, voice):
         ws.send(json.dumps({"type": "Speak", "text": text}))
@@ -130,7 +134,7 @@ class XaiTTSWS(WsMixin, XaiTTS):
         return connect("wss://api.x.ai/v1/tts?" + urlencode(
             {"language": self.LANG[lang], "voice": self.voice(lang), "codec": "pcm",
              "sample_rate": self.sr}),
-            additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=None)
+            additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=core.MAX_RAW_BYTES)
 
     def ws_send(self, ws, text, lang, voice):
         ws.send(json.dumps({"type": "text.delta", "delta": text}))
@@ -152,7 +156,7 @@ class AssemblyTTS1WS(WsMixin, AssemblyTTS1):
         ws = connect("wss://tts.us.assemblyai.com/v1/ws?" + urlencode(
             {"voice_id": self.voice(lang), "language": self.LANG[lang], "sample_rate": self.sr,
              "encoding": "pcm_s16le"}),
-            additional_headers={"Authorization": self.key}, max_size=None)
+            additional_headers={"Authorization": self.key}, max_size=core.MAX_RAW_BYTES)
         while self._j(ws).get("type") != "Begin":
             pass
         return ws
@@ -178,7 +182,7 @@ class AssemblyTTS1WS(WsMixin, AssemblyTTS1):
 class InworldTTS2WS(WsMixin, InworldTTS2):
     def ws_open(self, lang):
         return connect("wss://api.inworld.ai/tts/v1/voice:streamBidirectional",
-                       additional_headers={"Authorization": f"Basic {self.key}"}, max_size=None)
+                       additional_headers={"Authorization": f"Basic {self.key}"}, max_size=core.MAX_RAW_BYTES)
 
     def ws_send(self, ws, text, lang, voice):
         cid = uuid.uuid4().hex[:12]
@@ -206,7 +210,7 @@ class InworldTTS2WS(WsMixin, InworldTTS2):
 class SonioxTTS2WS(WsMixin, SonioxTTS2):
     def ws_open(self, lang):
         return connect("wss://tts-rt.soniox.com/tts-websocket",
-                       additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=None)
+                       additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=core.MAX_RAW_BYTES)
 
     def ws_send(self, ws, text, lang, voice):
         sid = uuid.uuid4().hex[:12]
@@ -229,7 +233,7 @@ class SonioxTTS2WS(WsMixin, SonioxTTS2):
 class SmallestLightning31ProWS(WsMixin, SmallestLightning31Pro):
     def ws_open(self, lang):
         return connect("wss://api.smallest.ai/waves/v1/tts/live",
-                       additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=None)
+                       additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=core.MAX_RAW_BYTES)
 
     def ws_send(self, ws, text, lang, voice):
         ws.send(json.dumps({"text": text, "voice_id": voice, "model": self.model,
@@ -251,7 +255,7 @@ class MurfFalcon21WS(WsMixin, MurfFalcon21):
     def ws_open(self, lang):
         return connect("wss://global.api.murf.ai/v1/speech/stream-input?" + urlencode(
             {"api-key": self.key, "model": self.model, "sample_rate": self.sr,
-             "channel_type": "MONO", "format": "PCM"}), max_size=None)
+             "channel_type": "MONO", "format": "PCM"}), max_size=core.MAX_RAW_BYTES)
 
     def ws_send(self, ws, text, lang, voice):
         cid = uuid.uuid4().hex[:12]
@@ -275,7 +279,7 @@ class StepAudio3TTSWS(WsMixin, StepAudio3TTS):
     socket surfaces as an error row and the next call reconnects (WsMixin pops it)."""
     def ws_open(self, lang):
         ws = connect(f"wss://api.stepfun.ai/v1/realtime/audio?model={self.model}",
-                     additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=None)
+                     additional_headers={"Authorization": f"Bearer {self.key}"}, max_size=core.MAX_RAW_BYTES)
         self._sid = self._j(ws)["data"]["session_id"]
         ws.send(json.dumps({"type": "tts.create", "data": {
             "session_id": self._sid, "voice_id": self.voice(lang), "response_format": "pcm",

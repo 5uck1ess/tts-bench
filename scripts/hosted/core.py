@@ -202,24 +202,25 @@ def synth(client, ad, text, lang):
                        extensions={"trace": _trace(marks, t0)}) as r:
         t_headers = (time.perf_counter() - t0) * 1000
         if r.status_code != 200:
-            body = r.read()[:600]
+            body = head(r, 600)
             raise RuntimeError(f"{ad.slug}: HTTP {r.status_code}: {body!r}")
         ctype = r.headers.get("content-type", "")
         if type(ad).audio_chunks is Adapter.audio_chunks and ("json" in ctype or "text/" in ctype):
             # A raw-audio adapter got a JSON/text body with HTTP 200: an error envelope, not audio.
-            raise RuntimeError(f"{ad.slug}: expected audio, got {ctype}: {r.read()[:300]!r}")
+            raise RuntimeError(f"{ad.slug}: expected audio, got {ctype}: {head(r, 300)!r}")
         ad.on_headers(r.headers)
         # iter_bytes = as-received chunks with Content-Encoding (gzip on Gemini's SSE) decoded;
         # iter_raw would hand back compressed bytes. Neither applies a fixed read size.
         arrivals = []  # (byte offset where the chunk ends, arrival ms)
         nbytes = 0
-        for chunk in ad.audio_chunks(r.iter_bytes()):
+        for chunk in ad.audio_chunks(bounded(r.iter_bytes(), t0, ad.slug)):
             if chunk:
                 now = (time.perf_counter() - t0) * 1000
                 if ttfa is None:
                     ttfa = now
                 chunks.append(chunk)
                 nbytes += len(chunk)
+                guard(nbytes, t0, ad.slug)
                 arrivals.append((nbytes, now))
         total = (time.perf_counter() - t0) * 1000
         headers = dict(r.headers)
@@ -357,6 +358,42 @@ def run_cell(client, ad, lens, pid, lang, text, take):
           f"ttfa {ttfa:>5}ms speech {sp:>5}ms total {res['total_ms']:6.0f}ms  "
           f"{base['connection']}")
     return base
+
+
+# Ceilings for one synthesis call. The longest bench clip is ~30 s; at 48 kHz float32 that is
+# ~6 MB, so 64 MB of audio or 5 minutes means the vendor is running away, not still speaking.
+MAX_AUDIO_BYTES = 64 * 2**20
+MAX_RAW_BYTES = 2 * MAX_AUDIO_BYTES  # wire bytes: base64/JSON envelopes inflate audio ~4/3
+MAX_CALL_S = 300
+
+
+def guard(nbytes, t0, slug, limit=None):
+    """Raise once a call passes the byte or time ceiling. t0 is a perf_counter() start."""
+    limit = limit or MAX_AUDIO_BYTES
+    if nbytes > limit:
+        raise RuntimeError(f"{slug}: response over {limit // 2**20} MB, aborted")
+    if time.perf_counter() - t0 > MAX_CALL_S:
+        raise RuntimeError(f"{slug}: call over {MAX_CALL_S} s, aborted")
+
+
+def bounded(it, t0, slug, limit=None):
+    """Pass chunks through, raising before the running total passes the ceilings."""
+    limit = limit or MAX_RAW_BYTES
+    n = 0
+    for b in it:
+        n += len(b)
+        guard(n, t0, slug, limit)
+        yield b
+
+
+def head(r, n):
+    """First n bytes of a streamed body without reading the rest of it."""
+    out = b""
+    for b in r.iter_bytes():
+        out += b
+        if len(out) >= n:
+            break
+    return out[:n]
 
 
 def new_client():
