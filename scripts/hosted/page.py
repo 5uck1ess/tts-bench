@@ -24,7 +24,7 @@ from html import escape
 
 from scoring.prompts import PROMPTS
 
-from .catalog import CATALOG, score_aggregates
+from .catalog import CATALOG, label, score_aggregates
 from .core import OUT
 from .providers import ADAPTERS
 from .speed_sample import BOTH, SKIP, transport
@@ -62,6 +62,7 @@ NO_CLONE = {
 }
 
 STYLE = """<style>
+.model-id{color:var(--muted);font-size:.82em;margin-left:.35em;white-space:nowrap}
 .hgrid{display:grid;gap:.4rem .9rem;align-items:center;margin:.6rem 0 1.2rem;font-size:.92em}
 .hgrid>div.h{color:var(--muted);font-size:.85em;border-bottom:1px solid var(--border);padding-bottom:.3rem}
 .hgrid.ab{grid-template-columns:minmax(9rem,1.2fr) repeat(3,auto) minmax(10rem,2fr)}
@@ -199,6 +200,14 @@ def _health_td(flags):
             f'trusting">⚠ {escape(label)}</span></td>')
 
 
+def _name_td(slug, via=""):
+    """Vendor name plus the model id we called; the chart reads data-name."""
+    model = ADAPTERS[slug].model
+    return (f'<td data-name="{escape(CATALOG[slug][0])}" data-model="{escape(model)}" '
+            f'title="{escape(label(slug))}{via}">'
+            f'{escape(CATALOG[slug][0])}<code class="model-id">{escape(model)}</code></td>')
+
+
 def _metric_td(key, v, spec=".3f"):
     if v is None:
         return f'<td class="num muted" data-metric="{key}" data-sort="">—</td>'
@@ -259,7 +268,7 @@ def _main_table(rows):
         ptitle = f' title="{escape(d["pnote"])}"' if d["pnote"] else ""
         ms = sp["med"]
         body.append(
-            f'<tr><td title="model id: {escape(cls.model)}{via}">{escape(d["name"])}</td>'
+            f'<tr>{_name_td(d["slug"], via)}'
             + _metric_td("utmos", d["um"]) + _metric_td("wer", d["we"]) + _health_td(d["flags"])
             + f'<td class="num" data-metric="ttfa"{_ds(ms)} title="{escape(tip)}">{_ms(ms)}{mark}</td>'
             f'<td class="num"{_ds(_price_sort(d["price"]))}{ptitle}>{escape(d["price"])}{note}'
@@ -333,7 +342,7 @@ def _clone_table(scores):
         sc = scores["cloning"].get(slug, {})
         mn, rec = MIN_REC.get(slug, ("—", "—"))
         body.append(
-            f'<tr><td>{escape(CATALOG[slug][0])}</td>' + _metric_td("sim", sc.get("sim"))
+            f'<tr>{_name_td(slug)}' + _metric_td("sim", sc.get("sim"))
             + _metric_td("utmos", sc.get("utmos")) + _metric_td("wer", sc.get("wer"))
             + _health_td(sc.get("flags", []))
             + f'<td class="num" data-sort="{info["seconds"]}">{info["seconds"]:g} s</td>'

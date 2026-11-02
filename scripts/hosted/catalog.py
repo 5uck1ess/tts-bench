@@ -40,6 +40,46 @@ CATALOG = {
 }
 
 
+# slug -> the exact model id our adapter sends (scripts/hosted/providers). Several display
+# names are only the company ("Gradium", "Palabra TTS"), so every hosted row also shows this.
+# Kept here, dependency-free, for the Scores page; a test keeps it equal to the adapters.
+MODEL_ID = {
+    "eleven_v4": "eleven_v4",
+    "eleven_v4_turbo": "eleven_v4_turbo",
+    "rime_coda": "coda",
+    "giggy_tts": "giggyspeech",
+    "cartesia_sonic36": "sonic-3.6",
+    "gemini38_flash_tts": "gemini-3.8-flash-tts",
+    "inworld_tts2": "inworld-tts-2",
+    "speechify_simba35": "simba-3.5",
+    "fish_drama3": "drama-3",
+    "voxtral3_tts": "voxtral-mini-tts-3-0",
+    "xai_tts": "xai-tts",
+    "assemblyai_tts1": "assemblyai-tts-1",
+    "soniox_tts2": "tts-rt-v2",
+    "stepaudio3_tts": "stepaudio-3-tts",
+    "smallest_lightning31pro": "lightning_v3.1_pro",
+    "deepgram_flux_tts": "flux-tts",
+    "mai_voice21": "MAI-Voice-2.1",
+    "vui_luna": "luna-tts",
+    "openai_gpt4o_mini_tts": "gpt-4o-mini-tts-2025-12-15",
+    "openai_realtime21": "gpt-realtime-2.1",
+    "murf_falcon21": "falcon-2.1",
+    "heygen_voice1": "heygen-voice-1",
+    "minimax_speech28hd": "minimax/speech-2.8-hd",
+    "bland_speech3": "btts-3",
+    "gradium_tts": "default",
+    "async_flash15": "async_flash_v1.5",
+    "palabra_tts": "auto",
+    "resemble_ultra": "resemble-ultra",
+}
+
+
+def label(slug):
+    """Display name plus the model id actually called, e.g. "Gradium · default"."""
+    return f"{CATALOG[slug][0]} · {MODEL_ID[slug]}"
+
+
 def score_aggregates(path, mode):
     """{slug: {"utmos", "wer", "sim": mean or None, "flags": [(pid, flag)], "n": clips}} over
     every scored clip of one lens (all prompts, all takes). Same definition as the Scores page:

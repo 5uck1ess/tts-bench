@@ -123,7 +123,7 @@ def test_build_scores_adds_hosted_rows_to_default_board_only(tmp_path, monkeypat
     html = (tmp_path / "scores.html").read_text(encoding="utf-8")
     default, cloning = html.split('<div class="subsection cloning"', 1)
     assert html.count('data-src="hosted"') == 1 + 1  # one row + the CSS selector
-    assert 'data-name="Inworld TTS-2"' in default and 'data-src="hosted"' in default
+    assert 'data-name="Inworld TTS-2" data-model="inworld-tts-2"' in default and 'data-src="hosted"' in default
     assert 'data-sort="4.2000"' in default          # mean of both takes
     assert 'data-sort="0.0500"' in default
     assert "gap (1)" in default                      # same flag on 2 takes of p1 counts once
