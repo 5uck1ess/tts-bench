@@ -1,6 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>tts-bench — Scores</title>
 <link rel="icon" type="image/svg+xml" href="logo-mark.svg"><link rel="icon" type="image/png" sizes="32x32" href="favicon.png"><link rel="apple-touch-icon" sizes="180x180" href="favicon-180.png">
 <style>
@@ -162,6 +161,26 @@
                    border-radius: 4px; font-size: 0.88em; color: var(--text); }
   .reading-guide strong { color: var(--accent); }
   .reading-guide a { color: var(--accent); }
+
+  /* Phones: a table wider than the screen scrolls in its own box (wrapped by SCRIPT) rather
+     than widening the page; the controls bar scrolls away instead of pinning a fifth of the
+     screen; 16px side gutters. */
+  .table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  @media (max-width: 760px) {
+    body { padding: 0.75rem 1rem 2.5rem; }
+    .controls { position: static; gap: 0.5rem; }
+    .controls input { min-width: 0; flex: 1 1 100%; }
+    .controls .hint { display: none; }
+    .prompt-jumper { top: 0; z-index: 5; }
+    th, td { padding: 6px 8px; }
+    /* The model name stays in view while a wide table scrolls sideways. */
+    .table-scroll th:first-child, .table-scroll td:first-child,
+    .scores-table-scroll th:first-child, .scores-table-scroll td:first-child {
+      position: sticky; left: 0; z-index: 1; background: var(--bg); }
+    .table-scroll th:first-child, .scores-table-scroll th:first-child {
+      background: var(--th-bg); }
+  }
 </style>
 <style>.site-header{margin:1rem 0 1.25rem;}.site-logo-link{display:inline-block;text-decoration:none;}.site-logo-link:hover{text-decoration:none;}.site-logo{display:block;height:auto;max-width:min(320px,80vw);}.site-logo--light{display:none;}[data-theme="light"] .site-logo--dark{display:none;}[data-theme="light"] .site-logo--light{display:block;}</style>
 <style>.subsection{border-left:2px solid var(--border);padding:.1rem 0 .1rem 1.1rem;margin:.5rem 0 1.3rem .3rem;}.subsection.cloning{border-left-color:var(--accent);}.sub-head,.listen-group{margin:.3rem 0 .6rem;font-size:1.02em;color:var(--text);font-weight:600;}.ref-row{margin:.2rem 0 .9rem;font-size:.9em;color:var(--muted);display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}.ref-row audio{width:260px;height:30px;vertical-align:middle;}.ref-row .ref-label{color:var(--accent);font-weight:600;}</style>
@@ -197,6 +216,15 @@
 
   // ---------- sort + filter ----------
   const tables = document.querySelectorAll('table');
+  // Wide tables scroll inside their own box instead of widening the page: on a phone a
+  // too-wide table makes the browser zoom the whole page out until nothing is readable.
+  tables.forEach(table => {
+    if (table.parentElement.closest('.table-scroll, .scores-table-scroll')) return;
+    const box = document.createElement('div');
+    box.className = 'table-scroll';
+    table.parentNode.insertBefore(box, table);
+    box.appendChild(table);
+  });
   const filterInput = document.getElementById('filter');
   const resetBtn = document.getElementById('reset-sort');
 
@@ -381,7 +409,8 @@
                 rows.some(function(r){ return !r.hosted; });
             legend.hidden = !mixed;
             scale.textContent = asc ? (btn.textContent.replace(/ [↑↓]$/, '') + ': shorter bar is better')
-                : metric.toUpperCase() + ' scale: ' + domain.min + '–' + domain.max;
+                : metric.toUpperCase() + ' scale: ' + +domain.min.toFixed(dec) + '–'
+                  + +domain.max.toFixed(dec) + unit;
             rows.forEach(function(row){
                 var item = document.createElement('div');
                 item.className = 'score-bar-row' + (row.flagged ? ' flagged' : '')
