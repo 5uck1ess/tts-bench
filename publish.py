@@ -546,6 +546,11 @@ _LISTEN_VIEW_STYLE = (
     '.badge.multi{color:var(--prompt-text);border-color:var(--prompt-text);}'
     '.badge.warn{color:var(--fail);border-color:var(--fail);}'
     '.summary-meta{color:var(--muted);font-weight:400;font-size:.85em;}'
+    # phones: model, source and a usable player in one row; Size (on Capabilities) drops out of
+    # the 4-column by-prompt tables, which otherwise squeeze the player to a sliver
+    '@media(max-width:760px){details.panel{padding:0 .7rem;}'
+    'details.panel table:has(th:nth-child(4)) :is(th,td):nth-child(2){display:none;}'
+    'details.panel audio{width:150px;}}'
     '</style>'
 )
 
@@ -764,8 +769,7 @@ def build_listen():
     bm.append('</div>')
 
     out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
-           '<meta name="viewport" content="width=device-width, initial-scale=1">',
+           '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
            '<title>tts-bench — Listen</title>',
            FAVICON_LINK, STYLE, LOGO_STYLE, _SUBSECTION_STYLE, _LISTEN_VIEW_STYLE,
            '</head><body>', _top_controls("listen"), LOGO_HEADER,
@@ -881,6 +885,10 @@ def build_speed_hub():
                          f'<span class="muted">· {len(ctx["models_seen"])} models · '
                          f'sorted fastest first · '
                          f'<a href="{escape(d.name)}/index.html">full report ↗</a></span></h3>')
+            block.append(score_chart([
+                ("rtf", "Speed (RTFx warm) ↑", {"decimals": 1, "unit": "×"}),
+                ("ttfa", "First audio (warm) ↓", {"dir": "asc", "decimals": 0, "unit": " ms"})],
+                label="Top 15 fastest"))
             block.append(table_html)
             block.append('</div>')
         block.append('</section>')
@@ -888,9 +896,10 @@ def build_speed_hub():
         panels.append("".join(block))
 
     out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
+           '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
            '<title>tts-bench — Speed</title>',
            FAVICON_LINK, STYLE, LOGO_STYLE, _SUBSECTION_STYLE, _SPEED_HUB_STYLE,
+           SCORE_CHART_STYLE,
            '</head><body>', _top_controls("speed"), LOGO_HEADER,
            '<h1>Speed</h1>',
            _SPEED_GUIDE]
@@ -912,6 +921,7 @@ def build_speed_hub():
     out.append(_RIG_TAB_SCRIPT)
     if has_cloning:
         out.append(_MODE_TAB_SCRIPT)
+    out.append(SCORE_CHART_SCRIPT)
     out.append('</body></html>')
     (WORKTREE / "speed.html").write_text("\n".join(out), encoding="utf-8")
 
@@ -1103,7 +1113,8 @@ SCORE_CHART_SCRIPT = '''<script>
                 rows.some(function(r){ return !r.hosted; });
             legend.hidden = !mixed;
             scale.textContent = asc ? (btn.textContent.replace(/ [↑↓]$/, '') + ': shorter bar is better')
-                : metric.toUpperCase() + ' scale: ' + domain.min + '–' + domain.max;
+                : metric.toUpperCase() + ' scale: ' + +domain.min.toFixed(dec) + '–'
+                  + +domain.max.toFixed(dec) + unit;
             rows.forEach(function(row){
                 var item = document.createElement('div');
                 item.className = 'score-bar-row' + (row.flagged ? ' flagged' : '')
@@ -1254,8 +1265,7 @@ def build_scores():
         'Human votes are the preference ground truth; these are objective backstops.</div>')
 
     out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
-           '<meta name="viewport" content="width=device-width, initial-scale=1">',
+           '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
            '<title>tts-bench — Scores</title>',
            FAVICON_LINK, STYLE, LOGO_STYLE, _SUBSECTION_STYLE, _SPEED_HUB_STYLE,
            scores_style, SCORE_CHART_STYLE,
@@ -1432,8 +1442,7 @@ def build_capabilities():
         f'<label class="cap-chip"><input type="checkbox" data-cap="{c}"> {l}</label>'
         for c, l in chips)
 
-    out = ['<!doctype html>', '<html lang="en"><head><meta charset="utf-8">',
-           '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    out = ['<!doctype html>', '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
            '<title>tts-bench — Capabilities</title>',
            FAVICON_LINK, STYLE, LOGO_STYLE, _CAPS_STYLE,
            '</head><body>', _top_controls("capabilities"), LOGO_HEADER,
@@ -1488,8 +1497,7 @@ def build_landing():
     n_rigs = sum(1 for (_r, dn, cn) in SPEED_RIGS if _canonical_dir(dn) or _canonical_dir(cn))
 
     out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
-           '<meta name="viewport" content="width=device-width, initial-scale=1">',
+           '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
            '<title>tts-bench — local TTS benchmark</title>',
            FAVICON_LINK, STYLE, LOGO_STYLE, _HOME_STYLE,
            '</head><body>',
@@ -1562,7 +1570,7 @@ def build_archive_index():
         })
 
     out = ['<!doctype html>',
-           '<html lang="en"><head><meta charset="utf-8">',
+           '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
            '<title>tts-bench — Archive</title>',
            FAVICON_LINK,
            STYLE,
@@ -1629,8 +1637,7 @@ def build_hosted():
     except ImportError as e:  # hosted venv deps (websockets) absent on this machine
         print(f"  skip hosted.html: {e}")
         return
-    head = "\n".join(['<!doctype html>', '<html lang="en"><head><meta charset="utf-8">',
-                      '<meta name="viewport" content="width=device-width, initial-scale=1">',
+    head = "\n".join(['<!doctype html>', '<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">',
                       '<title>tts-bench — Hosted APIs</title>', FAVICON_LINK, STYLE, LOGO_STYLE,
                       _SUBSECTION_STYLE, _SPEED_HUB_STYLE, _SCORES_STYLE_HOSTED, SCORE_CHART_STYLE,
                       '</head><body>', _top_controls("hosted"),
