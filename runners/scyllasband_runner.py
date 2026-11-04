@@ -1,19 +1,24 @@
-"""Scylla's Band runner (ONNX Runtime, fixed voices, predefined-only).
+"""Scylla's Band runner (LiteRT on CPU, fixed voices, predefined-only).
 
-Ten managed voices support en_us, en_gb, es, and it. The harness language
-codes map to en_us, es, and it; French is not supported. Output is 24 kHz.
+Release v3-20261104 (scyllasband runtime 3.0, github.com/lowkeytea/scyllasband
+at or after 26fa443, which reads "V3", "GPU" and the like correctly). Fourteen
+voices; English plus es, it, fr, de and vi. Output is 24 kHz.
 
-Uses synthesize_stream(), NOT synthesize(). The bundle ships fixed-size graph
-exports capped at 640 latent frames, and the single-shot synthesize() path
-raises on anything longer:
+English dialect. Each voice speaks one English dialect: ink, orpheus and
+tuesday are en_gb, the rest en_us. Harness "en" is passed to the runtime as
+"en", which selects the voice's own dialect; v3 rejects the other one, so the
+v1 runner's fixed "en" -> "en_us" mapping fails for the three en_gb voices.
 
-    ValueError: Predicted 670 latent frames, but this bundle supports at most 640.
+Bundle. install.* downloads the LiteRT bundle (`download --flavor litert`) on
+every rig, so all rigs bench the same graphs; LiteRT is the runtime's default
+CPU path. `--variant onnx` runs the ONNX bundle instead (it needs
+`python -m scyllasband download --flavor onnx` and `pip install -e .[onnx]`),
+and SCYLLASBAND_BUNDLE points at any bundle directory.
 
-Bench prompt 3 (the ~24s Parakeet sentence) trips that on every voice.
-synthesize_stream() is the long-form path — it plans the text into chunks,
-renders each within the frame cap, and emits `audio_chunk` events we
-concatenate. It also yields a real TTFA (time to the first chunk) rather than
-the whole-utterance time.
+Synthesis. synthesize_stream() speaks long text as passages and emits one
+`audio_chunk` event per passage, the first one short, so ttfa_ms is a real time
+to first audio. The seed is pinned (11) so reruns render the same audio.
+Delivery (intensity, pace, pitch) is left unset: each voice's own delivery.
 """
 
 import argparse
@@ -26,18 +31,23 @@ from pathlib import Path
 import _meminfo
 
 
-# Harness language code -> model language code. The harness only ever passes
-# "en"/"fr"/etc, and "en" means en_us for bench comparability.
+# Harness language code -> runtime language code. "en" stays "en": the runtime
+# resolves it to the voice's own English dialect (see the docstring).
 LANGUAGE_MAP = {
-    "en": "en_us",
+    "en": "en",
+    "fr": "fr",
     "es": "es",
     "it": "it",
+    "de": "de",
+    "vi": "vi",
 }
 
-# Model-native codes are also accepted verbatim, so a voice can be driven at its
-# manifest default_language (ink/orpheus/tuesday are en_gb) for A/B work that the
-# harness itself never asks for.
-NATIVE_LANGUAGES = {"en_us", "en_gb", "es", "it"}
+# Runtime codes are also accepted verbatim for A/B work the harness never asks
+# for; a voice only accepts its own English dialect.
+NATIVE_LANGUAGES = {"en_us", "en_gb"}
+
+FLAVORS = ("litert", "onnx")
+SEED = 11
 
 
 def main() -> int:
@@ -46,9 +56,9 @@ def main() -> int:
     p.add_argument("--out", default=None)
     p.add_argument("--device", default="cpu")
     p.add_argument("--reference", default=None,
-                   help="Voice ID (e.g. 'gwen'); defaults to 'ink'. "
+                   help="Voice ID (e.g. 'gwen'); defaults to 'tuesday'. "
                         "Scylla's Band doesn't support wav cloning.")
-    p.add_argument("--variant", default=None)
+    p.add_argument("--variant", default=None, help="Bundle flavor: litert (default) or onnx.")
     p.add_argument("--runs", type=int, default=1)
     p.add_argument("--language", default="en")
     p.add_argument("--stdin", action="store_true")
@@ -64,30 +74,33 @@ def main() -> int:
     if not language:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"unsupported Scylla's Band language={args.language}; "
-                                   f"harness codes: en, es, it; native codes: "
+                                   f"harness codes: {', '.join(sorted(LANGUAGE_MAP))}; native codes: "
                                    f"{', '.join(sorted(NATIVE_LANGUAGES))}"}))
+        return 1
+
+    flavor = (args.variant or "litert").lower()
+    if flavor not in FLAVORS:
+        print(json.dumps({"ok": False, "run_index": 0,
+                          "error": f"unknown variant {args.variant!r}; choose {', '.join(FLAVORS)}"}))
         return 1
 
     try:
         from scyllasband import ScyllasBandRuntime
+        from scyllasband.planner import records_from_text
         import numpy as np
         import soundfile as sf
 
         repo_root = Path(__file__).resolve().parents[1]
         bundle_dir = Path(os.environ.get(
             "SCYLLASBAND_BUNDLE",
-            repo_root / "venvs" / "scyllasband" / "src" / "scyllasband" / "models" / "onnx",
+            repo_root / "venvs" / "scyllasband" / "src" / "scyllasband" / "models" / flavor,
         )).expanduser().resolve()
-        # ink won the objective voice sweep (UTMOS 4.348, best of 10; scoring/voice_sweep.py).
-        # `scylla` is only the project's namesake and placed 5th with the 2nd-worst WER.
-        #
-        # DO NOT "fix" this by rendering ink at en_gb because its manifest
-        # default_language says en_gb. That was measured: ink drops to 4.205 at en_gb
-        # (orpheus 4.239->4.213, tuesday 4.282->4.075 — all three got worse). The
-        # benched number IS ink-at-en_us, which is what the harness's en -> en_us
-        # mapping produces. See docs/known-issues.md.
-        voice_id = args.reference or "ink"
-        rt = ScyllasBandRuntime.from_bundle(bundle_dir, backends=["onnx"])
+        # tuesday led the v3 voice sweep (UTMOS 4.27, WER 0.029 over prompts 1-4, two
+        # seeds; ink 4.22 / 0.033 within the seed spread). See docs/known-issues.md.
+        voice_id = args.reference or "tuesday"
+        # With SCYLLASBAND_BUNDLE and no --variant, the bundle's own manifest picks the backend.
+        explicit = args.variant or not os.environ.get("SCYLLASBAND_BUNDLE")
+        rt = ScyllasBandRuntime.from_bundle(bundle_dir, backend=flavor if explicit else None)
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"load failed: {type(e).__name__}: {e}"}))
@@ -100,9 +113,8 @@ def main() -> int:
             first = None
             chunks = []
             samplerate = None
-            for event in rt.synthesize_stream(
-                text=text, voice_id=voice_id, language=language,
-            ):
+            records = records_from_text(text, voice=voice_id, language=language)
+            for event in rt.synthesize_stream(records, seed=SEED):
                 if event.type != "audio_chunk" or event.audio is None:
                     continue
                 if first is None:
