@@ -188,7 +188,7 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
   per provider in this doc before its clips go live.
 - **ToS read 2026-11-01** (vendor terms pages; a reading, not legal advice):
   - **Prohibit benchmarking/competitive analysis:** AssemblyAI ("engage in competitive analysis or
-    benchmarking"), Deepgram ("benchmarking and other competitive analysis"), HeyGen ("benchmarking,
+    benchmarking"; **AssemblyAI gave explicit permission to publish, 2026-11-03**), Deepgram ("benchmarking and other competitive analysis"), HeyGen ("benchmarking,
     comparative or competitive purposes"), Smallest.ai ("benchmarking or competitive analysis"),
     Soniox (no "benchmark ... except for internal evaluation").
   - **Unclear:** Murf ("monitor ... performance ... for any competitive purpose"), xAI (enterprise
