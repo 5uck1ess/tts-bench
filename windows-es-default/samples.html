@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TTS Bench — Samples — windows-es-default</title>
 <style>
   :root {
@@ -135,7 +135,7 @@
   .prompt-jumper a { margin-right: 0.6rem; }
 
   /* Lens-to-lens nav tabs at top of each lens page */
-  .lens-tabs { display: inline-flex; gap: 0.3rem; margin-right: 0.6rem;
+  .lens-tabs { display: inline-flex; flex-wrap: wrap; gap: 0.3rem; margin-right: 0.6rem;
                align-items: center; }
   .lens-tab { display: inline-block; padding: 4px 12px; border-radius: 6px;
               border: 1px solid var(--border); color: var(--text);
@@ -160,6 +160,26 @@
                    border-radius: 4px; font-size: 0.88em; color: var(--text); }
   .reading-guide strong { color: var(--accent); }
   .reading-guide a { color: var(--accent); }
+
+  /* Phones: a table wider than the screen scrolls in its own box (wrapped by SCRIPT) rather
+     than widening the page; the controls bar scrolls away instead of pinning a fifth of the
+     screen; 16px side gutters. */
+  .table-scroll { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  @media (max-width: 760px) {
+    body { padding: 0.75rem 1rem 2.5rem; }
+    .controls { position: static; gap: 0.5rem; }
+    .controls input { min-width: 0; flex: 1 1 100%; }
+    .controls .hint { display: none; }
+    .prompt-jumper { top: 0; z-index: 5; }
+    th, td { padding: 6px 8px; }
+    /* The model name stays in view while a wide table scrolls sideways. */
+    .table-scroll th:first-child, .table-scroll td:first-child,
+    .scores-table-scroll th:first-child, .scores-table-scroll td:first-child {
+      position: sticky; left: 0; z-index: 1; background: var(--bg); }
+    .table-scroll th:first-child, .scores-table-scroll th:first-child {
+      background: var(--th-bg); }
+  }
 </style>
 </head><body>
 <div class="controls">
@@ -219,75 +239,75 @@
 <td class="num pill" data-sort="84.25">84ms</td>
 <td><audio controls preload="none" src="melotts_cuda_p6.wav"></audio></td>
 </tr>
-<tr id="sample-p6-neutts_nano-cpu">
+<tr id="sample-p6-scyllasband-cpu">
 <td class="num" data-sort="6">6</td>
+<td>Scylla&#x27;s Band</td>
+<td class="dev-cpu">cpu</td>
+<td class="num pill" data-sort="133.95">134ms</td>
+<td><audio controls preload="none" src="scyllasband_cpu_p6.wav"></audio></td>
+</tr>
+<tr id="sample-p6-neutts_nano-cpu">
+<td class="num" data-sort="7">7</td>
 <td>NeuTTS Nano</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="192.5">192ms</td>
 <td><audio controls preload="none" src="neutts_nano_cpu_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-pocket-cpu">
-<td class="num" data-sort="7">7</td>
+<td class="num" data-sort="8">8</td>
 <td>Pocket-TTS v4</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="350.95">351ms</td>
 <td><audio controls preload="none" src="pocket_cpu_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-neutts_nano-cuda">
-<td class="num" data-sort="8">8</td>
+<td class="num" data-sort="9">9</td>
 <td>NeuTTS Nano</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="358.1">358ms</td>
 <td><audio controls preload="none" src="neutts_nano_cuda_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-openvoice-cuda">
-<td class="num" data-sort="9">9</td>
+<td class="num" data-sort="10">10</td>
 <td>OpenVoice v2</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="395.35">395ms</td>
 <td><audio controls preload="none" src="openvoice_cuda_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-kokoro-cpu">
-<td class="num" data-sort="10">10</td>
+<td class="num" data-sort="11">11</td>
 <td>Kokoro</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="471.95">472ms</td>
 <td><audio controls preload="none" src="kokoro_cpu_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-lfm3_audio-cpu">
-<td class="num" data-sort="11">11</td>
+<td class="num" data-sort="12">12</td>
 <td>LFM3-Audio 2B</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="475.15">475ms</td>
 <td><audio controls preload="none" src="lfm3_audio_cpu_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-audio8_fast-cuda">
-<td class="num" data-sort="12">12</td>
+<td class="num" data-sort="13">13</td>
 <td>Audio8 TTS 0.6B (compiled)</td>
 <td class="dev-cuda">cuda</td>
 <td class="num pill" data-sort="542.35">542ms</td>
 <td><audio controls preload="none" src="audio8_fast_cuda_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-supertonic-cpu">
-<td class="num" data-sort="13">13</td>
+<td class="num" data-sort="14">14</td>
 <td>Supertonic 3</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="806.7">807ms</td>
 <td><audio controls preload="none" src="supertonic_cpu_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-melotts-cpu">
-<td class="num" data-sort="14">14</td>
+<td class="num" data-sort="15">15</td>
 <td>MeloTTS</td>
 <td class="dev-cpu">cpu</td>
 <td class="num pill" data-sort="841.55">842ms</td>
 <td><audio controls preload="none" src="melotts_cpu_p6.wav"></audio></td>
-</tr>
-<tr id="sample-p6-scyllasband-cpu">
-<td class="num" data-sort="15">15</td>
-<td>Scylla&#x27;s Band</td>
-<td class="dev-cpu">cpu</td>
-<td class="num pill" data-sort="898.05">898ms</td>
-<td><audio controls preload="none" src="scyllasband_cpu_p6.wav"></audio></td>
 </tr>
 <tr id="sample-p6-openvoice-cpu">
 <td class="num" data-sort="16">16</td>
@@ -442,9 +462,17 @@
 
   // ---------- sort + filter ----------
   const tables = document.querySelectorAll('table');
+  // Wide tables scroll inside their own box instead of widening the page: on a phone a
+  // too-wide table makes the browser zoom the whole page out until nothing is readable.
+  tables.forEach(table => {
+    if (table.parentElement.closest('.table-scroll, .scores-table-scroll')) return;
+    const box = document.createElement('div');
+    box.className = 'table-scroll';
+    table.parentNode.insertBefore(box, table);
+    box.appendChild(table);
+  });
   const filterInput = document.getElementById('filter');
   const resetBtn = document.getElementById('reset-sort');
-  const sortState = { col: -1, dir: 0 };
 
   tables.forEach(table => {
     table.querySelectorAll('thead th').forEach(th => { th.dataset.label = th.textContent; });
@@ -474,80 +502,92 @@
     return cell.textContent.toLowerCase();
   }
 
-  function renderArrows() {
-    tables.forEach(t => {
-      t.querySelectorAll('thead th').forEach((th, i) => {
-        const arrow = (i === sortState.col && sortState.dir !== 0)
-                    ? (sortState.dir === 1 ? ' ▲' : ' ▼') : '';
-        th.textContent = th.dataset.label + arrow;
-      });
+  // A click sorts every table whose header at that index has the same label, so tables that
+  // share a layout still sort together, but a table whose column there means something else
+  // (Hosted's default vs cloning tables) is left alone.
+  const states = new Map();
+  tables.forEach(t => states.set(t, { col: -1, dir: 0 }));
+
+  function renderArrows(table) {
+    const st = states.get(table);
+    table.querySelectorAll('thead th').forEach((th, i) => {
+      const arrow = (i === st.col && st.dir !== 0) ? (st.dir === 1 ? ' ▲' : ' ▼') : '';
+      th.textContent = th.dataset.label + arrow;
     });
   }
 
-  function restoreOrder() {
-    tables.forEach(table => {
-      const tbody = table.querySelector('tbody');
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      rows.sort((a, b) => parseInt(a.dataset.origIdx) - parseInt(b.dataset.origIdx));
-      rows.forEach(r => tbody.appendChild(r));
-    });
+  function restoreOrder(table) {
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => parseInt(a.dataset.origIdx) - parseInt(b.dataset.origIdx));
+    rows.forEach(r => tbody.appendChild(r));
   }
 
-  function sortAll(colIdx, explicitDir) {
-    if (explicitDir === 1 || explicitDir === -1) {
-      sortState.col = colIdx;
-      sortState.dir = explicitDir;
-    } else if (sortState.col === colIdx) {
-      sortState.dir = sortState.dir === 1 ? -1 : (sortState.dir === -1 ? 0 : 1);
+  function sortTable(table, colIdx, explicitDir) {
+    const st = states.get(table);
+    if (explicitDir === 2) {
+      st.col = colIdx;
+      st.dir = 0;
+    } else if (explicitDir === 1 || explicitDir === -1) {
+      st.col = colIdx;
+      st.dir = explicitDir;
+    } else if (st.col === colIdx) {
+      st.dir = st.dir === 1 ? -1 : (st.dir === -1 ? 0 : 1);
     } else {
-      sortState.col = colIdx;
-      sortState.dir = 1;
+      st.col = colIdx;
+      st.dir = 1;
     }
-    renderArrows();
-
-    if (sortState.dir === 0) {
-      restoreOrder();
-      return;
-    }
-
-    const dir = sortState.dir;
-    tables.forEach(table => {
-      const tbody = table.querySelector('tbody');
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-      rows.sort((a, b) => {
-        const aSpan = a.querySelector('td[colspan]') !== null;
-        const bSpan = b.querySelector('td[colspan]') !== null;
-        if (aSpan !== bSpan) return aSpan ? 1 : -1;
-        const av = cellSortValue(a, colIdx);
-        const bv = cellSortValue(b, colIdx);
-        if (av < bv) return -dir;
-        if (av > bv) return dir;
-        return 0;
-      });
-      rows.forEach(r => tbody.appendChild(r));
+    renderArrows(table);
+    if (st.dir === 0) { restoreOrder(table); return; }
+    const dir = st.dir;
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    rows.sort((a, b) => {
+      const aSpan = a.querySelector('td[colspan]') !== null;
+      const bSpan = b.querySelector('td[colspan]') !== null;
+      if (aSpan !== bSpan) return aSpan ? 1 : -1;
+      const av = cellSortValue(a, colIdx);
+      const bv = cellSortValue(b, colIdx);
+      // A missing value ("—", data-sort="") stays last in both directions.
+      const aBlank = av === Number.POSITIVE_INFINITY, bBlank = bv === Number.POSITIVE_INFINITY;
+      if (aBlank !== bBlank) return aBlank ? 1 : -1;
+      if (av < bv) return -dir;
+      if (av > bv) return dir;
+      return 0;
     });
+    rows.forEach(r => tbody.appendChild(r));
   }
 
   tables.forEach(table => {
     table.querySelectorAll('thead th').forEach((th, idx) => {
-      th.addEventListener('click', () => sortAll(idx));
+      th.addEventListener('click', () => {
+        sortTable(table, idx);
+        const st = states.get(table);
+        tables.forEach(other => {
+          if (other === table) return;
+          const oth = other.querySelectorAll('thead th')[idx];
+          if (oth && oth.dataset.label === th.dataset.label) sortTable(other, idx, st.dir || 2);
+        });
+      });
     });
   });
 
   resetBtn.addEventListener('click', () => {
-    sortState.col = -1; sortState.dir = 0;
-    renderArrows();
-    restoreOrder();
+    tables.forEach(t => {
+      states.set(t, { col: -1, dir: 0 });
+      renderArrows(t);
+      restoreOrder(t);
+    });
     filterInput.value = '';
     applyFilter();
   });
 
   // Page-load default sort: pages can set window.__defaultSort = {colIdx, dir}
-  // (set in a tiny inline <script> earlier in the page).
+  // (set in a tiny inline <script> earlier in the page). It applies to every table.
   if (window.__defaultSort &&
       typeof window.__defaultSort.colIdx === 'number' &&
       (window.__defaultSort.dir === 1 || window.__defaultSort.dir === -1)) {
-    sortAll(window.__defaultSort.colIdx, window.__defaultSort.dir);
+    tables.forEach(t => sortTable(t, window.__defaultSort.colIdx, window.__defaultSort.dir));
   }
 })();
 </script>
