@@ -172,6 +172,9 @@ MODELS = [
     # AuroraTTS-100K: 95.6K params, harmonic+noise DSP instead of a vocoder; one
     # LJSpeech voice, no cloning. Pinned remote code (see the runner).
     ("auroratts",     "auroratts", "runners/auroratts_runner.py", {"en"},     ["cpu", "cuda"], None,    False),
+    # LinnetTTS (VoxRT): 41.4M flow LM + Vocos decoder, Rust runtime, CPU-only. Built-in
+    # voice f1; the voice encoder is unreleased (cloning is licence-reserved).
+    ("linnet",        "linnet",    "runners/linnet_runner.py",    {"en"},     ["cpu"],         None,    False),
     # Hojo-TTS-Light (ONNX Runtime, no torch): 40M = 15 preset voices, no cloning;
     # 80M = cloning only (no preset; the no-reference run clones the house ref).
     ("hojo_40m",      "hojo",      "runners/hojo_runner.py",      {"en"},     ["cpu", "cuda"], "40m",   False),

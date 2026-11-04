@@ -370,6 +370,18 @@ else
     fi
 fi
 
+# --- LinnetTTS (VoxRT Rust runtime, no torch; CPU-only; weights pinned in runners/linnet_runner.py) ---
+echo; cyan "=== LinnetTTS (Rust runtime) ==="
+if ! want linnet; then echo "linnet: skipped (not in install filter)"
+elif [ ! -x venvs/linnet/bin/python ]; then
+    uv venv venvs/linnet --python 3.11 || die "uv venv linnet"
+    uv pip install --python venvs/linnet/bin/python "linnet-tts==0.1.1" numpy soundfile psutil "huggingface-hub>=0.36" \
+        || die "uv pip install linnet"
+    green "linnet: ok"
+else
+    echo "linnet: already installed"
+fi
+
 # --- Vaniq-Edge (8.5M VITS, one fixed voice) ---
 echo; cyan "=== Vaniq-Edge (8.5M VITS, one fixed voice) ==="
 if ! want vaniq; then echo "vaniq: skipped (not in install filter)"
