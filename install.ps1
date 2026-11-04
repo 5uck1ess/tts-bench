@@ -242,6 +242,30 @@ if (-not (Want "ptts")) { Write-Host "ptts: skipped (not in install filter)" -Fo
     Write-Host "ptts: already installed" -ForegroundColor Gray
 }
 
+Step "LinnetTTS (VoxRT Rust runtime, no torch; wheel built from pinned source — needs rustup + MSVC Build Tools)"
+if (-not (Want "linnet")) { Write-Host "linnet: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\linnet\Scripts\python.exe")) {
+    # PyPI linnet-tts 0.1.1 has no Windows wheel and no sdist, so build the abi3 wheel from
+    # the same commit with maturin (~15 s). Weights are pinned in runners/linnet_runner.py.
+    $cargo = "$env:USERPROFILE\.cargo\bin"
+    if (-not (Test-Path "$cargo\cargo.exe")) { throw "linnet: install Rust first (rustup-init.exe -y --profile minimal)" }
+    $env:PATH = "$cargo;$env:PATH"
+    $src = Join-Path $env:TEMP "linnet-src"
+    if (Test-Path $src) { Remove-Item -Recurse -Force $src }
+    New-Item -ItemType Directory -Force $src | Out-Null
+    Invoke-Checked "download linnet source" { Invoke-WebRequest "https://codeload.github.com/VoxRT/LinnetTTS/tar.gz/5ddd09c03464d2236f5e59b9695a63a38ba306af" -OutFile "$src.tar.gz" }
+    Invoke-Checked "extract linnet source" { tar -xzf "$src.tar.gz" -C $src }
+    Invoke-Checked "uv venv linnet" { uv venv venvs\linnet --python 3.11 }
+    Invoke-Checked "uv pip install linnet deps" { uv pip install --python venvs\linnet\Scripts\python.exe maturin numpy soundfile psutil "huggingface-hub>=0.36" }
+    $bind = Join-Path (Get-ChildItem $src -Directory)[0].FullName "bindings\python"
+    Invoke-Checked "maturin build linnet" { & venvs\linnet\Scripts\maturin.exe build --release --interpreter venvs\linnet\Scripts\python.exe -m "$bind\Cargo.toml" }
+    $whl = (Get-ChildItem -Recurse $src -Filter "linnet_tts-*.whl")[0].FullName
+    Invoke-Checked "uv pip install linnet wheel" { uv pip install --python venvs\linnet\Scripts\python.exe $whl }
+    Write-Host "linnet: ok" -ForegroundColor Green
+} else {
+    Write-Host "linnet: already installed" -ForegroundColor Gray
+}
+
 Step "SteerTTS (23.1M + 17.6M flow refiner; steertts + steertts_noflow share this venv)"
 if (-not (Want "steertts")) { Write-Host "steertts: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\steertts\Scripts\python.exe")) {
