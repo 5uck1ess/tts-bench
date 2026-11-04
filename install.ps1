@@ -253,7 +253,9 @@ if (-not (Want "linnet")) { Write-Host "linnet: skipped (not in install filter)"
     $src = Join-Path $env:TEMP "linnet-src"
     if (Test-Path $src) { Remove-Item -Recurse -Force $src }
     New-Item -ItemType Directory -Force $src | Out-Null
-    Invoke-Checked "download linnet source" { Invoke-WebRequest "https://codeload.github.com/VoxRT/LinnetTTS/tar.gz/5ddd09c03464d2236f5e59b9695a63a38ba306af" -OutFile "$src.tar.gz" }
+    # A cmdlet, not a native exe: it never sets $LASTEXITCODE, so Invoke-Checked would read a
+    # stale value. -ErrorAction Stop makes a failed download throw instead.
+    Invoke-WebRequest "https://codeload.github.com/VoxRT/LinnetTTS/tar.gz/5ddd09c03464d2236f5e59b9695a63a38ba306af" -OutFile "$src.tar.gz" -ErrorAction Stop
     Invoke-Checked "extract linnet source" { tar -xzf "$src.tar.gz" -C $src }
     Invoke-Checked "uv venv linnet" { uv venv venvs\linnet --python 3.11 }
     Invoke-Checked "uv pip install linnet deps" { uv pip install --python venvs\linnet\Scripts\python.exe maturin numpy soundfile psutil "huggingface-hub>=0.36" }
