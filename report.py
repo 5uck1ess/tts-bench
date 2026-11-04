@@ -643,7 +643,7 @@ MODEL_SIZE = {
     "piper":         "~25MB",
     "sanotts_amy":        "1.46M",
     "sanotts_heart_nano": "294K",
-    "scyllasband":   "~103M",
+    "scyllasband":   "~131M",
     # Complete text-to-waveform totals from the model cards (the integrated 24 kHz
     # decoder is inside these numbers, not bolted on as a separate vocoder).
     "inflect_nano":  "3.96M",
@@ -953,7 +953,7 @@ MODEL_RELEASE = {
     "piper":         "2023-01",   # original rhasspy/piper engine, not the piper1-gpl re-home
     "sanotts_amy":        "2026-07",   # sanotts 0.1.0, 2026-07-13
     "sanotts_heart_nano": "2026-09",   # new voice in 0.5.0, 2026-09-04
-    "scyllasband":   "2026-07",
+    "scyllasband":   "2026-11",   # v3-20261104 (v1 was 2026-07)
     "inflect_nano":  "2026-07",   # v2.0.0 2026-07-24 (v1 was 2026-06)
     "inflect_micro": "2026-07",
     "steertts":        "2026-10",   # HF repo created 2026-10-15
@@ -1060,7 +1060,8 @@ MODEL_EXPRESSIVE = {
     "kittentts": "—", "kokoro": "—", "kokoro_mlx": "—", "lfm2_audio": "—", "lfm3_audio": "—", "luxtts": "—",
     "kittentts2": "tags", "kittentts2_cpp": "tags", "kittentts08": "—",
     "magpie": "emotion voices*", "maya1": "tags + desc", "melotts": "—", "orpheus": "tags",
-    "outetts": "—", "parler": "desc*", "piper": "—", "scyllasband": "6 knobs",
+    "outetts": "—", "parler": "desc*", "piper": "—", "scyllasband": "3 knobs",
+    # scyllasband: intensity + pace + pitch (v3; v1 had six affect axes).
     "sanotts_amy": "knob", "sanotts_heart_nano": "knob",
     # speed + variation (latent noise scale). No emotion/style control.
     "inflect_nano": "2 knobs", "inflect_micro": "2 knobs",
@@ -1147,7 +1148,7 @@ MODEL_LANGS = {
     "kittentts": "—", "kokoro": "✓", "kokoro_mlx": "✓", "lfm2_audio": "— (en)", "lfm3_audio": "✓ (18)", "luxtts": "—",
     "kittentts2": "✓ (16)", "kittentts2_cpp": "✓ (16)", "kittentts08": "—",
     "magpie": "✓ (9)", "maya1": "—", "melotts": "✓ (4)", "orpheus": "— (en)",
-    "outetts": "✓ (12)", "parler": "—", "piper": "✓", "scyllasband": "✓ (4)",
+    "outetts": "✓ (12)", "parler": "—", "piper": "✓", "scyllasband": "✓ (6)",
     # sanoTTS supports six languages, but the two benched voices are English-only.
     "sanotts_amy": "— (en)", "sanotts_heart_nano": "— (en)",
     "inflect_nano": "— (en)", "inflect_micro": "— (en)", "vaniq": "— (en)", "supratts": "— (en)",

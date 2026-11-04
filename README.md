@@ -122,7 +122,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [Qwen3-TTS 0.6B CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice) | 0.6B | Jan 2026 | ✓ (9) | — | ✓ (10) | 24k | — | Apache 2.0 |
 | [sanoTTS Amy](https://huggingface.co/ampixa/sanoTTS) | 1.46M | Jul 2026 | ✓ (1) | — | — (en) | 22.05k | knob | GPL-3.0 |
 | [sanoTTS Heart-Nano](https://huggingface.co/ampixa/sanoTTS) | 294K | Sep 2026 | ✓ (1) | — | — (en) | 24k | knob | GPL-3.0 |
-| [Scylla's Band](https://huggingface.co/spybyscript/scyllasband) | ~103M | Jul 2026 | ✓ (10) | — | ✓ (4) | 24k | 6 knobs | Apache 2.0 |
+| [Scylla's Band](https://huggingface.co/spybyscript/scyllasband) | ~131M | Nov 2026 | ✓ (14) | — | ✓ (6) | 24k | 3 knobs | Apache 2.0 |
 | [Soprano 1.1 80M](https://huggingface.co/ekwek/Soprano-1.1-80M) | 80M | Jan 2026 | ✓ | — | — | 32k | — | Apache 2.0 |
 | [SteerTTS](https://huggingface.co/WhissleAI/steer-tts) | 40.8M | Oct 2026 | ✓ (2,825) | ✓ | — (en) | 24k | 12 knobs + tags | MIT code / CC-BY-NC 4.0 weights |
 | [SteerTTS (no refiner)](https://huggingface.co/WhissleAI/steer-tts) | 23.1M | Oct 2026 | ✓ (2,825) | ✓ | — (en) | 24k | 12 knobs + tags | MIT code / CC-BY-NC 4.0 weights |

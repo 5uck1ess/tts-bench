@@ -240,10 +240,10 @@ elif [ ! -x venvs/scyllasband/bin/python ]; then
     uv venv venvs/scyllasband --python 3.11 || die "uv venv scyllasband"
     git clone --depth 1 https://github.com/lowkeytea/scyllasband venvs/scyllasband/src \
         || die "git clone scyllasband"
-    uv pip install --python venvs/scyllasband/bin/python -e venvs/scyllasband/src \
-        numpy huggingface_hub onnxruntime soundfile \
+    # The package brings LiteRT (ai-edge-litert); every rig benches the LiteRT bundle.
+    uv pip install --python venvs/scyllasband/bin/python -e venvs/scyllasband/src soundfile \
         || die "uv pip install scyllasband"
-    (cd venvs/scyllasband/src && ../bin/python -m scyllasband download) \
+    (cd venvs/scyllasband/src && ../bin/python -m scyllasband download --flavor litert --yes) \
         || die "download scyllasband bundle"
     green "scyllasband: ok"
 else

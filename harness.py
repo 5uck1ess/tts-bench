@@ -135,10 +135,11 @@ MODELS = [
     ("piper",       "piper",      "runners/piper_runner.py",      {"en", "fr", "es"}, ["cpu", "cuda"],        None,   False),
     ("sanotts_amy",        "sanotts", "runners/sanotts_runner.py", {"en"},        ["cpu"], "amy",        False),
     ("sanotts_heart_nano", "sanotts", "runners/sanotts_runner.py", {"en"},        ["cpu"], "heart-nano", False),
-    # Scylla's Band: pure ONNX Runtime on CPU (no torch); ten predefined voices, no
-    # wav cloning -> can_clone=False, default lens only. en_us/en_gb/es/it, no French
-    # -> langs={"en"}, FR prompt skipped. ~103M core params + 15M neural G2P, 24 kHz.
-    ("scyllasband", "scyllasband","runners/scyllasband_runner.py", {"en", "es"},  ["cpu"],                None,   False),
+    # Scylla's Band v3 (release v3-20261104): LiteRT on CPU (no torch); fourteen
+    # predefined voices, no wav cloning -> can_clone=False, default lens only. English
+    # (each voice in its own dialect) + es/it/fr/de/vi -> langs={"en", "fr", "es"}.
+    # ~131M core params + 30M neural G2P, 24 kHz.
+    ("scyllasband", "scyllasband","runners/scyllasband_runner.py", {"en", "fr", "es"}, ["cpu"],              None,   False),
     # Inflect v2 (Apache-2.0): complete text-to-waveform VITS — the 24 kHz decoder is
     # inside the parameter count, no external vocoder. One fixed English voice, no wav
     # cloning -> can_clone=False, default lens only. English-only -> langs={"en"},
@@ -199,7 +200,7 @@ MODELS = [
     # 8B total), byte-level text -> 9-codebook AR transformer -> DAC @ 44.1 kHz, zero-shot
     # cloning. CUDA-only (compiled CUDA kernels in python/zonos2/kernel/csrc; no CPU/MPS),
     # so Linux-3090 only. Vendored NeMo normalizer covers en/de/zh but no fr -> langs
-    # =False (FR prompt skipped, like scyllasband). Pure cloner -> NO_PRESET_VOICE.
+    # =False (FR prompt skipped). Pure cloner -> NO_PRESET_VOICE.
     ("zonos2",      "zonos2",     "runners/zonos2_runner.py",     {"en"},        ["cuda"],               None,   True),
     ("openvoice",   "openvoice",  "runners/openvoice_runner.py",  {"en", "fr", "es"}, ["cpu", "cuda", "mps"], None,   True),
     # Voxtral: mps/cpu -> MLX (preset-voice only on Apple Silicon); cuda -> vllm-omni.

@@ -1,8 +1,8 @@
 """Rank a model's selectable voices objectively, to pick its bench default voice.
 
-Multi-voice models ship no "best" voice — Scylla's Band's manifest lists all ten
-as peers, Piper has one per language, Kokoro ships a pack per speaker. Picking the
-board's default by ear is taste; this picks it by measurement.
+Multi-voice models ship no "best" voice — Scylla's Band's manifest lists all
+fourteen as peers, Piper has one per language, Kokoro ships a pack per speaker.
+Picking the board's default by ear is taste; this picks it by measurement.
 
 Generates every voice over the canonical bench prompts through the model's OWN
 runner (`--reference <voice>`, the same flag the harness uses for predefined-voice
@@ -21,7 +21,7 @@ Run under the SCORING venv; it subprocesses the MODEL venv to generate:
     venvs/scoring/bin/python -m scoring.voice_sweep \
         --venv scyllasband \
         --runner runners/scyllasband_runner.py \
-        --voices ariadne,felix,gwen,ink,max,orpheus,rex,scylla,stone,tuesday \
+        --voices ariadne,felix,gwen,ink,kincade,max,orpheus,poppy,priya,rex,scylla,stone,thistle,tuesday \
         --out /tmp/voice_sweep
 
 Writes <out>/voice_sweep.csv and prints a ranking. Per-clip failures blank that
