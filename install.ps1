@@ -268,6 +268,18 @@ if (-not (Want "linnet")) { Write-Host "linnet: skipped (not in install filter)"
     Write-Host "linnet: already installed" -ForegroundColor Gray
 }
 
+Step "Underdog Woof (pure-numpy runtime, no torch; code + weights pinned in runners/woof_runner.py)"
+if (-not (Want "woof")) { Write-Host "woof: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\woof\Scripts\python.exe")) {
+    # The HF repo ships the underdog_woof package next to the weights; the runner
+    # snapshot-downloads the pinned revision and imports it from there.
+    Invoke-Checked "uv venv woof" { uv venv venvs\woof --python 3.11 }
+    Invoke-Checked "uv pip install woof deps" { uv pip install --python venvs\woof\Scripts\python.exe numpy soundfile psutil "huggingface-hub>=0.36" }
+    Write-Host "woof: ok" -ForegroundColor Green
+} else {
+    Write-Host "woof: already installed" -ForegroundColor Gray
+}
+
 Step "SteerTTS (23.1M + 17.6M flow refiner; steertts + steertts_noflow share this venv)"
 if (-not (Want "steertts")) { Write-Host "steertts: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\steertts\Scripts\python.exe")) {

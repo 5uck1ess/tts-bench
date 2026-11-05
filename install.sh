@@ -382,6 +382,17 @@ else
     echo "linnet: already installed"
 fi
 
+# --- Underdog Woof (pure-numpy runtime, no torch; CPU-only; code + weights pinned in runners/woof_runner.py) ---
+echo; cyan "=== Underdog Woof (numpy) ==="
+if ! want woof; then echo "woof: skipped (not in install filter)"
+elif [ ! -x venvs/woof/bin/python ]; then
+    uv venv venvs/woof --python 3.11 || die "uv venv woof"
+    uv pip install --python venvs/woof/bin/python numpy soundfile psutil "huggingface-hub>=0.36"         || die "uv pip install woof"
+    green "woof: ok"
+else
+    echo "woof: already installed"
+fi
+
 # --- Vaniq-Edge (8.5M VITS, one fixed voice) ---
 echo; cyan "=== Vaniq-Edge (8.5M VITS, one fixed voice) ==="
 if ! want vaniq; then echo "vaniq: skipped (not in install filter)"

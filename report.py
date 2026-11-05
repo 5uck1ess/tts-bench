@@ -522,6 +522,7 @@ MODEL_DISPLAY_NAMES = {
     "phonon_40m":    "Phonon 40m",
     "auroratts":     "AuroraTTS-100K",
     "linnet":        "LinnetTTS",
+    "woof":          "Underdog Woof",
     "hojo_40m":      "Hojo-TTS-Light 40M",
     "hojo_80m":      "Hojo-TTS-Light 80M",
     "f5tts":         "F5-TTS v1",
@@ -615,6 +616,7 @@ MODEL_SIZE = {
     "phonon_40m":    "50.5M (40.2M LM + Mimi)",   # same count; identical across the en/fr/es checkpoints
     "auroratts":     "95.6K",   # card: 95,638 inference params incl. the 145-param DSP; verified by numel at load
     "linnet":        "41.4M (31.5M LM + 9.9M decoder)",   # counted from the fp16 safetensors; HF repo name says "35m"
+    "woof":          "38.2M (23.0M LM + 15.3M decoder)",   # card: 22.95M speech model + 15.3M Mimi-derived decoder
     "hojo_40m":      "84.5M (40.4M LM + 13.3M fine + 30.8M decoder)",   # ONNX initializers + npz token embedding
     "hojo_80m":      "167M (89.4M LM + 20.3M codec enc + 45.0M dec + 12.0M spk)",   # same method; card's "80M" excludes input embeddings
     "sesame":        "1B",
@@ -725,6 +727,7 @@ MODEL_URL = {
     "phonon_40m":    _HF + "gradium/phonon-40m-en",
     "auroratts":     _HF + "AuroraAI-Research/AuroraTTS-100K",
     "linnet":        _HF + "VoxRT/linnet-en-35m",
+    "woof":          _HF + "ConwayResearch/Underdog-Woof",
     "hojo_40m":      _HF + "HojoAI/Hojo-TTS-Light-40M",
     "hojo_80m":      _HF + "HojoAI/Hojo-TTS-Light",
     "sesame":        _HF + "sesame/csm-1b",
@@ -824,6 +827,7 @@ MODEL_KIND = {
     "phonon_40m":    "predefined",
     "auroratts":     "predefined",  # single LJSpeech speaker, no cloning
     "linnet":        "predefined",  # 2 built-in voices; encoder unreleased, cloning licence-reserved
+    "woof":          "predefined",  # 2 built-in voices (juno, mira); no voice encoder shipped
     "hojo_40m":      "predefined",  # 15 voices, no cloning
     "hojo_80m":      "cloning",     # no preset voice; no-reference path clones the house ref
     "omnivoice":     "cloning",
@@ -927,6 +931,7 @@ MODEL_RELEASE = {
     "phonon_40m":    "2026-10",
     "auroratts":     "2026-10",   # HF repo created 2026-10-22
     "linnet":        "2026-11",   # HF repo created 2026-11-04
+    "woof":          "2026-11",   # HF repo created 2026-11-05
     "hojo_40m":      "2026-08",   # v2 weights benched (HF 2026-08-19); first 40M release 2026-06
     "hojo_80m":      "2026-08",   # v2 weights benched (HF 2026-08-21); v1 released 2026-05
     "sesame":        "2025-03",
@@ -1036,6 +1041,7 @@ MODEL_SR = {
     "inflect_nano": "24k", "inflect_micro": "24k", "vaniq": "24k", "supratts": "22.05k",
     "steertts": "24k", "steertts_noflow": "24k", "phonon_31m": "24k", "phonon_40m": "24k",
     "auroratts": "22.05k", "linnet": "24k",
+    "woof": "24k",
     "hojo_40m": "24k", "hojo_80m": "24k",
     "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
     "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
@@ -1069,6 +1075,7 @@ MODEL_EXPRESSIVE = {
     "phonon_31m": "knob", "phonon_40m": "knob",  # duration_delta (speaking rate)
     "auroratts": "2 knobs",  # speed + pitch_shift
     "linnet": "—",  # temp/cfg/seed are sampling knobs, not style control
+    "woof": "—",  # temp/seed only
     "hojo_40m": "—", "hojo_80m": "—",  # pinyin override only; style control is on the roadmap
     # length_scale only; noise scales are hardcoded in upstream's synthesize().
     "vaniq": "knob",
@@ -1113,6 +1120,7 @@ MODEL_LICENSE = {
     "phonon_31m": "Apache 2.0", "phonon_40m": "CC BY-NC 4.0",
     "auroratts": "Apache 2.0",
     "linnet": "Apache 2.0 code / Linnet Weights License",
+    "woof": "Underdog Non-Commercial 1.0",
     "hojo_40m": "Apache 2.0", "hojo_80m": "Apache 2.0",
     "supertonic": "MIT + OpenRAIL-M",
     "vibevoice": "MIT", "voxtral": "CC-BY-NC 4.0", "chatterbox": "MIT",
@@ -1154,6 +1162,7 @@ MODEL_LANGS = {
     "inflect_nano": "— (en)", "inflect_micro": "— (en)", "vaniq": "— (en)", "supratts": "— (en)",
     "steertts": "— (en)", "steertts_noflow": "— (en)", "phonon_31m": "— (en)", "phonon_40m": "✓ (5)",
     "auroratts": "— (en)", "linnet": "— (en)",
+    "woof": "— (en)",
     "hojo_40m": "✓ (zh+en)", "hojo_80m": "✓ (zh+en)",
     "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
