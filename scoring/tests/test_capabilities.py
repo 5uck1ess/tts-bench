@@ -96,6 +96,7 @@ def test_commercial_heuristic_flags_known_licenses():
     assert report._is_commercial("coqui") is False     # CPML (non-commercial)
     assert report._is_commercial("f5tts") is False      # CC-BY-NC
     assert report._is_commercial("wavtts") is False      # weights CC-BY-NC 4.0
+    assert report._is_commercial("woof") is False        # Underdog Non-Commercial 1.0
 
 
 def test_sr_hz_parses_readme_cells():

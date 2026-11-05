@@ -1237,7 +1237,7 @@ if _LANG_CELL_DRIFT:
 
 
 # Tokens in a license string that signal NON-commercial / research-only use.
-_NONCOMMERCIAL_TOKENS = ("NC", "non-commercial", "Non-commercial", "CPML", "Research")
+_NONCOMMERCIAL_TOKENS = ("NC", "non-commercial", "Non-commercial", "Non-Commercial", "CPML", "Research")
 
 
 def _is_multilingual(model):
