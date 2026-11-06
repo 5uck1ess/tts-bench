@@ -108,6 +108,14 @@ def _env(device: str) -> dict:
         except ImportError:
             n = os.cpu_count() or 1
         env.setdefault("TANG_THREADS", str(n))
+    if device == "cuda" and os.name != "nt":
+        # cudarc 0.16 (feature cuda-12080) dlopens "libnvrtc.so" first and needs
+        # nvrtcGetNVVM, which CUDA 13's nvrtc no longer exports (panic at load). install.sh
+        # puts the pip CUDA 12.8 nvrtc in the venv and links it as nvrtc12/libnvrtc.so.
+        pip_lib = next(iter((HOME / "lib").glob("python3*/site-packages/nvidia/cuda_nvrtc/lib")), None)
+        dirs = [str(d) for d in (HOME / "nvrtc12", pip_lib) if d and d.is_dir()]
+        if dirs:
+            env["LD_LIBRARY_PATH"] = os.pathsep.join(dirs + [env.get("LD_LIBRARY_PATH", "")]).rstrip(os.pathsep)
     if os.name == "nt" and "HOME" not in env:
         env["HOME"] = env.get("USERPROFILE", "")
     return env

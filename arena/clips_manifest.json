@@ -571,6 +571,26 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/lfm3_audio_cuda_p6.wav"
         },
         {
+          "model": "linnet",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/linnet_cpu_p1.wav"
+        },
+        {
+          "model": "linnet",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/linnet_cpu_p2.wav"
+        },
+        {
+          "model": "linnet",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/linnet_cpu_p3.wav"
+        },
+        {
+          "model": "linnet",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/linnet_cpu_p4.wav"
+        },
+        {
           "model": "longcat_1b",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/longcat_1b_cuda_p1.wav"
@@ -3556,6 +3576,26 @@
       "reference_url": "https://5uck1ess.github.io/tts-bench/hosted/_reference.wav",
       "clips": [
         {
+          "model": "hosted:assemblyai_tts1",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/assemblyai_tts1/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:assemblyai_tts1",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/assemblyai_tts1/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:assemblyai_tts1",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/assemblyai_tts1/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:assemblyai_tts1",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/assemblyai_tts1/cloning/p4_t1.wav"
+        },
+        {
           "model": "hosted:async_flash15",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/hosted/async_flash15/cloning/p1_t1.wav"
@@ -3759,6 +3799,26 @@
           "model": "hosted:gemini38_flash_tts",
           "prompt": 6,
           "url": "https://5uck1ess.github.io/tts-bench/hosted/gemini38_flash_tts/cloning/p6_t1.wav"
+        },
+        {
+          "model": "hosted:giggy_tts",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/giggy_tts/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:giggy_tts",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/giggy_tts/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:giggy_tts",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/giggy_tts/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:giggy_tts",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/giggy_tts/cloning/p4_t1.wav"
         },
         {
           "model": "hosted:gradium_tts",
@@ -4355,6 +4415,10 @@
     "lfm3_audio": {
       "name": "LFM3-Audio 2B",
       "url": "https://huggingface.co/LiquidAI/LFM3-Audio-2B"
+    },
+    "linnet": {
+      "name": "LinnetTTS",
+      "url": "https://huggingface.co/VoxRT/linnet-en-35m"
     },
     "longcat_1b": {
       "name": "LongCat-AudioDiT 1B",
