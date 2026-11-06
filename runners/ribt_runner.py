@@ -84,12 +84,29 @@ def _die_with_parent():
     ctypes.CDLL("libc.so.6", use_errno=True).prctl(1, signal.SIGKILL)  # PR_SET_PDEATHSIG
 
 
+def _watchdog(pgid: int):
+    """POSIX (Linux + macOS): a detached sh that SIGKILLs the CLI's process group once this
+    runner is gone.
+
+    harness.run_cell() enforces the cell timeout by killing the runner only. PDEATHSIG
+    (Linux) reaches the CLI but not the `cc` it runs to compile CPU kernels, and macOS has
+    no PDEATHSIG at all. The watchdog is a separate child, so it survives the runner's
+    SIGKILL, sees the parent pid vanish, and kills the whole group. On a normal exit the
+    runner kills the watchdog first. All its stdio is /dev/null so it never holds the
+    harness's capture pipes open.
+    """
+    script = f"while kill -0 {os.getpid()} 2>/dev/null; do sleep 0.2; done; kill -9 -{pgid} 2>/dev/null"
+    return subprocess.Popen(["sh", "-c", script], stdin=subprocess.DEVNULL,
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                            start_new_session=True)
+
+
 class _KillOnCloseJob:
     """Windows: put the CLI in a Job object that is killed when this runner's handle closes.
 
     The handle closes when the runner exits for any reason, including TerminateProcess from
-    the harness timeout. No-op elsewhere. (macOS has neither mechanism; there the runner's
-    own normal exit paths still wait on the child.)
+    the harness timeout; processes the CLI starts (its gcc) join the job too. No-op on
+    POSIX, which uses _watchdog instead.
     """
 
     def __init__(self):
@@ -202,17 +219,25 @@ def _prep_ref(reference: str | None, tmp: Path) -> Path:
 def _synth(texts, device, ref, tmp):
     """Run one synth process over `texts`; return [(gen_s, wav_path)], peak_rss_mb."""
     lines = tmp / "lines.tsv"
-    lines.write_text("".join(f"r{i}\t{t}\n" for i, t in enumerate(texts)), encoding="utf-8")
+    # --lines is one `name<TAB>text` row per line: a newline or tab inside the text would
+    # silently drop the rest of it, so collapse all whitespace to single spaces.
+    lines.write_text("".join(f"r{i}\t{' '.join(t.split())}\n" for i, t in enumerate(texts)),
+                     encoding="utf-8")
     out_dir = tmp / "out"
     if out_dir.exists():
         shutil.rmtree(out_dir)
     cmd = [str(_binary(device)), "synth", "--run", str(WEIGHTS), "--ckpt", "acoustic.safetensors",
            "--flow", str(WEIGHTS / "flow.safetensors"), "--voc", str(WEIGHTS / "vocoder.safetensors"),
            "--ref", str(ref), *SYNTH_ARGS, "--lines", str(lines), "--out-dir", str(out_dir)]
+    posix = os.name != "nt"
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
                             env=_env(device), cwd=str(tmp),
+                            # own process group, so the watchdog can kill the CLI AND the cc
+                            # it spawns to compile CPU kernels
+                            start_new_session=posix,
                             preexec_fn=_die_with_parent if sys.platform.startswith("linux") else None)
-    _JOB.adopt(proc)
+    _JOB.adopt(proc)  # Windows: Job object covers the whole tree
+    dog = _watchdog(proc.pid) if posix else None
     peak = [0.0]
 
     def _poll():
@@ -246,6 +271,9 @@ def _synth(texts, device, ref, tmp):
             marks[m.group(1)] = now - t_prev
             t_prev = now
     rc = proc.wait()
+    if dog is not None:
+        dog.kill()
+        dog.wait()
     th.join(timeout=1)
     if rc != 0 or len(marks) != len(texts):
         raise RuntimeError(f"ribt-tts exit {rc}, {len(marks)}/{len(texts)} utterances: "
