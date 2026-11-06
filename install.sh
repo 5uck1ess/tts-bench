@@ -396,10 +396,13 @@ elif [ ! -x venvs/ribt/target-cpu/release/ribt-tts ]; then
     [ -d venvs/ribt/src ] || git clone -q https://github.com/muni-works/ribt venvs/ribt/src || die "clone ribt"
     git -C venvs/ribt/src checkout -q e729c299bd095817577a47b4bb004361ac1d1843 || die "checkout ribt"
     (cd venvs/ribt/src && cargo build --release --no-default-features --features cpu --target-dir ../target-cpu) || die "cargo build ribt cpu"
-    (cd venvs/ribt/src && cargo build --release --no-default-features --features cuda --target-dir ../target-cuda) || echo "ribt: cuda build failed (cpu still usable)"
-    # cudarc wants a CUDA 12 nvrtc (CUDA 13 dropped nvrtcGetNVVM); the runner puts this dir on LD_LIBRARY_PATH
-    uv pip install --python venvs/ribt/bin/python "nvidia-cuda-nvrtc-cu12==12.8.*" || die "uv pip install ribt nvrtc12"
-    mkdir -p venvs/ribt/nvrtc12 && ln -sf "$(readlink -f venvs/ribt/lib/python3*/site-packages/nvidia/cuda_nvrtc/lib/libnvrtc.so.12)" venvs/ribt/nvrtc12/libnvrtc.so
+    # CUDA backend + its nvrtc shim are Linux-only (no CUDA on macOS; the pip nvrtc has no mac wheel).
+    if [ "$(uname -s)" = "Linux" ]; then
+        (cd venvs/ribt/src && cargo build --release --no-default-features --features cuda --target-dir ../target-cuda) || echo "ribt: cuda build failed (cpu still usable)"
+        # cudarc wants a CUDA 12 nvrtc (CUDA 13 dropped nvrtcGetNVVM); the runner puts this dir on LD_LIBRARY_PATH
+        uv pip install --python venvs/ribt/bin/python "nvidia-cuda-nvrtc-cu12==12.8.*" || die "uv pip install ribt nvrtc12"
+        mkdir -p venvs/ribt/nvrtc12 && ln -sf "$(readlink -f venvs/ribt/lib/python3*/site-packages/nvidia/cuda_nvrtc/lib/libnvrtc.so.12)" venvs/ribt/nvrtc12/libnvrtc.so
+    fi
     venvs/ribt/bin/python -c "from huggingface_hub import snapshot_download as d; d('municipal-robotics/ribt', revision='901d7cf930f4d24261d0e5a97c1697158be59571', local_dir='venvs/ribt/weights')" || die "download ribt weights"
     green "ribt: ok"
 else

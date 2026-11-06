@@ -73,6 +73,66 @@ SYNTH_ARGS = ["--nfe", "1", "--shortcut", "--temp", "0.3", "--seed", "0",
 UTT_RE = re.compile(r"^(r\d+)_\S*: \d+ tokens")
 
 
+def _die_with_parent():
+    """Linux preexec: SIGKILL the CLI if this runner dies.
+
+    harness.run_cell() enforces the cell timeout by killing the runner process only, so
+    without this a CLI that is mid-compile would keep running after the timeout.
+    """
+    import ctypes
+    import signal
+    ctypes.CDLL("libc.so.6", use_errno=True).prctl(1, signal.SIGKILL)  # PR_SET_PDEATHSIG
+
+
+class _KillOnCloseJob:
+    """Windows: put the CLI in a Job object that is killed when this runner's handle closes.
+
+    The handle closes when the runner exits for any reason, including TerminateProcess from
+    the harness timeout. No-op elsewhere. (macOS has neither mechanism; there the runner's
+    own normal exit paths still wait on the child.)
+    """
+
+    def __init__(self):
+        self.h = None
+        if os.name != "nt":
+            return
+        try:
+            import ctypes
+            from ctypes import wintypes
+            k32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            k32.CreateJobObjectW.restype = wintypes.HANDLE
+            k32.AssignProcessToJobObject.argtypes = (wintypes.HANDLE, wintypes.HANDLE)
+            k32.SetInformationJobObject.argtypes = (wintypes.HANDLE, ctypes.c_int,
+                                                    ctypes.c_void_p, wintypes.DWORD)
+
+            class _Basic(ctypes.Structure):
+                _fields_ = [("a", ctypes.c_int64), ("b", ctypes.c_int64),
+                            ("LimitFlags", wintypes.DWORD), ("c", ctypes.c_size_t),
+                            ("d", ctypes.c_size_t), ("e", wintypes.DWORD),
+                            ("f", ctypes.c_size_t), ("g", wintypes.DWORD), ("h", wintypes.DWORD)]
+
+            class _Ext(ctypes.Structure):
+                _fields_ = [("Basic", _Basic), ("Io", ctypes.c_uint64 * 6),
+                            ("i", ctypes.c_size_t), ("j", ctypes.c_size_t),
+                            ("k", ctypes.c_size_t), ("l", ctypes.c_size_t)]
+
+            h = k32.CreateJobObjectW(None, None)
+            info = _Ext()
+            info.Basic.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+            # 9 = JobObjectExtendedLimitInformation
+            if h and k32.SetInformationJobObject(h, 9, ctypes.byref(info), ctypes.sizeof(info)):
+                self.h, self.k32 = h, k32
+        except (OSError, AttributeError):
+            self.h = None
+
+    def adopt(self, proc):
+        if self.h:
+            self.k32.AssignProcessToJobObject(self.h, int(proc._handle))
+
+
+_JOB = _KillOnCloseJob()
+
+
 def _binary(device: str) -> Path:
     return HOME / f"target-{device}" / "release" / f"ribt-tts{EXE}"
 
@@ -150,7 +210,9 @@ def _synth(texts, device, ref, tmp):
            "--flow", str(WEIGHTS / "flow.safetensors"), "--voc", str(WEIGHTS / "vocoder.safetensors"),
            "--ref", str(ref), *SYNTH_ARGS, "--lines", str(lines), "--out-dir", str(out_dir)]
     proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
-                            env=_env(device), cwd=str(tmp))
+                            env=_env(device), cwd=str(tmp),
+                            preexec_fn=_die_with_parent if sys.platform.startswith("linux") else None)
+    _JOB.adopt(proc)
     peak = [0.0]
 
     def _poll():
