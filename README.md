@@ -85,7 +85,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 
 ---
 
-## Models tracked (93)
+## Models tracked (94)
 
 #### Predefined voices
 
@@ -120,6 +120,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [Phonon 40m](https://huggingface.co/gradium/phonon-40m-en) | 50.5M (40.2M LM + Mimi) | Oct 2026 | ✓ (1) | — | ✓ (5) | 24k | knob | CC BY-NC 4.0 |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) | ~15M | Jan 2023 | ✓ | — | ✓ | 22.05k | — | GPL-3.0 |
 | [Qwen3-TTS 0.6B CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice) | 0.6B | Jan 2026 | ✓ (9) | — | ✓ (10) | 24k | — | Apache 2.0 |
+| [ribt](https://huggingface.co/municipal-robotics/ribt) | 54M (18.65M acoustic + 21.88M flow + 13.5M vocoder) | Nov 2026 | ✓ (1) | ✓ | — (en) | 24k | — | MIT |
 | [sanoTTS Amy](https://huggingface.co/ampixa/sanoTTS) | 1.46M | Jul 2026 | ✓ (1) | — | — (en) | 22.05k | knob | GPL-3.0 |
 | [sanoTTS Heart-Nano](https://huggingface.co/ampixa/sanoTTS) | 294K | Sep 2026 | ✓ (1) | — | — (en) | 24k | knob | GPL-3.0 |
 | [Scylla's Band](https://huggingface.co/spybyscript/scyllasband) | ~131M | Nov 2026 | ✓ (14) | — | ✓ (6) | 24k | 3 knobs | Apache 2.0 |
@@ -203,7 +204,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**60 of the 93 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**61 of the 94 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 2,094 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 
