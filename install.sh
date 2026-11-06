@@ -382,6 +382,33 @@ else
     echo "linnet: already installed"
 fi
 
+# --- ribt (Rust + tang IR, no torch; CLI built with cargo, one binary per backend) ---
+# Source + weights pinned (see runners/ribt_runner.py). Needs rustup and a C compiler (cc):
+# the cpu backend compiles its kernels with cc at load. cuda build loads libcuda/libnvrtc
+# dynamically and needs a CUDA 12 nvrtc (pip shim below); the cpu build needs only gcc.
+echo; cyan "=== ribt (Rust CLI, cargo build) ==="
+if ! want ribt; then echo "ribt: skipped (not in install filter)"
+elif [ ! -x venvs/ribt/target-cpu/release/ribt-tts ]; then
+    command -v cargo >/dev/null || [ -x "$HOME/.cargo/bin/cargo" ] || die "ribt: install Rust first (rustup)"
+    export PATH="$HOME/.cargo/bin:$PATH"
+    uv venv venvs/ribt --python 3.11 --allow-existing || die "uv venv ribt"
+    uv pip install --python venvs/ribt/bin/python numpy soundfile scipy psutil "huggingface-hub>=0.36" || die "uv pip install ribt"
+    [ -d venvs/ribt/src ] || git clone -q https://github.com/muni-works/ribt venvs/ribt/src || die "clone ribt"
+    git -C venvs/ribt/src checkout -q e729c299bd095817577a47b4bb004361ac1d1843 || die "checkout ribt"
+    (cd venvs/ribt/src && cargo build --release --no-default-features --features cpu --target-dir ../target-cpu) || die "cargo build ribt cpu"
+    # CUDA backend + its nvrtc shim are Linux-only (no CUDA on macOS; the pip nvrtc has no mac wheel).
+    if [ "$(uname -s)" = "Linux" ]; then
+        (cd venvs/ribt/src && cargo build --release --no-default-features --features cuda --target-dir ../target-cuda) || echo "ribt: cuda build failed (cpu still usable)"
+        # cudarc wants a CUDA 12 nvrtc (CUDA 13 dropped nvrtcGetNVVM); the runner puts this dir on LD_LIBRARY_PATH
+        uv pip install --python venvs/ribt/bin/python "nvidia-cuda-nvrtc-cu12==12.8.*" || die "uv pip install ribt nvrtc12"
+        mkdir -p venvs/ribt/nvrtc12 && ln -sf "$(readlink -f venvs/ribt/lib/python3*/site-packages/nvidia/cuda_nvrtc/lib/libnvrtc.so.12)" venvs/ribt/nvrtc12/libnvrtc.so
+    fi
+    venvs/ribt/bin/python -c "from huggingface_hub import snapshot_download as d; d('municipal-robotics/ribt', revision='901d7cf930f4d24261d0e5a97c1697158be59571', local_dir='venvs/ribt/weights')" || die "download ribt weights"
+    green "ribt: ok"
+else
+    echo "ribt: already installed"
+fi
+
 # --- Underdog Woof (pure-numpy runtime, no torch; CPU-only; code + weights pinned in runners/woof_runner.py) ---
 echo; cyan "=== Underdog Woof (numpy) ==="
 if ! want woof; then echo "woof: skipped (not in install filter)"

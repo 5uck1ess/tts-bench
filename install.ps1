@@ -268,6 +268,33 @@ if (-not (Want "linnet")) { Write-Host "linnet: skipped (not in install filter)"
     Write-Host "linnet: already installed" -ForegroundColor Gray
 }
 
+Step "ribt (Rust + tang IR, no torch; CLI built with cargo -- needs rustup + WinLibs GCC for the cpu backend)"
+if (-not (Want "ribt")) { Write-Host "ribt: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\ribt\target-cpu\release\ribt-tts.exe")) {
+    # No Python package: runners/ribt_runner.py drives the ribt-tts CLI. The cpu backend
+    # compiles its kernels at load with a gcc-style cc (-shared -fPIC); MSVC cl can't, so
+    # install WinLibs GCC (the runner finds it under WinGet\Packages, or set RIBT_CC).
+    $cargo = "$env:USERPROFILE\.cargo\bin"
+    if (-not (Test-Path "$cargo\cargo.exe")) { throw "ribt: install Rust first (rustup-init.exe -y --profile minimal)" }
+    $env:PATH = "$cargo;$env:PATH"
+    if (-not (Get-ChildItem "$env:LOCALAPPDATA\Microsoft\WinGet\Packages" -Directory -Filter "BrechtSanders.WinLibs*" -ErrorAction SilentlyContinue)) {
+        Invoke-Checked "winget WinLibs GCC" { winget install -e --id BrechtSanders.WinLibs.POSIX.UCRT --accept-package-agreements --accept-source-agreements --disable-interactivity }
+    }
+    Invoke-Checked "uv venv ribt" { uv venv venvs\ribt --python 3.11 --allow-existing }
+    Invoke-Checked "uv pip install ribt deps" { uv pip install --python venvs\ribt\Scripts\python.exe numpy soundfile scipy psutil "huggingface-hub>=0.36" }
+    if (-not (Test-Path "venvs\ribt\src")) { Invoke-Checked "clone ribt" { git clone -q https://github.com/muni-works/ribt venvs\ribt\src } }
+    Invoke-Checked "checkout ribt" { git -C venvs\ribt\src checkout -q e729c299bd095817577a47b4bb004361ac1d1843 }
+    Push-Location venvs\ribt\src
+    try {
+        Invoke-Checked "cargo build ribt cpu" { cargo build --release --no-default-features --features cpu --target-dir ..\target-cpu }
+        Invoke-Checked "cargo build ribt cuda" { cargo build --release --no-default-features --features cuda --target-dir ..\target-cuda }
+    } finally { Pop-Location }
+    Invoke-Checked "download ribt weights" { & "venvs\ribt\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('municipal-robotics/ribt', revision='901d7cf930f4d24261d0e5a97c1697158be59571', local_dir='venvs/ribt/weights')" }
+    Write-Host "ribt: ok" -ForegroundColor Green
+} else {
+    Write-Host "ribt: already installed" -ForegroundColor Gray
+}
+
 Step "Underdog Woof (pure-numpy runtime, no torch; code + weights pinned in runners/woof_runner.py)"
 if (-not (Want "woof")) { Write-Host "woof: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\woof\Scripts\python.exe")) {

@@ -179,6 +179,8 @@ MODELS = [
     # Underdog Woof (ConwayResearch): 38.2M, pure-numpy runtime, CPU-only. Built-in voice
     # juno (upstream default); no voice encoder, so no cloning.
     ("woof",          "woof",      "runners/woof_runner.py",      {"en"},     ["cpu"],         None,    False),
+    # ribt: Rust CLI (cargo-built per backend), Kokoro af_heart distill; ref encoder clones partway
+    ("ribt",          "ribt",      "runners/ribt_runner.py",      {"en"},     ["cpu", "cuda"], None,    True),
     # Hojo-TTS-Light (ONNX Runtime, no torch): 40M = 15 preset voices, no cloning;
     # 80M = cloning only (no preset; the no-reference run clones the house ref).
     ("hojo_40m",      "hojo",      "runners/hojo_runner.py",      {"en"},     ["cpu", "cuda"], "40m",   False),
@@ -442,6 +444,10 @@ PTTS_CUDA = {"phonon_31m", "phonon_40m"}
 # exposes the CUDA execution provider (onnxruntime-gpu, not the CPU wheel).
 ORT_CUDA = {"hojo_40m", "hojo_80m"}
 
+# ribt is a cargo-built CLI with no Python ML stack in its venv. Its cuda cell needs a GPU
+# (nvidia-smi) AND the cuda-feature binary that install builds (venvs/ribt/target-cuda).
+BIN_CUDA = {"ribt": "venvs/ribt/target-cuda/release/ribt-tts"}
+
 
 def venv_python(venv_dir: str) -> Path:
     """Resolve the python.exe / bin/python path for a venv on this OS."""
@@ -532,6 +538,9 @@ def build_cells(reference=None, requested_models=None, requested_devices=None,
         elif model_name in ORT_CUDA:
             cuda_ok = ("cuda" in model_devices) and detect_cuda_smi() and _probe(
                 py, "import onnxruntime as o; print('CUDAExecutionProvider' in o.get_available_providers())")
+        elif model_name in BIN_CUDA:
+            exe = REPO / (BIN_CUDA[model_name] + (".exe" if sys.platform.startswith("win") else ""))
+            cuda_ok = ("cuda" in model_devices) and exe.is_file() and detect_cuda_smi()
         else:
             cuda_ok = ("cuda" in model_devices) and detect_cuda(py)
         mps_ok = ("mps" in model_devices) and detect_mps(py)
