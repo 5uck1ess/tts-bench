@@ -3,11 +3,18 @@
 Praat's autocorrelation pitch tracker is run twice: a broad pass estimates the
 speaker's median F0, then a narrower per-clip floor/ceiling is used for the
 measurement pass.  Unvoiced frames are discarded.  Voiced runs receive a short
-median filter and any remaining adjacent jump larger than one octave is
-rejected before the contour is converted to semitones.
+median filter, then any frame sitting most of an octave away from a wider
+local median is rejected (this catches multi-frame octave plateaus, not just
+single-frame spikes) before the contour is converted to semitones.
 
-Slopes are expressed in semitones per normalized utterance (normalized time
-runs from 0 to 1), not semitones per second.
+Units:
+  * ``declination_slope`` -- semitones per normalized utterance (normalized
+    time runs from 0 to 1 over the voiced span).
+  * ``terminal_slope`` -- semitones per SECOND, fit by OLS over the real
+    (never interpolated) voiced frames in the last ``TERMINAL_WINDOW_S`` of
+    the voiced span.  NaN when fewer than ``MIN_TERMINAL_VOICED`` real frames
+    fall in that window, so a clip ending on creak or an unvoiced sound does
+    not get a slope drawn across a gap.
 """
 
 from __future__ import annotations
@@ -24,6 +31,13 @@ N_POINTS = 100
 MIN_VOICED = 30
 TIME_STEP_S = 0.01
 OCTAVE_ST = 12.0
+# A frame deviating from the local median by more than this is an octave
+# (halving/doubling) tracker error.  0.75 octave: real intonation inside a
+# ~0.3 s window essentially never strays this far from its own median.
+OCTAVE_REJECT_ST = 9.0
+LOCAL_MEDIAN_WIDTH = 31
+TERMINAL_WINDOW_S = 0.30
+MIN_TERMINAL_VOICED = 10
 _BROAD_FLOOR_HZ = 50.0
 _BROAD_CEILING_HZ = 800.0
 
@@ -103,9 +117,11 @@ def _clean_voiced_frames(
 ) -> tuple[np.ndarray, np.ndarray, int]:
     """Return kept frame indexes/F0 after octave-artifact guarding.
 
-    A short median filter is confined to contiguous voiced runs.  If an
-    adjacent-frame jump still exceeds one octave, the member of that pair
-    farther from the run median is rejected.
+    A short median filter is confined to contiguous voiced runs.  Frames that
+    then deviate from a wider (``LOCAL_MEDIAN_WIDTH``) local median by more
+    than ``OCTAVE_REJECT_ST`` are rejected.  Comparing against a local median
+    rather than the adjacent frame rejects every frame of a multi-frame octave
+    plateau, not only its two boundary frames.
     """
     voiced = np.isfinite(frequencies) & (frequencies > 0.0)
     voiced_indexes = np.flatnonzero(voiced)
@@ -122,16 +138,8 @@ def _clean_voiced_frames(
         raw = frequencies[run]
         filtered = _median_filter_run(raw)
         semitones = 12.0 * np.log2(filtered)
-        keep = np.ones(run.size, dtype=bool)
-        run_median = float(np.median(semitones))
-
-        for left in np.flatnonzero(np.abs(np.diff(semitones)) > OCTAVE_ST):
-            right = left + 1
-            if not (keep[left] and keep[right]):
-                continue
-            left_dev = abs(float(semitones[left]) - run_median)
-            right_dev = abs(float(semitones[right]) - run_median)
-            keep[right if right_dev >= left_dev else left] = False
+        local_median = _median_filter_run(semitones, width=LOCAL_MEDIAN_WIDTH)
+        keep = np.abs(semitones - local_median) <= OCTAVE_REJECT_ST
 
         kept_indexes.append(run[keep])
         kept_values.append(filtered[keep])
@@ -236,12 +244,16 @@ def analyze_sound(
         normalized_time, normalized_voiced_time, semitones
     )
 
-    terminal = normalized_time >= 0.80
+    # Terminal movement from real voiced frames only, over a fixed window in
+    # seconds, so the measure is comparable across short and long clips.
+    terminal = voiced_times >= voiced_times[-1] - TERMINAL_WINDOW_S
+    if int(terminal.sum()) >= MIN_TERMINAL_VOICED:
+        terminal_slope = _ols_slope(voiced_times[terminal], semitones[terminal])
+    else:
+        terminal_slope = float("nan")
     return ProsodyMetrics(
         declination_slope=_ols_slope(normalized_time, normalized_contour),
-        terminal_slope=_ols_slope(
-            normalized_time[terminal], normalized_contour[terminal]
-        ),
+        terminal_slope=terminal_slope,
         f0_range_st=float(
             np.percentile(semitones, 95) - np.percentile(semitones, 5)
         ),

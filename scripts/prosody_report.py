@@ -1,7 +1,9 @@
 """Build the temporal-F0 corpus table and human-vs-TTS report.
 
-The external tts-bench corpus is read in place.  Only the two output paths in
-this worktree are written.
+Synthetic clips are exactly the canonical clips published on the board
+(``<gh-pages>/*-{default,cloning}/``, discovered by ``scoring.clips``), joined
+to ``scoring/scores.csv`` on ``(dir, wav)``.  Scratch runs under ``results/``
+are never scored.  Only the two output paths are written.
 """
 
 from __future__ import annotations
@@ -10,12 +12,10 @@ import argparse
 import csv
 import hashlib
 import math
-import re
 import sys
 import warnings
 from collections import Counter
 from pathlib import Path
-from typing import Iterable
 
 import numpy as np
 import pandas as pd
@@ -27,6 +27,8 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from scoring.clips import discover_clips  # noqa: E402
+from scoring.prompts import PROMPT_BY_ID  # noqa: E402
 from scoring.prosody import (  # noqa: E402
     MIN_VOICED,
     ProsodyMetrics,
@@ -36,7 +38,7 @@ from scoring.prosody import (  # noqa: E402
 )
 
 
-DEFAULT_CORPUS_ROOT = Path("C:/Users/tymra/LocalDev/tts-bench")
+DEFAULT_CORPUS_ROOT = REPO_ROOT
 DEFAULT_SCORES = REPO_ROOT / "scoring" / "scores.csv"
 DEFAULT_CSV = REPO_ROOT / "scoring" / "prosody.csv"
 DEFAULT_REPORT = REPO_ROOT / "docs" / "prosody-report.md"
@@ -79,16 +81,6 @@ CSV_FIELDS = [
     "error",
 ]
 
-_DEVICE_PROMPT_RE = re.compile(
-    r"^(?P<model>.+)_(?:cpu|cuda|mps)_p(?P<prompt>[1-5])$"
-)
-_DEVICE_RE = re.compile(r"^(?P<model>.+)_(?:cpu|cuda|mps)$")
-_PROMPT_RE = re.compile(r"(?:^|_)p(?P<prompt>[1-5])(?:_|$)")
-_MOSS_AB_RE = re.compile(
-    r"^(?P<mode>default|cloning)_p(?P<prompt>[1-5])_v(?P<version>.+)$"
-)
-
-
 def _float_or_nan(value: object) -> float:
     try:
         return float(value)
@@ -118,12 +110,8 @@ def _failed_metrics() -> dict[str, object]:
 
 
 def _language_for_prompt(prompt_id: object) -> str:
-    prompt = str(prompt_id).strip()
-    if prompt in {"1", "2", "3", "4"}:
-        return "en"
-    if prompt == "5":
-        return "fr"
-    return "unknown"
+    entry = PROMPT_BY_ID.get(str(prompt_id).strip())
+    return entry[0] if entry else "unknown"
 
 
 def _known_human_language(path: Path) -> str:
@@ -134,48 +122,6 @@ def _known_human_language(path: Path) -> str:
     if any(token in name for token in ("chris_hemsworth", "dafoe", "jo.wav")):
         return "en"
     return "unknown"
-
-
-def _mode_from_parts(parts: Iterable[str]) -> str:
-    for part in parts:
-        if part.endswith("-cloning") or part == "cloning":
-            return "cloning"
-        if part.endswith("-default") or part == "default":
-            return "default"
-    return "unknown"
-
-
-def _fallback_keys(relative_path: Path) -> dict[str, str]:
-    """Parse only facts encoded in a path; never infer from run chronology."""
-    stem = relative_path.stem
-    special = _MOSS_AB_RE.match(stem)
-    if special:
-        return {
-            "model": f"moss_tts_v{special.group('version')}",
-            "mode": special.group("mode"),
-            "prompt_id": special.group("prompt"),
-        }
-
-    match = _DEVICE_PROMPT_RE.match(stem)
-    prompt_id = match.group("prompt") if match else ""
-    if match:
-        model = match.group("model")
-    else:
-        device_match = _DEVICE_RE.match(stem)
-        model = device_match.group("model") if device_match else ""
-        prompt_match = _PROMPT_RE.search(stem)
-        if prompt_match:
-            prompt_id = prompt_match.group("prompt")
-        if not model and prompt_match:
-            model = stem[: prompt_match.start()].rstrip("_")
-
-    if not model and relative_path.parts[0] == "_preserved_moss_tts_v1.0":
-        model = "moss_tts_v1.0"
-    return {
-        "model": model or "unknown",
-        "mode": _mode_from_parts(relative_path.parts),
-        "prompt_id": prompt_id,
-    }
 
 
 def _read_scores(path: Path) -> dict[tuple[str, str], dict[str, str]]:
@@ -333,25 +279,19 @@ def _deduplicate_human_sources(
 
 
 def _analyze_synthetic(
-    results_root: Path,
+    gh_pages_root: Path,
     scores: dict[tuple[str, str], dict[str, str]],
 ) -> tuple[list[dict[str, object]], dict[str, object]]:
-    wav_paths = sorted(
-        path
-        for path in results_root.rglob("*.wav")
-        if path.name != "_reference.wav"
-    )
+    clips = discover_clips(str(gh_pages_root))
     rows: list[dict[str, object]] = []
-    synthetic_keys: set[tuple[str, str]] = set()
+    clip_keys: set[tuple[str, str]] = set()
     matched_keys: set[tuple[str, str]] = set()
     drop_reason_counts: Counter[str] = Counter()
     failed_unique = 0
 
-    for index, path in enumerate(wav_paths, start=1):
-        relative = path.relative_to(results_root)
-        dir_name = relative.parts[0]
-        key = (dir_name, path.name)
-        synthetic_keys.add(key)
+    for index, clip in enumerate(clips, start=1):
+        key = (clip.dir, clip.wav)
+        clip_keys.add(key)
         score = scores.get(key)
         if score is not None:
             matched_keys.add(key)
@@ -362,21 +302,16 @@ def _analyze_synthetic(
                 if len(reasons) > 1:
                     drop_reason_counts["both_health_and_wer"] += 1
                 continue
-            model = score.get("model", "").strip() or "unknown"
-            mode = score.get("mode", "").strip() or "unknown"
-            prompt_id = score.get("prompt_id", "").strip()
             join_source = "scores_csv"
             health = score.get("health", "").strip()
             wer = _float_or_nan(score.get("wer", ""))
         else:
-            parsed = _fallback_keys(relative)
-            model = parsed["model"]
-            mode = parsed["mode"]
-            prompt_id = parsed["prompt_id"]
-            join_source = "filename_fallback"
+            # Published but not yet scored: no health/WER gate available.
+            join_source = "unscored"
             health = ""
             wer = float("nan")
 
+        path = gh_pages_root / clip.dir / clip.wav
         try:
             metrics = analyze_wav(path)
             metric_values = metrics.as_dict()
@@ -390,17 +325,17 @@ def _analyze_synthetic(
         rows.append(
             {
                 "set": "synthetic",
-                "language": _language_for_prompt(prompt_id),
-                "source_path": relative.as_posix(),
+                "language": _language_for_prompt(clip.prompt_id),
+                "source_path": f"{clip.dir}/{clip.wav}",
                 "source_hash": "",
                 "segment_id": "",
                 "segment_start_s": "",
                 "segment_end_s": "",
-                "dir": dir_name,
-                "wav": path.name,
-                "model": model,
-                "mode": mode,
-                "prompt_id": prompt_id,
+                "dir": clip.dir,
+                "wav": clip.wav,
+                "model": clip.model,
+                "mode": clip.mode,
+                "prompt_id": clip.prompt_id,
                 "join_source": join_source,
                 "health": health,
                 "wer": wer,
@@ -410,14 +345,14 @@ def _analyze_synthetic(
             }
         )
         if index % 100 == 0:
-            print(f"synthetic: visited {index}/{len(wav_paths)} WAVs")
+            print(f"synthetic: visited {index}/{len(clips)} clips")
 
     stats: dict[str, object] = {
-        "discovered": len(wav_paths),
+        "discovered": len(clips),
         "score_rows": len(scores),
         "matched": len(matched_keys),
-        "unmatched_wavs": len(wav_paths) - len(matched_keys),
-        "score_rows_without_wav": len(set(scores) - synthetic_keys),
+        "unmatched_wavs": len(clips) - len(matched_keys),
+        "score_rows_without_wav": len(set(scores) - clip_keys),
         "failed_unique": failed_unique,
         "retained": len(rows),
         "drop_reasons": dict(drop_reason_counts),
@@ -533,9 +468,11 @@ def _valid(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _language_label(language: str) -> str:
-    return {"en": "English (prompts 1-4)", "fr": "French (prompt 5)"}.get(
-        language, language
-    )
+    return {
+        "en": "English (prompts 1-4)",
+        "fr": "French (prompt 5)",
+        "es": "Spanish (prompt 6)",
+    }.get(language, language)
 
 
 def _summary_values(
@@ -548,6 +485,9 @@ def _summary_values(
         "n": float(len(subset)),
         "declination_slope": float(subset["declination_slope"].median()),
         "terminal_slope": float(subset["terminal_slope"].median()),
+        # Median of |slope|, NOT |median slope|: rises and falls must not
+        # cancel into a spuriously "flat" value.
+        "terminal_abs": float(subset["terminal_slope"].abs().median()),
     }
 
 
@@ -557,9 +497,7 @@ def _pattern_label(human: dict[str, float], synthetic: dict[str, float]) -> str:
     less_negative_declination = (
         synthetic["declination_slope"] > human["declination_slope"]
     )
-    weaker_terminal = abs(synthetic["terminal_slope"]) < abs(
-        human["terminal_slope"]
-    )
+    weaker_terminal = synthetic["terminal_abs"] < human["terminal_abs"]
     if less_negative_declination and weaker_terminal:
         return "yes"
     if not less_negative_declination and not weaker_terminal:
@@ -570,46 +508,49 @@ def _pattern_label(human: dict[str, float], synthetic: dict[str, float]) -> str:
 def _per_model_frame(
     valid: pd.DataFrame, language: str
 ) -> pd.DataFrame:
+    """One row per (model, mode); preset and cloning clips are never pooled."""
     subset = valid[
         (valid["set"] == "synthetic") & (valid["language"] == language)
-    ]
+    ].assign(terminal_abs=lambda frame: frame["terminal_slope"].abs())
     grouped = (
-        subset.groupby("model", as_index=False)
+        subset.groupby(["model", "mode"], as_index=False)
         .agg(
             n=("terminal_slope", "size"),
             terminal_slope=("terminal_slope", "median"),
+            terminal_abs=("terminal_abs", "median"),
             declination_slope=("declination_slope", "median"),
-            fallback_n=(
+            unscored_n=(
                 "join_source",
-                lambda values: int((values == "filename_fallback").sum()),
+                lambda values: int((values == "unscored").sum()),
             ),
         )
-        .sort_values("model")
+        .sort_values(["model", "mode"])
     )
-    grouped["terminal_rank"] = (
-        grouped["terminal_slope"].abs().rank(method="min", ascending=True)
+    grouped["terminal_rank"] = grouped["terminal_abs"].rank(
+        method="min", ascending=True
     )
     grouped["declination_rank"] = grouped["declination_slope"].rank(
         method="min", ascending=False
     )
     return grouped.sort_values(
-        ["terminal_rank", "declination_rank", "model"]
+        ["terminal_rank", "declination_rank", "model", "mode"]
     ).reset_index(drop=True)
 
 
 def _model_table_markdown(frame: pd.DataFrame) -> list[str]:
     lines = [
-        "| terminal rank | model | n | terminal median | "
-        "|terminal| | declination median | declination rank | fallback n |",
-        "|---:|---|---:|---:|---:|---:|---:|---:|",
+        "| terminal rank | model | mode | n | median abs terminal | "
+        "terminal median (signed) | declination median | declination rank | "
+        "unscored n |",
+        "|---:|---|---|---:|---:|---:|---:|---:|---:|",
     ]
     for row in frame.itertuples(index=False):
-        model = str(row.model).replace("|", r"\|")
+        model = str(row.model).replace("|", "/")
         lines.append(
-            f"| {int(row.terminal_rank)} | {model} | {int(row.n)} | "
-            f"{_fmt(row.terminal_slope)} | {_fmt(abs(row.terminal_slope))} | "
+            f"| {int(row.terminal_rank)} | {model} | {row.mode} | {int(row.n)} | "
+            f"{_fmt(row.terminal_abs)} | {_fmt(row.terminal_slope)} | "
             f"{_fmt(row.declination_slope)} | "
-            f"{int(row.declination_rank)} | {int(row.fallback_n)} |"
+            f"{int(row.declination_rank)} | {int(row.unscored_n)} |"
         )
     return lines
 
@@ -756,12 +697,22 @@ def _report_markdown(
     lines = [
         "# F0 temporal-structure report",
         "",
-        f"**Headline: {headline}**",
+        (
+            "> **Do not cite the human-vs-synthetic direction.** The human "
+            "baseline is silence-segmented reference audio (multi-sentence "
+            "blocks, few speakers), not humans reading the bench prompts, so "
+            "it is not comparable to the synthetic clips. The per-model tables "
+            "are descriptive only: no direction is established as more "
+            "human-like, and nothing here has been validated against arena "
+            "votes."
+        ),
+        "",
+        f"Descriptive aggregate (not a finding): {headline}",
         "",
         (
             "This is a descriptive corpus result, not a replication of the "
             "paper's experiment. “Weaker terminal movement” is operationalized "
-            "as a smaller absolute median `terminal_slope`; declination is "
+            "as a smaller median of `|terminal_slope|`; declination is "
             "compared as a signed slope (higher means less negative)."
         ),
         "",
@@ -790,7 +741,7 @@ def _report_markdown(
         "## Human baseline and aggregate synthetic comparison",
         "",
         "| language | set | n | declination median | terminal median | "
-        "|terminal| | paper pattern? |",
+        "median abs terminal | paper pattern? |",
         "|---|---|---:|---:|---:|---:|---|",
     ]
     for language in ("en", "fr"):
@@ -800,7 +751,7 @@ def _report_markdown(
                 f"| {_language_label(language)} | {set_name} | "
                 f"{int(values['n'])} | {_fmt(values['declination_slope'])} | "
                 f"{_fmt(values['terminal_slope'])} | "
-                f"{_fmt(abs(values['terminal_slope']))} | "
+                f"{_fmt(values['terminal_abs'])} | "
                 f"{pattern if set_name == 'synthetic' else 'baseline'} |"
             )
     lines += [
@@ -817,24 +768,23 @@ def _report_markdown(
         "## Per-model ranking (primary result)",
         "",
         (
-            "Terminal rank orders the smallest absolute median movement first "
-            "(weakest movement). Declination rank orders the highest signed "
-            "median first (least negative/most positive). `fallback n` counts "
-            "clips whose keys were parsed from filenames because scores.csv "
-            "did not join."
+            "One row per model and mode (preset and cloning are never pooled). "
+            "Terminal rank orders the smallest median of `|terminal_slope|` "
+            "first (weakest movement); the signed median is shown alongside "
+            "but is not ranked, because rises and falls cancel in it. "
+            "Declination rank orders the highest signed median first (least "
+            "negative/most positive). `unscored n` counts published clips with "
+            "no scores.csv row yet (no health/WER gate)."
         ),
         "",
     ]
-    for language in ("en", "fr"):
+    for language in ("en", "fr", "es"):
         frame = _per_model_frame(valid, language)
-        human = comparisons[language][0]
+        human = comparisons.get(language, ({"n": 0.0},))[0]
         meets_both = int(
             (
                 (frame["declination_slope"] > human["declination_slope"])
-                & (
-                    frame["terminal_slope"].abs()
-                    < abs(human["terminal_slope"])
-                )
+                & (frame["terminal_abs"] < human["terminal_abs"])
             ).sum()
         ) if human["n"] else 0
         lines += [
@@ -885,15 +835,15 @@ def _report_markdown(
         "",
         "## Counts and exclusions",
         "",
-        f"- Synthetic WAVs discovered: {synthetic_stats['discovered']}.",
+        f"- Published synthetic clips discovered: {synthetic_stats['discovered']}.",
         (
-            f"- Joined to `{scores_path.as_posix()}` on `(dir, wav)`: "
-            f"{synthetic_stats['matched']}; filename fallback: "
+            f"- Joined to `{scores_path.name}` on `(dir, wav)`: "
+            f"{synthetic_stats['matched']}; published but unscored: "
             f"{synthetic_stats['unmatched_wavs']}."
         ),
         (
-            f"- Score rows with no matching WAV under `{corpus_root.as_posix()}/"
-            f"results`: {synthetic_stats['score_rows_without_wav']} of "
+            f"- Score rows with no published clip: "
+            f"{synthetic_stats['score_rows_without_wav']} of "
             f"{synthetic_stats['score_rows']}."
         ),
         (
@@ -934,14 +884,15 @@ def _report_markdown(
             "Praat autocorrelation F0 uses a broad 50-800 Hz pass to estimate "
             "each clip/source voice, followed by an adaptive median/2.5 to "
             "median*2.5 floor/ceiling. Unvoiced frames are dropped. Contiguous "
-            "voiced runs receive a five-frame median filter; remaining adjacent "
-            "jumps over 12 semitones reject the member farther from the run "
-            "median. Each valid contour is converted to semitones relative to "
-            "its voiced-frame median and linearly interpolated to 100 points "
-            "from the first through last cleaned voiced frame (internal "
-            "unvoiced gaps retain their timing; container-edge padding is not "
-            "extrapolated). OLS slopes use normalized time 0-1 globally and "
-            "0.80-1.00 terminally. Dispersion uses the cleaned, uninterpolated "
+            "voiced runs receive a five-frame median filter; frames more than "
+            "9 semitones from a 31-frame local median are rejected as octave "
+            "errors. Each valid contour is converted to semitones relative to "
+            "its voiced-frame median. Declination is the OLS slope of that "
+            "contour linearly interpolated to 100 points over normalized time "
+            "0-1 (semitones per utterance). Terminal slope is an OLS fit in "
+            "semitones per second over the real, uninterpolated voiced frames "
+            "in the last 0.30 s of the voiced span, and is NaN when fewer than "
+            "10 such frames exist. Dispersion uses the cleaned, uninterpolated "
             "frames."
         ),
         "",
@@ -967,15 +918,9 @@ def _report_markdown(
             "remove, this confound."
         ),
         (
-            f"- The `(dir, wav)` join covered only {synthetic_stats['matched']}/"
-            f"{synthetic_stats['discovered']} discovered synthetic WAVs. "
-            "Filename-fallback rows have no health/WER gate, and mode is unknown "
-            "when it is not encoded in the path."
-        ),
-        (
-            "- The recursive synthetic set includes historical runs, smoke/"
-            "comparison artifacts, and potentially repeated audio. It was not "
-            "deduplicated because the requested set was every non-reference WAV."
+            "- Synthetic clips are the published board clips only; the same "
+            "model can appear from more than one rig/device, and those rows "
+            "are pooled within a model and mode."
         ),
         (
             "- Per-model medians with small n are unstable. Rows are not "
@@ -983,9 +928,9 @@ def _report_markdown(
             "runs, or shared cloning references."
         ),
         (
-            "- Terminal slope is especially sensitive to utterance duration, "
-            "endpoint voicing, and silence segmentation; normalized time does "
-            "not eliminate those effects."
+            "- Terminal slope remains sensitive to endpoint voicing and creak; "
+            "clips whose final 0.30 s has too little voicing are NaN and drop "
+            "out of the medians."
         ),
         (
             "- Automatic pitch bounds and median filtering reduce octave errors "
@@ -1008,14 +953,14 @@ def build_report(
     csv_path: Path,
     report_path: Path,
 ) -> tuple[pd.DataFrame, str]:
-    results_root = corpus_root / "results"
+    gh_pages_root = corpus_root / "_gh-pages"
     reference_root = corpus_root / "reference"
-    for required in (results_root, reference_root, scores_path):
+    for required in (gh_pages_root, reference_root, scores_path):
         if not required.exists():
             raise FileNotFoundError(f"required input is missing: {required}")
 
     scores = _read_scores(scores_path)
-    synthetic_rows, synthetic_stats = _analyze_synthetic(results_root, scores)
+    synthetic_rows, synthetic_stats = _analyze_synthetic(gh_pages_root, scores)
     human_rows, human_stats = _analyze_human(corpus_root)
     df = pd.DataFrame(synthetic_rows + human_rows, columns=CSV_FIELDS)
     df = df.sort_values(
