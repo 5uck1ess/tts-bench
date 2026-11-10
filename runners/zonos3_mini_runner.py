@@ -152,6 +152,21 @@ def _die_with_parent():
     ctypes.CDLL("libc.so.6", use_errno=True).prctl(1, signal.SIGKILL)  # PR_SET_PDEATHSIG
 
 
+def _watchdog(pgid: int):
+    """POSIX (Linux + macOS): a detached sh that SIGKILLs the server's process group once
+    this runner is gone (same pattern as ribt_runner).
+
+    harness.run_cell() enforces the cell timeout by killing the runner only, so close() in
+    the finally never runs. macOS has no PDEATHSIG at all; the watchdog is a separate child,
+    so it survives the runner's SIGKILL, sees the parent pid vanish, and kills the group.
+    On a normal exit close() kills the watchdog first. All its stdio is /dev/null so it never
+    holds the harness's capture pipes open."""
+    script = f"while kill -0 {os.getpid()} 2>/dev/null; do sleep 0.2; done; kill -9 -{pgid} 2>/dev/null"
+    return subprocess.Popen(["sh", "-c", script], stdin=subprocess.DEVNULL,
+                            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                            start_new_session=True)
+
+
 def _binary(device: str) -> Path:
     return HOME / f"bin-{device}" / f"zonos3-server{EXE}"
 
@@ -202,10 +217,14 @@ class Server:
         env["SPK_THREADS"] = str(th)
         self.gpu_base = _gpu_used_mb() if device == "cuda" else None
         self.log = tempfile.TemporaryFile()
+        posix = os.name != "nt"
         self.proc = subprocess.Popen(cmd, stdout=self.log, stderr=subprocess.STDOUT,
                                      stdin=subprocess.DEVNULL, env=env, cwd=str(HOME),
+                                     # own process group, so the watchdog can kill it as a unit
+                                     start_new_session=posix,
                                      preexec_fn=_die_with_parent if sys.platform.startswith("linux") else None)
-        _JOB.adopt(self.proc)
+        _JOB.adopt(self.proc)  # Windows: Job object kills it when this runner's handle closes
+        self.dog = _watchdog(self.proc.pid) if posix else None  # POSIX incl. macOS (no PDEATHSIG)
         self.peak_rss = 0.0
         self._stop = False
         threading.Thread(target=self._poll_mem, daemon=True).start()
@@ -293,6 +312,9 @@ class Server:
             self.proc.wait(timeout=10)
         except subprocess.TimeoutExpired:
             pass
+        if self.dog is not None:
+            self.dog.kill()
+            self.dog.wait()
 
 
 def _generate(srv: Server, text: str, language: str, speaker: dict, out: Path | None):
