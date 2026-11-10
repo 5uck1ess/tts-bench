@@ -85,7 +85,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 
 ---
 
-## Models tracked (95)
+## Models tracked (97)
 
 #### Predefined voices
 
@@ -115,10 +115,12 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [Ming-3.0-TTS tiny](https://huggingface.co/inclusionAI/Ming-3.0-tts-tiny) | 8.98B (MoE, 1.3B active) | Oct 2026 | ✓ (100+) | ✓ | ✓ (7) | 44.1k | tags + desc | MIT |
 | [Orpheus TTS](https://huggingface.co/canopylabs/orpheus-3b-0.1-ft) | 3B | Mar 2025 | ✓ (8) | — | — (en) | 24k | tags | Apache 2.0 |
 | [OuteTTS 1.0 1B](https://huggingface.co/OuteAI/Llama-OuteTTS-1.0-1B) | ~1B | Apr 2025 | ✓ | ✓ | ✓ (12) | 44.1k | — | CC-BY-NC-SA 4.0 + Llama 3.2 |
+| [Paradee-8M v1.3](https://huggingface.co/sahilmahendrakar/Paradee-8M-v1.3) | 7.88M (4.23M text + 3.65M decoder) | Nov 2026 | ✓ (8) | — | ✓ (4) | 24k | knob | Apache 2.0 |
 | [Parler-TTS Mini v1](https://huggingface.co/parler-tts/parler-tts-mini-v1) | 878M | Jun 2024 | ✓ (voice desc) | — | — | **44.1k** | desc\* | Apache 2.0 |
 | [Phonon 31m](https://huggingface.co/gradium/phonon-31m-en) | 41.1M (30.8M LM + Mimi) | Oct 2026 | ✓ (1) | — | — (en) | 24k | knob | Apache 2.0 |
 | [Phonon 40m](https://huggingface.co/gradium/phonon-40m-en) | 50.5M (40.2M LM + Mimi) | Oct 2026 | ✓ (1) | — | ✓ (5) | 24k | knob | CC BY-NC 4.0 |
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) | ~15M | Jan 2023 | ✓ | — | ✓ | 22.05k | — | GPL-3.0 |
+| [PiVo-1.4M](https://huggingface.co/empero-ai/PiVo-1.4M) | 1.40M (585K acoustic + 817K vocoder) | Nov 2026 | ✓ (2) | — | — (en) | 16k | knob | Apache 2.0 + BSD (vocoder) |
 | [Qwen3-TTS 0.6B CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice) | 0.6B | Jan 2026 | ✓ (9) | — | ✓ (10) | 24k | — | Apache 2.0 |
 | [ribt](https://huggingface.co/municipal-robotics/ribt) | 54M (18.65M acoustic + 21.88M flow + 13.5M vocoder) | Nov 2026 | ✓ (1) | ✓ | — (en) | 24k | — | MIT |
 | [sanoTTS Amy](https://huggingface.co/ampixa/sanoTTS) | 1.46M | Jul 2026 | ✓ (1) | — | — (en) | 22.05k | knob | GPL-3.0 |
@@ -205,7 +207,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**62 of the 95 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**62 of the 97 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 2,094 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

@@ -233,6 +233,27 @@ else
     echo "sanotts: already installed"
 fi
 
+# --- Paradee-8M v1.3 + PiVo-1.4M ---
+echo; cyan "=== Paradee-8M v1.3 + PiVo-1.4M ==="
+if ! want paradee; then echo "paradee: skipped (not in install filter)"
+elif [ ! -x venvs/paradee/bin/python ]; then
+    # misaki 0.9.x needs Python < 3.13; en_core_web_sm up front (uv venvs have no pip).
+    uv venv venvs/paradee --python 3.11 || die "uv venv paradee"
+    uv pip install --python venvs/paradee/bin/python         "paradee @ git+https://github.com/sahilmahendrakar/paradee@af5ca1a17daad860d1aea60510d93d8dbd1d7b6f"         "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl"         soundfile psutil || die "uv pip install paradee"
+    green "paradee: ok"
+else
+    echo "paradee: already installed"
+fi
+if ! want pivo; then echo "pivo: skipped (not in install filter)"
+elif [ ! -x venvs/pivo/bin/python ]; then
+    # No pip package: the runner snapshot-downloads the HF repo at a pinned revision.
+    uv venv venvs/pivo --python 3.11 || die "uv venv pivo"
+    uv pip install --python venvs/pivo/bin/python "numpy>=1.26,<3" "onnxruntime>=1.20,<2" soundfile psutil "huggingface-hub>=0.36"         || die "uv pip install pivo deps"
+    green "pivo: ok"
+else
+    echo "pivo: already installed"
+fi
+
 # --- Scylla's Band ---
 echo; cyan "=== Scylla's Band ==="
 if ! want scyllasband; then echo "scyllasband: skipped (not in install filter)"

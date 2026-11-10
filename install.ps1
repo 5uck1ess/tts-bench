@@ -164,6 +164,28 @@ if (-not (Want "sanotts")) { Write-Host "sanotts: skipped (not in install filter
     Write-Host "sanotts: already installed" -ForegroundColor Gray
 }
 
+Step "Paradee-8M v1.3 + PiVo-1.4M (ONNX Runtime CPU, no torch)"
+if (-not (Want "paradee")) { Write-Host "paradee: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\paradee\Scripts\python.exe")) {
+    # misaki 0.9.x needs Python < 3.13. en_core_web_sm is installed up front because misaki
+    # otherwise pip-downloads it at first use, and uv venvs have no pip. Weights: HF tag v1.3.
+    Invoke-Checked "uv venv paradee" { uv venv venvs\paradee --python 3.11 }
+    Invoke-Checked "uv pip install paradee" { uv pip install --python venvs\paradee\Scripts\python.exe "paradee @ git+https://github.com/sahilmahendrakar/paradee@af5ca1a17daad860d1aea60510d93d8dbd1d7b6f" "en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl" soundfile psutil }
+    Write-Host "paradee: ok" -ForegroundColor Green
+} else {
+    Write-Host "paradee: already installed" -ForegroundColor Gray
+}
+if (-not (Want "pivo")) { Write-Host "pivo: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\pivo\Scripts\python.exe")) {
+    # No pip package: runners/pivo_runner.py snapshot-downloads the HF repo at a pinned
+    # revision and imports its bundled pivo/ code.
+    Invoke-Checked "uv venv pivo" { uv venv venvs\pivo --python 3.11 }
+    Invoke-Checked "uv pip install pivo deps" { uv pip install --python venvs\pivo\Scripts\python.exe "numpy>=1.26,<3" "onnxruntime>=1.20,<2" soundfile psutil "huggingface-hub>=0.36" }
+    Write-Host "pivo: ok" -ForegroundColor Green
+} else {
+    Write-Host "pivo: already installed" -ForegroundColor Gray
+}
+
 Step "Scylla's Band"
 if (-not (Want "scyllasband")) { Write-Host "scyllasband: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\scyllasband\Scripts\python.exe")) {

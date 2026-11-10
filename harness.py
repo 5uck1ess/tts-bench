@@ -176,6 +176,13 @@ MODELS = [
     # LinnetTTS (VoxRT): 41.4M flow LM + Vocos decoder, Rust runtime, CPU-only. Built-in
     # voice f1; the voice encoder is unreleased (cloning is licence-reserved).
     ("linnet",        "linnet",    "runners/linnet_runner.py",    {"en"},     ["cpu"],         None,    False),
+    # Paradee-8M v1.3 (Apache-2.0): Kokoro-82M distilled to 7.88M, one int8 ONNX graph,
+    # CPUExecutionProvider only. Eight Kokoro voices; the voice sets the language, so the
+    # runner uses af_heart / ff_siwis / em_alex for en / fr / es. No cloning.
+    ("paradee",       "paradee",   "runners/paradee_runner.py",   {"en", "fr", "es"}, ["cpu"],   None,    False),
+    # PiVo-1.4M (Empero): 585K acoustic + 817K FARGAN vocoder, NumPy + ONNX Runtime CPU.
+    # Voice Pi. CMU-dict-only frontend errors on OOV words (prompts 3 + 4) -- published as failures.
+    ("pivo",          "pivo",      "runners/pivo_runner.py",      {"en"},     ["cpu"],         None,    False),
     # Underdog Woof (ConwayResearch): 38.2M, pure-numpy runtime, CPU-only. Built-in voice
     # juno (upstream default); no voice encoder, so no cloning.
     ("woof",          "woof",      "runners/woof_runner.py",      {"en"},     ["cpu"],         None,    False),
