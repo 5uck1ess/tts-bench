@@ -82,6 +82,9 @@ NO_PRESET_VOICE = {
     # hojo_80m: voice.npz is token embeddings only and generate() requires a reference;
     # the no-reference run clones the house Chris (9.27 s cut, see the runner).
     "hojo_80m",
+    # miratts: pure cloner; the no-reference run clones the house Chris
+    # (runners/miratts_runner.py DEFAULT_REF), so it is cloning board only.
+    "miratts",
     # Qwen3-TTS *Base* (both runtimes): no model-native preset voice -- Base is the
     # cloning checkpoint, so it is reference-only. CustomVoice (qwentts_06b_custom)
     # is the Qwen row with real preset timbres.
