@@ -295,6 +295,63 @@ if (-not (Want "ribt")) { Write-Host "ribt: skipped (not in install filter)" -Fo
     Write-Host "ribt: already installed" -ForegroundColor Gray
 }
 
+Step "ZONOS3-Mini (Zyphra C++/ggml runtime, no torch; built with VS 2022 Build Tools + CUDA 13 toolkit)"
+# "Installed" = the completion marker written after EVERY step (cpu + cuda build + weights)
+# succeeded, AND a cuda build exists whenever a CUDA 13 toolkit is present -- so a failed
+# weights download, or a toolkit installed later, re-runs the stanza (all steps idempotent).
+$z3nvcc = Get-ChildItem "$env:ProgramFiles\NVIDIA GPU Computing Toolkit\CUDA\v13*\bin\nvcc.exe" -ErrorAction SilentlyContinue | Select-Object -Last 1
+$z3done = (Test-Path "venvs\zonos3\.install-complete") -and ((-not $z3nvcc) -or (Test-Path "venvs\zonos3\bin-cuda\zonos3-server.exe"))
+if (-not (Want "zonos3_mini")) { Write-Host "zonos3_mini: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not $z3done) {
+    Remove-Item -Force "venvs\zonos3\.install-complete" -ErrorAction SilentlyContinue
+    # runners/zonos3_mini_runner.py drives zonos3-server (one per bench cell). Upstream's
+    # Python runtime (servers/sgl) is Linux/CUDA-only, so Windows builds servers/ggml.
+    # patches/zonos3_mini_ggml.patch: MSVC build fix + a ZONOS3_THREADS override (see runner).
+    # The CUDA build needs a FULL toolkit (nvcc); on this rig only v13.0 has one (12.8/12.9
+    # are headers only), and the VS CUDA integration is absent, so build with Ninja + vcvars.
+    $vcvars = Get-ChildItem "${env:ProgramFiles(x86)}\Microsoft Visual Studio\2022\*\VC\Auxiliary\Build\vcvars64.bat" -ErrorAction SilentlyContinue | Select-Object -First 1
+    if (-not $vcvars) { throw "zonos3_mini: needs Visual Studio 2022 Build Tools (C++ workload)" }
+    Invoke-Checked "uv venv zonos3" { uv venv venvs\zonos3 --python 3.12 --allow-existing }
+    Invoke-Checked "uv pip install zonos3 deps" { uv pip install --python venvs\zonos3\Scripts\python.exe numpy soundfile psutil "huggingface-hub>=0.36" }
+    if (-not (Test-Path "venvs\zonos3\src")) { Invoke-Checked "clone zonos3" { git clone -q https://github.com/Zyphra/ZONOS3-Mini venvs\zonos3\src } }
+    Invoke-Checked "checkout zonos3" { git -C venvs\zonos3\src checkout -q d5c266cfb96533445cc65041eda2f8a9b0d4d3b6 }
+    Invoke-Checked "zonos3 ggml submodule" { git -C venvs\zonos3\src submodule update --init servers/ggml/ggml }
+    # Apply the patch, or confirm it is already applied; anything else is fatal (a silent skip
+    # would build a 4-thread CPU backbone with no error).
+    git -C venvs\zonos3\src apply --check --ignore-whitespace ..\..\..\patches\zonos3_mini_ggml.patch 2>$null
+    if ($LASTEXITCODE -eq 0) { Invoke-Checked "patch zonos3" { git -C venvs\zonos3\src apply --ignore-whitespace ..\..\..\patches\zonos3_mini_ggml.patch } }
+    else {
+        git -C venvs\zonos3\src apply -R --check --ignore-whitespace ..\..\..\patches\zonos3_mini_ggml.patch 2>$null
+        if ($LASTEXITCODE -ne 0) { throw "zonos3_mini: patches/zonos3_mini_ggml.patch neither applies nor is already applied" }
+    }
+    $g = (Resolve-Path "venvs\zonos3\src\servers\ggml").Path
+    $cuda = $z3nvcc
+    Invoke-Checked "build zonos3 cpu" { cmd /c "call `"$($vcvars.FullName)`" >nul && cmake -S `"$g`" -B `"$g\build-cpu`" -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl && cmake --build `"$g\build-cpu`" -j 16 --target zonos3-server" }
+    New-Item -ItemType Directory -Force venvs\zonos3\bin-cpu | Out-Null
+    Copy-Item "$g\build-cpu\zonos3-server.exe", "$g\build-cpu\bin\*.dll" venvs\zonos3\bin-cpu\ -ErrorAction SilentlyContinue
+    Copy-Item "$g\build-cpu\*.dll" venvs\zonos3\bin-cpu\ -ErrorAction SilentlyContinue
+    if ($cuda) {
+        $cudaRoot = Split-Path (Split-Path $cuda.FullName)
+        # nvcc goes in by full path: a `set PATH=...;%PATH%` inside this one cmd line would expand
+        # %PATH% BEFORE vcvars runs and drop cl from PATH.
+        Invoke-Checked "build zonos3 cuda" { cmd /c "call `"$($vcvars.FullName)`" >nul && cmake -S `"$g`" -B `"$g\build-cuda`" -G Ninja -DCMAKE_BUILD_TYPE=Release -DGGML_CUDA=ON -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl `"-DCMAKE_CUDA_COMPILER=$($cuda.FullName)`" `"-DCUDAToolkit_ROOT=$cudaRoot`" `"-DCMAKE_CUDA_ARCHITECTURES=86;120`" && cmake --build `"$g\build-cuda`" -j 16 --target zonos3-server" }
+        New-Item -ItemType Directory -Force venvs\zonos3\bin-cuda | Out-Null
+        Copy-Item "$g\build-cuda\zonos3-server.exe" venvs\zonos3\bin-cuda\
+        Get-ChildItem "$g\build-cuda" -Recurse -Filter *.dll | Copy-Item -Destination venvs\zonos3\bin-cuda\
+        # bundle the CUDA runtime so the server does not depend on PATH order
+        Copy-Item "$cudaRoot\bin\x64\cudart64_*.dll", "$cudaRoot\bin\x64\cublas*64_*.dll" venvs\zonos3\bin-cuda\ -ErrorAction SilentlyContinue
+    } else { Write-Host "zonos3_mini: no CUDA 13 toolkit (nvcc) -- cpu only" -ForegroundColor Yellow }
+    Invoke-Checked "download zonos3 weights" { & "venvs\zonos3\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('Zyphra/ZONOS3-Mini', revision='45deee5735477ed11a327e248294c466194c89e9', local_dir='venvs/zonos3/weights', allow_patterns=['gguf/zonos3-ptq.gguf','gguf/zac-keep2.gguf','gguf/spk-encoder.gguf','gguf/zac-encoder.gguf','gguf/ssl-teacher.gguf','gguf/voices/*'])" }
+    foreach ($f in "venvs\zonos3\bin-cpu\zonos3-server.exe", "venvs\zonos3\weights\gguf\zonos3-ptq.gguf", "venvs\zonos3\weights\gguf\zac-keep2.gguf") {
+        if (-not (Test-Path $f)) { throw "zonos3_mini: install incomplete, missing $f" }
+    }
+    if ($cuda -and -not (Test-Path "venvs\zonos3\bin-cuda\zonos3-server.exe")) { throw "zonos3_mini: install incomplete, cuda build missing" }
+    Set-Content -Path "venvs\zonos3\.install-complete" -Value "d5c266c / weights 45deee5"
+    Write-Host "zonos3_mini: ok (cloning needs ffmpeg on PATH to decode the reference)" -ForegroundColor Green
+} else {
+    Write-Host "zonos3_mini: already installed" -ForegroundColor Gray
+}
+
 Step "Underdog Woof (pure-numpy runtime, no torch; code + weights pinned in runners/woof_runner.py)"
 if (-not (Want "woof")) { Write-Host "woof: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\woof\Scripts\python.exe")) {

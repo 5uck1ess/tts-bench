@@ -409,6 +409,54 @@ else
     echo "ribt: already installed"
 fi
 
+# --- ZONOS3-Mini (Zyphra C++/ggml runtime, no torch; cpu + cuda zonos3-server builds) ---
+# runners/zonos3_mini_runner.py drives zonos3-server. This is the ggml Q4 row; upstream's
+# bf16 Python runtime (servers/sgl, Mini-SGLang) is a separate, not-yet-benched path.
+echo; cyan "=== ZONOS3-Mini (ggml) ==="
+# "Installed" = the completion marker written after EVERY step succeeded, AND a cuda build
+# whenever nvcc is present (Linux) -- a failed download or a later toolkit re-runs this.
+z3_done() {
+    [ -f venvs/zonos3/.install-complete ] || return 1
+    if [ "$(uname -s)" = "Linux" ] && command -v nvcc >/dev/null; then [ -x venvs/zonos3/bin-cuda/zonos3-server ] || return 1; fi
+    return 0
+}
+if ! want zonos3_mini; then echo "zonos3_mini: skipped (not in install filter)"
+elif ! z3_done; then
+    rm -f venvs/zonos3/.install-complete
+    command -v cmake >/dev/null || die "zonos3_mini: needs cmake + a C++17 compiler"
+    uv venv venvs/zonos3 --python 3.12 --allow-existing || die "uv venv zonos3"
+    uv pip install --python venvs/zonos3/bin/python numpy soundfile psutil "huggingface-hub>=0.36" || die "uv pip install zonos3"
+    [ -d venvs/zonos3/src ] || git clone -q https://github.com/Zyphra/ZONOS3-Mini venvs/zonos3/src || die "clone zonos3"
+    git -C venvs/zonos3/src checkout -q d5c266cfb96533445cc65041eda2f8a9b0d4d3b6 || die "checkout zonos3"
+    git -C venvs/zonos3/src submodule update --init servers/ggml/ggml || die "zonos3 ggml submodule"
+    # MSVC struct rename (harmless here) + ZONOS3_THREADS override for the backbone CPU backend
+    # apply, or confirm already applied; otherwise fatal (a silent skip = 4-thread CPU backbone)
+    if git -C venvs/zonos3/src apply --check --ignore-whitespace ../../../patches/zonos3_mini_ggml.patch 2>/dev/null; then
+        git -C venvs/zonos3/src apply --ignore-whitespace ../../../patches/zonos3_mini_ggml.patch || die "patch zonos3"
+    else
+        git -C venvs/zonos3/src apply -R --check --ignore-whitespace ../../../patches/zonos3_mini_ggml.patch 2>/dev/null \
+            || die "zonos3_mini: patches/zonos3_mini_ggml.patch neither applies nor is already applied"
+    fi
+    G=venvs/zonos3/src/servers/ggml
+    # static ggml so the server can be copied out of the build tree
+    cmake -S $G -B $G/build-cpu -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF && cmake --build $G/build-cpu -j --target zonos3-server || die "build zonos3 cpu"
+    mkdir -p venvs/zonos3/bin-cpu && cp "$(find $G/build-cpu -name zonos3-server -type f | head -1)" venvs/zonos3/bin-cpu/
+    if [ "$(uname -s)" = "Linux" ] && command -v nvcc >/dev/null; then
+        cmake -S $G -B $G/build-cuda -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=OFF -DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES="86;120" \
+            && cmake --build $G/build-cuda -j --target zonos3-server \
+            && mkdir -p venvs/zonos3/bin-cuda && cp "$(find $G/build-cuda -name zonos3-server -type f | head -1)" venvs/zonos3/bin-cuda/ \
+            || die "zonos3_mini: cuda build failed (nvcc present; fix the toolkit or remove it for a cpu-only install)"
+    fi
+    venvs/zonos3/bin/python -c "from huggingface_hub import snapshot_download as d; d('Zyphra/ZONOS3-Mini', revision='45deee5735477ed11a327e248294c466194c89e9', local_dir='venvs/zonos3/weights', allow_patterns=['gguf/zonos3-ptq.gguf','gguf/zac-keep2.gguf','gguf/spk-encoder.gguf','gguf/zac-encoder.gguf','gguf/ssl-teacher.gguf','gguf/voices/*'])" || die "download zonos3 weights"
+    for f in venvs/zonos3/bin-cpu/zonos3-server venvs/zonos3/weights/gguf/zonos3-ptq.gguf venvs/zonos3/weights/gguf/zac-keep2.gguf; do
+        [ -e "$f" ] || die "zonos3_mini: install incomplete, missing $f"
+    done
+    echo "d5c266c / weights 45deee5" > venvs/zonos3/.install-complete
+    green "zonos3_mini: ok (cloning needs ffmpeg on PATH)"
+else
+    echo "zonos3_mini: already installed"
+fi
+
 # --- Underdog Woof (pure-numpy runtime, no torch; CPU-only; code + weights pinned in runners/woof_runner.py) ---
 echo; cyan "=== Underdog Woof (numpy) ==="
 if ! want woof; then echo "woof: skipped (not in install filter)"

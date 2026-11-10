@@ -207,6 +207,12 @@ MODELS = [
     # so Linux-3090 only. Vendored NeMo normalizer covers en/de/zh but no fr -> langs
     # =False (FR prompt skipped). Pure cloner -> NO_PRESET_VOICE.
     ("zonos2",      "zonos2",     "runners/zonos2_runner.py",     {"en"},        ["cuda"],               None,   True),
+    # ZONOS3-Mini (Zyphra): Zyphra's C++/ggml runtime (zonos3-server, Q4/Q8 PTQ backbone,
+    # keep2 decoder), built per backend into venvs/zonos3/bin-{cpu,cuda}. 27 shipped preset
+    # voices (per-language: Wyatt/Gaspard/Rodrigo) + zero-shot cloning, both in the server's
+    # default raw-reference mode. Cross-lingual cloning (English house ref on p5/p6) is
+    # fragile; see the runner docstring.
+    ("zonos3_mini", "zonos3",     "runners/zonos3_mini_runner.py", {"en", "fr", "es"}, ["cpu", "cuda"],     None,   True),
     ("openvoice",   "openvoice",  "runners/openvoice_runner.py",  {"en", "fr", "es"}, ["cpu", "cuda", "mps"], None,   True),
     # Voxtral: mps/cpu -> MLX (preset-voice only on Apple Silicon); cuda -> vllm-omni.
     # can_clone=True is for the cross-rig cuda path; the MLX runner fails a
@@ -446,7 +452,8 @@ ORT_CUDA = {"hojo_40m", "hojo_80m"}
 
 # ribt is a cargo-built CLI with no Python ML stack in its venv. Its cuda cell needs a GPU
 # (nvidia-smi) AND the cuda-feature binary that install builds (venvs/ribt/target-cuda).
-BIN_CUDA = {"ribt": "venvs/ribt/target-cuda/release/ribt-tts"}
+BIN_CUDA = {"ribt": "venvs/ribt/target-cuda/release/ribt-tts",
+            "zonos3_mini": "venvs/zonos3/bin-cuda/zonos3-server"}
 
 
 def venv_python(venv_dir: str) -> Path:
