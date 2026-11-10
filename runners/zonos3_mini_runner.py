@@ -74,6 +74,7 @@ pre-sizes its KV pool for --batch slots (upstream default 8), so this is not per
 
 import argparse
 import base64
+import secrets
 import json
 import os
 import socket
@@ -96,7 +97,13 @@ VOICES = WEIGHTS / "voices"
 PRESET = {"en": "Wyatt_en-American_M_1", "fr": "Gaspard_fr_M_1", "es": "Rodrigo_es_M_1"}
 SEED = 1
 MAX_FRAMES = 2000
-SESSION = "tts-bench"
+# Per-run secrets: the upstream server allows any CORS origin and, without
+# ZONOS3_ACCESS_TOKEN, no auth -- so a webpage could otherwise read the cached reference
+# clip from the loopback server via a guessable session id. With the token set, the server
+# rejects every request (CORS preflights included) lacking `Authorization: Bearer <token>`
+# with 403 before routing.
+SESSION = secrets.token_urlsafe(16)
+TOKEN = secrets.token_urlsafe(32)
 LANG = {"en": "en_us", "fr": "fr_fr", "es": "es"}
 READY_TIMEOUT_S = 300
 MAX_REF_BYTES = 64 * 1024 * 1024
@@ -212,7 +219,8 @@ def _http(method, url, body=None, timeout=600):
         _OPENER = _opener()
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, method=method,
-                                 headers={"Content-Type": "application/json", "X-TTS-Session-ID": SESSION})
+                                 headers={"Content-Type": "application/json", "X-TTS-Session-ID": SESSION,
+                                          "Authorization": f"Bearer {TOKEN}"})
     with _OPENER.open(req, timeout=timeout) as r:
         return r.read()
 
@@ -229,6 +237,7 @@ class Server:
         env = dict(os.environ)
         env["ZONOS3_THREADS"] = str(th)
         env["SPK_THREADS"] = str(th)
+        env["ZONOS3_ACCESS_TOKEN"] = TOKEN
         self.gpu_base = _gpu_used_mb() if device == "cuda" else None
         self.log = tempfile.TemporaryFile()
         posix = os.name != "nt"
