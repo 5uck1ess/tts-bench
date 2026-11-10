@@ -1,0 +1,37 @@
+diff --git a/servers/ggml/src/zonos3.cpp b/servers/ggml/src/zonos3.cpp
+index 382d8d6..0105df4 100644
+--- a/servers/ggml/src/zonos3.cpp
++++ b/servers/ggml/src/zonos3.cpp
+@@ -2,6 +2,7 @@
+ 
+ #include "compat.h"
+ #include "gguf.h"
++#include "ggml-cpu.h"
+ 
+ #include <cmath>
+ #include <cstdio>
+@@ -227,6 +228,8 @@ bool zonos3_model_load(zonos3_model & m, const char * path, bool use_gpu) {
+     m.is_gpu = ggml_backend_dev_type(dev) == GGML_BACKEND_DEVICE_TYPE_GPU;
+     m.ctx_w = meta;
+     if (!m.backend) { fprintf(stderr, "zonos3: backend initialization failed\n"); return fail(); }
++    // tts-bench local patch: upstream leaves the backbone CPU backend at GGML_DEFAULT_N_THREADS (4).
++    if (!m.is_gpu) if (const char * th = getenv("ZONOS3_THREADS")) ggml_backend_cpu_set_n_threads(m.backend, std::max(1, atoi(th)));
+     std::vector<ggml_backend_buffer_type_t> extra_bufts;
+     if (!m.is_gpu) {
+         auto get_extra = (ggml_backend_dev_get_extra_bufts_t) ggml_backend_reg_get_proc_address(
+diff --git a/servers/ggml/src/zonos3.h b/servers/ggml/src/zonos3.h
+index b2d5d59..a8db88e 100644
+--- a/servers/ggml/src/zonos3.h
++++ b/servers/ggml/src/zonos3.h
+@@ -185,9 +185,9 @@ using zonos3_frame_cb = std::function<bool(int frame_idx, const int32_t * codes,
+ // recomputed over all of the slot's keys with the text keys outside the window at -inf (non-text keys are never
+ // masked). Both are explicit F32 attention, also on the F16-KV / FlashAttention profile.
+ struct zonos3_align_probe {
+-    struct head { int layer = 0, head = 0; };
++    struct probe_head { int layer = 0, head = 0; };
+     struct window { int layer = 0, head = 0, lo = 0, hi = 0; };  // inclusive text indices (clipped like clip_window)
+-    std::vector<head> heads;       // probed heads (global layers only); empty = no probe
++    std::vector<probe_head> heads;       // probed heads (global layers only); empty = no probe
+     int text_start = -1;           // absolute prompt row of the text BOS
+     int text_len = 0;              // BOS..EOS rows inclusive; <= zonos3_batch_features::probe_max_text
+     std::vector<window> windows;   // masked heads; empty = unmasked

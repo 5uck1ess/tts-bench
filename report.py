@@ -561,6 +561,7 @@ MODEL_DISPLAY_NAMES = {
     "drama3":        "Fish Audio Drama 3 (ComfyUI port)",
     "zonos":         "Zonos v0.1",
     "zonos2":        "Zonos2",
+    "zonos3_mini":   "ZONOS3-Mini (ggml Q4)",
     "openvoice":     "OpenVoice v2",
     "styletts2":     "StyleTTS 2",
     "vibevoice_7b":  "VibeVoice 7B",
@@ -673,6 +674,7 @@ MODEL_SIZE = {
     "drama3":        "35.9B (MoE, 3B active)",
     "zonos":         "1.6B",
     "zonos2":        "8B (MoE, ~900M active)",
+    "zonos3_mini":   "800M (MoE, ~100M active; Q4/Q8 GGUF)",   # card: 800M total, ~100M active
     "openvoice":     "~100M",
     "styletts2":     "~148M",
     "vibevoice_7b":  "7B",
@@ -778,6 +780,7 @@ MODEL_URL = {
     "breeze_tts2":   _HF + "BreezeBlue/Breeze-TTS-2",
     "zonos":         _HF + "Zyphra/Zonos-v0.1-transformer",
     "zonos2":        _HF + "Zyphra/Zonos2",
+    "zonos3_mini":   _HF + "Zyphra/ZONOS3-Mini",
     "openvoice":     _HF + "myshell-ai/OpenVoiceV2",
     "styletts2":     "https://github.com/yl4579/StyleTTS2",
     "metavoice":     _HF + "metavoiceio/metavoice-1B-v0.1",
@@ -877,6 +880,7 @@ MODEL_KIND = {
     "drama3":        "cloning",
     "zonos":         "cloning",
     "zonos2":        "cloning",   # no preset voice — zero-shot clones from a reference wav
+    "zonos3_mini":   "cloning",   # 27 shipped preset voices (per-language: Wyatt/Gaspard/Rodrigo) + zero-shot cloning; _PRESET_AND_CLONE
     "openvoice":     "cloning",
     "styletts2":     "cloning",
     "vibevoice_7b":  "cloning",
@@ -984,6 +988,7 @@ MODEL_RELEASE = {
     "breeze_tts2":   "2026-08",
     "zonos":         "2025-02",
     "zonos2":        "2026-06",
+    "zonos3_mini":   "2026-11",   # weights + runtime public 2026-11-09
     "openvoice":     "2024-04",
     "styletts2":     "2023-06",
     "metavoice":     "2024-02",
@@ -1062,7 +1067,7 @@ MODEL_SR = {
     "qwentts_fast": "24k", "sopro": "24k", "sopro_streaming": "24k",
     "audio8": "44.1k", "audio8_fast": "44.1k", "audio8_01b": "44.1k", "audio8_realistic": "44.1k", "sesame": "24k",
     "step_editx": "24k", "styletts2": "24k", "vibevoice_15b": "24k", "vibevoice_7b": "24k",
-    "voxcpm": "48k", "wavtts": "16k", "zipvoice": "24k", "zonos": "44.1k", "zonos2": "44.1k",
+    "voxcpm": "48k", "wavtts": "16k", "zipvoice": "24k", "zonos": "44.1k", "zonos2": "44.1k", "zonos3_mini": "44.1k",
 }
 
 # Explicit emotion/delivery control offered (tags / desc / knob / emo-ref / —);
@@ -1108,7 +1113,7 @@ MODEL_EXPRESSIVE = {
     "audio8": "—", "audio8_fast": "—", "audio8_01b": "—", "audio8_realistic": "—",
     "sesame": "—", "step_editx": "tags + desc",
     "styletts2": "knob", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "desc",
-    "wavtts": "—", "zipvoice": "—", "zonos": "emo-ref + knob", "zonos2": "knob",
+    "wavtts": "—", "zipvoice": "—", "zonos": "emo-ref + knob", "zonos2": "knob", "zonos3_mini": "steer + 3 knobs",  # emotion/accent/voice-design steering + loudness/fmax/rate buckets
 }
 
 # License string as shown in the README (the precise truth; the commercial-OK
@@ -1154,7 +1159,7 @@ MODEL_LICENSE = {
     "audio8_01b": "Audio8 Community v1.0",
     "sesame": "Apache 2.0", "step_editx": "Apache 2.0", "styletts2": "MIT", "vibevoice_15b": "MIT",
     "vibevoice_7b": "MIT", "voxcpm": "Apache 2.0", "wavtts": "MIT code / CC-BY-NC 4.0 weights",
-    "zipvoice": "Apache 2.0", "zonos": "Apache 2.0", "zonos2": "Apache 2.0",
+    "zipvoice": "Apache 2.0", "zonos": "Apache 2.0", "zonos2": "Apache 2.0", "zonos3_mini": "Apache 2.0",
 }
 
 # Language coverage cell from the README: "✓" multilingual, "✓ (N)"/"✓ (zh+en)"
@@ -1187,7 +1192,7 @@ MODEL_LANGS = {
     "audio8": "✓ (11)", "audio8_fast": "✓ (11)", "audio8_01b": "✓ (11)", "audio8_realistic": "✓ (23)",
     "sesame": "—", "step_editx": "—",
     "styletts2": "—", "vibevoice_15b": "—", "vibevoice_7b": "—", "voxcpm": "✓ (30)",
-    "wavtts": "✓ (zh+en)", "zipvoice": "✓ (zh+en)", "zonos": "✓", "zonos2": "—",
+    "wavtts": "✓ (zh+en)", "zipvoice": "✓ (zh+en)", "zonos": "✓", "zonos2": "—", "zonos3_mini": "✓",
 }
 
 # --- Registry-drift guard -------------------------------------------------
