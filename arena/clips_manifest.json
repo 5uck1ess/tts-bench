@@ -1418,7 +1418,7 @@
         {
           "model": "zonos3_mini",
           "prompt": 6,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-default/zonos3_mini_cuda_p6.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/zonos3_mini_cuda_p6.wav"
         }
       ]
     },
@@ -2883,7 +2883,7 @@
         {
           "model": "zonos3_mini",
           "prompt": 6,
-          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/zonos3_mini_cuda_p6.wav"
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/zonos3_mini_cuda_p6.wav"
         }
       ]
     },
