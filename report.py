@@ -523,6 +523,8 @@ MODEL_DISPLAY_NAMES = {
     "auroratts":     "AuroraTTS-100K",
     "linnet":        "LinnetTTS",
     "woof":          "Underdog Woof",
+    "paradee":       "Paradee-8M v1.3",
+    "pivo":          "PiVo-1.4M",
     "ribt":          "ribt",
     "hojo_40m":      "Hojo-TTS-Light 40M",
     "hojo_80m":      "Hojo-TTS-Light 80M",
@@ -619,6 +621,8 @@ MODEL_SIZE = {
     "auroratts":     "95.6K",   # card: 95,638 inference params incl. the 145-param DSP; verified by numel at load
     "linnet":        "41.4M (31.5M LM + 9.9M decoder)",   # counted from the fp16 safetensors; HF repo name says "35m"
     "woof":          "38.2M (23.0M LM + 15.3M decoder)",   # card: 22.95M speech model + 15.3M Mimi-derived decoder
+    "paradee":       "7.88M (4.23M text + 3.65M decoder)",   # card v1.3: same shape as v1.2
+    "pivo":          "1.40M (585K acoustic + 817K vocoder)",   # card: 1,401,562 learned params incl. FARGAN-derived vocoder
     "ribt":          "54M (18.65M acoustic + 21.88M flow + 13.5M vocoder)",   # card stage sizes
     "hojo_40m":      "84.5M (40.4M LM + 13.3M fine + 30.8M decoder)",   # ONNX initializers + npz token embedding
     "hojo_80m":      "167M (89.4M LM + 20.3M codec enc + 45.0M dec + 12.0M spk)",   # same method; card's "80M" excludes input embeddings
@@ -732,6 +736,8 @@ MODEL_URL = {
     "auroratts":     _HF + "AuroraAI-Research/AuroraTTS-100K",
     "linnet":        _HF + "VoxRT/linnet-en-35m",
     "woof":          _HF + "ConwayResearch/Underdog-Woof",
+    "paradee":       _HF + "sahilmahendrakar/Paradee-8M-v1.3",
+    "pivo":          _HF + "empero-ai/PiVo-1.4M",
     "ribt":          _HF + "municipal-robotics/ribt",
     "hojo_40m":      _HF + "HojoAI/Hojo-TTS-Light-40M",
     "hojo_80m":      _HF + "HojoAI/Hojo-TTS-Light",
@@ -834,6 +840,8 @@ MODEL_KIND = {
     "auroratts":     "predefined",  # single LJSpeech speaker, no cloning
     "linnet":        "predefined",  # 2 built-in voices; encoder unreleased, cloning licence-reserved
     "woof":          "predefined",  # 2 built-in voices (juno, mira); no voice encoder shipped
+    "paradee":       "predefined",  # 8 Kokoro voices (4 en, 2 hi, 1 fr, 1 es); no cloning
+    "pivo":          "predefined",  # 2 synthetic voices (Pi, Vo); no speaker encoder
     "ribt":          "cloning",     # af_heart default via bundled ref.wav + a reference encoder; _PRESET_AND_CLONE
     "hojo_40m":      "predefined",  # 15 voices, no cloning
     "hojo_80m":      "cloning",     # no preset voice; no-reference path clones the house ref
@@ -940,6 +948,8 @@ MODEL_RELEASE = {
     "auroratts":     "2026-10",   # HF repo created 2026-10-22
     "linnet":        "2026-11",   # HF repo created 2026-11-04
     "woof":          "2026-11",   # HF repo created 2026-11-05
+    "paradee":       "2026-11",   # v1.3 posted 2026-11-09 (v1.0 was 2026-10)
+    "pivo":          "2026-11",   # HF repo + tech report Nov 2026
     "ribt":          "2026-11",   # code + weights public 2026-11-05 (release.toml dated 2026-10-17)
     "hojo_40m":      "2026-08",   # v2 weights benched (HF 2026-08-19); first 40M release 2026-06
     "hojo_80m":      "2026-08",   # v2 weights benched (HF 2026-08-21); v1 released 2026-05
@@ -1052,6 +1062,7 @@ MODEL_SR = {
     "steertts": "24k", "steertts_noflow": "24k", "phonon_31m": "24k", "phonon_40m": "24k",
     "auroratts": "22.05k", "linnet": "24k",
     "woof": "24k", "ribt": "24k",
+    "paradee": "24k", "pivo": "16k",
     "hojo_40m": "24k", "hojo_80m": "24k",
     "supertonic": "24k", "vibevoice": "24k", "voxtral": "24k", "chatterbox": "24k",
     "chatterbox_turbo": "24k", "coqui": "24k", "cosyvoice": "24k", "dia": "44.1k",
@@ -1086,6 +1097,7 @@ MODEL_EXPRESSIVE = {
     "auroratts": "2 knobs",  # speed + pitch_shift
     "linnet": "—",  # temp/cfg/seed are sampling knobs, not style control
     "woof": "—",  # temp/seed only
+    "paradee": "knob", "pivo": "knob",  # speed only
     "ribt": "—",  # pitch/rate/accent are global offsets, not style control
     "hojo_40m": "—", "hojo_80m": "—",  # pinyin override only; style control is on the roadmap
     # length_scale only; noise scales are hardcoded in upstream's synthesize().
@@ -1132,6 +1144,7 @@ MODEL_LICENSE = {
     "auroratts": "Apache 2.0",
     "linnet": "Apache 2.0 code / Linnet Weights License",
     "woof": "Underdog Non-Commercial 1.0",
+    "paradee": "Apache 2.0", "pivo": "Apache 2.0 + BSD (vocoder)",
     "ribt": "MIT",
     "hojo_40m": "Apache 2.0", "hojo_80m": "Apache 2.0",
     "supertonic": "MIT + OpenRAIL-M",
@@ -1175,6 +1188,7 @@ MODEL_LANGS = {
     "steertts": "— (en)", "steertts_noflow": "— (en)", "phonon_31m": "— (en)", "phonon_40m": "✓ (5)",
     "auroratts": "— (en)", "linnet": "— (en)",
     "woof": "— (en)", "ribt": "— (en)",
+    "paradee": "✓ (4)", "pivo": "— (en)",
     "hojo_40m": "✓ (zh+en)", "hojo_80m": "✓ (zh+en)",
     "soprano": "—",
     "supertonic": "✓ (31)", "vibevoice": "—", "voxtral": "✓", "chatterbox": "—",
