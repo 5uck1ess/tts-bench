@@ -99,6 +99,7 @@ MAX_FRAMES = 2000
 SESSION = "tts-bench"
 LANG = {"en": "en_us", "fr": "fr_fr", "es": "es"}
 READY_TIMEOUT_S = 300
+MAX_REF_BYTES = 64 * 1024 * 1024
 
 
 class _KillOnCloseJob:
@@ -270,7 +271,20 @@ class Server:
         generate forces that encode here, so the timed runs reuse the cached codes, like
         the other cloners' encode-once-at-load (without it CPU paid ~25 s of codec-encoder +
         SSL-teacher work inside every run)."""
-        ref = base64.b64encode(Path(path).read_bytes()).decode()
+        p = Path(path)
+        # Bounded read: only a regular file, at most MAX_REF_BYTES (a 60 s 48 kHz stereo
+        # float32 wav is ~23 MB; the server keeps only the first 60 s anyway). A FIFO or a
+        # huge file would otherwise block or exhaust memory before the server's limit applies.
+        if not p.is_file():
+            raise ValueError(f"reference is not a regular file: {path}")
+        size = p.stat().st_size
+        if size > MAX_REF_BYTES:
+            raise ValueError(f"reference too large ({size} B > {MAX_REF_BYTES} B): {path}")
+        with p.open("rb") as fh:
+            raw = fh.read(MAX_REF_BYTES + 1)
+        if len(raw) > MAX_REF_BYTES:
+            raise ValueError(f"reference grew past {MAX_REF_BYTES} B while reading: {path}")
+        ref = base64.b64encode(raw).decode()
         sp = json.loads(_http("POST", self.base + "/v2/speakers",
                               {"speaker_audio_base64": ref, "speaker_audio_name": Path(path).name}))
         _http("POST", self.base + "/v2/generate",
