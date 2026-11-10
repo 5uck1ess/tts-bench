@@ -195,12 +195,25 @@ def _gpu_used_mb():
         return None
 
 
+def _opener():
+    """Loopback-only opener: an empty ProxyHandler, so an inherited http_proxy/HTTP_PROXY can
+    never route these 127.0.0.1 requests (which carry the reference clip) through a proxy."""
+    import urllib.request
+    return urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+
+_OPENER = None
+
+
 def _http(method, url, body=None, timeout=600):
     import urllib.request
+    global _OPENER
+    if _OPENER is None:
+        _OPENER = _opener()
     data = json.dumps(body).encode() if body is not None else None
     req = urllib.request.Request(url, data=data, method=method,
                                  headers={"Content-Type": "application/json", "X-TTS-Session-ID": SESSION})
-    with urllib.request.urlopen(req, timeout=timeout) as r:
+    with _OPENER.open(req, timeout=timeout) as r:
         return r.read()
 
 
