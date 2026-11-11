@@ -289,6 +289,18 @@ def _read_scores_csv():
     return look
 
 
+def _hosted_naq(mode="default"):
+    """{hosted slug: mean NAQ over its scored takes}. Hosted rows in naq_scores.csv use
+    the hosted/ layout, dir = "<slug>/<mode>" (local dirs never contain a slash)."""
+    acc = {}
+    if NAQ_SCORES_CSV.exists():
+        for row in _plain_rows(NAQ_SCORES_CSV):
+            slug, _, m = row["dir"].partition("/")
+            if m == mode and row.get("naq", "") not in ("", None):
+                acc.setdefault(slug, []).append(float(row["naq"]))
+    return {s: sum(v) / len(v) for s, v in acc.items()}
+
+
 def _model_scores(model, prompt_ids, dirs, look):
     """Mean of each metric over the canonical picked clip per prompt for one model.
     Returns {'utmos','wer','sim','naq': float|None, 'n': int}. Blanks are skipped per
@@ -1229,7 +1241,9 @@ def build_scores():
     # hosted vendors clone a different reference voice, so their SIM is not comparable.
     from scripts.hosted.catalog import (CATALOG as HOSTED_CATALOG, model_shown,
                                         model_title, score_aggregates)
-    hosted = {(HOSTED_CATALOG[slug][0], model_shown(slug), model_title(slug)): agg
+    hosted_naq = _hosted_naq("default")
+    hosted = {(HOSTED_CATALOG[slug][0], model_shown(slug), model_title(slug)):
+              {**agg, "naq": hosted_naq.get(slug)}
               for slug, agg in
               score_aggregates(HOSTED_SCORES_CSV, "default").items()
               if slug in HOSTED_CATALOG}  # board vendors only (a scored test dir never leaks)
