@@ -53,6 +53,13 @@ import _meminfo
 
 SAMPLE_RATE = 24000  # Mimi codec
 MODEL_ID = "sesame/csm-1b"
+# The checkpoint's generation_config.json ships max_new_tokens=125 = 10.0 s at
+# Mimi's 12.5 frames/s, which silently truncated every clip longer than 10 s
+# (prompt 3 was cut at exactly 10.00 s on every rig/device/lens). Sesame's own
+# generator defaults to 90 s; 30 s matches the miso runner (same architecture)
+# and leaves headroom over our longest prompt (~18 s). EOS still ends early.
+MAX_AUDIO_S = 30
+MAX_NEW_FRAMES = int(MAX_AUDIO_S * 12.5)
 
 
 def _read_ref_transcript(ref_wav: str | None) -> str | None:
@@ -140,7 +147,8 @@ def main() -> int:
             for k in ("input_values", "audio_values"):
                 if k in inputs and inputs[k] is not None and inputs[k].dtype != model.dtype:
                     inputs[k] = inputs[k].to(model.dtype)
-            audio = model.generate(**inputs, output_audio=True)
+            audio = model.generate(**inputs, output_audio=True,
+                                   max_new_tokens=MAX_NEW_FRAMES)
             t_end = time.perf_counter()
 
             # model.generate(output_audio=True) returns a list of tensors;
