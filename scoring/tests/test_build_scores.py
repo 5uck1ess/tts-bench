@@ -158,3 +158,14 @@ def test_build_scores_adds_hosted_rows_to_default_board_only(tmp_path, monkeypat
     assert 'class="source-switch"' not in html
     assert '<div class="subsection" data-mode="default">' in html
     assert "Inworld" not in cloning.split("<script>")[0]
+
+
+def test_hosted_naq_means_takes_per_slug(tmp_path, monkeypatch):
+    n = tmp_path / "naq.csv"
+    n.write_text("dir,wav,model,prompt_id,naq\n"
+                 "windows-default,a_cuda_p1.wav,a,1,10.0\n"
+                 "vend_x/default,p1_t1.wav,vend_x,1,60.0\n"
+                 "vend_x/default,p1_t2.wav,vend_x,1,80.0\n"
+                 "vend_x/cloning,p1_t1.wav,vend_x,1,5.0\n", encoding="utf-8")
+    monkeypatch.setattr(publish, "NAQ_SCORES_CSV", n)
+    assert publish._hosted_naq("default") == {"vend_x": 70.0}
