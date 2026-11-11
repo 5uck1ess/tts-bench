@@ -230,3 +230,60 @@ def test_hosted_pool_is_its_own_lens(tmp_path, monkeypatch):
             assert all("/hosted/" in u for u in urls)
         names = {r["name"] for r in c.get("/api/ranking?mode=hosted-default").json()["ranking"]}
         assert names == {"VUI Labs Luna", "hosted:rime_coda"}
+
+
+def _mixed_client(tmp_path, monkeypatch, rate):
+    import copy
+    man = copy.deepcopy(MANIFEST)
+    man["modes"]["hosted-default"] = {"reference_url": None, "clips": [
+        {"model": "hosted:vui_luna", "prompt": 1, "url": "https://gh.test/tts-bench/hosted/vui_luna/default/p1_t1.wav"},
+        {"model": "hosted:rime_coda", "prompt": 1, "url": "https://gh.test/tts-bench/hosted/rime_coda/default/p1_t1.wav"},
+    ]}
+    mpath = tmp_path / "manifest.json"
+    mpath.write_text(json.dumps(man), encoding="utf-8")
+    monkeypatch.setenv("ARENA_MANIFEST", str(mpath))
+    monkeypatch.setenv("ARENA_DB", str(tmp_path / "arena.db"))
+    monkeypatch.setenv("TURNSTILE_SECRET", "")
+    monkeypatch.setenv("HMAC_SECRET", "test-hmac")
+    monkeypatch.setenv("ARENA_MIX_RATE", rate)
+    import arena.app as appmod
+    import importlib
+    importlib.reload(appmod)
+    return appmod
+
+
+def test_mixed_round_pairs_hosted_with_local_and_skips_elo(tmp_path, monkeypatch):
+    appmod = _mixed_client(tmp_path, monkeypatch, "1")
+    with TestClient(appmod.app) as c:
+        d = c.get("/api/next?mode=default").json()
+        assert d["vote_mode"] == "mixed-default"
+        urls = [c.get(d[k], follow_redirects=False).headers["location"] for k in ("left_url", "right_url")]
+        assert sorted("/hosted/" in u for u in urls) == [False, True]   # one hosted, one local
+        before = c.get("/api/ranking?mode=default").json()
+        body = {"voter": "mix-voter", "mode": "mixed-default", "choice": "left",
+                "prompt_id": d["prompt_id"], "left_id": d["left_id"], "right_id": d["right_id"],
+                "pair_nonce": d["pair_nonce"], "dwell_ms": 5000, "both_played": True}
+        r = c.post("/api/vote", json=body).json()
+        assert r["ok"] and r["clean"]
+        assert {r["reveal"]["left"]["model"], r["reveal"]["right"]["model"]} & {"hosted:vui_luna", "hosted:rime_coda"}
+        assert c.get("/api/ranking?mode=default").json() == before          # local board untouched
+        assert c.get("/api/ranking?mode=hosted-default").json()["votes"] == 0
+        with appmod._db_lock:
+            modes = [row[0] for row in appmod._conn.execute("SELECT mode FROM votes").fetchall()]
+        assert modes == ["mixed-default"]
+
+
+def test_mixed_rounds_off_at_zero_rate(tmp_path, monkeypatch):
+    appmod = _mixed_client(tmp_path, monkeypatch, "0")
+    with TestClient(appmod.app) as c:
+        assert all(c.get("/api/next?mode=default").json()["vote_mode"] == "default" for _ in range(20))
+
+
+def test_mixed_nonce_cannot_be_replayed_as_default(tmp_path, monkeypatch):
+    appmod = _mixed_client(tmp_path, monkeypatch, "1")
+    with TestClient(appmod.app) as c:
+        d = c.get("/api/next?mode=default").json()
+        body = {"voter": "v", "mode": "default", "choice": "left", "prompt_id": d["prompt_id"],
+                "left_id": d["left_id"], "right_id": d["right_id"], "pair_nonce": d["pair_nonce"],
+                "dwell_ms": 5000, "both_played": True}
+        assert c.post("/api/vote", json=body).status_code == 400   # signed for mixed-default only

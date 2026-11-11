@@ -108,6 +108,32 @@ for _m in [m for m in ("default", "cloning", "hosted-default", "hosted-cloning")
         _STATES[_m] = ModeState(_m, _inv, _conn)
 _INITIAL = "default" if "default" in _STATES else next(iter(_STATES))
 
+# Mixed matchups: a share of Default-voice rounds pit a hosted API against a local model, so
+# NAQ gets votes that compare the two pools. They are logged under their own mode and never
+# touch any Elo board (the local and hosted leaderboards stay exactly as they were).
+MIX_MODE = "mixed-default"
+MIX_RATE = float(os.environ.get("ARENA_MIX_RATE", "0.15"))
+
+
+def _mix_pools():
+    """(local inventory, hosted inventory, shared prompts) or None when mixing is off."""
+    loc, hos = _STATES.get("default"), _STATES.get("hosted-default")
+    if MIX_RATE <= 0 or loc is None or hos is None:
+        return None
+    shared = sorted(set(loc.inv.by_prompt) & set(hos.inv.by_prompt))
+    return (loc.inv, hos.inv, shared) if shared else None
+
+
+def _mixed_pair(rng):
+    """One hosted-vs-local pair (prompt, left, right, left_id, right_id), sides random."""
+    loc, hos, shared = _mix_pools()
+    prompt = rng.choice(shared)
+    a = (rng.choice(loc.by_prompt[prompt]), loc)
+    b = (rng.choice(hos.by_prompt[prompt]), hos)
+    if rng.random() < 0.5:
+        a, b = b, a
+    return prompt, a[0], b[0], a[1].id_of[(a[0], prompt)], b[1].id_of[(b[0], prompt)]
+
 
 def _ip_hash(request: Request) -> str:
     # NOTE: X-Forwarded-For's leftmost entry is client-supplied and spoofable, so
@@ -135,18 +161,24 @@ def index():
 @app.get("/api/next")
 def api_next(mode: str = _INITIAL):
     st = _STATES.get(mode) or _STATES[_INITIAL]
+    vote_mode = st.mode
     with st.lock:
-        prompt, left, right = choose_pair(st.inv.by_prompt, st.elo, st.games,
-                                          st.pair_count, st.rng)
-    left_id = st.inv.id_of[(left, prompt)]
-    right_id = st.inv.id_of[(right, prompt)]
+        if st.mode == "default" and _mix_pools() and st.rng.random() < MIX_RATE:
+            vote_mode = MIX_MODE
+            prompt, left, right, left_id, right_id = _mixed_pair(st.rng)
+        else:
+            prompt, left, right = choose_pair(st.inv.by_prompt, st.elo, st.games,
+                                              st.pair_count, st.rng)
+            left_id = st.inv.id_of[(left, prompt)]
+            right_id = st.inv.id_of[(right, prompt)]
     ts = int(time.time())
-    fields = pair_fields(st.mode, left_id, right_id, prompt)
+    fields = pair_fields(vote_mode, left_id, right_id, prompt)
     nonce = make_nonce(SETTINGS.hmac_secret_bytes, fields, ts)
     lang, text = st.inv.prompts.get(prompt, ("en", ""))
     with _db_lock:
         total = dbmod.clean_vote_count(_conn, st.mode)  # all good-faith votes (incl tie/bad)
     return {
+        "vote_mode": vote_mode,    # the page posts this back as the vote's mode
         "token": nonce,            # legacy field name kept for page parity
         "pair_nonce": nonce,
         "prompt_id": prompt,
@@ -201,7 +233,12 @@ async def api_vote(request: Request):
     body = await request.json()
     mode = body.get("mode", _INITIAL)
     st = _STATES.get(mode)
-    if st is None:
+    if mode == MIX_MODE and _mix_pools():
+        loc, hos, _shared = _mix_pools()
+        lookup = {**loc.id_of, **hos.id_of}   # hosted slugs are namespaced, no collisions
+    elif st is not None:
+        lookup = st.inv.id_of
+    else:
         return JSONResponse({"ok": False, "error": "bad mode"}, status_code=400)
     choice = body.get("choice", "")
     if choice not in ("left", "right", "tie", "bad"):
@@ -227,7 +264,7 @@ async def api_vote(request: Request):
 
     # Resolve models from the opaque ids.
     left = right = None
-    for (m, p), cid in st.inv.id_of.items():
+    for (m, p), cid in lookup.items():
         if cid == left_id and p == prompt_id:
             left = m
         if cid == right_id and p == prompt_id:
@@ -276,7 +313,7 @@ async def api_vote(request: Request):
         dbmod.insert_vote(_conn, row)
         dbmod.bump_token(_conn, token, now)
 
-    if clean and choice != "bad":
+    if clean and choice != "bad" and mode != MIX_MODE:   # mixed votes never move an Elo board
         with st.lock:
             elomod.apply_vote(st.elo, st.games, left, right, choice)
             key = frozenset((left, right))
