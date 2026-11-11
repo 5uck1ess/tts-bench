@@ -14,6 +14,10 @@ Public blind 2AFC voting for the [tts-bench](https://github.com/5uck1ess/tts-ben
 leaderboard. Two lenses (Default voice quality, Cloning fidelity); audio is served
 from gh-pages; votes persist to Turso; a live human-preference Elo is shown.
 
+Hosted APIs have their own lenses and Elo. Separately, `ARENA_MIX_RATE` (default 0.15) of
+Default-voice rounds pit a hosted API against a local model; those votes are logged as mode
+`mixed-default` and never move either Elo board.
+
 ## What it is / isn't
 - Collects human preference at scale (research ground truth). PUBLIC.
 - Contains **no NAQ code** — pairing/Elo only. NAQ stays private R&D.
@@ -28,6 +32,7 @@ from gh-pages; votes persist to Turso; a live human-preference Elo is shown.
 | `HMAC_SECRET` | pair-nonce + ip-hash signing secret | prod |
 | `ADMIN_TOKEN` | header token for `/admin/flag_token` | prod |
 | `ARENA_LANGS` | votable prompt langs (default `en`; `all` for every) | no |
+| `ARENA_MIX_RATE` | share of Default rounds that are hosted vs local (default `0.15`; `0` turns it off) | no |
 
 Local dev runs with all of these empty (Turnstile disabled, sqlite at `arena/arena.db`).
 
