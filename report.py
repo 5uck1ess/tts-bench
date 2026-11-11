@@ -1043,6 +1043,33 @@ def _release_td(model, cls="muted"):
     return f'<td class="{cls}"{ds}>{escape(_release_label(model) or "—")}</td>'
 
 
+_SIZE_UNIT = {"K": 1e3, "M": 1e6, "B": 1e9}
+
+
+def _size_num(model):
+    """Param count from the MODEL_SIZE cell for numeric sorting: "95.6K"->95600,
+    "1.40M (585K ...)"->1.4e6, "~1B"/"<100M" strip the prefix. "~25MB" (piper, a
+    disk size) reads as 25M. None when there is no leading number."""
+    s = MODEL_SIZE.get(model, "").lstrip("~<").strip()
+    num = ""
+    for ch in s:
+        if ch.isdigit() or ch == ".":
+            num += ch
+        else:
+            break
+    if not num:
+        return None
+    mult = _SIZE_UNIT.get(s[len(num):].strip()[:1].upper())
+    return float(num) * mult if mult else None
+
+
+def _size_td(model, cls="muted"):
+    """A Size table cell with a numeric data-sort, so "95.6K" sorts below "1B"."""
+    s = _size_num(model)
+    ds = f' data-sort="{s:g}"' if s is not None else ' data-sort=""'
+    return f'<td class="{cls}"{ds}>{escape(MODEL_SIZE.get(model, "—"))}</td>'
+
+
 # ---------------------------------------------------------------------------
 # Capability matrix data — the structured source behind the Capabilities page.
 # Lifted from the curated README model tables (single values, kept in sync with
@@ -1647,7 +1674,6 @@ def _speed_table_html(ctx):
         a = ctx["per_model"][(model, dev)]
         row_id = f"speed-{model}-{dev}".lower().replace("/", "-")
         dev_class = f"dev-{dev}"
-        size_str = MODEL_SIZE.get(model, "—")
         n_ok = a["n_ok"]; n_total = a["n_total"]
         partial = (n_ok < n_total) and n_ok > 0
         partial_tag = (f' <span class="muted">({n_ok}/{n_total} ok)</span>'
@@ -1679,7 +1705,7 @@ def _speed_table_html(ctx):
                    f'{_fmt_rtf(a["rtf_warm"])}</td>')
         out.append(f'<td class="num"{_ds(a["peak_mem"])}>{_fmt_mb(a["peak_mem"])}</td>')
         out.append(f'<td class="num"{_ds(a["peak_vram"])}>{_fmt_mb(a["peak_vram"])}</td>')
-        out.append(f'<td class="muted">{escape(size_str)}</td>')
+        out.append(_size_td(model))
         out.append(_release_td(model))
         out.append('</tr>')
     out.append('</tbody></table>')

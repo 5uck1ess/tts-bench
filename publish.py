@@ -37,7 +37,7 @@ from report import (
     STYLE, CONTROLS, SCRIPT, PROMPT_INFO, MODEL_SIZE, MODEL_KIND, MODEL_URL,
     MODEL_SR, MODEL_EXPRESSIVE, MODEL_LICENSE, MODEL_LANGS,
     _ds, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
-    _build_context, _speed_table_html, _display_name, _release_label, _release_td,
+    _build_context, _speed_table_html, _display_name, _release_label, _release_td, _size_td,
     _is_multilingual, _is_commercial, _sr_hz, _is_crosslingual, MODEL_LANGS,
     HOUSE_REF_LABEL, display_ref,
 )
@@ -1032,11 +1032,10 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
                      f'title="{escape(mtitle)}">{escape(name)}'
                      f'<code class="model-id">{escape(model_id)}</code> '
                      '<span class="src-tag">hosted</span></td>',
-                     '<td class="muted">API</td>', '<td class="muted" data-sort="">—</td>']
+                     '<td class="muted" data-sort="">API</td>', '<td class="muted" data-sort="">—</td>']
         else:
             cells = [f'<td>{escape(_display_name(m))}</td>',
-                     f'<td class="muted">{escape(MODEL_SIZE.get(m, "—"))}</td>',
-                     _release_td(m)]
+                     _size_td(m), _release_td(m)]
         for (k, _h, _up) in columns:
             v = agg.get(k)
             if v is None:
@@ -1327,25 +1326,6 @@ def build_scores():
     (WORKTREE / "scores.html").write_text("\n".join(out), encoding="utf-8")
 
 
-def _params_num(m):
-    """Rough param/size magnitude from the MODEL_SIZE cell, for a sortable Params
-    column. Best-effort: "1.5B"->1.5e9, "<100M"/"~500M"->Ne6, "~25MB"->disk proxy."""
-    s = MODEL_SIZE.get(m, "").lstrip("~<").strip()
-    num = ""
-    for ch in s:
-        if ch.isdigit() or ch == ".":
-            num += ch
-        else:
-            break
-    if not num:
-        return None
-    val = float(num)
-    unit = s[len(num):].strip().upper()
-    if unit.startswith("B"):
-        return val * 1e9
-    return val * 1e6  # "M" params or "MB" disk — both small relative to B
-
-
 def _langs_num(m):
     """Sort key for the Languages column: 0 = English-only, else the language
     count (parsed from "(31)"/"(600+)"), token count for "(zh+en)", or 1 for a
@@ -1453,7 +1433,7 @@ def build_capabilities():
             f'data-expr="{1 if has_expr else 0}" data-comm="{1 if comm else 0}" '
             f'data-cpu="{1 if cpu else 0}">'
             f'<td>{name_cell}</td>'
-            f'<td class="num"{_ds(_params_num(m))}>{escape(MODEL_SIZE.get(m, "—"))}</td>'
+            f'{_size_td(m, cls="num")}'
             f'{_release_td(m)}'
             f'<td class="cap-type">{typ}</td>'
             f'<td data-sort="{_langs_num(m)}">{escape(MODEL_LANGS.get(m, "—"))}</td>'
