@@ -261,6 +261,10 @@ def _plain_rows(path):
 
 
 HOSTED_SCORES_CSV = REPO / "scoring" / "hosted_scores.csv"  # paid-API scores (score_hosted.py)
+# NAQ: per-clip naturalness score from a private vote-trained model (default voice
+# only). Only the scores are public; the model and its training stay private.
+# naq = chance (0-100) a listener prefers the clip over a typical bench clip.
+NAQ_SCORES_CSV = REPO / "scoring" / "naq_scores.csv"
 
 
 def _read_scores_csv():
@@ -276,14 +280,20 @@ def _read_scores_csv():
             vals[k] = float(v) if v not in ("", None) else None
         vals["health"] = (row.get("health", "") or "").strip()  # "" = clean / unscored
         look[(row["dir"], row["wav"])] = vals
+    if NAQ_SCORES_CSV.exists():
+        for row in _plain_rows(NAQ_SCORES_CSV):
+            v = row.get("naq", "")
+            look.setdefault((row["dir"], row["wav"]), {"utmos": None, "wer": None,
+                                                        "sim": None, "health": ""})
+            look[(row["dir"], row["wav"])]["naq"] = float(v) if v not in ("", None) else None
     return look
 
 
 def _model_scores(model, prompt_ids, dirs, look):
     """Mean of each metric over the canonical picked clip per prompt for one model.
-    Returns {'utmos','wer','sim': float|None, 'n': int}. Blanks are skipped per
+    Returns {'utmos','wer','sim','naq': float|None, 'n': int}. Blanks are skipped per
     metric; n = number of prompts that had a picked clip present in scores.csv."""
-    acc = {"utmos": [], "wer": [], "sim": []}
+    acc = {"utmos": [], "wer": [], "sim": [], "naq": []}
     health_flags = []                         # [(prompt_id, "gap"), ...] over picked clips
     n = 0
     for pid in prompt_ids:
@@ -934,7 +944,11 @@ def build_speed_hub():
 
 _SCORES_GUIDE = (
     '<div class="reading-guide">Objective scores over the same 5 prompts. '
-    '<strong>UTMOS</strong> = predicted naturalness (higher better); '
+    '<strong>NAQ</strong> (default voice) = how natural it sounds to people: the chance, '
+    '0–100, that a listener picks this model over a typical bench model in a blind A/B. '
+    'It comes from a model trained on our arena votes, and on held-out blind votes it '
+    'agreed with listeners far more often than UTMOS; the model itself is not published; '
+    '<strong>UTMOS</strong> = predicted naturalness, mostly how clean the audio is (higher better); '
     '<strong>WER</strong> = ASR word-error rate vs the intended text — a '
     '<em>failure-detector</em>, not a fine ranking (lower better); '
     '<strong>SIM</strong> = speaker similarity to the cloned reference '
@@ -1017,8 +1031,9 @@ def _scores_table(models, dirs, look, columns, fallback_dirs=None, fallback_mode
                 cells.append(f'<td class="num muted" data-metric="{escape(k)}" '
                              'data-sort="">—</td>')
             else:
+                shown = f"{v:.0f}" if k == "naq" else f"{v:.3f}"
                 cells.append(f'<td class="num" data-metric="{escape(k)}" '
-                             f'data-sort="{v:.4f}">{v:.3f}</td>')
+                             f'data-sort="{v:.4f}">{shown}</td>')
         if show_health:
             cells.append(_health_cell(agg.get("health_flags", [])))
         body.append(f'<tr{cls}>' + "".join(cells) + '</tr>')
@@ -1073,6 +1088,7 @@ SCORE_CHART_SCRIPT = '''<script>
   var limit = 15;
     var metricDomains = {
         utmos: {min: 0, max: 5},
+        naq: {min: 0, max: 100},
         sim: {min: -1, max: 1}
     };
   document.querySelectorAll('.score-chart').forEach(function(chart){
@@ -1205,7 +1221,7 @@ def build_scores():
     default_models = raw_default - NO_PRESET_VOICE
     cloning_models = raw_cloning | (NO_PRESET_VOICE & (raw_default | raw_cloning))
 
-    default_cols = [("utmos", "UTMOS", True), ("wer", "WER", False)]
+    default_cols = [("naq", "NAQ", True), ("utmos", "UTMOS", True), ("wer", "WER", False)]
     cloning_cols = [("sim", "SIM", True), ("utmos", "UTMOS", True), ("wer", "WER", False)]
 
     # Paid APIs join the Default voice board behind a Local / Hosted / Both switch (Tym,
@@ -1260,7 +1276,7 @@ def build_scores():
         source_switch = source_script = source_attr = ""
     else:
         source_attr = ' data-source="local"'
-    default_chart = score_chart([("utmos", "UTMOS ↑")]) if "<table" in default_tbl else ""
+    default_chart = score_chart([("naq", "NAQ ↑"), ("utmos", "UTMOS ↑")]) if "<table" in default_tbl else ""
     cloning_chart = score_chart([("sim", "SIM ↑"), ("utmos", "UTMOS ↑")]) if "<table" in cloning_tbl else ""
     foot = (
         '<div class="scores-foot">Scored over the 5 bench prompts (thin — WER is a '
@@ -1290,7 +1306,7 @@ def build_scores():
            f'<h3 class="sub-head">Cloning <span class="muted">· fidelity + naturalness + '
            f'intelligibility</span></h3>{cloning_chart}{cloning_tbl}</div>',
            foot,
-           # colIdx 3 = first metric column (after Model/Size/Released): UTMOS on
+           # colIdx 3 = first metric column (after Model/Size/Released): NAQ on
            # the default board, SIM on the cloning board — keep the metric-led sort.
            '<script>window.__defaultSort = {colIdx: 3, dir: -1};</script>',
            SCRIPT, _MODE_TAB_SCRIPT, SCORE_CHART_SCRIPT, source_script, '</body></html>']
