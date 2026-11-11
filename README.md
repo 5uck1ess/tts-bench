@@ -10,9 +10,9 @@ Bench for local text-to-speech (TTS) models. Three lenses, on whatever hardware 
 
 - **Speed** — cold + warm **TTFA** (time to first audio), **RTFx** (realtime speed; higher = faster than realtime), memory, on CPU / CUDA / Apple Silicon
 - **Listen** — every model on every prompt, default voice + voice cloning, with inline audio players, so you can pick a model by ear
-- **Scores** — objective metrics per model: UTMOS (naturalness), WER (intelligibility), SIM (cloning fidelity), scored over the bench prompts via [seed-tts-eval](https://github.com/BytedanceSpeech/seed-tts-eval)-style ASR + speaker-verification. Sortable, with a Default/Cloning toggle.
+- **Scores** — metrics per model: NAQ (how natural people find it, default voice), UTMOS (predicted naturalness, mostly cleanliness), WER (intelligibility), SIM (cloning fidelity), scored over the bench prompts via [seed-tts-eval](https://github.com/BytedanceSpeech/seed-tts-eval)-style ASR + speaker-verification. Sortable, with a Default/Cloning toggle.
 
-An objective quality score (NAQ) was prototyped but isn't part of the bench — the v2 features didn't track subjective ranking closely enough to publish, so it was pulled and is being redesigned separately. The bench measures speed; quality is by-ear via the Listen lens.
+**NAQ** is a naturalness score: the chance (0–100) that a listener picks a model over a typical bench model in a blind A/B. It comes from a model trained on the arena's blind votes, and on held-out blind votes it agreed with listeners far more often than UTMOS. Only the scores are published; the model and its training are not. It covers the default voice; cloning is scored by SIM + UTMOS + WER.
 
 ---
 
@@ -72,7 +72,7 @@ Interactive feel-test: `python speak.py kokoro`. One-shot A/B comparison: `pytho
 - CUDA (RTX 5090): **AuroraTTS-100K** — 12ms warm TTFA, 603× RTFx
 - CPU + MPS (Apple M4, 16 GB): **Piper** — 208ms warm TTFA, 32× RTFx
 
-**Best sounding:** *No objective ranking right now — the NAQ score is paused pending redesign. Open the [Demos site](https://5uck1ess.github.io/tts-bench/) and use the Listen lens.*
+**Best sounding:** *Sort the [Scores](https://5uck1ess.github.io/tts-bench/scores.html) board by NAQ, then confirm by ear on the Listen lens.*
 
 **Best cloning — maintainer's by-ear ranking (October 2026):**
 - 1. **Fish Audio Drama 3**

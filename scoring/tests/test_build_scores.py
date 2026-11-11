@@ -12,9 +12,26 @@ def test_score_lookup_indexes_by_dir_wav(tmp_path, monkeypatch):
         "windows-cloning,f5tts_cuda_p1.wav,f5tts,cloning,1,4.20,0.00,0.97\n",
         encoding="utf-8")
     monkeypatch.setattr(publish, "SCORES_CSV", csv_path)
+    monkeypatch.setattr(publish, "NAQ_SCORES_CSV", tmp_path / "none.csv")
     look = publish._read_scores_csv()
     row = look[("windows-cloning", "f5tts_cuda_p1.wav")]
     assert row["utmos"] == 4.20 and row["sim"] == 0.97
+
+
+def test_score_lookup_merges_naq(tmp_path, monkeypatch):
+    s = tmp_path / "scores.csv"
+    s.write_text("dir,wav,model,mode,prompt_id,utmos,wer,sim\n"
+                 "windows-default,a_cuda_p1.wav,a,default,1,4.0,0.0,\n", encoding="utf-8")
+    n = tmp_path / "naq.csv"
+    n.write_text("dir,wav,model,prompt_id,naq\n"
+                 "windows-default,a_cuda_p1.wav,a,1,64.2\n"
+                 "windows-default,b_cuda_p1.wav,b,1,\n", encoding="utf-8")
+    monkeypatch.setattr(publish, "SCORES_CSV", s)
+    monkeypatch.setattr(publish, "NAQ_SCORES_CSV", n)
+    look = publish._read_scores_csv()
+    assert look[("windows-default", "a_cuda_p1.wav")]["naq"] == 64.2
+    assert look[("windows-default", "a_cuda_p1.wav")]["utmos"] == 4.0
+    assert look[("windows-default", "b_cuda_p1.wav")]["naq"] is None
 
 
 def test_model_scores_means_over_picked_clips(monkeypatch):
@@ -70,9 +87,17 @@ def test_build_scores_renders_both_lenses(tmp_path, monkeypatch):
     monkeypatch.setattr(publish, "WORKTREE", gh)
     monkeypatch.setattr(publish, "SCORES_CSV", scores)
     monkeypatch.setattr(publish, "HOSTED_SCORES_CSV", tmp_path / "no_hosted.csv")
+    naq = tmp_path / "naq_scores.csv"
+    naq.write_text("dir,wav,model,prompt_id,naq\n"
+                   "windows-default,kokoro_cuda_p1.wav,kokoro,1,71.6\n", encoding="utf-8")
+    monkeypatch.setattr(publish, "NAQ_SCORES_CSV", naq)
     publish.build_scores()
 
     html = (gh / "scores.html").read_text(encoding="utf-8")
+    default_sec, cloning_sec = html.split('data-mode="cloning" style', 1)
+    assert 'data-sort="71.6000">72</td>' in default_sec  # NAQ shown 0-100, no decimals
+    assert 'data-metric="naq"' not in cloning_sec     # default voice only
+    assert 'data-chart-metric="naq"' in default_sec and 'naq: {min: 0, max: 100}' in html
     assert "scores.html" in html and ">Scores<" in html  # nav tab present
     assert 'data-mode="default"' in html and 'data-mode="cloning"' in html
     assert "UTMOS" in html and "WER" in html and "SIM" in html

@@ -8,7 +8,7 @@ Open TTS models advertise speed numbers from cherry-picked hardware, often confu
 - **Samples** — every model × prompt rendered with an inline audio player so you can pick by ear. Sourced from a single rig per model (see "Speed is per-rig; samples are single-source" below), not duplicated across rigs.
 - **Voice cloning** — same prompts, same reference voice, ranked subjectively. See [cloning.md](cloning.md).
 
-An objective quality score (NAQ) was prototyped but is **not** part of the bench — it didn't track subjective ranking closely enough to publish, and is now redesigned separately (offline, over the saved wavs) rather than computed during a run. The bench measures speed only.
+NAQ is not computed during a run. It is scored offline over the saved wavs by a private model trained on the arena's blind votes, and only the per-clip scores are published (`scoring/naq_scores.csv`, default voice, English prompts 1–4). `naq` = the chance (0–100) that a listener prefers the clip over a typical bench clip. Models added after the last NAQ scoring pass show a blank until the next one.
 
 ## Speed is per-rig; samples are single-source
 
