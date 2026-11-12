@@ -44,6 +44,8 @@ NO_PRESET_VOICE = {
     # jo.wav until 2026-07-29 -- see docs/known-issues.md.
     "f5tts", "indextts", "indextts25", "step_editx",
     "firered3", "auk_base", "auk_flash",
+    # VoxMel: continuation cloner, no preset; the no-reference run clones house Chris.
+    "voxmel_06b", "voxmel_03b",
     # Same defect, caught in the follow-up pass: these stored the fallback as a bare
     # stem ("jo") rather than "jo.wav", so the first sweep's grep missed them.
     "neutts_air", "neutts_nano", "luxtts",

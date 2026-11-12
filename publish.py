@@ -98,6 +98,8 @@ NO_PRESET_VOICE = {
     "f5tts", "indextts", "indextts25", "step_editx",
     # Reference-only: no model-native preset voice; the default lens clones house Chris.
     "firered3", "auk_base", "auk_flash",
+    # VoxMel: continuation cloner, no preset; the no-reference run clones house Chris.
+    "voxmel_06b", "voxmel_03b",
     # Same defect, caught in the follow-up pass: these stored the fallback as a bare
     # stem ("jo") rather than "jo.wav", so the first sweep's grep missed them.
     "neutts_air", "neutts_nano", "luxtts",
