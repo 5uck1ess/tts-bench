@@ -85,7 +85,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 
 ---
 
-## Models tracked (97)
+## Models tracked (99)
 
 #### Predefined voices
 
@@ -96,6 +96,8 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [Audio8 TTS Preview 0.6B](https://huggingface.co/Audio8/Audio8-TTS-Preview-0.6b) | 601M | Jul 2026 | ✓ | ✓ | ✓ (11) | 44.1k | — | Apache 2.0 |
 | [Audio8 TTS Realistic 0.6B](https://huggingface.co/Edge0/Audio8-TTS-Realistic-0.6b) | 601M | Oct 2026 | ✓ | ✓ | ✓ (23) | 44.1k | — | Apache 2.0 |
 | [AuroraTTS-100K](https://huggingface.co/AuroraAI-Research/AuroraTTS-100K) | 95.6K | Oct 2026 | ✓ (1) | — | — (en) | 22.05k | 2 knobs | Apache 2.0 |
+| [Flock Speech Goldfinch](https://huggingface.co/flockspeech/goldfinch) | 24.9M (11.4M acoustic + 13.5M Vocos) | Nov 2026 | ✓ (1) | — | — (en) | 24k | tags | Apache 2.0 (Vocos MIT) |
+| [Flock Speech Junco](https://huggingface.co/flockspeech/junco) | 24.9M (11.4M acoustic + 13.5M Vocos) | Nov 2026 | ✓ (1) | — | — (en) | 24k | knob | Apache 2.0 (Vocos MIT) |
 | [Hojo-TTS-Light 40M](https://huggingface.co/HojoAI/Hojo-TTS-Light-40M) | 84.5M (40.4M LM + 13.3M fine + 30.8M decoder) | Aug 2026 | ✓ (15) | — | ✓ (zh+en) | 24k | — | Apache 2.0 |
 | [Inflect-Micro v2](https://huggingface.co/owensong/Inflect-Micro-v2) | 9.36M | Jul 2026 | ✓ (1) | — | — (en) | 24k | 2 knobs | Apache 2.0 |
 | [Inflect-Nano v2](https://huggingface.co/owensong/Inflect-Nano-v2) | 3.96M | Jul 2026 | ✓ (1) | — | — (en) | 24k | 2 knobs | Apache 2.0 |
@@ -207,7 +209,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**62 of the 97 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**62 of the 99 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 2,094 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

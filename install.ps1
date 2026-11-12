@@ -164,6 +164,16 @@ if (-not (Want "sanotts")) { Write-Host "sanotts: skipped (not in install filter
     Write-Host "sanotts: already installed" -ForegroundColor Gray
 }
 
+Step "Flock Speech 0.2.3 (Junco + Goldfinch; ONNX Runtime CPU, no torch; weights bundled in the wheel)"
+if (-not (Want "flockspeech")) { Write-Host "flockspeech: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\flockspeech\Scripts\python.exe")) {
+    Invoke-Checked "uv venv flockspeech" { uv venv venvs\flockspeech --python 3.11 }
+    Invoke-Checked "uv pip install flockspeech" { uv pip install --python venvs\flockspeech\Scripts\python.exe "flockspeech==0.2.3" soundfile psutil }
+    Write-Host "flockspeech: ok" -ForegroundColor Green
+} else {
+    Write-Host "flockspeech: already installed" -ForegroundColor Gray
+}
+
 Step "Paradee-8M v1.3 + PiVo-1.4M (ONNX Runtime CPU, no torch)"
 if (-not (Want "paradee")) { Write-Host "paradee: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\paradee\Scripts\python.exe")) {

@@ -176,6 +176,11 @@ MODELS = [
     # LinnetTTS (VoxRT): 41.4M flow LM + Vocos decoder, Rust runtime, CPU-only. Built-in
     # voice f1; the voice encoder is unreleased (cloning is licence-reserved).
     ("linnet",        "linnet",    "runners/linnet_runner.py",    {"en"},     ["cpu"],         None,    False),
+    # Flock Speech (ONNX Runtime CPU, no torch): 11.4M flow-matching acoustic model + 13.5M
+    # Vocos per voice. Junco = LJSpeech reading voice; Goldfinch = conversational with
+    # [laugh]/[breath] tags. Single-speaker, no cloning.
+    ("flock_junco",     "flockspeech", "runners/flockspeech_runner.py", {"en"}, ["cpu"], "junco",     False),
+    ("flock_goldfinch", "flockspeech", "runners/flockspeech_runner.py", {"en"}, ["cpu"], "goldfinch", False),
     # Paradee-8M v1.3 (Apache-2.0): Kokoro-82M distilled to 7.88M, one int8 ONNX graph,
     # CPUExecutionProvider only. Eight Kokoro voices; the voice sets the language, so the
     # runner uses af_heart / ff_siwis / em_alex for en / fr / es. No cloning.

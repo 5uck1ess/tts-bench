@@ -234,6 +234,16 @@ else
 fi
 
 # --- Paradee-8M v1.3 + PiVo-1.4M ---
+echo; cyan "=== Flock Speech 0.2.3 (Junco + Goldfinch, ONNX CPU) ==="
+if ! want flockspeech; then echo "flockspeech: skipped (not in install filter)"
+elif [ ! -x venvs/flockspeech/bin/python ]; then
+    uv venv venvs/flockspeech --python 3.11 || die "uv venv flockspeech"
+    uv pip install --python venvs/flockspeech/bin/python "flockspeech==0.2.3" soundfile psutil || die "uv pip install flockspeech"
+    green "flockspeech: ok"
+else
+    echo "flockspeech: already installed"
+fi
+
 echo; cyan "=== Paradee-8M v1.3 + PiVo-1.4M ==="
 if ! want paradee; then echo "paradee: skipped (not in install filter)"
 elif [ ! -x venvs/paradee/bin/python ]; then
