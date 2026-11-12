@@ -24,8 +24,9 @@ exactly what `Voice.__call__` returns.
 Determinism: `stream()` builds `np.random.default_rng(seed)` per call, so the pinned
 seed (0, upstream's default) gives bit-identical reruns.
 
-Warm-up: the phonemizer backend is created lazily on the first call (~200 ms), so a
-throwaway synthesis runs during load to keep that cost out of run 0.
+Cold run: the phonemizer backend is created lazily on the first call (~200 ms upstream
+estimate). There is no warm-up synthesis, so that cost lands in run 0, which is what the
+cold column is meant to measure.
 
 Threads: upstream's default is min(4, cpu_count) intra-op threads. Like every other
 runner we leave the library default alone. The model's "8.7x on a single thread"
@@ -82,7 +83,6 @@ def main() -> int:
 
         tts = flockspeech.load(variant)
         sample_rate = tts.sample_rate
-        tts("Warm up.", seed=SEED)  # creates the phonemizer backend outside run 0
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"load failed: {type(e).__name__}: {e}"}))
