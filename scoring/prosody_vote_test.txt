@@ -1,0 +1,51 @@
+
+=== all clean votes ===
+
+-- default: 2776 decisive votes joined, 59 models
+   UTMOS alone (raw sign): 0.576 on 2776
+   held-out UTMOS logit: 0.572 (median test n=672)
+   terminal_abs    alone(+sign)=0.553  UTMOS+f - UTMOS = +0.014 [-0.060, +0.100]  fail
+   declination     alone(+sign)=0.446  UTMOS+f - UTMOS = +0.006 [-0.080, +0.093]  fail
+   f0_sd           alone(+sign)=0.561  UTMOS+f - UTMOS = +0.020 [-0.065, +0.114]  fail
+   f0_range        alone(+sign)=0.559  UTMOS+f - UTMOS = +0.025 [-0.066, +0.115]  fail
+   f0_sd_dev       alone(+sign)=0.459  UTMOS+f - UTMOS = -0.010 [-0.103, +0.090]  fail
+   rate_dev        alone(+sign)=0.508  UTMOS+f - UTMOS = +0.009 [-0.084, +0.096]  fail
+   octave_frac     alone(+sign)=0.520  UTMOS+f - UTMOS = -0.004 [-0.091, +0.076]  fail
+
+-- cloning: 1683 decisive votes joined, 62 models
+   UTMOS alone (raw sign): 0.590 on 1683
+   held-out UTMOS logit: 0.592 (median test n=417)
+   terminal_abs    alone(+sign)=0.503  UTMOS+f - UTMOS = -0.009 [-0.114, +0.074]  fail
+   declination     alone(+sign)=0.491  UTMOS+f - UTMOS = -0.008 [-0.103, +0.085]  fail
+   f0_sd           alone(+sign)=0.428  UTMOS+f - UTMOS = +0.005 [-0.076, +0.088]  fail
+   f0_range        alone(+sign)=0.437  UTMOS+f - UTMOS = +0.006 [-0.086, +0.088]  fail
+   f0_sd_dev       alone(+sign)=0.467  UTMOS+f - UTMOS = -0.015 [-0.095, +0.071]  fail
+   rate_dev        alone(+sign)=0.439  UTMOS+f - UTMOS = -0.000 [-0.090, +0.094]  fail
+   octave_frac     alone(+sign)=0.393  UTMOS+f - UTMOS = +0.003 [-0.095, +0.097]  fail
+   ref_f0_sd_gap   alone(+sign)=0.569  UTMOS+f - UTMOS = -0.002 [-0.090, +0.076]  fail
+   ref_f0_med_gap  alone(+sign)=0.489  UTMOS+f - UTMOS = -0.011 [-0.111, +0.082]  fail
+
+=== votes since 2026-10-21 (after house-ref re-bench) ===
+
+-- default: 234 decisive votes joined, 59 models
+   UTMOS alone (raw sign): 0.603 on 234
+   held-out UTMOS logit: 0.596 (median test n=56)
+   terminal_abs    alone(+sign)=0.555  UTMOS+f - UTMOS = +0.001 [-0.281, +0.304]  fail
+   declination     alone(+sign)=0.359  UTMOS+f - UTMOS = +0.046 [-0.159, +0.265]  fail
+   f0_sd           alone(+sign)=0.632  UTMOS+f - UTMOS = +0.033 [-0.226, +0.226]  fail
+   f0_range        alone(+sign)=0.671  UTMOS+f - UTMOS = +0.057 [-0.179, +0.287]  fail
+   f0_sd_dev       alone(+sign)=0.462  UTMOS+f - UTMOS = +0.011 [-0.225, +0.230]  fail
+   rate_dev        alone(+sign)=0.568  UTMOS+f - UTMOS = +0.069 [-0.169, +0.283]  fail
+   octave_frac     alone(+sign)=0.583  UTMOS+f - UTMOS = +0.017 [-0.205, +0.231]  fail
+
+-- cloning: 96 decisive votes joined, 57 models
+   too few votes
+
+=== flags (all clean votes) ===
+   flat (f0_sd < 1.2 st): flagged clip appearances=73, loss rate=0.603, UTMOS already calls 0.726 of these votes
+      clips: ['cloning:f5tts:p2', 'cloning:ming_tiny:p1', 'cloning:miso:p1', 'cloning:moss_tts_v15:p1', 'cloning:outetts:p2', 'cloning:outetts:p3']
+   wild (f0_sd > 6.5 st): flagged clip appearances=107, loss rate=0.776, UTMOS already calls 0.710 of these votes
+      clips: ['cloning:voxcpm:p1', 'default:dia:p1', 'default:pocket:p1']
+   unstable (>5% octave-rejected): flagged clip appearances=0, loss rate=nan, UTMOS already calls nan of these votes
+      clips: []
+   clips flagged: flat=7, wild=3, unstable=0 of 570
