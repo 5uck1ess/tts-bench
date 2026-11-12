@@ -2786,6 +2786,46 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/voxcpm_cuda_p5.wav"
         },
         {
+          "model": "voxmel_03b",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/voxmel_03b_cuda_p1.wav"
+        },
+        {
+          "model": "voxmel_03b",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/voxmel_03b_cuda_p2.wav"
+        },
+        {
+          "model": "voxmel_03b",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/voxmel_03b_cuda_p3.wav"
+        },
+        {
+          "model": "voxmel_03b",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/voxmel_03b_cuda_p4.wav"
+        },
+        {
+          "model": "voxmel_06b",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/voxmel_06b_cuda_p1.wav"
+        },
+        {
+          "model": "voxmel_06b",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/voxmel_06b_cuda_p2.wav"
+        },
+        {
+          "model": "voxmel_06b",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/voxmel_06b_cuda_p3.wav"
+        },
+        {
+          "model": "voxmel_06b",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/voxmel_06b_cuda_p4.wav"
+        },
+        {
           "model": "wavtts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/wavtts_cuda_p1.wav"
@@ -4768,6 +4808,14 @@
     "voxcpm": {
       "name": "VoxCPM2 2B",
       "url": "https://huggingface.co/openbmb/VoxCPM2"
+    },
+    "voxmel_03b": {
+      "name": "VoxMel 0.3B",
+      "url": "https://huggingface.co/VoxDance-Lab/VoxMel-0.3B"
+    },
+    "voxmel_06b": {
+      "name": "VoxMel 0.6B",
+      "url": "https://huggingface.co/VoxDance-Lab/VoxMel-0.6B"
     },
     "voxtral": {
       "name": "Voxtral 4B TTS",
