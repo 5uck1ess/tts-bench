@@ -24,6 +24,9 @@ settings. seed 42 = the demo's fixed seed; `generate(seed=)` re-seeds every call
 reruns are reproducible. `max_seconds` defaults to 30 s per call, a ceiling far above
 the longest bench prompt (p3 ~15-19 s), so no cap is raised.
 
+Safe loading: upstream unpickles checkpoints with torch.load(weights_only=False); the
+runner forces weights_only=True during the load (both checkpoints are tensor-only).
+
 Non-streaming: ttfa_ms == gen_s. bf16 autocast is upstream's on CUDA; CPU runs fp32.
 """
 
@@ -94,14 +97,26 @@ def main() -> int:
         vocos_dir = snapshot_download(VOCOS[0], revision=VOCOS[1])
         # config.yaml names the Qwen architecture by a path relative to examples/voxmel
         # ("qwen_tokenizer", "qwen_configs/qwen2_medium_300m"), so load from there.
+        # Upstream's loader (voxcore/train_utils/load_pretrained_model.py) calls
+        # torch.load(weights_only=False), which unpickles arbitrary objects, so a crafted
+        # checkpoint could run code. Both pinned checkpoints are plain tensor state
+        # dicts, so force weights_only=True for every torch.load during the load.
+        _torch_load = torch.load
+
+        def _safe_load(*a, **kw):
+            kw["weights_only"] = True
+            return _torch_load(*a, **kw)
+
         cwd = os.getcwd()
         os.chdir(SRC / "examples" / "voxmel")
+        torch.load = _safe_load
         try:
             tts = VoxMel.from_pretrained(
                 model_dir, checkpoint=ckpt,
                 tokenizer_path=str(SRC / "examples" / "voxmel" / "qwen_tokenizer"),
                 vocos_path=vocos_dir, device=args.device)
         finally:
+            torch.load = _torch_load
             os.chdir(cwd)
         sample_rate = tts.sample_rate
     except Exception as e:
