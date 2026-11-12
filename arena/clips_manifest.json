@@ -306,6 +306,46 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/dramabox_cuda_p4.wav"
         },
         {
+          "model": "flock_goldfinch",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/flock_goldfinch_cpu_p1.wav"
+        },
+        {
+          "model": "flock_goldfinch",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/flock_goldfinch_cpu_p2.wav"
+        },
+        {
+          "model": "flock_goldfinch",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/flock_goldfinch_cpu_p3.wav"
+        },
+        {
+          "model": "flock_goldfinch",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/flock_goldfinch_cpu_p4.wav"
+        },
+        {
+          "model": "flock_junco",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/flock_junco_cpu_p1.wav"
+        },
+        {
+          "model": "flock_junco",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/flock_junco_cpu_p2.wav"
+        },
+        {
+          "model": "flock_junco",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/flock_junco_cpu_p3.wav"
+        },
+        {
+          "model": "flock_junco",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/flock_junco_cpu_p4.wav"
+        },
+        {
           "model": "higgs_v3",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/linux-default/higgs_v3_cuda_p1.wav"
@@ -4352,6 +4392,14 @@
     "fish_s2": {
       "name": "Fish Speech S2-Pro",
       "url": "https://huggingface.co/fishaudio/s2-pro"
+    },
+    "flock_goldfinch": {
+      "name": "Flock Speech Goldfinch",
+      "url": "https://huggingface.co/flockspeech/goldfinch"
+    },
+    "flock_junco": {
+      "name": "Flock Speech Junco",
+      "url": "https://huggingface.co/flockspeech/junco"
     },
     "higgs_v3": {
       "name": "Higgs Audio v3 TTS",
