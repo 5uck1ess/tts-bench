@@ -396,6 +396,21 @@ if (-not (Want "woof")) { Write-Host "woof: skipped (not in install filter)" -Fo
     Write-Host "woof: already installed" -ForegroundColor Gray
 }
 
+Step "VoxMel 0.6B + 0.3B (torch; source pinned at 2588e79; weights + Vocos pinned in runners/voxmel_runner.py)"
+if (-not (Want "voxmel")) { Write-Host "voxmel: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\voxmel\Scripts\python.exe")) {
+    Invoke-Checked "uv venv voxmel" { uv venv venvs\voxmel --python 3.11 }
+    Invoke-Checked "git clone voxmel" { git clone https://github.com/VoxDance-Lab/VoxMel venvs\voxmel\src }
+    Invoke-Checked "checkout voxmel" { git -C venvs\voxmel\src checkout 2588e79a28ca1722bb40c43815c7aae19ef9945b }
+    # requirements pin transformers 4.41.1 / numpy 1.26.0; install them as-is.
+    Invoke-Checked "uv pip install voxmel" { uv pip install --python venvs\voxmel\Scripts\python.exe -e venvs\voxmel\src soundfile psutil hf_xet }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120), LAST: requirements resolve PyPI's CPU torch.
+    Invoke-Checked "torch cu128 for voxmel" { uv pip install --python venvs\voxmel\Scripts\python.exe --reinstall-package torch --reinstall-package torchaudio torch==2.8.0 torchaudio==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "voxmel: ok" -ForegroundColor Green
+} else {
+    Write-Host "voxmel: already installed" -ForegroundColor Gray
+}
+
 Step "SteerTTS (23.1M + 17.6M flow refiner; steertts + steertts_noflow share this venv)"
 if (-not (Want "steertts")) { Write-Host "steertts: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\steertts\Scripts\python.exe")) {

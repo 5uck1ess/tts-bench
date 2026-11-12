@@ -499,6 +499,21 @@ else
     echo "woof: already installed"
 fi
 
+# --- VoxMel 0.6B + 0.3B (torch; source pinned; weights + Vocos pinned in runners/voxmel_runner.py) ---
+echo; cyan "=== VoxMel ==="
+if ! want voxmel; then echo "voxmel: skipped (not in install filter)"
+elif [ ! -x venvs/voxmel/bin/python ]; then
+    uv venv venvs/voxmel --python 3.11 || die "uv venv voxmel"
+    git clone https://github.com/VoxDance-Lab/VoxMel venvs/voxmel/src || die "git clone voxmel"
+    git -C venvs/voxmel/src checkout 2588e79a28ca1722bb40c43815c7aae19ef9945b || die "checkout voxmel"
+    uv pip install --python venvs/voxmel/bin/python -e venvs/voxmel/src soundfile psutil hf_xet \
+        || die "uv pip install voxmel"
+    uv pip install --python venvs/voxmel/bin/python torch==2.8.0 torchaudio==2.8.0 || die "torch voxmel"
+    green "voxmel: ok"
+else
+    echo "voxmel: already installed"
+fi
+
 # --- Vaniq-Edge (8.5M VITS, one fixed voice) ---
 echo; cyan "=== Vaniq-Edge (8.5M VITS, one fixed voice) ==="
 if ! want vaniq; then echo "vaniq: skipped (not in install filter)"

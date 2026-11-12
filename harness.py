@@ -326,6 +326,10 @@ MODELS = [
     # docs/known-issues.md (Cross-cutting, 2026-10-20).
     # CUDA-only: hard-coded flash-attn.
     ("firered3",    "firered3",   "runners/firered3_runner.py",   {"en"},        ["cuda"],  None,   True),
+    # VoxMel (VoxDance-Lab): tokenizer-free AR mel TTS (Qwen2.5 + flow head + Haar residual
+    # tiers + Vocos). Reference-only: the no-reference run clones house Chris.
+    ("voxmel_06b",  "voxmel",     "runners/voxmel_runner.py",     {"en"},        ["cpu", "cuda"], "06b", True),
+    ("voxmel_03b",  "voxmel",     "runners/voxmel_runner.py",     {"en"},        ["cpu", "cuda"], "03b", True),
     # AuK: pure cloners, one venv + runner; --variant picks Base or Flash.
     # Cross-lingual FR from the English reference measured WER 0.267 (first 11/15
     # words verbatim). CUDA-only, torch attention (no flash-attn needed). Duration

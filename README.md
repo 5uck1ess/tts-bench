@@ -85,7 +85,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 
 ---
 
-## Models tracked (99)
+## Models tracked (101)
 
 #### Predefined voices
 
@@ -190,6 +190,8 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [VibeVoice 1.5B](https://huggingface.co/microsoft/VibeVoice-1.5B) | 1.5B | Aug 2025 | — | ✓ | — | 24k | — | MIT |
 | [VibeVoice 7B](https://huggingface.co/vibevoice/VibeVoice-7B) | 7B | Sep 2025 | — | ✓ | — | 24k | — | MIT |
 | [VoxCPM2](https://huggingface.co/openbmb/VoxCPM2) | 2B | Apr 2026 | — | ✓ | ✓ (30) | **48k** | desc | Apache 2.0 |
+| [VoxMel 0.3B](https://huggingface.co/VoxDance-Lab/VoxMel-0.3B) | 441M (428M model + 13.5M Vocos) | Nov 2026 | — | ✓ | ✓ (zh+en) | 24k | — | Apache 2.0 |
+| [VoxMel 0.6B](https://huggingface.co/VoxDance-Lab/VoxMel-0.6B) | 704M (690M model + 13.5M Vocos) | Nov 2026 | — | ✓ | ✓ (zh+en) | 24k | — | Apache 2.0 |
 | [WavTTS](https://github.com/cwx-worst-one/WavTTS) | 0.67B | May 2026 | — | ✓ | ✓ (zh+en) | **16k** | — | MIT code / CC-BY-NC 4.0 weights |
 | [ZipVoice](https://huggingface.co/k2-fsa/ZipVoice) | 123M | Jun 2025 | — | ✓ | ✓ (zh+en) | 24k | — | Apache 2.0 |
 | [Zonos v0.1](https://huggingface.co/Zyphra/Zonos-v0.1-transformer) | 1.6B | Feb 2025 | — | ✓ | ✓ | **44.1k** | emo-ref + knob | Apache 2.0 |
@@ -209,7 +211,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**62 of the 99 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**64 of the 101 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 2,094 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

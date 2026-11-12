@@ -486,6 +486,8 @@ MODEL_DISPLAY_NAMES = {
     "longcat_1b":    "LongCat-AudioDiT 1B",
     "longcat_3p5b":  "LongCat-AudioDiT 3.5B",
     "firered3":      "FireRedTTS3",
+    "voxmel_06b":    "VoxMel 0.6B",
+    "voxmel_03b":    "VoxMel 0.3B",
     "auk_base":      "AuK",
     "auk_flash":     "AuK-Flash",
     "orpheus":       "Orpheus-TTS 3B",
@@ -636,6 +638,8 @@ MODEL_SIZE = {
     "longcat_3p5b":  "3.83B",
     # Measured safetensors header sums; frozen text encoder excluded, like LongCat.
     "firered3":      "2.12B",
+    "voxmel_06b":    "704M (690M model + 13.5M Vocos)",   # counted from model_L_final.pt (494M Qwen2.5 + 14.8M flow head + 181M residual tiers)
+    "voxmel_03b":    "441M (428M model + 13.5M Vocos)",
     "auk_base":      "1.53B",
     "auk_flash":     "1.53B",
     "orpheus":       "3.3B",   # Llama-3.2-3B backbone + SNAC decoder
@@ -752,6 +756,8 @@ MODEL_URL = {
     "longcat_1b":    _HF + "meituan-longcat/LongCat-AudioDiT-1B",
     "longcat_3p5b":  _HF + "meituan-longcat/LongCat-AudioDiT-3.5B",
     "firered3":      _HF + "FireRedTeam/FireRedTTS3",
+    "voxmel_06b":    _HF + "VoxDance-Lab/VoxMel-0.6B",
+    "voxmel_03b":    _HF + "VoxDance-Lab/VoxMel-0.3B",
     "auk_base":      _HF + "tencent/AuK",
     "auk_flash":     _HF + "tencent/AuK-Flash",
     "orpheus":       _HF + "canopylabs/orpheus-3b-0.1-ft",
@@ -873,6 +879,8 @@ MODEL_KIND = {
     "miso":          "cloning",
     "longcat_1b":    "cloning",
     "longcat_3p5b":  "cloning",
+    "voxmel_06b":    "cloning",  # continuation cloning with transcript; no preset voice
+    "voxmel_03b":    "cloning",
     "firered3":      "cloning",
     "auk_base":      "cloning",
     "auk_flash":     "cloning",
@@ -967,6 +975,8 @@ MODEL_RELEASE = {
     "miso":          "2026-05",
     "longcat_1b":    "2026-03",
     "longcat_3p5b":  "2026-03",
+    "voxmel_06b":    "2026-11",   # HF repo created 2026-11-10
+    "voxmel_03b":    "2026-11",
     "firered3":      "2026-08",
     "auk_base":      "2026-09",
     "auk_flash":     "2026-09",
@@ -1106,6 +1116,7 @@ MODEL_SR = {
     "breeze_tts2": "24k",
     "dots_tts": "48k", "dramabox": "48k", "echo": "44.1k", "f5tts": "24k",
     "fish_15": "44.1k", "fish_s2": "44.1k", "drama3": "44.1k", "higgs_v3": "24k", "indextts": "22.05k", "indextts25": "22.05k",
+    "voxmel_06b": "24k", "voxmel_03b": "24k",
     "firered3": "24k", "auk_base": "24k", "auk_flash": "24k",
     "longcat_1b": "24k", "longcat_3p5b": "24k", "mars5": "24k", "metavoice": "48k",
     "miotts_01b": "44.1k", "miotts_06b": "44.1k", "miratts": "48k", "miso": "24k", "ming": "44.1k", "ming_tiny": "44.1k",
@@ -1150,6 +1161,7 @@ MODEL_EXPRESSIVE = {
     "breeze_tts2": "tags + desc",
     "echo": "tags", "f5tts": "—", "fish_15": "—", "fish_s2": "tags", "drama3": "tags + desc", "higgs_v3": "tags",
     "indextts": "emo-ref + desc + knob", "indextts25": "emo-ref + desc + knob", "longcat_1b": "—", "longcat_3p5b": "—", "mars5": "—",
+    "voxmel_06b": "—", "voxmel_03b": "—",
     "firered3": "—", "auk_base": "—", "auk_flash": "—",
     "metavoice": "—", "miotts_01b": "—", "miotts_06b": "—", "miratts": "knob", "miso": "—",
     "ming": "tags + desc",
@@ -1195,6 +1207,7 @@ MODEL_LICENSE = {
     "echo": "CC-BY-NC-SA 4.0", "f5tts": "CC-BY-NC", "fish_15": "CC-BY-NC-SA 4.0",
     "fish_s2": "Research (non-commercial)", "drama3": "Research (non-commercial)", "higgs_v3": "Research (NC)", "indextts": "bilibili Model License", "indextts25": "bilibili Model License",
     # AuK weights are MIT; mandatory Qwen2.5-Omni-3B is qwen-research (NC).
+    "voxmel_06b": "Apache 2.0", "voxmel_03b": "Apache 2.0",
     "firered3": "Apache 2.0",
     "auk_base": "MIT code / Qwen Research (NC) encoder",
     "auk_flash": "MIT code / Qwen Research (NC) encoder",
@@ -1236,6 +1249,7 @@ MODEL_LANGS = {
     "breeze_tts2": "✓ (zh+en)",
     "dots_tts": "✓ (24)", "dramabox": "— (en)", "echo": "—", "f5tts": "✓ (zh+en)",
     "fish_15": "✓", "fish_s2": "✓ (80+)", "drama3": "✓", "higgs_v3": "✓ (100)", "indextts": "✓ (zh+en)", "indextts25": "✓ (5)",
+    "voxmel_06b": "✓ (zh+en)", "voxmel_03b": "✓ (zh+en)",
     "firered3": "✓ (24)", "auk_base": "✓", "auk_flash": "✓",
     "longcat_1b": "✓ (zh+en)", "longcat_3p5b": "✓ (zh+en)", "mars5": "—", "metavoice": "—",
     "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)", "ming": "✓ (7)", "ming_tiny": "✓ (7)",
