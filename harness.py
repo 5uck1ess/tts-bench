@@ -173,6 +173,9 @@ MODELS = [
     # AuroraTTS-100K: 95.6K params, harmonic+noise DSP instead of a vocoder; one
     # LJSpeech voice, no cloning. Pinned remote code (see the runner).
     ("auroratts",     "auroratts", "runners/auroratts_runner.py", {"en"},     ["cpu", "cuda"], None,    False),
+    # tiny-voca: 4.5M params, source-filter synth instead of a vocoder, own phonemizer
+    # (dizione). Two presets, pinned to F2; no cloning.
+    ("tinyvoca",      "tinyvoca",  "runners/tinyvoca_runner.py",  {"en"},     ["cpu", "cuda"], None,    False),
     # LinnetTTS (VoxRT): 41.4M flow LM + Vocos decoder, Rust runtime, CPU-only. Built-in
     # voice f1; the voice encoder is unreleased (cloning is licence-reserved).
     ("linnet",        "linnet",    "runners/linnet_runner.py",    {"en"},     ["cpu"],         None,    False),
