@@ -523,6 +523,7 @@ MODEL_DISPLAY_NAMES = {
     "phonon_31m":    "Phonon 31m",
     "phonon_40m":    "Phonon 40m",
     "auroratts":     "AuroraTTS-100K",
+    "tinyvoca":      "tiny-voca",
     "linnet":        "LinnetTTS",
     "flock_junco":     "Flock Speech Junco",
     "flock_goldfinch": "Flock Speech Goldfinch",
@@ -623,6 +624,7 @@ MODEL_SIZE = {
     "phonon_31m":    "41.1M (30.8M LM + Mimi)",   # counted from model.safetensors; card's "31M" excludes the codec
     "phonon_40m":    "50.5M (40.2M LM + Mimi)",   # same count; identical across the en/fr/es checkpoints
     "auroratts":     "95.6K",   # card: 95,638 inference params incl. the 145-param DSP; verified by numel at load
+    "tinyvoca":      "4.5M",    # card: 4,537,291 incl. the source-filter synth; verified by numel at load
     "flock_junco":     "24.9M (11.4M acoustic + 13.5M Vocos)",   # ONNX initializers; card's "11.4M" excludes the vocoder
     "flock_goldfinch": "24.9M (11.4M acoustic + 13.5M Vocos)",
     "linnet":        "41.4M (31.5M LM + 9.9M decoder)",   # counted from the fp16 safetensors; HF repo name says "35m"
@@ -742,6 +744,7 @@ MODEL_URL = {
     "phonon_31m":    _HF + "gradium/phonon-31m-en",
     "phonon_40m":    _HF + "gradium/phonon-40m-en",
     "auroratts":     _HF + "AuroraAI-Research/AuroraTTS-100K",
+    "tinyvoca":      _HF + "n4ze3m/tiny-voca",
     "linnet":        _HF + "VoxRT/linnet-en-35m",
     "flock_junco":     _HF + "flockspeech/junco",
     "flock_goldfinch": _HF + "flockspeech/goldfinch",
@@ -850,6 +853,7 @@ MODEL_KIND = {
     "phonon_31m":    "predefined",  # checkpoint default voice; cloning is Gradium's hosted API only
     "phonon_40m":    "predefined",
     "auroratts":     "predefined",  # single LJSpeech speaker, no cloning
+    "tinyvoca":      "predefined",  # two presets (F2/M2), bench pins F2; no cloning
     "flock_junco":     "predefined",  # single LJSpeech voice, no cloning
     "flock_goldfinch": "predefined",  # single conversational voice, no cloning
     "linnet":        "predefined",  # 2 built-in voices; encoder unreleased, cloning licence-reserved
@@ -962,6 +966,7 @@ MODEL_RELEASE = {
     "phonon_31m":    "2026-10",   # HF repo created 2026-10-19
     "phonon_40m":    "2026-10",
     "auroratts":     "2026-10",   # HF repo created 2026-10-22
+    "tinyvoca":      "2026-11",   # GitHub repo + HF release 2026-11-14
     "flock_junco":     "2026-11",   # HF repo created 2026-11-10
     "flock_goldfinch": "2026-11",
     "linnet":        "2026-11",   # HF repo created 2026-11-04
@@ -1107,7 +1112,7 @@ MODEL_SR = {
     "sanotts_amy": "22.05k", "sanotts_heart_nano": "24k",
     "inflect_nano": "24k", "inflect_micro": "24k", "vaniq": "24k", "supratts": "22.05k",
     "steertts": "24k", "steertts_noflow": "24k", "phonon_31m": "24k", "phonon_40m": "24k",
-    "auroratts": "22.05k", "linnet": "24k", "flock_junco": "24k", "flock_goldfinch": "24k",
+    "auroratts": "22.05k", "tinyvoca": "24k", "linnet": "24k", "flock_junco": "24k", "flock_goldfinch": "24k",
     "woof": "24k", "ribt": "24k",
     "paradee": "24k", "pivo": "16k",
     "hojo_40m": "24k", "hojo_80m": "24k",
@@ -1143,6 +1148,7 @@ MODEL_EXPRESSIVE = {
     "steertts": "12 knobs + tags", "steertts_noflow": "12 knobs + tags",
     "phonon_31m": "knob", "phonon_40m": "knob",  # duration_delta (speaking rate)
     "auroratts": "2 knobs",  # speed + pitch_shift
+    "tinyvoca": "3 knobs",  # speed + pitch_shift + pitch_range
     "flock_junco": "knob",  # speed only
     "flock_goldfinch": "tags",  # [laugh] [breath] [sigh] [lipsmack] [throat] [noise] + speed
     "linnet": "—",  # temp/cfg/seed are sampling knobs, not style control
@@ -1193,6 +1199,7 @@ MODEL_LICENSE = {
     "steertts": "MIT code / CC-BY-NC 4.0 weights", "steertts_noflow": "MIT code / CC-BY-NC 4.0 weights",
     "phonon_31m": "Apache 2.0", "phonon_40m": "CC BY-NC 4.0",
     "auroratts": "Apache 2.0",
+    "tinyvoca": "Apache 2.0",
     "flock_junco": "Apache 2.0 (Vocos MIT)", "flock_goldfinch": "Apache 2.0 (Vocos MIT)",
     "linnet": "Apache 2.0 code / Linnet Weights License",
     "woof": "Underdog Non-Commercial 1.0",
@@ -1239,7 +1246,7 @@ MODEL_LANGS = {
     "sanotts_amy": "— (en)", "sanotts_heart_nano": "— (en)",
     "inflect_nano": "— (en)", "inflect_micro": "— (en)", "vaniq": "— (en)", "supratts": "— (en)",
     "steertts": "— (en)", "steertts_noflow": "— (en)", "phonon_31m": "— (en)", "phonon_40m": "✓ (5)",
-    "auroratts": "— (en)", "linnet": "— (en)", "flock_junco": "— (en)", "flock_goldfinch": "— (en)",
+    "auroratts": "— (en)", "tinyvoca": "— (en)", "linnet": "— (en)", "flock_junco": "— (en)", "flock_goldfinch": "— (en)",
     "woof": "— (en)", "ribt": "— (en)",
     "paradee": "✓ (4)", "pivo": "— (en)",
     "hojo_40m": "✓ (zh+en)", "hojo_80m": "✓ (zh+en)",

@@ -411,6 +411,22 @@ if (-not (Want "voxmel")) { Write-Host "voxmel: skipped (not in install filter)"
     Write-Host "voxmel: already installed" -ForegroundColor Gray
 }
 
+Step "tiny-voca (4.5M params, torch; source + dizione + weights pinned)"
+if (-not (Want "tinyvoca")) { Write-Host "tinyvoca: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\tinyvoca\Scripts\python.exe")) {
+    Invoke-Checked "uv venv tinyvoca" { uv venv venvs\tinyvoca --python 3.11 }
+    Invoke-Checked "git clone tinyvoca" { git clone https://github.com/n4ze3m/tiny-voca venvs\tinyvoca\src\tiny-voca }
+    Invoke-Checked "checkout tinyvoca" { git -C venvs\tinyvoca\src\tiny-voca checkout b8703fea86b88e0e6d3e225dfd244aea7b453e13 }
+    # dizione = the author's phonemizer; the checkpoint fingerprints it, so pin the commit.
+    Invoke-Checked "uv pip install tinyvoca" { uv pip install --python venvs\tinyvoca\Scripts\python.exe -e venvs\tinyvoca\src\tiny-voca "dizione @ git+https://github.com/n4ze3m/dizione@f8629fe989f3d0db5f440f9b3c6f0154f2e6110f" huggingface-hub soundfile psutil }
+    Invoke-Checked "download tinyvoca weights" { & "venvs\tinyvoca\Scripts\python.exe" -c "from huggingface_hub import snapshot_download as d; d('n4ze3m/tiny-voca', revision='5131e959f6da837cb855b02694341efbdba6fdf0', local_dir='venvs/tinyvoca/src/weights', ignore_patterns=['samples/*','onnx/*'])" }
+    # cu128 wheels for Blackwell (RTX 5090, sm_120), LAST. PyPI's Windows torch is CPU-only.
+    Invoke-Checked "torch cu128 for tinyvoca" { uv pip install --python venvs\tinyvoca\Scripts\python.exe torch==2.8.0 --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "tinyvoca: ok" -ForegroundColor Green
+} else {
+    Write-Host "tinyvoca: already installed" -ForegroundColor Gray
+}
+
 Step "SteerTTS (23.1M + 17.6M flow refiner; steertts + steertts_noflow share this venv)"
 if (-not (Want "steertts")) { Write-Host "steertts: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\steertts\Scripts\python.exe")) {

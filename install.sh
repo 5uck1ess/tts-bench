@@ -514,6 +514,21 @@ else
     echo "voxmel: already installed"
 fi
 
+# --- tiny-voca (4.5M params, torch; source + dizione + weights pinned) ---
+echo; cyan "=== tiny-voca ==="
+if ! want tinyvoca; then echo "tinyvoca: skipped (not in install filter)"
+elif [ ! -x venvs/tinyvoca/bin/python ]; then
+    uv venv venvs/tinyvoca --python 3.11 || die "uv venv tinyvoca"
+    git clone https://github.com/n4ze3m/tiny-voca venvs/tinyvoca/src/tiny-voca || die "git clone tinyvoca"
+    git -C venvs/tinyvoca/src/tiny-voca checkout b8703fea86b88e0e6d3e225dfd244aea7b453e13 || die "checkout tinyvoca"
+    # dizione = the author's phonemizer; the checkpoint fingerprints it, so pin the commit.
+    uv pip install --python venvs/tinyvoca/bin/python torch==2.8.0 -e venvs/tinyvoca/src/tiny-voca         "dizione @ git+https://github.com/n4ze3m/dizione@f8629fe989f3d0db5f440f9b3c6f0154f2e6110f"         huggingface-hub soundfile psutil || die "uv pip install tinyvoca"
+    venvs/tinyvoca/bin/python -c "from huggingface_hub import snapshot_download as d; d('n4ze3m/tiny-voca', revision='5131e959f6da837cb855b02694341efbdba6fdf0', local_dir='venvs/tinyvoca/src/weights', ignore_patterns=['samples/*','onnx/*'])"         || die "download tinyvoca weights"
+    green "tinyvoca: ok"
+else
+    echo "tinyvoca: already installed"
+fi
+
 # --- Vaniq-Edge (8.5M VITS, one fixed voice) ---
 echo; cyan "=== Vaniq-Edge (8.5M VITS, one fixed voice) ==="
 if ! want vaniq; then echo "vaniq: skipped (not in install filter)"
