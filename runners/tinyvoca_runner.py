@@ -18,7 +18,9 @@ limit is ``max_tokens`` = 512 phonemes and canonical prompt 3 is 224, so every
 bench prompt is one call and the runner does no splitting.
 
 ``speak`` takes a seed (default 0) and is deterministic. The first call pays a
-one-off warm-up (~90 ms vs ~20 ms), so a throwaway call runs during load.
+one-off initialisation (~90 ms vs ~20 ms on CPU). There is deliberately no
+warm-up call at load: run 0 is the cold run (docs/architecture.md), so that
+cost belongs in it.
 
 Output is float and can exceed full scale (prompt 1 on F2 peaks at 1.077).
 Upstream writes FLOAT wavs to preserve that; this runner writes the board's
@@ -77,7 +79,6 @@ def main() -> int:
             raise RuntimeError("no installed front end matches the checkpoint fingerprint")
         model = load_model(CHECKPOINT, args.device)
         sr = model.config.sample_rate
-        speak(model, "Warm up.", VOICE, seed=SEED)
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"load failed: {type(e).__name__}: {e}"}))
