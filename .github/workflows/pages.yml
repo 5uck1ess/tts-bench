@@ -86,17 +86,14 @@ jobs:
             # list clips whose wav exists, so a wav-less checkout drops rows.
             git worktree add -B gh-pages _gh-pages origin/gh-pages
 
-            # publish.py records the commit each publish was built from. If the last
-            # publish came from a commit not on master yet, or from uncommitted score
-            # or page edits, a rebuild from master would roll those numbers back:
-            # skip and leave it to the next publish from merged master.
-            marker=_gh-pages/.built-from.json
-            if [ -f "$marker" ]; then
-              read -r pub_sha pub_dirty < <(python -c "import json,sys; d=json.load(open(sys.argv[1])); print(d.get('sha') or 'none', str(d.get('dirty', True)).lower())" "$marker" | tr -d '\r')
-              if [ "$pub_dirty" != "false" ] || ! git merge-base --is-ancestor "$pub_sha" origin/master 2>/dev/null; then
-                echo "::warning::gh-pages was last published from $pub_sha (uncommitted edits: $pub_dirty), which is not on master. Skipping the rebuild so those published numbers are not rolled back."
-                exit 0
-              fi
+            # publish.py records exactly which page inputs (score CSVs, page code)
+            # each publish was built from. If any of them isn't on master yet (a
+            # publish from an unmerged branch or uncommitted edits, or a publish
+            # with no record), rebuilding from master could roll those numbers
+            # back: skip and leave it to the next publish from merged master.
+            if ! python publish.py --check-rebuild-safe; then
+              echo "::warning::The live pages were built from inputs not on master (or carry no record of them). Skipping the rebuild so published numbers are not rolled back."
+              exit 0
             fi
 
             python publish.py --rebuild-pages
@@ -112,7 +109,7 @@ jobs:
 
             # If master moved while building, this output may already be stale:
             # start over from the new tip rather than push it.
-            git fetch --depth=1 origin +master:refs/remotes/origin/master
+            git fetch origin +master:refs/remotes/origin/master
             if [ "$(git rev-parse origin/master)" != "$built_from" ]; then
               echo "master moved during the build (attempt $attempt); rebuilding from the new tip."
               continue

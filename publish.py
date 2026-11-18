@@ -1677,17 +1677,57 @@ PAGE_INPUTS = ("publish.py", "report.py", "harness.py", "bench.py",
 BUILT_FROM = ".built-from.json"
 
 
+def _input_blobs():
+    """{path: git blob id} for every tracked page input, hashed from the working
+    tree (so uncommitted edits get their own id, which master won't have)."""
+    files = [f for f in _git("ls-files", "--", *PAGE_INPUTS, check=False).splitlines()
+             if (REPO / f).is_file()]
+    if not files:
+        return {}
+    r = subprocess.run(["git", "hash-object", "--stdin-paths"], cwd=REPO,
+                       input="\n".join(files), capture_output=True, text=True)
+    ids = r.stdout.split()
+    return dict(zip(files, ids)) if r.returncode == 0 and len(ids) == len(files) else {}
+
+
 def write_built_from():
-    """Record which commit the pages were built from, in the worktree.
+    """Record exactly which page inputs (score CSVs, page code) the pages were built
+    from, in the worktree.
 
     The CI rebuild (.github/workflows/pages.yml) reads this before overwriting the
-    pages: if the last publish came from a commit that isn't on master yet, or from
-    page inputs (score CSVs, page code) edited but not committed, a rebuild from
-    master would roll those published numbers back, so CI skips instead."""
-    sha = _git("rev-parse", "HEAD", check=False)
-    dirty = bool(_git("status", "--porcelain", "--", *PAGE_INPUTS, check=False))
+    pages. If any recorded input isn't on master yet (a publish from an unmerged
+    branch or from uncommitted edits), a rebuild from master would roll those
+    published numbers back, so CI skips instead (see rebuild_is_safe)."""
     (WORKTREE / BUILT_FROM).write_text(
-        json.dumps({"sha": sha, "dirty": dirty}), encoding="utf-8")
+        json.dumps({"sha": _git("rev-parse", "HEAD", check=False),
+                    "inputs": _input_blobs()}, sort_keys=True),
+        encoding="utf-8")
+
+
+def unmerged_inputs(inputs, reachable):
+    """Recorded page inputs whose content is not among master's objects."""
+    return sorted(path for path, blob in inputs.items() if blob not in reachable)
+
+
+def rebuild_is_safe(ref="origin/master"):
+    """True when every input the live pages were built from is already on `ref`,
+    so rebuilding from `ref` can't roll back published numbers. A missing or
+    old-format marker is unsafe: nothing proves what the pages were built from."""
+    marker = WORKTREE / BUILT_FROM
+    try:
+        inputs = json.loads(marker.read_text(encoding="utf-8")).get("inputs")
+    except (OSError, ValueError):
+        inputs = None
+    if not inputs:
+        print(f"{BUILT_FROM}: missing or has no recorded inputs; not safe to rebuild.")
+        return False
+    reachable = {line.split()[0] for line in
+                 _git("rev-list", "--objects", ref).splitlines() if line.strip()}
+    missing = unmerged_inputs(inputs, reachable)
+    if missing:
+        print(f"Published from inputs not on {ref}: {', '.join(missing)}")
+        return False
+    return True
 
 
 def build_top_level():
@@ -1910,11 +1950,17 @@ def main() -> int:
                    help="List runs already published to gh-pages and exit.")
     p.add_argument("--rebuild-all", action="store_true",
                    help="Regenerate every results/<dated>/ and republish to gh-pages.")
+    p.add_argument("--check-rebuild-safe", action="store_true",
+                   help="Exit 0 if every input the live pages were built from is on "
+                        "origin/master (used by the CI rebuild), else exit 1.")
     p.add_argument("--rebuild-pages", action="store_true",
                    help="Regenerate only the top-level landing pages (index/listen/speed/"
                         "archive) from the canonical dirs already in the worktree. "
                         "No new run copied, no commit, no push — for local preview.")
     args = p.parse_args()
+
+    if args.check_rebuild_safe:
+        return 0 if rebuild_is_safe() else 1
 
     if args.rebuild_pages:
         ensure_worktree()
