@@ -169,3 +169,22 @@ def test_hosted_naq_means_takes_per_slug(tmp_path, monkeypatch):
                  "vend_x/cloning,p1_t1.wav,vend_x,1,5.0\n", encoding="utf-8")
     monkeypatch.setattr(publish, "NAQ_SCORES_CSV", n)
     assert publish._hosted_naq("default") == {"vend_x": 70.0}
+
+
+def test_write_built_from_records_commit_and_dirty_flag(tmp_path, monkeypatch):
+    """The CI rebuild reads this marker to avoid rolling back a publish made from
+    a commit not on master, or from uncommitted score/page edits."""
+    import json
+    monkeypatch.setattr(publish, "WORKTREE", tmp_path)
+    calls = []
+
+    def fake_git(*args, **kw):
+        calls.append(args)
+        return "abc123" if args[0] == "rev-parse" else " M scoring/scores.csv"
+
+    monkeypatch.setattr(publish, "_git", fake_git)
+    publish.write_built_from()
+    got = json.loads((tmp_path / publish.BUILT_FROM).read_text(encoding="utf-8"))
+    assert got == {"sha": "abc123", "dirty": True}
+    status = next(a for a in calls if a[0] == "status")
+    assert "scoring" in status and "publish.py" in status

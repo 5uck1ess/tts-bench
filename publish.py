@@ -1671,8 +1671,28 @@ _SCORES_STYLE_HOSTED = ('<style>.health-flag{color:var(--fail);white-space:nowra
                         '</style>')
 
 
+# Inputs the top-level pages are built from (besides the canonical dirs in the worktree).
+PAGE_INPUTS = ("publish.py", "report.py", "harness.py", "bench.py",
+               "scoring", "scripts/hosted", "assets")
+BUILT_FROM = ".built-from.json"
+
+
+def write_built_from():
+    """Record which commit the pages were built from, in the worktree.
+
+    The CI rebuild (.github/workflows/pages.yml) reads this before overwriting the
+    pages: if the last publish came from a commit that isn't on master yet, or from
+    page inputs (score CSVs, page code) edited but not committed, a rebuild from
+    master would roll those published numbers back, so CI skips instead."""
+    sha = _git("rev-parse", "HEAD", check=False)
+    dirty = bool(_git("status", "--porcelain", "--", *PAGE_INPUTS, check=False))
+    (WORKTREE / BUILT_FROM).write_text(
+        json.dumps({"sha": sha, "dirty": dirty}), encoding="utf-8")
+
+
 def build_top_level():
     """Regenerate every top-level landing page from the canonical dirs in the worktree."""
+    write_built_from()
     _copy_branding_assets()
     build_listen()
     build_speed_hub()
