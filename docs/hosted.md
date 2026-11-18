@@ -46,6 +46,11 @@ Added 2026-11-02 after a gap check against the Artificial Analysis provider boar
 - **Resemble Ultra** (HTTP stream; clone made in the console). Resemble's site now leads with
   deepfake detection, but Ultra is its live TTS; every Chatterbox-era hosted model is end-of-life.
 
+Added 2026-11-18 (Tym): **Voicefinder Voyager 1** (`voyager-1`, HTTP, API instant clone from a
+<=14 s recording). Synchronous only: its `/stream` route sends nothing until the whole file is
+generated and signed, so the row has no first-speech time. Every file carries a watermark and a
+trailing C2PA chunk, which the collector keeps byte-for-byte (`Adapter.keep_bytes`).
+
 Waiting: Qwen-Audio-3.1-TTS-Plus, until it is offered outside Alibaba's ID-verified Model Studio.
 
 Dropped: Gemini Flash-Lite (cheap tier of the same vendor); Hume Octave 2 (Hume is shutting down its
@@ -90,6 +95,7 @@ minute of speech and marked ≈. Re-check each against the vendor page on publis
 | Bland Speech v3 | $40 | $40/1M | TR | |
 | Gradium | $35.9–57.8 | by plan | PC | |
 | Async Flash v1.5 | ≈$9.3 | $0.50 per hour of generated audio | docs.async.com Billing & Pricing (10-30) | prepaid wallet; Pro v1.0 $1.00/hr |
+| Voicefinder Voyager 1 | $60 | $0.06/1k API balance | voicefinder.io/app/developers/docs (11-18) | launch price until 2026-12-18, then $0.08/1k |
 
 Already collected: Fish Drama 3 web-app clips in `hosted/drama-3-webapp/` (fidelity check for the `drama3`
 port). These are web-app clips, not API clips, and stay out of the hosted board.
@@ -197,6 +203,11 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
   - **No clause found:** the other 15 have no benchmark clause. Conditions: AI disclosure where law
     requires it (ElevenLabs, Rime, Giggy, Microsoft, xAI); paid plan for Fish and ElevenLabs.
     Every vendor that mentions cloning requires the speaker's consent.
+  - **Voicefinder, read 2026-11-18** (voicefinder.io/legal/terms-ai, Spanish): no benchmarking clause.
+    7.3 forbids removing its AI marks or metadata (so clips keep the C2PA chunk), training models on its
+    output and building "competing products" such as voice banks or datasets; 7.1 limits Free-plan output
+    to personal, non-commercial use; 7.7 requires the speaker's consent to clone. **Cleared with
+    Voicefinder's owner directly (Tym, 2026-11-18).**
   - **Decided 2026-11-01 (Tym): publish all vendors**, after the cloning lens is done; pull any vendor that objects.
 - **Cloning consent.** See open question 1; several vendors require you to attest you have rights to
   the cloned voice.

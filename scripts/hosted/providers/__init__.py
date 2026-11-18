@@ -11,6 +11,7 @@ from .openai_realtime import OpenAIRealtime21
 from .palabra import PalabraTTS
 from .resemble import ResembleUltra
 from .rime import RimeCoda
+from .voicefinder import VoicefinderVoyager1
 from .ws import AssemblyTTS1WS, CartesiaSonic36WS
 
 # Cartesia and AssemblyAI run on their WebSocket transport (faster first speech, see ws.py).
@@ -20,5 +21,5 @@ ADAPTERS = {a.slug: a for a in (
     XaiTTS, AssemblyTTS1WS, SonioxTTS2, StepAudio3TTS, SmallestLightning31Pro, DeepgramFluxTTS,
     MaiVoice21, VuiLuna, OpenAIMiniTTS, MurfFalcon21, HeyGenVoice1, MiniMaxSpeech28HD,
     OpenAIRealtime21, BlandSpeech3, GradiumTTS, AsyncFlash15, SpeechmaticsTTS, PalabraTTS,
-    ResembleUltra)}
+    ResembleUltra, VoicefinderVoyager1)}
 from . import clone  # noqa: E402,F401  (registers cloning on the adapter classes)

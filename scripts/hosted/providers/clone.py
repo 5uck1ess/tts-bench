@@ -383,3 +383,27 @@ def _assembly(self, client, ref):
 
 _setup(AssemblyTTS1, "30", _assembly, langs={"en"})
 MIN_REC["assemblyai_tts1"] = ("3", "10–20")
+
+
+# Voicefinder: POST /v1/voices/add (multipart, one WAV/MP3 <= 4 MB, up to 20 voices, 10 per 24 h).
+# Recordings up to 14 s are used whole; longer ones get a ~12 s clip picked by Voicefinder. The 10 s
+# cut (9.85 s) is the longest used whole, sent with its transcript. The rights declaration
+# (cv-rights-2026-10-20) is required on every voice; the reference is Tym's own consented voice.
+from .voicefinder import VoicefinderVoyager1  # noqa: E402
+
+
+def _voicefinder(self, client, ref):
+    r = client.post("https://api.voicefinder.io/v1/voices/add",
+                    headers={"x-api-key": self.key},
+                    data={"name": NAME, "rights_accepted": "true",
+                          "rights_version": "cv-rights-2026-10-20", "language": "en",
+                          "transcript": ref["text"]},
+                    files={"files": (WAV, ref["wav"], "audio/wav")})
+    j = _check(r, self.slug)
+    if j.get("warnings"):
+        print(f"{self.slug} clone warnings: {j['warnings']}  clip: {j.get('clip')}")
+    return j["voice_id"]
+
+
+_setup(VoicefinderVoyager1, "10", _voicefinder)
+MIN_REC["voicefinder_voyager1"] = ("—", "≤14")
