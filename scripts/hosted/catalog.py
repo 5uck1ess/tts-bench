@@ -37,6 +37,7 @@ CATALOG = {
     "async_flash15": ("Async Flash v1.5", "≈$9.3", "$0.50 per hour of audio"),
     "palabra_tts": ("Palabra TTS", "$12", ""),
     "resemble_ultra": ("Resemble Ultra", "≈$33", "$0.0005 per second of audio (Flex)"),
+    "voicefinder_voyager1": ("Voicefinder Voyager 1", "$60", "API balance; $80 after 2026-12-18"),
 }
 
 
@@ -72,6 +73,7 @@ MODEL_ID = {
     "async_flash15": "async_flash_v1.5",
     "palabra_tts": "auto",
     "resemble_ultra": "resemble-ultra",
+    "voicefinder_voyager1": "voyager-1",
 }
 
 

@@ -73,3 +73,27 @@ def test_palabra_upload_url_must_be_https_s3():
                 "https://amazonaws.com.evil.example/"):
         with pytest.raises(RuntimeError):
             _check_upload_url(bad, "p")
+
+
+def test_keep_bytes_saves_the_vendor_wav_verbatim(tmp_path, monkeypatch):
+    """A keep_bytes adapter's clip on disk is exactly what the vendor sent, trailing C2PA chunk
+    included (Voicefinder terms 7.3: no stripping AI metadata)."""
+    pcm = (np.sin(np.arange(4800) / 10) * 8000).astype("<i2").tobytes()
+    c2pa = b"C2PA" + struct.pack("<I", 6) + b"signed"
+    fmt = b"fmt " + struct.pack("<IHHIIHH", 16, 1, 1, 48000, 96000, 2, 16)
+    data = b"data" + struct.pack("<I", len(pcm)) + pcm
+    body = fmt + data + c2pa
+    raw = b"RIFF" + struct.pack("<I", 4 + len(body)) + b"WAVE" + body
+
+    class Fake(core.Adapter):
+        slug, vendor, model, fmt, sr, keep_bytes, streaming = "fake", "F", "m", "wav", 48000, True, False
+        langs = {"en"}
+
+    monkeypatch.setattr(core, "OUT", tmp_path / "pub")
+    monkeypatch.setattr(core, "PRIVATE", tmp_path / "priv")
+    monkeypatch.setattr(core, "synth", lambda *a: dict(
+        voice="v", req={"json": {}}, data=raw, marks={}, headers={}, cold=False,
+        ttfa_speech_ms=None, http_version="HTTP/1.1", ttfb_ms=1.0, ttfa_ms=None, total_ms=50.0))
+    out = core.run_cell(None, Fake("k"), "default", 1, "en", "hi", 1)
+    assert out["status"] == "ok" and out["duration_s"] == 0.1
+    assert (tmp_path / "pub" / "fake" / "default" / "p1_t1.wav").read_bytes() == raw

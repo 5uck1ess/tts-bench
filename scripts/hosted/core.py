@@ -59,6 +59,10 @@ class Adapter:
     clone_cut = "30"
     clone_ref = None   # set by prepare_clone: dict(cut, path, text, seconds, wav bytes)
     clone_langs = None  # languages the cloned voice is documented for; None = same as langs
+    # True = save the vendor's WAV byte-for-byte instead of re-encoding it. For vendors whose
+    # terms forbid stripping embedded AI marks/metadata (Voicefinder's C2PA chunk): to_wav()
+    # still decodes it for the duration/SR checks, but the file on disk is what the vendor sent.
+    keep_bytes = False
 
     def create_clone(self, client, ref):
         """Create a cloned voice from `ref` (see prepare_clone) and return its voice id."""
@@ -360,6 +364,10 @@ def run_cell(client, ad, lens, pid, lang, text, take):
     try:
         res = synth(client, ad, text, lang)
         wav, sr, dur = to_wav(res["data"], ad.fmt, ad.sr)
+        if ad.keep_bytes:
+            if ad.fmt != "wav" or res["data"][:4] != b"RIFF":
+                raise RuntimeError(f"{ad.slug}: keep_bytes needs a WAV body")
+            wav = res["data"]
         if dur < 0.05:
             raise RuntimeError(f"{ad.slug}: {dur:.3f}s of audio")
     except Exception as e:  # published as a defect/error, never dropped

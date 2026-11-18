@@ -265,6 +265,10 @@ def _main_table(rows):
         note = "*" if d["pnote"] else ""
         ptitle = f' title="{escape(d["pnote"])}"' if d["pnote"] else ""
         ms = sp["med"]
+        if not cls.streaming:  # nothing plays until the whole file has arrived: no onset to time
+            mark = ' <span class="muted">‡</span>'
+            tip = (f'no streaming: the whole file arrives at once (prompt 3 in '
+                   f'{_fmt(d["p3"], ".1f")} s; see Speed detail) · {d["tr"]}')
         body.append(
             f'<tr>{_name_td(d["slug"], via)}'
             + _metric_td("utmos", d["um"]) + _metric_td("wer", d["we"]) + _health_td(d["flags"])
@@ -282,7 +286,7 @@ def _detail_grid(rows):
     key = lambda d: d["sp"]["med"] if d["sp"]["med"] is not None else float("inf")
     for d in sorted(rows, key=key):
         sp = d["sp"]
-        mark = " †" if sp.get("sweep") else ""
+        mark = " ‡" if not d["cls"].streaming else " †" if sp.get("sweep") else ""
         sr = "—" if not d["sr"] else f'{d["sr"] / 1000:g} kHz'
         cells += [
             f'<div class="name">{escape(d["name"])}</div>',
@@ -433,7 +437,8 @@ def build(worktree, head, foot):
         'counts. <strong>UTMOS</strong>, <strong>WER</strong>, <strong>SIM</strong> and '
         '<strong>Health</strong> mean the same as on the <a href="scores.html">Scores</a> page: the '
         'mean over every clip (3 takes of each prompt). Prices are list $/1M characters; '
-        '* = hover for a note.</div>',
+        '* = hover for a note. ‡ = no streaming (the whole file arrives at once), so no '
+        'first-speech time.</div>',
         f'<div class="mode-select"><div class="lens-tabs" id="mode-tabs">{tab_links}</div></div>',
         '<div class="subsection" data-mode="default"><h3 class="sub-head">Default voice '
         '<span class="muted">· naturalness, intelligibility, speed, price</span></h3>',
@@ -451,7 +456,8 @@ def build(worktree, head, foot):
         '<div class="subsection" data-mode="speed" style="display:none">',
         '<div class="meta">Warm calls on one fixed English sentence, fastest first. '
         '<em>Delivery p3</em> = the full prompt-3 clip including vendor pacing (some stream at '
-        'about playback speed), so don\'t rank by it. † = sweep calls only.</div>',
+        'about playback speed), so don\'t rank by it. † = sweep calls only. ‡ = no streaming: Delivery is when '
+        'its audio can start.</div>',
         _detail_grid(rows),
         '<h3 class="sub-head">HTTP vs WebSocket</h3>',
         '<div class="meta">Vendors offering both, sampled in alternating calls: median ms to '
