@@ -1,0 +1,91 @@
+name: Rebuild pages
+
+# Merges that change what the site shows (score CSVs, page code) used to sit
+# unpublished until someone remembered to run publish.py by hand. This job
+# rebuilds the top-level pages from the canonical dirs already on gh-pages and
+# pushes the result, so those merges go live on their own.
+#
+# It does not publish new bench rows: results/ is gitignored, so new runs still
+# go up from a rig with publish.py. hosted.html is left as-is here (its
+# sidecars live only on the Windows collector; build_hosted() skips without them).
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - publish.py
+      - report.py
+      - harness.py
+      - "scoring/*.csv"
+      - "scoring/*.py"
+      - "assets/**"
+      - ".github/workflows/pages.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: gh-pages-rebuild
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHON_DOTENV_DISABLED: "1"
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install developer dependencies
+        run: python -m pip install -r requirements-dev.txt
+
+      - name: Rebuild top-level pages and push
+        run: |
+          set -euo pipefail
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          msg="Rebuild pages: $(git log -1 --format='%h %s')"
+
+          # A rig may push to gh-pages while this runs; on a rejected push, start
+          # over from the new tip (never force, never rebase: the pages are generated).
+          for attempt in 1 2 3; do
+            git fetch --depth=1 origin +gh-pages:refs/remotes/origin/gh-pages
+            git worktree remove --force _gh-pages 2>/dev/null || rm -rf _gh-pages
+            git worktree prune
+            # Full checkout, wavs included: the Listen and Scores builders only
+            # list clips whose wav exists, so a wav-less checkout drops rows.
+            git worktree add -B gh-pages _gh-pages origin/gh-pages
+
+            python publish.py --rebuild-pages
+
+            git -C _gh-pages add -A
+            if git -C _gh-pages diff --cached --quiet; then
+              echo "Pages already up to date."
+              exit 0
+            fi
+            git -C _gh-pages diff --cached --stat
+            git -C _gh-pages commit -q -m "$msg"
+            if git -C _gh-pages push origin gh-pages; then
+              echo "pushed=1" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            echo "Push rejected (attempt $attempt); retrying from the new gh-pages tip."
+            sleep 10
+          done
+          echo "Could not push after 3 attempts." >&2
+          exit 1
+
+      - name: Request a Pages build
+        if: env.pushed == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" || echo "Build request failed; the push may still trigger one."
