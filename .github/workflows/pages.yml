@@ -30,8 +30,11 @@ permissions:
   contents: write
   pages: write
 
+# Only master runs share the publish queue. A dispatch from any other branch gets
+# its own throwaway group, so it can't replace a pending master rebuild (its job
+# is skipped by the guard below anyway).
 concurrency:
-  group: gh-pages-rebuild
+  group: ${{ github.ref == 'refs/heads/master' && 'gh-pages-rebuild' || format('gh-pages-noop-{0}', github.run_id) }}
   cancel-in-progress: false
 
 jobs:
@@ -63,14 +66,17 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # A rig may push to gh-pages while this runs; on a rejected push, start
           # over from the new tip (never force, never rebase: the pages are generated).
-          for attempt in 1 2 3; do
-            # Always build from the CURRENT master tip, not the SHA this run was
-            # started on: a re-run, or a dispatch from another branch, would
-            # otherwise rebuild from stale code/CSVs and overwrite newer scores.
+          for attempt in 1 2 3 4 5; do
+            # Fetch gh-pages BEFORE master. Anything already on gh-pages was built
+            # from a master no newer than the one fetched next, so this build can
+            # never render older score CSVs over newer published ones.
+            git fetch --depth=1 origin +gh-pages:refs/remotes/origin/gh-pages
+            # Build from the CURRENT master tip, not the SHA this run started on:
+            # a re-run would otherwise rebuild from stale code/CSVs.
             git fetch --depth=1 origin +master:refs/remotes/origin/master
             git checkout -q --detach origin/master
+            built_from=$(git rev-parse HEAD)
             msg="Rebuild pages: $(git log -1 --format='%h %s')"
-            git fetch --depth=1 origin +gh-pages:refs/remotes/origin/gh-pages
             git worktree remove --force _gh-pages 2>/dev/null || rm -rf _gh-pages
             git worktree prune
             # Full checkout, wavs included: the Listen and Scores builders only
@@ -86,13 +92,21 @@ jobs:
             fi
             git -C _gh-pages diff --cached --stat
             git -C _gh-pages commit -q -m "$msg"
+
+            # If master moved while building, this output may already be stale:
+            # start over from the new tip rather than push it.
+            git fetch --depth=1 origin +master:refs/remotes/origin/master
+            if [ "$(git rev-parse origin/master)" != "$built_from" ]; then
+              echo "master moved during the build (attempt $attempt); rebuilding from the new tip."
+              continue
+            fi
             if git -C _gh-pages push origin gh-pages; then
               exit 0
             fi
             echo "Push rejected (attempt $attempt); retrying from the new gh-pages tip."
             sleep 10
           done
-          echo "Could not push after 3 attempts." >&2
+          echo "Could not publish after 5 attempts." >&2
           exit 1
 
       # Pushes made with GITHUB_TOKEN do not trigger a Pages build, so request one
