@@ -1748,18 +1748,37 @@ PAGES_WORKFLOW = "pages.yml"
 
 
 def _sync_worktree():
-    """Put the worktree exactly on origin/gh-pages before staging anything, so a
-    publish never builds on a stale local copy (another rig or CI may have pushed)."""
+    """Bring the worktree up to origin/gh-pages before staging anything, so a
+    publish never builds on a stale local copy (another rig or CI may have pushed).
+
+    Uncommitted leftovers (e.g. from a local --rebuild-pages preview) are dropped.
+    Local commits not pushed yet (earlier --no-push publishes, or a rejected push)
+    are kept and replayed on top: they touch only this writer's own paths, so they
+    can't conflict with anyone else's."""
     ensure_worktree()
-    if _branch_exists_remote(BRANCH):
-        _git("fetch", "origin", BRANCH, cwd=WORKTREE)
-        _git("reset", "--hard", f"origin/{BRANCH}", cwd=WORKTREE)
+    if not _branch_exists_remote(BRANCH):
+        return
+    _git("reset", "-q", "--hard", "HEAD", cwd=WORKTREE)
+    _git("fetch", "origin", BRANCH, cwd=WORKTREE)
+    r = subprocess.run(["git", "rebase", "-q", f"origin/{BRANCH}"], cwd=WORKTREE,
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        _git("rebase", "--abort", cwd=WORKTREE, check=False)
+        raise SystemExit(
+            f"Local {BRANCH} commits don't replay onto origin/{BRANCH}:\n"
+            f"{(r.stderr or r.stdout).strip()}\n"
+            f"Inspect with `git -C {WORKTREE} log origin/{BRANCH}..HEAD`; they likely "
+            f"include pages from an old publisher that only CI writes now.")
+
+
+def _ahead_of_remote():
+    return bool(_git("rev-list", f"origin/{BRANCH}..HEAD", cwd=WORKTREE, check=False))
 
 
 def _commit_and_push(paths, message, stage, no_push=False, attempts=3):
     """Sync, run `stage()` to write files, commit ONLY `paths`, push. A rejected
-    push (someone else pushed other files meanwhile) re-syncs and re-stages: never
-    force, never rebase. Returns True when something was committed."""
+    push (someone else pushed other files meanwhile) re-syncs and retries, never
+    forcing. Returns True when this call committed or pushed something."""
     for attempt in range(1, attempts + 1):
         _sync_worktree()
         stage()
@@ -1769,20 +1788,24 @@ def _commit_and_push(paths, message, stage, no_push=False, attempts=3):
                    or _git("ls-files", "--", p, cwd=WORKTREE)]
         if present:
             _git("add", "-A", "--", *present, cwd=WORKTREE)
-        if not _git("diff", "--cached", "--name-only", cwd=WORKTREE):
-            print("No changes — already up to date.")
-            return False
-        _git("commit", "-m", message, cwd=WORKTREE)
-        print(f"Committed to {BRANCH}.")
-        if no_push:
-            print(f"--no-push: skipping push. Push manually with:\n  "
-                  f"git -C {WORKTREE} push origin {BRANCH}")
-            return True
+        committed = bool(_git("diff", "--cached", "--name-only", cwd=WORKTREE))
+        if committed:
+            _git("commit", "-m", message, cwd=WORKTREE)
+            print(f"Committed to {BRANCH}.")
         if not _branch_exists_remote(BRANCH):
+            if no_push:
+                return committed
             _git("push", "-u", "origin", BRANCH, cwd=WORKTREE, capture=False)
             print("\nFirst push of gh-pages — now enable Pages in repo settings:")
             print("  Settings → Pages → Source: 'Deploy from a branch' → Branch: gh-pages / root")
             return True
+        if not committed and not _ahead_of_remote():
+            print("No changes — already up to date.")
+            return False
+        if no_push:
+            print(f"--no-push: skipping push. Push manually with:\n  "
+                  f"git -C {WORKTREE} push origin {BRANCH}")
+            return committed
         r = subprocess.run(["git", "push", "origin", BRANCH], cwd=WORKTREE, text=True)
         if r.returncode == 0:
             return True
@@ -1792,14 +1815,18 @@ def _commit_and_push(paths, message, stage, no_push=False, attempts=3):
 
 def trigger_pages_rebuild():
     """Ask CI to rebuild the top-level pages from master + what's now on gh-pages.
-    Its half-hourly check catches it anyway if this can't run (no gh CLI / auth)."""
-    r = subprocess.run(["gh", "workflow", "run", PAGES_WORKFLOW, "--ref", "master"],
-                       cwd=REPO, capture_output=True, text=True)
-    if r.returncode == 0:
+    Never fails the publish: the half-hourly catch-up rebuilds anyway if this
+    can't run (no gh CLI, no auth)."""
+    try:
+        r = subprocess.run(["gh", "workflow", "run", PAGES_WORKFLOW, "--ref", "master"],
+                           cwd=REPO, capture_output=True, text=True)
+        ok, why = r.returncode == 0, (r.stderr or r.stdout).strip()
+    except OSError as e:  # gh not installed / not on PATH
+        ok, why = False, str(e)
+    if ok:
         print("Requested the CI page rebuild (landing/listen/speed/scores update in a few minutes).")
     else:
-        print("Could not request the CI page rebuild "
-              f"({(r.stderr or r.stdout).strip() or 'gh CLI unavailable'}).\n"
+        print(f"Could not request the CI page rebuild ({why or 'gh CLI unavailable'}).\n"
               "  The half-hourly check will pick it up, or run 'Rebuild pages' "
               "from the repo's Actions tab.")
 

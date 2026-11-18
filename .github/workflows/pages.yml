@@ -59,10 +59,19 @@ jobs:
         run: |
           set -euo pipefail
           master=$(gh api "repos/${GITHUB_REPOSITORY}/commits/master" -q .sha)
+          tip_sha=$(gh api "repos/${GITHUB_REPOSITORY}/commits/gh-pages" -q .sha)
           tip_msg=$(gh api "repos/${GITHUB_REPOSITORY}/commits/gh-pages" -q .commit.message)
           if [ "${GITHUB_EVENT_NAME}" = "schedule" ] && [ "$tip_msg" = "Rebuild pages from master $master" ]; then
-            echo "Pages already built from master $master; nothing to do."
             echo "run=false" >> "$GITHUB_OUTPUT"
+            # The pages are current; make sure they were also DEPLOYED (an earlier
+            # run's Pages request may have failed after its push succeeded).
+            latest=$(gh api "repos/${GITHUB_REPOSITORY}/pages/builds/latest" -q '.status + " " + .commit' || echo "unknown")
+            if [ "$latest" = "built $tip_sha" ]; then
+              echo "Pages already built and deployed from master $master; nothing to do."
+            else
+              echo "Pages are current but the last deploy is '$latest'; requesting a Pages build."
+              gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds"
+            fi
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
           fi

@@ -28,12 +28,8 @@ def _setup(tmp_path, monkeypatch):
     _git(wt, "remote", "add", "origin", str(origin))
     _git(wt, "push", "-q", "origin", publish.BRANCH)
 
-    def sync():
-        _git(wt, "fetch", "-q", "origin", publish.BRANCH)
-        _git(wt, "reset", "-q", "--hard", f"origin/{publish.BRANCH}")
-
     monkeypatch.setattr(publish, "WORKTREE", wt)
-    monkeypatch.setattr(publish, "_sync_worktree", sync)
+    monkeypatch.setattr(publish, "ensure_worktree", lambda: None)  # wt already set up
     monkeypatch.setattr(publish, "_branch_exists_remote", lambda b: True)
     return origin, wt
 
@@ -80,3 +76,28 @@ def test_no_changes_commits_nothing(tmp_path, monkeypatch):
     before = _git(origin, "rev-parse", publish.BRANCH)
     assert publish._commit_and_push(["linux-default"], "noop", lambda: None) is False
     assert _git(origin, "rev-parse", publish.BRANCH) == before
+
+
+def test_two_no_push_publishes_keep_both_commits(tmp_path, monkeypatch):
+    origin, wt = _setup(tmp_path, monkeypatch)
+
+    def stage_dir(name):
+        def stage():
+            (wt / name).mkdir(exist_ok=True)
+            (wt / name / "results.csv").write_text(name)
+        return stage
+
+    publish._commit_and_push(["linux-default"], "default", stage_dir("linux-default"), no_push=True)
+    publish._commit_and_push(["linux-cloning"], "cloning", stage_dir("linux-cloning"), no_push=True)
+    _git(wt, "push", "-q", "origin", publish.BRANCH)  # the printed manual push
+    assert _remote_file(origin, "linux-default/results.csv") == "linux-default"
+    assert _remote_file(origin, "linux-cloning/results.csv") == "linux-cloning"
+
+
+def test_missing_gh_cli_does_not_fail_the_publish(monkeypatch, capsys):
+    def no_gh(*a, **k):
+        raise FileNotFoundError("gh")
+
+    monkeypatch.setattr(publish.subprocess, "run", no_gh)
+    publish.trigger_pages_rebuild()
+    assert "half-hourly" in capsys.readouterr().out
