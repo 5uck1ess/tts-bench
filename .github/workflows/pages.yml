@@ -12,10 +12,14 @@ name: Rebuild pages
 on:
   push:
     branches: [master]
+    # Everything the page builders read or import: publish.py -> report.py
+    # (-> bench.py PROMPTS, harness.py) and scripts/hosted/catalog.py (Scores).
     paths:
       - publish.py
       - report.py
       - harness.py
+      - bench.py
+      - "scripts/hosted/*.py"
       - "scoring/*.csv"
       - "scoring/*.py"
       - "assets/**"
@@ -75,7 +79,6 @@ jobs:
             git -C _gh-pages diff --cached --stat
             git -C _gh-pages commit -q -m "$msg"
             if git -C _gh-pages push origin gh-pages; then
-              echo "pushed=1" >> "$GITHUB_ENV"
               exit 0
             fi
             echo "Push rejected (attempt $attempt); retrying from the new gh-pages tip."
@@ -84,8 +87,10 @@ jobs:
           echo "Could not push after 3 attempts." >&2
           exit 1
 
+      # Pushes made with GITHUB_TOKEN do not trigger a Pages build, so request one
+      # explicitly. It runs even when nothing changed, so re-running the job after
+      # a failed build request still deploys; and a failed request fails the job.
       - name: Request a Pages build
-        if: env.pushed == '1'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds" || echo "Build request failed; the push may still trigger one."
+        run: gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds"
