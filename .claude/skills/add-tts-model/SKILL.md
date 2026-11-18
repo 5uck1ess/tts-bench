@@ -151,15 +151,21 @@ before treating it as a real failure.
 `scoring/health.py`'s `HealthScorer().detail(wav)` flags clipping, silence and gaps. It
 catches hard defects only — clean health is necessary, not sufficient.
 
-Then get a human verdict. Stage the diagnostic clips (prompt 2 and the long prompt 3,
-default and cloning) somewhere playable and ask. For engine-variant pairs the question
-is sharper than "is this good": it's **"does the fast row sound the same as the base
-row?"** — if compilation changed the numerics audibly, the speed win is costing quality
-and the row is misleading. Build the comparison so that question is answerable side by side.
+Then stage the diagnostic clips (prompt 2 and the long prompt 3, default and cloning)
+somewhere playable for a by-ear listen. For engine-variant pairs the question is sharper
+than "is this good": it's **"does the fast row sound the same as the base row?"** — if
+compilation changed the numerics audibly, the speed win is costing quality and the row is
+misleading. Build the comparison so that question is answerable side by side.
 
-Do not publish before this gate.
+The ship bar is **"is the runner correct"**, not "is the output good". A model that sounds
+bad through a correct runner still publishes — showing the defect is the bench. Don't hold
+a publish on the listen unless it points at a runner bug.
 
 ## Phase 8 — Publish
+
+**PR first, gh-pages second.** Open the PR for the code changes and publish only after its
+review comes back READY. Publishing from an unmerged branch puts rows live that the review
+may still change.
 
 ```
 git -C _gh-pages reset --hard origin/gh-pages     # FIRST. Always.
@@ -168,6 +174,13 @@ python merge.py --into results/<rig>-cloning  --from results/<scratch> --models 
 python publish.py results/<rig>-default
 python publish.py results/<rig>-cloning
 ```
+
+Spanish (prompt 6) lives in separate `results/<rig>-es-default` / `-es-cloning` dirs; merge
+and publish those too when the model claims `"es"`.
+
+**`publish.py` pushes the whole local canonical dir, not just your model.** Anything else
+sitting unpublished in it goes live with your push. Diff the dir against what gh-pages
+already serves before running it.
 
 **`publish.py`'s `ensure_worktree()` does not pull.** Another rig publishes to the same
 branch. Without the reset you build on stale state and either get rejected (fine) or
@@ -236,13 +249,19 @@ manifest-only upload after confirming the schema is unchanged.
 
 - `docs/known-issues.md` — the traps, with the measurements that prove them
 - memory: scope decision, shipped state, new SHAs, model count
-- `homebase/coordination/tasks.md` — a task for the rigs that still lack the model.
-  Objective scores (UTMOS / WER / **SIM**) can only be produced on Linux; SIM's fairseq
-  stack does not run on Windows. If a human liked the cloning by ear, the number they
-  actually want is gated on that pass.
+## Phase 12 — Linux pass (part of the add, not a follow-up)
 
-Write predictions into the task where you have them (expected RTFx on other hardware,
-and why). A prediction that can be checked later is worth more than a summary.
+Run the bench on the Linux rig (ryzen-ai) yourself and publish its rows, then run the
+objective scoring there: UTMOS / WER / **SIM** can only be produced on Linux, because SIM's
+fairseq stack does not run on Windows. Commit the new `scoring/scores.csv` rows through a
+PR and republish. Don't hand this off as a task for later; the add isn't done until both
+rigs and the Scores board have the model.
+
+The Default Scores board's NAQ column fills from a separate private scoring pass that
+isn't in this repo; a new model shows a dash there until that pass runs.
+
+Write predictions down before the Linux run where you have them (expected RTFx on the
+3090, and why). A prediction that can be checked is worth more than a summary.
 
 ## Re-benching a row that is already live
 
@@ -250,10 +269,10 @@ A model whose upstream shipped a fix is **not** a fresh add. The phases above st
 apply, but four things differ, and three of them fail silently.
 
 **Preserve the old rows before touching the venv.** Copy the model's rows + wavs out of
-both canonical dirs into `results/_preserved_<model>_<version>/` (the repo already has
-`_preserved_moss_tts_v1.0` for this). Without it the by-ear gate has nothing to compare
-against — and the honest question is not "is this good", it's "is this better than what
-we already published". Stage the A/B on **prompt 3**, old vs new, and gate on it.
+both canonical dirs into `results/_preserved_<model>_<version>/`. Without it the by-ear
+listen has nothing to compare against — and the honest question is not "is this good",
+it's "is this better than what we already published". Stage the A/B on **prompt 3**, old
+vs new.
 
 **Confirm the weights actually moved.** Record
 `~/.cache/huggingface/hub/models--<org>--<repo>/refs/main` before the first load and
@@ -280,5 +299,5 @@ block the publish.
 Mechanics: `merge.py --replace` is the flag for this (plain merge has a duplicate guard
 and `--force` *appends*, giving you 120 rows where you wanted 60). And a re-bench usually
 invalidates the other rigs' rows too — the Linux speed rows and all six score cells are
-measured on the old version the moment you publish, so queue that re-run with predictions
-rather than leaving the board mixed-version and unmarked.
+measured on the old version the moment you publish, so run the Linux re-bench and
+re-score (Phase 12) rather than leaving the board mixed-version and unmarked.
