@@ -168,7 +168,6 @@ review comes back READY. Publishing from an unmerged branch puts rows live that 
 may still change.
 
 ```
-git -C _gh-pages reset --hard origin/gh-pages     # FIRST. Always.
 python merge.py --into results/<rig>-default  --from results/<scratch> --models <new>
 python merge.py --into results/<rig>-cloning  --from results/<scratch> --models <new>
 python publish.py results/<rig>-default
@@ -178,20 +177,22 @@ python publish.py results/<rig>-cloning
 Spanish (prompt 6) lives in separate `results/<rig>-es-default` / `-es-cloning` dirs; merge
 and publish those too when the model claims `"es"`.
 
+**One writer per file on gh-pages.** `publish.py <dir>` syncs to `origin/gh-pages` itself,
+commits **only that run dir**, pushes (re-syncing and retrying if another rig or CI pushed
+meanwhile, never forcing), then asks CI to rebuild. The top-level pages (landing, Listen,
+Speed, Scores, Capabilities, Archive) are built and pushed **only by CI**
+(`.github/workflows/pages.yml`), from master's code and score CSVs plus the run dirs on
+gh-pages. `hosted.html` + `hosted/` are published only from the Windows collector with
+`publish.py --hosted`. Consequences:
+
+- Score changes go live when their PR merges to master, never from a rig's local CSVs.
+- `publish.py --rebuild-pages` is a local preview; a rig never commits those pages.
+- The landing pages update a few minutes after your push (CI run). If `gh` can't trigger
+  it, the half-hourly catch-up does.
+
 **`publish.py` pushes the whole local canonical dir, not just your model.** Anything else
 sitting unpublished in it goes live with your push. Diff the dir against what gh-pages
 already serves before running it.
-
-**`publish.py`'s `ensure_worktree()` does not pull.** Another rig publishes to the same
-branch. Without the reset you build on stale state and either get rejected (fine) or
-force-push over another machine's rows (not fine).
-
-**If the push is rejected, do not rebase and never force.** gh-pages content is fully
-generated: `reset --hard origin/gh-pages`, then re-run `publish.py` for each canonical
-dir. `build_top_level()` rebuilds the landing pages from *every* canonical dir present
-in the worktree, so this correctly merges the other rig's data with yours. Verify by
-grepping both your new model **and** the other rig's rows out of the rebuilt files
-before pushing.
 
 Two mechanical notes: the shell's working directory can drift into `_gh-pages/` after a
 `cd`, so run `publish.py` from an explicit repo root and use `git -C <abs path>` for
@@ -200,7 +201,7 @@ rig's disk and in the gh-pages branch, so never delete them casually.
 
 ## Phase 9 — Verify live, not just pushed
 
-Pushed ≠ served. Check the Pages build reports `built` on your commit
+Pushed ≠ served. Wait for the "Rebuild pages" Actions run that follows your push, then check the Pages build reports `built` on its commit
 (`gh api repos/<owner>/<repo>/pages/builds`), then fetch the live pages **with a
 cache-buster** — a plain fetch will hand you a stale CDN copy and make a correct deploy
 look broken. Confirm the display name renders (a raw slug means a missing registry) and

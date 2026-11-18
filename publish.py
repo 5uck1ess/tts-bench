@@ -1671,82 +1671,13 @@ _SCORES_STYLE_HOSTED = ('<style>.health-flag{color:var(--fail);white-space:nowra
                         '</style>')
 
 
-# Inputs the top-level pages are built from (besides the canonical dirs in the worktree).
-PAGE_INPUTS = ("publish.py", "report.py", "harness.py", "bench.py",
-               "scoring", "scripts/hosted", "assets")
-BUILT_FROM = ".built-from.json"
-
-
-def _input_blobs():
-    """{path: git blob id} for every tracked page input, as git would commit the
-    working tree right now: uncommitted edits get the id their commit would have,
-    which master won't have until they land.
-
-    The ids come from staging into a throwaway index rather than `git
-    hash-object`: hashing skips git's line-ending rules for files committed with
-    CRLF (e.g. scores.csv), so the id would never match the eventual commit."""
-    import os
-    import tempfile
-    with tempfile.TemporaryDirectory() as tmp:
-        env = {**os.environ, "GIT_INDEX_FILE": str(Path(tmp) / "index")}
-
-        def git(*args):
-            r = subprocess.run(["git", *args], cwd=REPO, env=env,
-                               capture_output=True, text=True)
-            return r.stdout if r.returncode == 0 else ""
-
-        git("read-tree", "HEAD")
-        git("add", "-u", "--", *PAGE_INPUTS)  # tracked files only, edits + deletions
-        blobs = {}
-        for line in git("ls-files", "-s", "--", *PAGE_INPUTS).splitlines():
-            meta, _, path = line.partition("\t")
-            blobs[path] = meta.split()[1]
-    return blobs
-
-
-def write_built_from():
-    """Record exactly which page inputs (score CSVs, page code) the pages were built
-    from, in the worktree.
-
-    The CI rebuild (.github/workflows/pages.yml) reads this before overwriting the
-    pages. If any recorded input isn't on master yet (a publish from an unmerged
-    branch or from uncommitted edits), a rebuild from master would roll those
-    published numbers back, so CI skips instead (see rebuild_is_safe)."""
-    (WORKTREE / BUILT_FROM).write_text(
-        json.dumps({"sha": _git("rev-parse", "HEAD", check=False),
-                    "inputs": _input_blobs()}, sort_keys=True),
-        encoding="utf-8")
-
-
-def unmerged_inputs(inputs, reachable):
-    """Recorded page inputs whose content is not among master's objects."""
-    return sorted(path for path, blob in inputs.items() if blob not in reachable)
-
-
-def rebuild_is_safe(ref="origin/master"):
-    """True when every input the live pages were built from is already on `ref`,
-    so rebuilding from `ref` can't roll back published numbers. A missing or
-    old-format marker is unsafe: nothing proves what the pages were built from."""
-    marker = WORKTREE / BUILT_FROM
-    try:
-        inputs = json.loads(marker.read_text(encoding="utf-8")).get("inputs")
-    except (OSError, ValueError):
-        inputs = None
-    if not inputs:
-        print(f"{BUILT_FROM}: missing or has no recorded inputs; not safe to rebuild.")
-        return False
-    reachable = {line.split()[0] for line in
-                 _git("rev-list", "--objects", ref).splitlines() if line.strip()}
-    missing = unmerged_inputs(inputs, reachable)
-    if missing:
-        print(f"Published from inputs not on {ref}: {', '.join(missing)}")
-        return False
-    return True
-
-
 def build_top_level():
-    """Regenerate every top-level landing page from the canonical dirs in the worktree."""
-    write_built_from()
+    """Regenerate every top-level landing page from the canonical dirs in the worktree.
+
+    Only the CI workflow (.github/workflows/pages.yml) commits these pages. Rigs run
+    it for a local preview (`--rebuild-pages`) but never commit the result: one
+    writer, so a rig can't push pages built from scores master doesn't have yet,
+    and CI can't roll back pages a rig pushed."""
     _copy_branding_assets()
     build_listen()
     build_speed_hub()
@@ -1809,6 +1740,70 @@ def _publish_csv(src: Path, dest_dir: Path) -> None:
             w.writerow([row[i] for i in keep if i < len(row)])
 
 
+# Who writes what on gh-pages (one writer per file, so no push can roll back another):
+#   CI (pages.yml)            top-level pages: index/listen/speed/scores/... + logos
+#   a rig (publish.py <dir>)  its own run dir, e.g. windows-default/
+#   Windows collector         hosted.html + hosted/  (publish.py --hosted)
+PAGES_WORKFLOW = "pages.yml"
+
+
+def _sync_worktree():
+    """Put the worktree exactly on origin/gh-pages before staging anything, so a
+    publish never builds on a stale local copy (another rig or CI may have pushed)."""
+    ensure_worktree()
+    if _branch_exists_remote(BRANCH):
+        _git("fetch", "origin", BRANCH, cwd=WORKTREE)
+        _git("reset", "--hard", f"origin/{BRANCH}", cwd=WORKTREE)
+
+
+def _commit_and_push(paths, message, stage, no_push=False, attempts=3):
+    """Sync, run `stage()` to write files, commit ONLY `paths`, push. A rejected
+    push (someone else pushed other files meanwhile) re-syncs and re-stages: never
+    force, never rebase. Returns True when something was committed."""
+    for attempt in range(1, attempts + 1):
+        _sync_worktree()
+        stage()
+        # Only paths that exist or are tracked: git add errors on a pathspec that
+        # matches nothing, and a tracked-but-deleted path must still stage its removal.
+        present = [p for p in paths if (WORKTREE / p).exists()
+                   or _git("ls-files", "--", p, cwd=WORKTREE)]
+        if present:
+            _git("add", "-A", "--", *present, cwd=WORKTREE)
+        if not _git("diff", "--cached", "--name-only", cwd=WORKTREE):
+            print("No changes — already up to date.")
+            return False
+        _git("commit", "-m", message, cwd=WORKTREE)
+        print(f"Committed to {BRANCH}.")
+        if no_push:
+            print(f"--no-push: skipping push. Push manually with:\n  "
+                  f"git -C {WORKTREE} push origin {BRANCH}")
+            return True
+        if not _branch_exists_remote(BRANCH):
+            _git("push", "-u", "origin", BRANCH, cwd=WORKTREE, capture=False)
+            print("\nFirst push of gh-pages — now enable Pages in repo settings:")
+            print("  Settings → Pages → Source: 'Deploy from a branch' → Branch: gh-pages / root")
+            return True
+        r = subprocess.run(["git", "push", "origin", BRANCH], cwd=WORKTREE, text=True)
+        if r.returncode == 0:
+            return True
+        print(f"Push rejected (attempt {attempt}/{attempts}); re-syncing and retrying.")
+    raise SystemExit(f"Could not push {BRANCH} after {attempts} attempts.")
+
+
+def trigger_pages_rebuild():
+    """Ask CI to rebuild the top-level pages from master + what's now on gh-pages.
+    Its half-hourly check catches it anyway if this can't run (no gh CLI / auth)."""
+    r = subprocess.run(["gh", "workflow", "run", PAGES_WORKFLOW, "--ref", "master"],
+                       cwd=REPO, capture_output=True, text=True)
+    if r.returncode == 0:
+        print("Requested the CI page rebuild (landing/listen/speed/scores update in a few minutes).")
+    else:
+        print("Could not request the CI page rebuild "
+              f"({(r.stderr or r.stdout).strip() or 'gh CLI unavailable'}).\n"
+              "  The half-hourly check will pick it up, or run 'Rebuild pages' "
+              "from the repo's Actions tab.")
+
+
 def publish(run_dir: Path, no_push: bool = False) -> None:
     if not run_dir.exists():
         raise SystemExit(f"Not found: {run_dir}")
@@ -1840,60 +1835,35 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
     # and report.py — never ship a stale index/speed/samples page.
     build_report(run_dir)
 
-    ensure_worktree()
+    def stage():
+        dest = WORKTREE / run_dir.name
+        if dest.exists():
+            shutil.rmtree(dest)
+        dest.mkdir()
+        for fname in ("index.html", "speed.html", "samples.html",
+                      "report.html", "results.csv"):
+            src = run_dir / fname
+            if src.exists():
+                if fname == "results.csv":
+                    _publish_csv(src, dest)
+                else:
+                    shutil.copy2(src, dest)
+        if meta_src.exists():
+            shutil.copy2(meta_src, dest)
+        for wav in run_dir.glob("*.wav"):
+            shutil.copy2(wav, dest)
+        (WORKTREE / ".nojekyll").touch()
+        total = sum(f.stat().st_size for f in dest.iterdir())
+        print(f"Staged {run_dir.name}/ ({total / 1024 / 1024:.1f} MB)")
 
-    dest = WORKTREE / run_dir.name
-    if dest.exists():
-        print(f"Overwriting existing {dest.relative_to(REPO)}")
-        shutil.rmtree(dest)
-    dest.mkdir()
-
-    html_files = ("index.html", "speed.html", "samples.html",
-                  "report.html", "results.csv")
-    for fname in html_files:
-        src = run_dir / fname
-        if src.exists():
-            if fname == "results.csv":
-                _publish_csv(src, dest)
-            else:
-                shutil.copy2(src, dest)
-    if meta_src.exists():
-        shutil.copy2(meta_src, dest)
-    else:
+    if not meta_src.exists():
         print(f"  warning: no meta.json in {run_dir.name} — "
               f"run `python bench.py --write-meta {run_dir.relative_to(REPO)}` "
               f"to tag it with this machine's rig info.")
-    wavs = list(run_dir.glob("*.wav"))
-    for wav in wavs:
-        shutil.copy2(wav, dest)
-
-    total_bytes = sum(p.stat().st_size for p in dest.iterdir())
-    has_meta = " + meta.json" if meta_src.exists() else ""
-    print(f"Copied report.html + results.csv{has_meta} + {len(wavs)} wav(s) "
-          f"({total_bytes / 1024 / 1024:.1f} MB)")
-
-    (WORKTREE / ".nojekyll").touch()
-    build_top_level()
-    print(f"Rebuilt landing (index/listen/speed/archive) — {_count_published()} run(s) total")
-
-    _git("add", "-A", cwd=WORKTREE)
-    if not _git("diff", "--cached", "--name-only", cwd=WORKTREE):
-        print("No changes — already up to date.")
-        return
-    _git("commit", "-m", f"Publish bench run {run_dir.name}", cwd=WORKTREE)
-    print(f"Committed to {BRANCH}.")
-
-    if no_push:
-        print(f"\n--no-push: skipping push. Push manually with:\n  "
-              f"git -C {WORKTREE} push -u origin {BRANCH}")
-        return
-
-    if _branch_exists_remote(BRANCH):
-        _git("push", "origin", BRANCH, cwd=WORKTREE, capture=False)
-    else:
-        _git("push", "-u", "origin", BRANCH, cwd=WORKTREE, capture=False)
-        print("\nFirst push of gh-pages — now enable Pages in repo settings:")
-        print("  Settings → Pages → Source: 'Deploy from a branch' → Branch: gh-pages / root")
+    committed = _commit_and_push([run_dir.name, ".nojekyll"],
+                                 f"Publish bench run {run_dir.name}", stage, no_push)
+    if committed and not no_push:
+        trigger_pages_rebuild()
 
     url = _pages_url()
     if url:
@@ -1903,55 +1873,57 @@ def publish(run_dir: Path, no_push: bool = False) -> None:
 
 
 def rebuild_all(no_push: bool = False) -> None:
-    """Regenerate every results/<dated>/ via build_report, then republish each to gh-pages."""
+    """Regenerate every results/<dir>/ report and republish those run dirs. The
+    top-level pages are CI's (see build_top_level); this asks it to rebuild them."""
     if not (REPO / "results").exists():
         raise SystemExit("No results/ dir; nothing to rebuild.")
-    ensure_worktree()
     dirs = sorted(
         [d for d in (REPO / "results").iterdir()
          if d.is_dir() and (d / "results.csv").exists()],
         reverse=True,
     )
     if not dirs:
-        raise SystemExit("No results/<dated>/ subdirs with results.csv.")
+        raise SystemExit("No results/<dir>/ subdirs with results.csv.")
     for d in dirs:
         print(f"Rebuilding {d.name}...")
         build_report(d)
-        dest = WORKTREE / d.name
-        if dest.exists():
-            shutil.rmtree(dest)
-        dest.mkdir()
-        for fname in ("index.html", "speed.html", "samples.html",
-                      "report.html", "results.csv"):
-            src = d / fname
-            if src.exists():
-                if fname == "results.csv":
-                    _publish_csv(src, dest)
-                else:
-                    shutil.copy2(src, dest)
-        meta_src = d / "meta.json"
-        if meta_src.exists():
-            shutil.copy2(meta_src, dest)
-        for wav in d.glob("*.wav"):
-            shutil.copy2(wav, dest)
-    (WORKTREE / ".nojekyll").touch()
-    build_top_level()
-    print(f"Rebuilt {len(dirs)} run(s); landing updated.")
 
-    _git("add", "-A", cwd=WORKTREE)
-    if not _git("diff", "--cached", "--name-only", cwd=WORKTREE):
-        print("No changes — already up to date.")
-        return
-    _git("commit", "-m", "Rebuild gh-pages with three-lens layout", cwd=WORKTREE)
-    print("Committed to gh-pages.")
-    if no_push:
-        print(f"--no-push: skipping push. Push manually with:\n  "
-              f"git -C {WORKTREE} push origin {BRANCH}")
-        return
-    if _branch_exists_remote(BRANCH):
-        _git("push", "origin", BRANCH, cwd=WORKTREE, capture=False)
-    else:
-        _git("push", "-u", "origin", BRANCH, cwd=WORKTREE, capture=False)
+    def stage():
+        for d in dirs:
+            dest = WORKTREE / d.name
+            if dest.exists():
+                shutil.rmtree(dest)
+            dest.mkdir()
+            for fname in ("index.html", "speed.html", "samples.html",
+                          "report.html", "results.csv"):
+                src = d / fname
+                if src.exists():
+                    if fname == "results.csv":
+                        _publish_csv(src, dest)
+                    else:
+                        shutil.copy2(src, dest)
+            if (d / "meta.json").exists():
+                shutil.copy2(d / "meta.json", dest)
+            for wav in d.glob("*.wav"):
+                shutil.copy2(wav, dest)
+        (WORKTREE / ".nojekyll").touch()
+
+    committed = _commit_and_push([d.name for d in dirs] + [".nojekyll"],
+                                 f"Republish {len(dirs)} run dir(s)", stage, no_push)
+    if committed and not no_push:
+        trigger_pages_rebuild()
+
+
+def publish_hosted(no_push: bool = False) -> None:
+    """Publish hosted.html + hosted/ (the paid-API tab). Its inputs (the sweep's
+    sidecars in hosted/) live only on the Windows collector, so this runs there;
+    CI never writes these paths."""
+    if not list((REPO / "hosted").glob("*/default/p1_t1.json")):
+        raise SystemExit("No hosted sweep sidecars in hosted/ — run this on the Windows collector.")
+    committed = _commit_and_push(["hosted.html", "hosted"], "Publish hosted APIs page",
+                                 build_hosted, no_push)
+    if committed and not no_push:
+        trigger_pages_rebuild()
 
 
 def main() -> int:
@@ -1964,23 +1936,23 @@ def main() -> int:
                    help="List runs already published to gh-pages and exit.")
     p.add_argument("--rebuild-all", action="store_true",
                    help="Regenerate every results/<dated>/ and republish to gh-pages.")
-    p.add_argument("--check-rebuild-safe", action="store_true",
-                   help="Exit 0 if every input the live pages were built from is on "
-                        "origin/master (used by the CI rebuild), else exit 1.")
+    p.add_argument("--hosted", action="store_true",
+                   help="Publish hosted.html + hosted/ (Windows collector only).")
     p.add_argument("--rebuild-pages", action="store_true",
                    help="Regenerate only the top-level landing pages (index/listen/speed/"
                         "archive) from the canonical dirs already in the worktree. "
                         "No new run copied, no commit, no push — for local preview.")
     args = p.parse_args()
 
-    if args.check_rebuild_safe:
-        return 0 if rebuild_is_safe() else 1
-
     if args.rebuild_pages:
         ensure_worktree()
         build_top_level()
         print(f"Rebuilt landing pages in {WORKTREE.relative_to(REPO)}: "
               f"index.html · listen.html · speed.html · archive.html (not committed).")
+        return 0
+
+    if args.hosted:
+        publish_hosted(no_push=args.no_push)
         return 0
 
     if args.rebuild_all:

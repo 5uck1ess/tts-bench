@@ -169,21 +169,3 @@ def test_hosted_naq_means_takes_per_slug(tmp_path, monkeypatch):
                  "vend_x/cloning,p1_t1.wav,vend_x,1,5.0\n", encoding="utf-8")
     monkeypatch.setattr(publish, "NAQ_SCORES_CSV", n)
     assert publish._hosted_naq("default") == {"vend_x": 70.0}
-
-
-def test_rebuild_guard_skips_unmerged_or_unrecorded_inputs(tmp_path, monkeypatch):
-    """The CI rebuild must not roll back numbers published from inputs that are
-    not on master: content master lacks, or no record at all."""
-    import json
-    monkeypatch.setattr(publish, "WORKTREE", tmp_path)
-    assert publish.unmerged_inputs({"a": "1", "b": "2"}, {"1", "2", "3"}) == []
-    assert publish.unmerged_inputs({"a": "1", "b": "9"}, {"1", "2"}) == ["b"]
-
-    monkeypatch.setattr(publish, "_git", lambda *a, **k: "1 a\n2 b\n")
-    assert publish.rebuild_is_safe() is False            # no marker
-    (tmp_path / publish.BUILT_FROM).write_text(json.dumps({"sha": "x", "dirty": False}))
-    assert publish.rebuild_is_safe() is False            # old-format marker
-    (tmp_path / publish.BUILT_FROM).write_text(json.dumps({"inputs": {"a": "1", "b": "2"}}))
-    assert publish.rebuild_is_safe() is True             # all inputs on master
-    (tmp_path / publish.BUILT_FROM).write_text(json.dumps({"inputs": {"a": "1", "b": "7"}}))
-    assert publish.rebuild_is_safe() is False            # an input master lacks

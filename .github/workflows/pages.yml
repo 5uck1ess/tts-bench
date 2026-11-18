@@ -1,13 +1,14 @@
 name: Rebuild pages
 
-# Merges that change what the site shows (score CSVs, page code) used to sit
-# unpublished until someone remembered to run publish.py by hand. This job
-# rebuilds the top-level pages from the canonical dirs already on gh-pages and
-# pushes the result, so those merges go live on their own.
+# CI is the ONLY writer of the top-level pages (index/listen/speed/scores/
+# capabilities/archive + logos). Rigs publish only their own run dirs and the
+# Windows collector only hosted.html + hosted/ (see publish.py). With one writer
+# per file, nothing can push pages built from scores master doesn't have, and this
+# job can't roll back anything a rig pushed.
 #
-# It does not publish new bench rows: results/ is gitignored, so new runs still
-# go up from a rig with publish.py. hosted.html is left as-is here (its
-# sidecars live only on the Windows collector; build_hosted() skips without them).
+# Runs when master changes a page input, when a rig asks for it after publishing
+# a run dir (publish.py calls `gh workflow run`), and every 30 minutes as a
+# catch-up that exits early when the pages already match master + gh-pages.
 
 on:
   push:
@@ -25,6 +26,8 @@ on:
       - "assets/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
+  schedule:
+    - cron: "17,47 * * * *"
 
 permissions:
   contents: write
@@ -45,71 +48,86 @@ jobs:
     timeout-minutes: 30
     env:
       PYTHON_DOTENV_DISABLED: "1"
+      GH_TOKEN: ${{ github.token }}
 
     steps:
+      # Cheap check before the ~1.7 GB gh-pages checkout: if the newest gh-pages
+      # commit is this job's own rebuild of the current master tip, nothing has
+      # changed since (any rig publish or master change would be newer).
+      - name: Check whether a rebuild is needed
+        id: need
+        run: |
+          set -euo pipefail
+          master=$(gh api "repos/${GITHUB_REPOSITORY}/commits/master" -q .sha)
+          tip_msg=$(gh api "repos/${GITHUB_REPOSITORY}/commits/gh-pages" -q .commit.message)
+          if [ "${GITHUB_EVENT_NAME}" = "schedule" ] && [ "$tip_msg" = "Rebuild pages from master $master" ]; then
+            echo "Pages already built from master $master; nothing to do."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v7
+        if: steps.need.outputs.run == 'true'
         with:
           ref: master
-          fetch-depth: 0   # full master history: the guard below checks ancestry
 
       - uses: actions/setup-python@v7
+        if: steps.need.outputs.run == 'true'
         with:
-          # 3.12+: sum() changed its float rounding in 3.12, and the rigs publish
+          # 3.12+: sum() changed its float rounding in 3.12, and the rigs build
           # with 3.12+; 3.11 shifts a few averaged metrics by one in the last digit.
           python-version: "3.12"
           cache: pip
 
       - name: Install developer dependencies
+        if: steps.need.outputs.run == 'true'
         run: python -m pip install -r requirements-dev.txt
 
       - name: Rebuild top-level pages and push
+        if: steps.need.outputs.run == 'true'
         run: |
           set -euo pipefail
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # A rig may push to gh-pages while this runs; on a rejected push, start
+          # A rig may push its run dir while this runs; on a rejected push, start
           # over from the new tip (never force, never rebase: the pages are generated).
           for attempt in 1 2 3 4 5; do
-            # Fetch gh-pages BEFORE master. Anything already on gh-pages was built
-            # from a master no newer than the one fetched next, so this build can
-            # never render older score CSVs over newer published ones.
             git fetch --depth=1 origin +gh-pages:refs/remotes/origin/gh-pages
             # Build from the CURRENT master tip, not the SHA this run started on:
             # a re-run would otherwise rebuild from stale code/CSVs.
-            git fetch origin +master:refs/remotes/origin/master
+            git fetch --depth=1 origin +master:refs/remotes/origin/master
             git checkout -q --detach origin/master
             built_from=$(git rev-parse HEAD)
-            msg="Rebuild pages: $(git log -1 --format='%h %s')"
             git worktree remove --force _gh-pages 2>/dev/null || rm -rf _gh-pages
             git worktree prune
             # Full checkout, wavs included: the Listen and Scores builders only
             # list clips whose wav exists, so a wav-less checkout drops rows.
             git worktree add -B gh-pages _gh-pages origin/gh-pages
 
-            # publish.py records exactly which page inputs (score CSVs, page code)
-            # each publish was built from. If any of them isn't on master yet (a
-            # publish from an unmerged branch or uncommitted edits, or a publish
-            # with no record), rebuilding from master could roll those numbers
-            # back: skip and leave it to the next publish from merged master.
-            if ! python publish.py --check-rebuild-safe; then
-              echo "::warning::The live pages were built from inputs not on master (or carry no record of them). Skipping the rebuild so published numbers are not rolled back."
-              exit 0
-            fi
-
             python publish.py --rebuild-pages
 
-            git -C _gh-pages add -A
-            # The marker changes on every build; only a page change is worth a commit.
-            if git -C _gh-pages diff --cached --quiet -- . ':(exclude).built-from.json'; then
-              echo "Pages already up to date."
-              exit 0
+            # Stage only CI's own files: root-level pages and logos. Run dirs belong
+            # to the rigs, hosted.html + hosted/ to the Windows collector.
+            git -C _gh-pages add -A -- ':(glob)*' ':(exclude)hosted.html'
+            msg="Rebuild pages from master $built_from"
+            if git -C _gh-pages diff --cached --quiet; then
+              if [ "$(git -C _gh-pages log -1 --format=%s)" = "$msg" ]; then
+                echo "Pages already up to date."
+                exit 0
+              fi
+              # Nothing changed, but record that this state was checked (an empty
+              # commit) so the half-hourly catch-up can skip the big checkout.
+              echo "Pages already up to date; recording the check."
+              git -C _gh-pages commit -q --allow-empty -m "$msg"
+            else
+              git -C _gh-pages diff --cached --stat
+              git -C _gh-pages commit -q -m "$msg"
             fi
-            git -C _gh-pages diff --cached --stat
-            git -C _gh-pages commit -q -m "$msg"
 
             # If master moved while building, this output may already be stale:
             # start over from the new tip rather than push it.
-            git fetch origin +master:refs/remotes/origin/master
+            git fetch --depth=1 origin +master:refs/remotes/origin/master
             if [ "$(git rev-parse origin/master)" != "$built_from" ]; then
               echo "master moved during the build (attempt $attempt); rebuilding from the new tip."
               continue
@@ -127,6 +145,5 @@ jobs:
       # explicitly. It runs even when nothing changed, so re-running the job after
       # a failed build request still deploys; and a failed request fails the job.
       - name: Request a Pages build
-        env:
-          GH_TOKEN: ${{ github.token }}
+        if: steps.need.outputs.run == 'true'
         run: gh api -X POST "repos/${GITHUB_REPOSITORY}/pages/builds"
