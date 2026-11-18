@@ -3696,6 +3696,36 @@
           "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/default/p6_t1.wav"
         },
         {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/default/p6_t1.wav"
+        },
+        {
           "model": "hosted:voxtral3_tts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/default/p1_t1.wav"
@@ -4286,6 +4316,36 @@
           "url": "https://5uck1ess.github.io/tts-bench/hosted/stepaudio3_tts/cloning/p4_t1.wav"
         },
         {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/cloning/p1_t1.wav"
+        },
+        {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/cloning/p2_t1.wav"
+        },
+        {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/cloning/p3_t1.wav"
+        },
+        {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/cloning/p4_t1.wav"
+        },
+        {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/cloning/p5_t1.wav"
+        },
+        {
+          "model": "hosted:voicefinder_voyager1",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/voicefinder_voyager1/cloning/p6_t1.wav"
+        },
+        {
           "model": "hosted:voxtral3_tts",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/hosted/voxtral3_tts/cloning/p1_t1.wav"
@@ -4571,6 +4631,10 @@
     },
     "hosted:stepaudio3_tts": {
       "name": "StepFun Step-Audio 3 TTS",
+      "url": null
+    },
+    "hosted:voicefinder_voyager1": {
+      "name": "Voicefinder Voyager 1",
       "url": null
     },
     "hosted:voxtral3_tts": {
