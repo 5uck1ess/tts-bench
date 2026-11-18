@@ -1678,16 +1678,23 @@ BUILT_FROM = ".built-from.json"
 
 
 def _input_blobs():
-    """{path: git blob id} for every tracked page input, hashed from the working
-    tree (so uncommitted edits get their own id, which master won't have)."""
-    files = [f for f in _git("ls-files", "--", *PAGE_INPUTS, check=False).splitlines()
-             if (REPO / f).is_file()]
-    if not files:
-        return {}
-    r = subprocess.run(["git", "hash-object", "--stdin-paths"], cwd=REPO,
-                       input="\n".join(files), capture_output=True, text=True)
-    ids = r.stdout.split()
-    return dict(zip(files, ids)) if r.returncode == 0 and len(ids) == len(files) else {}
+    """{path: git blob id} for every tracked page input. Files that match HEAD use
+    their committed id; files with uncommitted edits are hashed from the working
+    tree, so the edit gets an id master won't have. (Re-hashing every file instead
+    breaks on files committed with CRLF, e.g. scores.csv: hashing normalizes the
+    line endings and the id no longer matches the commit.)"""
+    blobs = {}
+    for line in _git("ls-files", "-s", "--", *PAGE_INPUTS, check=False).splitlines():
+        meta, _, path = line.partition("\t")
+        blobs[path] = meta.split()[1]
+    changed = [f for f in _git("diff", "HEAD", "--name-only", "--", *PAGE_INPUTS,
+                               check=False).splitlines() if f in blobs]
+    for f in changed:
+        if (REPO / f).is_file():
+            blobs[f] = _git("hash-object", f, check=False)
+        else:
+            blobs.pop(f)  # deleted locally: the pages can't have read it
+    return blobs
 
 
 def write_built_from():
