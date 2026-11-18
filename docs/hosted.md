@@ -206,7 +206,8 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
   - **Voicefinder, read 2026-11-18** (voicefinder.io/legal/terms-ai, Spanish): no benchmarking clause.
     7.3 forbids removing its AI marks or metadata (so clips keep the C2PA chunk), training models on its
     output and building "competing products" such as voice banks or datasets; 7.1 limits Free-plan output
-    to personal, non-commercial use; 7.7 requires the speaker's consent to clone.
+    to personal, non-commercial use; 7.7 requires the speaker's consent to clone. **Cleared with
+    Voicefinder's owner directly (Tym, 2026-11-18).**
   - **Decided 2026-11-01 (Tym): publish all vendors**, after the cloning lens is done; pull any vendor that objects.
 - **Cloning consent.** See open question 1; several vendors require you to attest you have rights to
   the cloned voice.
