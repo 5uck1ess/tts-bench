@@ -1678,22 +1678,29 @@ BUILT_FROM = ".built-from.json"
 
 
 def _input_blobs():
-    """{path: git blob id} for every tracked page input. Files that match HEAD use
-    their committed id; files with uncommitted edits are hashed from the working
-    tree, so the edit gets an id master won't have. (Re-hashing every file instead
-    breaks on files committed with CRLF, e.g. scores.csv: hashing normalizes the
-    line endings and the id no longer matches the commit.)"""
-    blobs = {}
-    for line in _git("ls-files", "-s", "--", *PAGE_INPUTS, check=False).splitlines():
-        meta, _, path = line.partition("\t")
-        blobs[path] = meta.split()[1]
-    changed = [f for f in _git("diff", "HEAD", "--name-only", "--", *PAGE_INPUTS,
-                               check=False).splitlines() if f in blobs]
-    for f in changed:
-        if (REPO / f).is_file():
-            blobs[f] = _git("hash-object", f, check=False)
-        else:
-            blobs.pop(f)  # deleted locally: the pages can't have read it
+    """{path: git blob id} for every tracked page input, as git would commit the
+    working tree right now: uncommitted edits get the id their commit would have,
+    which master won't have until they land.
+
+    The ids come from staging into a throwaway index rather than `git
+    hash-object`: hashing skips git's line-ending rules for files committed with
+    CRLF (e.g. scores.csv), so the id would never match the eventual commit."""
+    import os
+    import tempfile
+    with tempfile.TemporaryDirectory() as tmp:
+        env = {**os.environ, "GIT_INDEX_FILE": str(Path(tmp) / "index")}
+
+        def git(*args):
+            r = subprocess.run(["git", *args], cwd=REPO, env=env,
+                               capture_output=True, text=True)
+            return r.stdout if r.returncode == 0 else ""
+
+        git("read-tree", "HEAD")
+        git("add", "-u", "--", *PAGE_INPUTS)  # tracked files only, edits + deletions
+        blobs = {}
+        for line in git("ls-files", "-s", "--", *PAGE_INPUTS).splitlines():
+            meta, _, path = line.partition("\t")
+            blobs[path] = meta.split()[1]
     return blobs
 
 
