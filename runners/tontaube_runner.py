@@ -24,7 +24,7 @@ inherited TTS_MODEL_REPO_ID / MODEL_PATH / CB<n>_MODEL_PATH / LITE_QUANT) and re
 load unless the int4 bundle is beside the codebooks: upstream otherwise falls back to bf16
 silently. A --device cpu run also hides CUDA (DualCodec / VibeVoice pick CUDA on their own).
 References are validated before load (exists, non-empty, audio suffix) and passed as an
-absolute voice_path that upstream reads with soundfile (no temp copy; see VOICE_PATH below).
+absolute file path that upstream reads with soundfile (no temp copy), capped at 10 min.
 DualCodec / W2V-BERT / VibeVoice / MossFormer2 download from upstream at revisions
 the server pins.
 
@@ -85,6 +85,7 @@ LANGS = {"en": "english", "fr": "french", "es": "spanish"}
 PRESETS = {"en": "Marcus.mp3", "fr": "Adam.mp3", "es": "Fernando.mp3"}
 MODEL_REPO = "TontaubeAI/TontaubeV1.1-int4"
 MODEL_REVISION = "2cff8331a357cdd50b05c823f5172eaa3ac6c121"   # = tag v1.1.0
+MAX_REF_SECONDS = 600.0   # upstream keeps the first 60 s (prompt_seconds) but loads the whole file
 
 
 def _build_dir() -> Path:
@@ -110,7 +111,8 @@ def _builder_alive(build: Path) -> bool:
         if not pid_dir.name.isdigit() or pid_dir.name == me:
             continue
         try:
-            if (pid_dir / "comm").read_text().strip() not in _BUILD_COMMS:
+            comm = (pid_dir / "comm").read_bytes().decode("utf-8", "replace").strip()
+            if comm not in _BUILD_COMMS:
                 continue
             if needle in (pid_dir / "cmdline").read_bytes().decode("utf-8", "replace"):
                 return True
@@ -122,23 +124,30 @@ def _builder_alive(build: Path) -> bool:
     return False
 
 
+# A leftover torch build lock is declared stale only after this long with no build
+# process (ninja / compiler / linker) working in the build dir. A live owner -- another
+# runner or a `tontaube serve` -- spawns ninja within moments of taking the lock and
+# removes the lock when done, so we keep waiting; a lock orphaned by a killed run
+# never gets a builder again.
+STALE_LOCK_QUIET_S = 30.0
+
+
 def _build_native_kernels_locked(note) -> None:
-    """Build upstream's CPU C++ kernels under a runner-owned flock, recovering a
-    PyTorch build lock orphaned by a killed run.
+    """Build upstream's CPU C++ kernels, recovering a PyTorch build lock orphaned by a
+    killed run without ever deleting a live one.
 
     torch.utils.cpp_extension guards the build dir with a bare `lock` file
     (FileBaton: no owner PID, removed in a `finally`). harness.run_cell kills the
-    runner on cell timeout, which skips that `finally` and can leave ninja running;
+    runner on cell timeout, which skips that `finally` (and can leave ninja running);
     every later load would then wait on the orphaned file until it times out too.
 
-    Ownership comes from an fcntl.flock on a sidecar file instead: the kernel drops
-    it when its holder dies, so holding it proves no live *runner* owns `lock`. We
-    then wait for any orphaned compiler from a killed run to exit (so two builds never
-    share the dir), and only then remove a leftover `lock`. The build itself
-    (app.native.kernels(), normally triggered lazily inside engine load) is forced
-    while we hold the flock, so a second runner blocks on the flock rather than
-    racing the lock file. Covers runner-vs-runner; a `tontaube serve` building in the
-    same cache dir at that moment is not coordinated (not a bench scenario).
+    1. An fcntl.flock on a sidecar file serializes runners (the kernel drops it when
+       its holder dies), and the build (app.native.kernels(), normally lazy inside
+       engine load) is forced while it is held.
+    2. If a torch `lock` exists, wait: it disappears when a live owner finishes; it is
+       removed by us only after STALE_LOCK_QUIET_S continuous seconds with no build
+       process in the dir. That also covers owners that don't take our flock
+       (`tontaube serve` sharing the cache) and orphaned compilers from a killed run.
     """
     import fcntl
 
@@ -147,15 +156,18 @@ def _build_native_kernels_locked(note) -> None:
     with open(build / ".tontaube_runner.flock", "w") as fh:
         fcntl.flock(fh, fcntl.LOCK_EX)          # waits for a live runner's build
         lock = build / "lock"
-        if lock.exists():                       # only a leftover lock needs the /proc scan
-            waited = False
-            while _builder_alive(build):        # orphaned ninja/c++ from a killed run
-                waited = True
-                time.sleep(0.5)
-            if waited:
-                note("tontaube: waited for an orphaned native-kernels build to exit")
-            lock.unlink(missing_ok=True)
-            note(f"tontaube: removed stale build lock {lock} (no live owner)")
+        quiet_since = None
+        while lock.exists():
+            if _builder_alive(build):
+                quiet_since = None
+            elif quiet_since is None:
+                quiet_since = time.monotonic()
+            elif time.monotonic() - quiet_since >= STALE_LOCK_QUIET_S:
+                lock.unlink(missing_ok=True)
+                note(f"tontaube: removed stale build lock {lock} "
+                     f"(no build process for {STALE_LOCK_QUIET_S:.0f}s)")
+                break
+            time.sleep(0.5)
         from app.native import kernels
         kernels()                               # build (or load the cached .so) now
         # flock released on close; the extension is cached in-process from here.
@@ -200,13 +212,12 @@ def main() -> int:
         # loaders pick CUDA on their own whenever it is visible. Hide it so a CPU run is
         # CPU end to end (harness.run_cell does the same; this covers direct runs).
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    # Every voice (bundled preset or --reference) is passed as an absolute server-side
-    # voice_path, which upstream reads straight from disk. voice_path must sit under
-    # VOICE_PATH, hence "/". The base64 route (what a remote /predict client uses) was
-    # dropped: upstream decodes it to a NamedTemporaryFile(delete=False) wav removed only
-    # in a `finally`, so a cell-timeout kill left a decoded copy of the reference behind.
-    # Measured byte-identical output on both devices (clone p1, cuda + cpu).
-    os.environ["VOICE_PATH"] = "/"
+    # Presets resolve under the bundled samples dir (upstream's own layout). Upstream also
+    # resolves DEFAULT_VOICE under VOICE_PATH at engine start; every request here names
+    # its voice explicitly, so an inherited DEFAULT_VOICE is dropped rather than allowed
+    # to fail startup.
+    os.environ["VOICE_PATH"] = str(SRC / "voices" / "samples")
+    os.environ.pop("DEFAULT_VOICE", None)
     # Pin the checkpoint this row is labelled with. Upstream resolves the model from
     # inheritable env (TTS_MODEL_REPO_ID / _REVISION, MODEL_PATH, CB<n>_MODEL_PATH,
     # LITE_QUANT) and silently falls back to bf16 when no int4 bundle sits next to the
@@ -228,18 +239,29 @@ def main() -> int:
 
     ref_path = None
     if args.reference:
-        # Validate before model load: an empty or unreadable file must fail the cell,
-        # not fall back to a default voice under the cloning label.
-        ref = Path(args.reference)
+        # The reference is handed to the engine as a file path that upstream reads with
+        # soundfile (content-sniffed, so a .wav symlink to a hash-named blob works). Not
+        # the base64 route: upstream decodes that to a NamedTemporaryFile(delete=False)
+        # removed only in a `finally`, so a cell-timeout kill would leak a decoded copy.
+        # Validated here, before model load: an empty/unreadable file must fail the cell
+        # rather than fall back to a default voice under the cloning label, and upstream
+        # reads + resamples the WHOLE file before keeping its first 60 s, so a very long
+        # recording is refused instead of exhausting memory.
+        ref = Path(os.path.abspath(args.reference))
         try:
-            ref = ref.resolve(strict=True)
+            import soundfile as sf
             if ref.stat().st_size == 0:
                 raise ValueError(f"reference {ref} is empty")
-            if ref.suffix.lower() not in (".wav", ".flac", ".mp3", ".ogg"):
-                raise ValueError(f"reference {ref} is not a wav/flac/mp3/ogg file")
+            info = sf.info(str(ref))
+            if info.frames <= 0 or info.samplerate <= 0:
+                raise ValueError(f"reference {ref} has no audio")
+            dur = info.frames / info.samplerate
+            if dur > MAX_REF_SECONDS:
+                raise ValueError(f"reference {ref} is {dur:.0f} s; upstream only uses the first "
+                                 f"60 s but loads it whole, so >{MAX_REF_SECONDS:.0f} s is refused")
             ref_path = str(ref)
-        except (OSError, ValueError) as e:
-            emit({"ok": False, "run_index": 0, "error": f"reference rejected: {e}"})
+        except Exception as e:
+            emit({"ok": False, "run_index": 0, "error": f"reference rejected: {type(e).__name__}: {e}"})
             return 1
     mossformer = args.device == "cuda"   # upstream's per-device default, made explicit
 
@@ -267,8 +289,16 @@ def main() -> int:
                     raise ValueError(f"unsupported language {language}")
                 kw = dict(text=text, language=LANGS[language], tag=TAG, seed=SEED,
                           format="wav", mossformer2_postprocess=mossformer)
-                kw["voice_path"] = ref_path or str(SRC / "voices" / "samples" / PRESETS[language])
+                if ref_path is None:
+                    kw["voice_path"] = PRESETS[language]
                 req = TTSRequest(**kw)
+                if ref_path is not None:
+                    # Assigned after validation (TTSRequest does not validate assignment):
+                    # its voice_path validator requires the RESOLVED path to sit under
+                    # VOICE_PATH with an audio suffix, which rejects references outside the
+                    # samples dir and symlinks to extensionless files. The runner has
+                    # already validated the file; the engine reads it with soundfile.
+                    req.voice_path = ref_path
                 _meminfo.reset_peak(args.device)
                 t0 = time.perf_counter()
                 res = await synthesize(req)
