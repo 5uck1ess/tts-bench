@@ -91,9 +91,11 @@ MAX_REF_BYTES = 8 * 1024 * 1024 // 4 * 3
 
 
 def _build_dir() -> Path:
+    # Same expression upstream uses (app/native/__init__.py), resolved to an absolute
+    # real path so it compares against /proc/<pid>/cwd even when the env var is relative.
     root = Path(os.getenv("TONTAUBE_CACHE_DIR",
                           Path(os.getenv("XDG_CACHE_HOME", Path.home() / ".cache")) / "tontaube")).expanduser()
-    return root / "native-kernels"
+    return (root / "native-kernels").resolve()
 
 
 def _builder_alive(build: Path) -> bool:
@@ -107,7 +109,8 @@ def _builder_alive(build: Path) -> bool:
         try:
             if needle in (pid_dir / "cmdline").read_bytes().decode("utf-8", "replace"):
                 return True
-            if os.readlink(pid_dir / "cwd").startswith(needle):
+            cwd = os.readlink(pid_dir / "cwd")
+            if cwd == needle or cwd.startswith(needle + os.sep):
                 return True
         except OSError:
             continue
@@ -138,19 +141,46 @@ def _build_native_kernels_locked(note) -> None:
     build.mkdir(parents=True, exist_ok=True)
     with open(build / ".tontaube_runner.flock", "w") as fh:
         fcntl.flock(fh, fcntl.LOCK_EX)          # waits for a live runner's build
-        waited = False
-        while _builder_alive(build):            # orphaned ninja/c++ from a killed run
-            waited = True
-            time.sleep(0.5)
-        if waited:
-            note("tontaube: waited for an orphaned native-kernels build to exit")
         lock = build / "lock"
-        if lock.exists():
-            lock.unlink()
+        if lock.exists():                       # only a leftover lock needs the /proc scan
+            waited = False
+            while _builder_alive(build):        # orphaned ninja/c++ from a killed run
+                waited = True
+                time.sleep(0.5)
+            if waited:
+                note("tontaube: waited for an orphaned native-kernels build to exit")
+            lock.unlink(missing_ok=True)
             note(f"tontaube: removed stale build lock {lock} (no live owner)")
         from app.native import kernels
         kernels()                               # build (or load the cached .so) now
         # flock released on close; the extension is cached in-process from here.
+
+
+def _private_tmpdir(note) -> Path:
+    """Per-process temp dir under the Tontaube cache, sweeping dirs of dead runners.
+
+    Upstream decodes each new reference to a NamedTemporaryFile(delete=False) wav and
+    removes it in a `finally`; harness.run_cell's timeout kill skips that, leaving a
+    decoded copy of the reference behind. Pointing tempfile at runner-tmp/<pid> lets
+    the next run delete whatever a killed run left (normal runs clean up on exit).
+    """
+    base = _build_dir().parent / "runner-tmp"
+    base.mkdir(parents=True, exist_ok=True)
+    for d in base.iterdir():
+        if not d.name.isdigit() or d.name == str(os.getpid()):
+            continue
+        try:
+            os.kill(int(d.name), 0)
+            continue                            # that runner is still alive
+        except ProcessLookupError:
+            pass
+        except PermissionError:
+            continue
+        shutil.rmtree(d, ignore_errors=True)
+        note(f"tontaube: removed temp files left by killed runner {d.name}")
+    mine = base / str(os.getpid())
+    mine.mkdir(exist_ok=True)
+    return mine
 
 
 def main() -> int:
@@ -240,6 +270,13 @@ def main() -> int:
                   "error": "cloning needs ffmpeg/ffprobe on PATH (upstream decodes references with FFmpeg)"})
             return 1
     mossformer = args.device == "cuda"   # upstream's per-device default, made explicit
+
+    import atexit
+    import tempfile
+    tmp = _private_tmpdir(lambda m: print(m, file=sys.stderr))
+    os.environ["TMPDIR"] = str(tmp)
+    tempfile.tempdir = str(tmp)
+    atexit.register(shutil.rmtree, tmp, True)
 
     async def run() -> int:
         try:
