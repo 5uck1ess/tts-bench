@@ -6,6 +6,7 @@ Three flavors of "zero-shot cloning" are supported, with slightly different refe
 |---|---|
 | ChatterBox, Coqui XTTS-v2, LuxTTS, VoxCPM, Echo-TTS, Zonos2 | wav only — no transcript |
 | NeuTTS Air, NeuTTS Nano, F5-TTS, OmniVoice | wav **+** matching `.txt` transcript (same basename, e.g. `myvoice.wav` + `myvoice.txt`). The transcript MUST be the literal words spoken in the wav. |
+| Reverb-TTS | wav **+** matching `.txt` transcript, plus an optional `.lang` sidecar with the **recording's** language code (`fr`, `es`, …; e.g. `myvoice.lang`). Without it the recording is treated as English — the transcript is number/abbreviation-normalized in that language, so a French reference with no `.lang` reads "Louis XIV" as "Louis the fourteenth". |
 | Pocket-TTS (cloning path) | wav, HF accept-terms gated on [`kyutai/pocket-tts`](https://huggingface.co/kyutai/pocket-tts) + `hf auth login` |
 
 Drop the wav (and optional `.txt`) into `reference/`, then:

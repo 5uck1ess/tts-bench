@@ -41,6 +41,8 @@ MODELS = [
     ("f5tts",       "f5tts",      "runners/f5tts_runner.py",      {"en"},        ["cpu", "cuda", "mps"], None,   True),
     ("coqui",       "coqui",      "runners/coqui_runner.py",      {"en", "fr", "es"}, ["cpu", "cuda", "mps"], None,   True),
     ("omnivoice",   "omnivoice",  "runners/omnivoice_runner.py",  {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
+    # reverb: Software Mansion's pruned/distilled OmniVoice (297M); 16 per-language presets + cloning.
+    ("reverb",      "reverb",     "runners/reverb_runner.py",     {"en", "fr", "es"}, ["cpu", "cuda"],   None,   True),
     ("zipvoice",    "zipvoice",   "runners/zipvoice_runner.py",   {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
     ("voxcpm",      "voxcpm",     "runners/voxcpm_runner.py",     {"en", "fr"},  ["cpu", "cuda"],        None,   True),
     # base qwentts: cloning disabled — long prompts blow the 600s cell timeout, but

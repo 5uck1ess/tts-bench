@@ -766,6 +766,20 @@ else
     echo "omnivoice: already installed"
 fi
 
+# --- Reverb-TTS (Software Mansion, 297M distilled OmniVoice, presets + cloning) ---
+echo; cyan "=== Reverb-TTS (Software Mansion, 297M distilled OmniVoice) ==="
+if ! want reverb; then echo "reverb: skipped (not in install filter)"
+elif ! { [ -x venvs/reverb/bin/python ] && venvs/reverb/bin/python -c "import reverb_tts, soundfile" 2>/dev/null; }; then
+    # Gate on the import, not the interpreter: a failed install leaves a bare venv
+    # that would otherwise read as "already installed" on retry.
+    [ -x venvs/reverb/bin/python ] || uv venv venvs/reverb --python 3.11 || die "uv venv reverb"
+    # PyPI torch on Linux is already CUDA-enabled.
+    uv pip install --python venvs/reverb/bin/python "reverb-tts==1.0.0" soundfile numpy || die "uv pip install reverb-tts"
+    green "reverb: ok (16 presets + cloning, weights auto-download from HF on first use)"
+else
+    echo "reverb: already installed"
+fi
+
 # --- ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning) ---
 echo; cyan "=== ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning) ==="
 if ! want zipvoice; then echo "zipvoice: skipped (not in install filter)"
