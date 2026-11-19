@@ -90,6 +90,44 @@ MODEL_REVISION = "2cff8331a357cdd50b05c823f5172eaa3ac6c121"   # = tag v1.1.0
 MAX_REF_BYTES = 8 * 1024 * 1024 // 4 * 3
 
 
+def _clear_stale_build_lock(emit_note) -> None:
+    """Remove a native-kernels build lock left by a killed first CPU build.
+
+    The CPU path JIT-builds upstream's C++ kernels with torch.utils.cpp_extension,
+    which guards the build dir with a bare `lock` file (FileBaton: no PID, removed in
+    a `finally`). harness.run_cell kills the runner on cell timeout, which skips that
+    `finally`, and every later load then waits on the orphaned file until it, too,
+    times out. The lock is stale when no live process is building in that dir: ninja
+    runs with it as cwd and the compiler/linker get its paths on the command line.
+    Benches run cells sequentially, so a concurrent first build isn't a case here.
+    """
+    root = Path(os.getenv("TONTAUBE_CACHE_DIR",
+                          Path(os.getenv("XDG_CACHE_HOME", Path.home() / ".cache")) / "tontaube")).expanduser()
+    build = root / "native-kernels"
+    lock = build / "lock"
+    if not lock.exists():
+        return
+    needle = str(build)
+    proc = Path("/proc")
+    if not proc.is_dir():
+        return
+    for pid_dir in proc.iterdir():
+        if not pid_dir.name.isdigit() or pid_dir.name == str(os.getpid()):
+            continue
+        try:
+            if needle in (pid_dir / "cmdline").read_bytes().decode("utf-8", "replace"):
+                return
+            if os.readlink(pid_dir / "cwd").startswith(needle):
+                return
+        except OSError:
+            continue
+    try:
+        lock.unlink()
+        emit_note(f"tontaube: removed stale build lock {lock} (no build process alive)")
+    except FileNotFoundError:
+        pass
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--text", default=None)
@@ -177,6 +215,9 @@ def main() -> int:
                   "error": "cloning needs ffmpeg/ffprobe on PATH (upstream decodes references with FFmpeg)"})
             return 1
     mossformer = args.device == "cuda"   # upstream's per-device default, made explicit
+
+    if args.device == "cpu":
+        _clear_stale_build_lock(emit_note=lambda m: print(m, file=sys.stderr))
 
     async def run() -> int:
         try:

@@ -802,7 +802,8 @@ elif ! { [ -x venvs/tontaube/bin/python ] && venvs/tontaube/bin/python -c "impor
         git clone --branch v1.1.0 --depth 1 https://github.com/craitech/tontaube.git venvs/tontaube/src \
             || die "git clone tontaube"
     fi
-    [ -x venvs/tontaube/bin/python ] || uv venv venvs/tontaube --python 3.12 || die "uv venv tontaube"
+    # --allow-existing: the source clone above already made venvs/tontaube non-empty.
+    [ -x venvs/tontaube/bin/python ] || uv venv venvs/tontaube --python 3.12 --allow-existing || die "uv venv tontaube"
     ( cd venvs/tontaube/src && UV_PROJECT_ENVIRONMENT="$(cd ../ && pwd)" uv sync --frozen ) \
         || die "uv sync tontaube"
     green "tontaube: ok (46 bundled voices + cloning; weights auto-download from HF on first use)"
