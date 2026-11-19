@@ -59,6 +59,14 @@ REPO = "software-mansion/Reverb-TTS"
 REVISION = "72be799c8fb6d56a206d260b425c48bf3bd5943d"
 SEED = 42
 PRESETS = {"en": "en_male_narrator_1", "fr": "fr_male_standard", "es": "es_male_standard_1"}
+# sha256 of each preset JSON at REVISION. Lets an offline run accept a cached copy
+# fetched under another revision (the package itself caches presets under `main`)
+# only when it is byte-for-byte the pinned file.
+PRESET_SHA256 = {
+    "en_male_narrator_1": "e69282b398ae1d5adfbb81b462b0ab8d3d5c65c09a64eb72507fa7926e456f69",
+    "fr_male_standard":   "6bdb764082b824729065037d9f61deaf6528f161f862045feb11fedf1e7770ff",
+    "es_male_standard_1": "287882480b440cde3b77b6f8e9828776cbbbdf59e0f1a8103302ed0d7cf610bb",
+}
 
 
 def _read_ref_transcript(ref_wav):
@@ -74,7 +82,10 @@ def _read_ref_language(ref_wav):
     The harness has no channel for it, so: a sibling `<ref>.lang` file holding a
     code like `fr`, else English (every house reference is English)."""
     lang = Path(ref_wav).with_suffix(".lang")
-    return lang.read_text(encoding="utf-8").strip() if lang.exists() else "en"
+    if lang.exists():
+        # utf-8-sig: Notepad-style BOMs would otherwise make check_language reject "fr".
+        return lang.read_text(encoding="utf-8-sig").strip().lower()
+    return "en"
 
 
 def _load_preset(name):
@@ -90,8 +101,19 @@ def _load_preset(name):
     from huggingface_hub import hf_hub_download
     from reverb_tts.text import check_language
     from reverb_tts.tts import CODEBOOKS, Voice
-    path = hf_hub_download(REPO, f"voices/{name}.json", revision=REVISION)
-    data = _json.loads(Path(path).read_text(encoding="utf-8"))
+    import hashlib
+    try:
+        raw = Path(hf_hub_download(REPO, f"voices/{name}.json", revision=REVISION)).read_bytes()
+    except Exception as first_err:  # offline with the file cached under another revision
+        from huggingface_hub.constants import HF_HUB_CACHE
+        snaps = Path(HF_HUB_CACHE) / ("models--" + REPO.replace("/", "--")) / "snapshots"
+        raw = next((b for b in (p.read_bytes() for p in snaps.glob(f"*/voices/{name}.json"))
+                    if hashlib.sha256(b).hexdigest() == PRESET_SHA256[name]), None)
+        if raw is None:
+            raise first_err
+    if hashlib.sha256(raw).hexdigest() != PRESET_SHA256[name]:
+        raise ValueError(f"preset {name} does not match the pinned sha256")
+    data = _json.loads(raw.decode("utf-8"))
     codes = torch.tensor(data["codes"], dtype=torch.long).view(CODEBOOKS, -1)
     return Voice(codes, data["transcript"], check_language(data["language"]), data.get("speech_frames"))
 
@@ -128,7 +150,12 @@ def main() -> int:
         tts = TTS.from_pretrained(REPO, device=args.device, revision=REVISION)
         # Encode the reference / load the presets once, at load (outside timing).
         if args.reference:
-            clone_voice = tts.voice(args.reference, ref_text, language=_read_ref_language(args.reference))
+            ref_lang = _read_ref_language(args.reference)
+            if ref_lang == "en" and args.language != "en" and not Path(args.reference).with_suffix(".lang").exists():
+                print(f"reverb: no {Path(args.reference).with_suffix('.lang').name}; treating the reference "
+                      f"recording as English (target text is {args.language}). Add the sidecar if it isn't.",
+                      file=sys.stderr)
+            clone_voice = tts.voice(args.reference, ref_text, language=ref_lang)
             presets = {}
         else:
             clone_voice = None
