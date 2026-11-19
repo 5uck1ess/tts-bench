@@ -43,6 +43,12 @@ MODELS = [
     ("omnivoice",   "omnivoice",  "runners/omnivoice_runner.py",  {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
     # reverb: Software Mansion's pruned/distilled OmniVoice (297M); 16 per-language presets + cloning.
     ("reverb",      "reverb",     "runners/reverb_runner.py",     {"en", "fr", "es"}, ["cpu", "cuda"],   None,   True),
+    # TontaubeV1.1-int4 (craitech, Tontaube Community License 1.0): 4-bit GPTQ release on the
+    # server's "lite" backend, called in-process (same coroutine as /predict). LINUX-ONLY:
+    # upstream does not support native Windows. Bundled per-language reference voices
+    # (en Marcus / fr Adam / es Fernando) + zero-shot cloning -> _PRESET_AND_CLONE.
+    # CUDA output 48 kHz (MossFormer2 SR on, upstream GPU default); CPU 24 kHz (off).
+    ("tontaube",    "tontaube",   "runners/tontaube_runner.py",   {"en", "fr", "es"}, ["cpu", "cuda"],   None,   True),
     ("zipvoice",    "zipvoice",   "runners/zipvoice_runner.py",   {"en", "fr"},  ["cpu", "cuda", "mps"], None,   True),
     ("voxcpm",      "voxcpm",     "runners/voxcpm_runner.py",     {"en", "fr"},  ["cpu", "cuda"],        None,   True),
     # base qwentts: cloning disabled — long prompts blow the 600s cell timeout, but

@@ -780,6 +780,29 @@ else
     echo "reverb: already installed"
 fi
 
+# --- TontaubeV1.1-int4 (craitech, Tontaube Community License 1.0) — LINUX-ONLY ---
+# Upstream supports Linux only (no native Windows/macOS). Source clone of the inference
+# server at tag v1.1.0 (commit ef254ca) + `uv sync --frozen` from its own uv.lock into
+# venvs/tontaube (Python 3.12, torch 2.9.1 cu128, vllm 0.16.0 pulled by the lock even
+# though the runner uses the "lite" backend). Weights (TontaubeAI/TontaubeV1.1-int4,
+# revision v1.1.0 = sha 2cff8331) + DualCodec/W2V-BERT/VibeVoice/MossFormer2 download on
+# first load. The CPU path JIT-builds C++ kernels on first load (needs g++; ninja comes
+# from the venv). runners/tontaube_runner.py calls the server's /predict coroutine in-process.
+echo; cyan "=== TontaubeV1.1-int4 (craitech, Linux-only, lite backend) ==="
+if ! want tontaube; then echo "tontaube: skipped (not in install filter)"
+elif ! { [ -x venvs/tontaube/bin/python ] && venvs/tontaube/bin/python -c "import sys; sys.path.insert(0, 'venvs/tontaube/src'); import app.main, soundfile" 2>/dev/null; }; then
+    if [ ! -d venvs/tontaube/src ]; then
+        git clone --branch v1.1.0 --depth 1 https://github.com/craitech/tontaube.git venvs/tontaube/src \
+            || die "git clone tontaube"
+    fi
+    [ -x venvs/tontaube/bin/python ] || uv venv venvs/tontaube --python 3.12 || die "uv venv tontaube"
+    ( cd venvs/tontaube/src && UV_PROJECT_ENVIRONMENT="$(cd ../ && pwd)" uv sync --frozen ) \
+        || die "uv sync tontaube"
+    green "tontaube: ok (46 bundled voices + cloning; weights auto-download from HF on first use)"
+else
+    echo "tontaube: already installed"
+fi
+
 # --- ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning) ---
 echo; cyan "=== ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning) ==="
 if ! want zipvoice; then echo "zipvoice: skipped (not in install filter)"

@@ -539,6 +539,7 @@ MODEL_DISPLAY_NAMES = {
     "dia":           "Dia 1.6B-0626",
     "omnivoice":     "OmniVoice",
     "reverb":        "Reverb-TTS",
+    "tontaube":      "TontaubeV1.1 (int4)",
     "zipvoice":      "ZipVoice 123M",
     "piper":         "Piper",
     "kokoro":        "Kokoro",
@@ -605,6 +606,7 @@ MODEL_SIZE = {
     "vibevoice_15b": "1.5B",
     "omnivoice":     "~1B",
     "reverb":        "297M",   # 297,234,184 over its own fp16 model.safetensors (computed; card headline agrees)
+    "tontaube":      "2.90B (4 predictors; GPTQ int4)",  # base TontaubeV1.1 card: 2,899,197,954 stored params (CB0 1.85B + CB1-3); codec/VibeVoice not counted
     "zipvoice":      "123M",
     "voxcpm":        "2B",
     "magpie":        "357M",
@@ -726,6 +728,7 @@ MODEL_URL = {
     "vibevoice_7b":  _HF + "vibevoice/VibeVoice-7B",
     "omnivoice":     _HF + "k2-fsa/OmniVoice",
     "reverb":        _HF + "software-mansion/Reverb-TTS",
+    "tontaube":      _HF + "TontaubeAI/TontaubeV1.1-int4",
     "zipvoice":      _HF + "k2-fsa/ZipVoice",
     "voxcpm":        _HF + "openbmb/VoxCPM2",
     "magpie":        _HF + "nvidia/magpie_tts_multilingual_357m",
@@ -868,6 +871,7 @@ MODEL_KIND = {
     "hojo_80m":      "cloning",     # no preset voice; no-reference path clones the house ref
     "omnivoice":     "cloning",
     "reverb":        "cloning",
+    "tontaube":      "cloning",   # 46 bundled reference voices (per language) + zero-shot cloning; _PRESET_AND_CLONE
     "zipvoice":      "cloning",
     "voxcpm":        "cloning",
     "coqui":         "cloning",
@@ -951,6 +955,7 @@ MODEL_RELEASE = {
     "vibevoice_7b":  "2025-09",
     "omnivoice":     "2026-03",
     "reverb":        "2026-11",  # GitHub repo 2026-11-06, HF card 2026-11-19
+    "tontaube":      "2026-11",  # HF repo created 2026-11-10 (v1.1.0)
     "zipvoice":      "2025-06",
     "voxcpm":        "2026-04",
     "magpie":        "2025-12",
@@ -1131,7 +1136,7 @@ MODEL_SR = {
     "longcat_1b": "24k", "longcat_3p5b": "24k", "mars5": "24k", "metavoice": "48k",
     "miotts_01b": "44.1k", "miotts_06b": "44.1k", "miratts": "48k", "miso": "24k", "ming": "44.1k", "ming_tiny": "44.1k",
     "moss_tts": "24k", "moss_tts_v15": "24k", "moss_tts_nano": "48k",
-    "neutts_air": "24k", "neutts_nano": "24k", "omnivoice": "24k", "reverb": "24k", "openvoice": "22.05k",
+    "neutts_air": "24k", "neutts_nano": "24k", "omnivoice": "24k", "reverb": "24k", "tontaube": "48k", "openvoice": "22.05k",
     "pocket": "24k", "qwentts": "24k", "qwentts_06b": "24k", "qwentts_06b_custom": "24k",
     "qwentts_fast": "24k", "sopro": "24k", "sopro_streaming": "24k",
     "audio8": "44.1k", "audio8_fast": "44.1k", "audio8_01b": "44.1k", "audio8_realistic": "44.1k", "sesame": "24k",
@@ -1178,7 +1183,7 @@ MODEL_EXPRESSIVE = {
     "ming": "tags + desc",
     "ming_tiny": "tags + desc",
     "moss_tts": "—", "moss_tts_v15": "tags (pause)", "moss_tts_nano": "—", "neutts_air": "—",
-    "neutts_nano": "—", "omnivoice": "tags*", "reverb": "—", "openvoice": "knob", "pocket": "—",
+    "neutts_nano": "—", "omnivoice": "tags*", "reverb": "—", "tontaube": "5 knobs + style", "openvoice": "knob", "pocket": "—",
     "qwentts": "—", "qwentts_06b": "—",
     # CustomVoice instruct control is unverified pending a runtime check (card/table conflict).
     "qwentts_06b_custom": "—", "qwentts_fast": "—",
@@ -1229,6 +1234,7 @@ MODEL_LICENSE = {
     "neutts_air": "Apache 2.0", "neutts_nano": "Apache 2.0",
     "omnivoice": "Apache 2.0 code / CC-BY-NC weights",
     "reverb": "Apache 2.0 code / CC-BY-NC 4.0 weights",
+    "tontaube": "Tontaube Community 1.0 (free < €200K revenue)",
     "openvoice": "MIT", "pocket": "Apache 2.0", "qwentts": "Apache 2.0",
     "qwentts_06b": "Apache 2.0", "qwentts_06b_custom": "Apache 2.0", "qwentts_fast": "Apache 2.0 weights / MIT wrapper",
     "sopro": "Apache 2.0", "sopro_streaming": "Apache 2.0",
@@ -1267,7 +1273,7 @@ MODEL_LANGS = {
     "longcat_1b": "✓ (zh+en)", "longcat_3p5b": "✓ (zh+en)", "mars5": "—", "metavoice": "—",
     "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)", "ming": "✓ (7)", "ming_tiny": "✓ (7)",
     "moss_tts": "✓ (20)", "moss_tts_v15": "✓ (31)", "moss_tts_nano": "✓ (zh+en)",
-    "neutts_air": "—", "neutts_nano": "✓ (4)", "omnivoice": "✓ (600+)", "reverb": "✓ (7)", "openvoice": "✓",
+    "neutts_air": "—", "neutts_nano": "✓ (4)", "omnivoice": "✓ (600+)", "reverb": "✓ (7)", "tontaube": "✓ (7)", "openvoice": "✓",
     "pocket": "✓ (7)", "qwentts": "✓ (10)", "qwentts_06b": "✓ (10)", "qwentts_06b_custom": "✓ (10)",
     "qwentts_fast": "✓ (10)", "sopro": "✓ (4)", "sopro_streaming": "✓ (4)",
     "audio8": "✓ (11)", "audio8_fast": "✓ (11)", "audio8_01b": "✓ (11)", "audio8_realistic": "✓ (23)",
@@ -1359,7 +1365,7 @@ def _sr_hz(model):
 # speaks a DIFFERENT one in that same voice. CURATED, not derived — each entry was
 # verified against the model's card/paper (2026-06-30). ming (2026-10-20): upstream cookbook says the reference carries
 # the voice "not the language", and the English house ref spoke fr/es at WER 0.0/0.07;
-# ming_tiny: same English ref spoke fr/es at WER 0.0/0.0 (Linux smoke 2026-10-20). A multilingual cloner is NOT
+# ming_tiny: same English ref spoke fr/es at WER 0.0/0.0 (Linux smoke 2026-10-20). tontaube: English house ref spoke fr/es at WER 0.0/0.07 (Linux smoke 2026-11-19). A multilingual cloner is NOT
 # automatically cross-lingual: longcat (1B/3.5B), miotts (0.1B/0.6B), and voxtral are
 # multilingual cloners documented to clone only within a single language, so they are
 # omitted. Multilingual cloners with no documented cross-lingual transfer are also
@@ -1369,7 +1375,7 @@ MODEL_CROSSLINGUAL = {
     "auk_base", "auk_flash",
     "coqui", "cosyvoice", "dots_tts", "f5tts", "higgs_v3", "indextts", "indextts25", "moss_tts",
     "ming", "ming_tiny", "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_06b",
-    "qwentts_fast", "reverb", "zonos",
+    "qwentts_fast", "reverb", "tontaube", "zonos",
 }
 
 
