@@ -85,7 +85,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 
 ---
 
-## Models tracked (103)
+## Models tracked (104)
 
 #### Predefined voices
 
@@ -135,6 +135,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [Supertonic 3](https://huggingface.co/Supertone/supertonic-3) | 99M | May 2026 | ✓ | — | ✓ (31) | 24k | tags | MIT + OpenRAIL-M |
 | [SupraTTS 0.1 Beta](https://huggingface.co/SupraLabs/SupraTTS-0.1-Beta) | 43.5M | Sep 2026 | ✓ (1) | — | — (en) | 22.05k | 3 knobs | MIT |
 | [tiny-voca](https://huggingface.co/n4ze3m/tiny-voca) | 4.5M | Nov 2026 | ✓ (2) | — | — (en) | 24k | 3 knobs | Apache 2.0 |
+| [TontaubeV1.1 (int4)](https://huggingface.co/TontaubeAI/TontaubeV1.1-int4) | 2.90B (4 predictors; GPTQ int4) | Nov 2026 | ✓ (46) | ✓ | ✓ (7) | **48k** | 5 knobs + style | Tontaube Community 1.0 (free < €200K revenue) |
 | [Underdog Woof](https://huggingface.co/ConwayResearch/Underdog-Woof) | 38.2M (23.0M LM + 15.3M decoder) | Nov 2026 | ✓ (2) | — | — (en) | 24k | — | Underdog Non-Commercial 1.0 |
 | [Vaniq-Edge](https://huggingface.co/Abiray/Vaniq-Edge) | 8.91M | Aug 2026 | ✓ (1) | — | — (en) | 24k | knob | MIT |
 | [VibeVoice Realtime 0.5B](https://huggingface.co/microsoft/VibeVoice-Realtime-0.5B) | 0.5B | Dec 2025 | ✓ | — | — | 24k | — | MIT |
@@ -207,13 +208,13 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 > **Qwen3-TTS rows.** `qwentts_06b_custom` (0.6B CustomVoice) is the only Qwen row with real preset voices (9 timbres) and sits on the Default board; its `instruct` style control is not supported at 0.6B (the `qwen-tts` package ignores it for 0b6 despite the card), hence `—` in Expressive. The 0.6B **Base** checkpoint (`qwentts_06b`), like both 1.7B Base rows, is **reference-only** — Base has no model-native preset voice, so its no-reference run clones the house `chris_hemsworth_15s.wav` and it appears under Cloning, never Default. Its cloning *lens* is disabled by an intermittent decode runaway (identical input yielded 12.9 s of audio on one call and 655.3 s on the next) — see [docs/known-issues.md](docs/known-issues.md).
 
-> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Higgs Audio v3 / dots.tts / Zonos2 / Orpheus / CosyVoice 3 are Linux-only (CUDA) — Higgs v3 is the one **server-backed** model (it runs via a Docker `sgl-omni` HTTP server, not an in-process load), dots.tts and Zonos2 require Linux-only dependencies/compiled CUDA kernels, and Orpheus (vLLM) + CosyVoice 3 (cu121 / torch 2.3.1) have no Blackwell-compatible Windows path; Echo-TTS and DramaBox are Windows + Linux (CUDA-only, no CPU/MPS; DramaBox needs ~18 GB VRAM). Fish Audio Drama 3 is Windows + Linux through the third-party ComfyUI-Drama3 port (CUDA-only; experts offloaded to system RAM, so it needs ~48 GB RAM and ~24 GB VRAM) — its row measures that port, not Fish's own server. The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
+> Rig availability: Voxtral is Mac (MLX, preset-voice only) + Linux (vLLM, cloning); Fish S2-Pro / MetaVoice / Step-Audio-EditX / Higgs Audio v3 / dots.tts / Zonos2 / Orpheus / CosyVoice 3 are Linux-only (CUDA) — Higgs v3 is the one **server-backed** model (it runs via a Docker `sgl-omni` HTTP server, not an in-process load), dots.tts and Zonos2 require Linux-only dependencies/compiled CUDA kernels, and Orpheus (vLLM) + CosyVoice 3 (cu121 / torch 2.3.1) have no Blackwell-compatible Windows path; TontaubeV1.1 (int4) is Linux-only (CPU + CUDA) because upstream does not support native Windows; Echo-TTS and DramaBox are Windows + Linux (CUDA-only, no CPU/MPS; DramaBox needs ~18 GB VRAM). Fish Audio Drama 3 is Windows + Linux through the third-party ComfyUI-Drama3 port (CUDA-only; experts offloaded to system RAM, so it needs ~48 GB RAM and ~24 GB VRAM) — its row measures that port, not Fish's own server. The rest run on Windows + Linux CUDA, most on CPU/MPS too. Per-rig speed + samples on the [Demos site](https://5uck1ess.github.io/tts-bench/).
 
 ---
 
 ## Voice cloning
 
-**65 of the 103 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**66 of the 104 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 2,094 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

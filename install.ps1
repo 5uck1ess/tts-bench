@@ -1241,6 +1241,10 @@ if (-not (Want "lfm3_audio")) { Write-Host "lfm3_audio: skipped (not in install 
 # the Linux rig only (see install.sh's higgs_v3 stanza + Docker prerequisite). There is no
 # Windows install here by design — leave higgs_v3 out of this script.
 
+# --- TontaubeV1.1-int4 - LINUX-ONLY, intentionally no Windows stanza ---
+# Upstream (craitech/tontaube v1.1.0) states native Windows is not supported (WSL2 only);
+# the row is benched on the Linux rig. See install.sh's tontaube stanza.
+
 Step "DramaBox (Resemble AI, LTX-2 Community/NC, LTX-2.3 3.3B audio DiT, 48k, dialogue + cloning, CUDA-only)"
 if (-not (Want "dramabox")) { Write-Host "dramabox: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\dramabox\Scripts\python.exe")) {
