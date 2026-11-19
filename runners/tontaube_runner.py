@@ -23,8 +23,8 @@ Pinned: inference repo tag v1.1.0 (commit ef254ca), weights resolved to HF sha
 inherited TTS_MODEL_REPO_ID / MODEL_PATH / CB<n>_MODEL_PATH / LITE_QUANT) and refuses to
 load unless the int4 bundle is beside the codebooks: upstream otherwise falls back to bf16
 silently. A --device cpu run also hides CUDA (DualCodec / VibeVoice pick CUDA on their own).
-References are validated before load (non-empty, <= upstream's 8 MiB-base64 cap) and
-cloning requires ffmpeg/ffprobe, which upstream decodes every reference through.
+References are validated before load (exists, non-empty, audio suffix) and passed as an
+absolute voice_path that upstream reads with soundfile (no temp copy; see VOICE_PATH below).
 DualCodec / W2V-BERT / VibeVoice / MossFormer2 download from upstream at revisions
 the server pins.
 
@@ -49,8 +49,8 @@ Choices / gotchas (measured on linux-3090, 2026-11-19):
 - The pipeline includes upstream's CB0-CTC guard: an English piece whose CTC CER > 0.25
   is regenerated (at most 2 guard retries) and a quality gate may resample. Those
   retries are inside gen_s — that's what the server does per request.
-- Cloning: the reference wav is sent as voice_audio_b64 each call (as a /predict client
-  would). The engine caches encoded voice prompts by content, so run 0 of a cell
+- Cloning: the reference is passed as voice_path each call. The engine caches encoded
+  voice prompts, so run 0 of a cell
   includes the W2V-BERT reference encode and warm runs don't. No transcript needed.
 - Generation cap: 400 CB0 tokens per text chunk (12.5 Hz -> 32 s), chunks <= 350 chars.
   Prompt 3 (253 chars) is one chunk and measured 261 frames default / 220 cloned.
@@ -69,7 +69,6 @@ import base64
 import io
 import json
 import os
-import shutil
 import sys
 import time
 import warnings
@@ -86,8 +85,6 @@ LANGS = {"en": "english", "fr": "french", "es": "spanish"}
 PRESETS = {"en": "Marcus.mp3", "fr": "Adam.mp3", "es": "Fernando.mp3"}
 MODEL_REPO = "TontaubeAI/TontaubeV1.1-int4"
 MODEL_REVISION = "2cff8331a357cdd50b05c823f5172eaa3ac6c121"   # = tag v1.1.0
-# upstream MAX_VOICE_REFERENCE_B64_CHARS (8 MiB of base64) as raw bytes
-MAX_REF_BYTES = 8 * 1024 * 1024 // 4 * 3
 
 
 def _build_dir() -> Path:
@@ -98,15 +95,23 @@ def _build_dir() -> Path:
     return (root / "native-kernels").resolve()
 
 
+# Processes that make up a cpp_extension build (ninja -> c++ driver -> cc1plus/as ->
+# collect2/ld). Anything else with its cwd in the build dir (an idle shell someone
+# left there, a file browser) is not a build and must not block recovery.
+_BUILD_COMMS = {"ninja", "c++", "g++", "gcc", "cc", "cc1plus", "as", "collect2", "ld", "ld.bfd", "ld.gold"}
+
+
 def _builder_alive(build: Path) -> bool:
-    """True while any process is compiling in `build` (ninja runs with it as cwd;
-    the compiler/linker get its paths on the command line)."""
+    """True while a compiler/ninja process is working in `build` (ninja runs with it
+    as cwd; the compiler/linker get its paths on the command line)."""
     needle = str(build)
     me = str(os.getpid())
     for pid_dir in Path("/proc").iterdir():
         if not pid_dir.name.isdigit() or pid_dir.name == me:
             continue
         try:
+            if (pid_dir / "comm").read_text().strip() not in _BUILD_COMMS:
+                continue
             if needle in (pid_dir / "cmdline").read_bytes().decode("utf-8", "replace"):
                 return True
             cwd = os.readlink(pid_dir / "cwd")
@@ -156,33 +161,6 @@ def _build_native_kernels_locked(note) -> None:
         # flock released on close; the extension is cached in-process from here.
 
 
-def _private_tmpdir(note) -> Path:
-    """Per-process temp dir under the Tontaube cache, sweeping dirs of dead runners.
-
-    Upstream decodes each new reference to a NamedTemporaryFile(delete=False) wav and
-    removes it in a `finally`; harness.run_cell's timeout kill skips that, leaving a
-    decoded copy of the reference behind. Pointing tempfile at runner-tmp/<pid> lets
-    the next run delete whatever a killed run left (normal runs clean up on exit).
-    """
-    base = _build_dir().parent / "runner-tmp"
-    base.mkdir(parents=True, exist_ok=True)
-    for d in base.iterdir():
-        if not d.name.isdigit() or d.name == str(os.getpid()):
-            continue
-        try:
-            os.kill(int(d.name), 0)
-            continue                            # that runner is still alive
-        except ProcessLookupError:
-            pass
-        except PermissionError:
-            continue
-        shutil.rmtree(d, ignore_errors=True)
-        note(f"tontaube: removed temp files left by killed runner {d.name}")
-    mine = base / str(os.getpid())
-    mine.mkdir(exist_ok=True)
-    return mine
-
-
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--text", default=None)
@@ -222,7 +200,13 @@ def main() -> int:
         # loaders pick CUDA on their own whenever it is visible. Hide it so a CPU run is
         # CPU end to end (harness.run_cell does the same; this covers direct runs).
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    os.environ["VOICE_PATH"] = str(SRC / "voices" / "samples")
+    # Every voice (bundled preset or --reference) is passed as an absolute server-side
+    # voice_path, which upstream reads straight from disk. voice_path must sit under
+    # VOICE_PATH, hence "/". The base64 route (what a remote /predict client uses) was
+    # dropped: upstream decodes it to a NamedTemporaryFile(delete=False) wav removed only
+    # in a `finally`, so a cell-timeout kill left a decoded copy of the reference behind.
+    # Measured byte-identical output on both devices (clone p1, cuda + cpu).
+    os.environ["VOICE_PATH"] = "/"
     # Pin the checkpoint this row is labelled with. Upstream resolves the model from
     # inheritable env (TTS_MODEL_REPO_ID / _REVISION, MODEL_PATH, CB<n>_MODEL_PATH,
     # LITE_QUANT) and silently falls back to bf16 when no int4 bundle sits next to the
@@ -242,41 +226,22 @@ def main() -> int:
     warnings.filterwarnings("ignore", message=".*weight_norm", category=FutureWarning)
     sys.path.insert(0, str(SRC))
 
-    voice_b64 = None
+    ref_path = None
     if args.reference:
-        # Validate before model load. An empty file would encode to "" and upstream
-        # would quietly use its default voice (an ok:true "clone" of Marcus); an
-        # oversized one would be read whole before upstream's base64 cap rejects it.
+        # Validate before model load: an empty or unreadable file must fail the cell,
+        # not fall back to a default voice under the cloning label.
         ref = Path(args.reference)
         try:
-            size = ref.stat().st_size
-            if size == 0:
+            ref = ref.resolve(strict=True)
+            if ref.stat().st_size == 0:
                 raise ValueError(f"reference {ref} is empty")
-            if size > MAX_REF_BYTES:
-                raise ValueError(f"reference {ref} is {size} bytes; upstream accepts at most "
-                                 f"{MAX_REF_BYTES} (8 MiB of base64)")
-            with ref.open("rb") as f:
-                data = f.read(MAX_REF_BYTES + 1)
-            if not data or len(data) > MAX_REF_BYTES:
-                raise ValueError(f"reference {ref} changed size while reading")
-            voice_b64 = base64.b64encode(data).decode("ascii")
+            if ref.suffix.lower() not in (".wav", ".flac", ".mp3", ".ogg"):
+                raise ValueError(f"reference {ref} is not a wav/flac/mp3/ogg file")
+            ref_path = str(ref)
         except (OSError, ValueError) as e:
             emit({"ok": False, "run_index": 0, "error": f"reference rejected: {e}"})
             return 1
-        # Upstream decodes reference audio through FFmpeg (ffprobe + ffmpeg); without
-        # it even a valid PCM wav is rejected as invalid audio.
-        if not (shutil.which("ffprobe") and shutil.which("ffmpeg")):
-            emit({"ok": False, "run_index": 0,
-                  "error": "cloning needs ffmpeg/ffprobe on PATH (upstream decodes references with FFmpeg)"})
-            return 1
     mossformer = args.device == "cuda"   # upstream's per-device default, made explicit
-
-    import atexit
-    import tempfile
-    tmp = _private_tmpdir(lambda m: print(m, file=sys.stderr))
-    os.environ["TMPDIR"] = str(tmp)
-    tempfile.tempdir = str(tmp)
-    atexit.register(shutil.rmtree, tmp, True)
 
     async def run() -> int:
         try:
@@ -302,10 +267,7 @@ def main() -> int:
                     raise ValueError(f"unsupported language {language}")
                 kw = dict(text=text, language=LANGS[language], tag=TAG, seed=SEED,
                           format="wav", mossformer2_postprocess=mossformer)
-                if voice_b64 is not None:
-                    kw["voice_audio_b64"] = voice_b64
-                else:
-                    kw["voice_path"] = PRESETS[language]
+                kw["voice_path"] = ref_path or str(SRC / "voices" / "samples" / PRESETS[language])
                 req = TTSRequest(**kw)
                 _meminfo.reset_peak(args.device)
                 t0 = time.perf_counter()

@@ -794,8 +794,8 @@ elif [ "$(uname -s)" != "Linux" ]; then
     # The frozen lock pulls vllm/flashinfer/nvidia-* wheels with no macOS artifacts.
     echo "tontaube: skipped (Linux-only; upstream does not support $(uname -s))"
 elif ! { command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null; }; then
-    # Upstream decodes every voice reference through FFmpeg; without it cloning
-    # rejects valid wavs. Fail loudly here instead of installing a broken cloner.
+    # FFmpeg is an upstream system requirement (its README: "FFmpeg, and the Opus
+    # runtime"; pydub decodes base64 references through it). Skip loudly without it.
     red "tontaube: needs ffmpeg + ffprobe on PATH (e.g. sudo apt install ffmpeg) — skipped"
 elif ! { [ -x venvs/tontaube/bin/python ] && venvs/tontaube/bin/python -c "import sys; sys.path.insert(0, 'venvs/tontaube/src'); import app.main, soundfile" 2>/dev/null; }; then
     if [ ! -d venvs/tontaube/src ]; then
