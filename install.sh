@@ -790,6 +790,13 @@ fi
 # from the venv). runners/tontaube_runner.py calls the server's /predict coroutine in-process.
 echo; cyan "=== TontaubeV1.1-int4 (craitech, Linux-only, lite backend) ==="
 if ! want tontaube; then echo "tontaube: skipped (not in install filter)"
+elif [ "$(uname -s)" != "Linux" ]; then
+    # The frozen lock pulls vllm/flashinfer/nvidia-* wheels with no macOS artifacts.
+    echo "tontaube: skipped (Linux-only; upstream does not support $(uname -s))"
+elif ! { command -v ffmpeg >/dev/null && command -v ffprobe >/dev/null; }; then
+    # Upstream decodes every voice reference through FFmpeg; without it cloning
+    # rejects valid wavs. Fail loudly here instead of installing a broken cloner.
+    red "tontaube: needs ffmpeg + ffprobe on PATH (e.g. sudo apt install ffmpeg) — skipped"
 elif ! { [ -x venvs/tontaube/bin/python ] && venvs/tontaube/bin/python -c "import sys; sys.path.insert(0, 'venvs/tontaube/src'); import app.main, soundfile" 2>/dev/null; }; then
     if [ ! -d venvs/tontaube/src ]; then
         git clone --branch v1.1.0 --depth 1 https://github.com/craitech/tontaube.git venvs/tontaube/src \

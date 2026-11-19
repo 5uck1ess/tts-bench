@@ -19,7 +19,12 @@ semaphore on top of that (read app/cli.py + main.create_app, v1.1.0), so the aud
 and timing are the served path minus HTTP.
 
 Pinned: inference repo tag v1.1.0 (commit ef254ca), weights resolved to HF sha
-2cff8331a357cdd50b05c823f5172eaa3ac6c121 (the server pins TTS_MODEL_REVISION=v1.1.0).
+2cff8331a357cdd50b05c823f5172eaa3ac6c121. The runner forces that repo + sha (overriding any
+inherited TTS_MODEL_REPO_ID / MODEL_PATH / CB<n>_MODEL_PATH / LITE_QUANT) and refuses to
+load unless the int4 bundle is beside the codebooks: upstream otherwise falls back to bf16
+silently. A --device cpu run also hides CUDA (DualCodec / VibeVoice pick CUDA on their own).
+References are validated before load (non-empty, <= upstream's 8 MiB-base64 cap) and
+cloning requires ffmpeg/ffprobe, which upstream decodes every reference through.
 DualCodec / W2V-BERT / VibeVoice / MossFormer2 download from upstream at revisions
 the server pins.
 
@@ -64,6 +69,7 @@ import base64
 import io
 import json
 import os
+import shutil
 import sys
 import time
 import warnings
@@ -78,6 +84,10 @@ SEED = 1234
 TAG = "audiobook"
 LANGS = {"en": "english", "fr": "french", "es": "spanish"}
 PRESETS = {"en": "Marcus.mp3", "fr": "Adam.mp3", "es": "Fernando.mp3"}
+MODEL_REPO = "TontaubeAI/TontaubeV1.1-int4"
+MODEL_REVISION = "2cff8331a357cdd50b05c823f5172eaa3ac6c121"   # = tag v1.1.0
+# upstream MAX_VOICE_REFERENCE_B64_CHARS (8 MiB of base64) as raw bytes
+MAX_REF_BYTES = 8 * 1024 * 1024 // 4 * 3
 
 
 def main() -> int:
@@ -114,7 +124,21 @@ def main() -> int:
 
     os.environ["TTS_BACKEND"] = "lite"
     os.environ["LITE_DEVICE"] = args.device
+    if args.device == "cpu":
+        # LITE_DEVICE only moves the predictors; the DualCodec / VibeVoice / W2V-BERT
+        # loaders pick CUDA on their own whenever it is visible. Hide it so a CPU run is
+        # CPU end to end (harness.run_cell does the same; this covers direct runs).
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
     os.environ["VOICE_PATH"] = str(SRC / "voices" / "samples")
+    # Pin the checkpoint this row is labelled with. Upstream resolves the model from
+    # inheritable env (TTS_MODEL_REPO_ID / _REVISION, MODEL_PATH, CB<n>_MODEL_PATH,
+    # LITE_QUANT) and silently falls back to bf16 when no int4 bundle sits next to the
+    # codebooks, so a stray override would bench a different model under the int4 name.
+    os.environ["TTS_MODEL_REPO_ID"] = MODEL_REPO
+    os.environ["TTS_MODEL_REVISION"] = MODEL_REVISION
+    os.environ["LITE_QUANT"] = "auto"
+    for var in ("MODEL_PATH", "CB0_MODEL_PATH", "CB1_MODEL_PATH", "CB2_MODEL_PATH", "CB3_MODEL_PATH"):
+        os.environ.pop(var, None)
     # The CPU path JIT-builds C++ kernels via torch.utils.cpp_extension, which shells
     # out to `ninja`. The ninja wheel's binary lives in the venv's bin/, which is only
     # on PATH when the venv is activated (upstream runs under `uv run`); harness calls
@@ -127,10 +151,30 @@ def main() -> int:
 
     voice_b64 = None
     if args.reference:
+        # Validate before model load. An empty file would encode to "" and upstream
+        # would quietly use its default voice (an ok:true "clone" of Marcus); an
+        # oversized one would be read whole before upstream's base64 cap rejects it.
+        ref = Path(args.reference)
         try:
-            voice_b64 = base64.b64encode(Path(args.reference).read_bytes()).decode("ascii")
-        except OSError as e:
-            emit({"ok": False, "run_index": 0, "error": f"reference read failed: {e}"})
+            size = ref.stat().st_size
+            if size == 0:
+                raise ValueError(f"reference {ref} is empty")
+            if size > MAX_REF_BYTES:
+                raise ValueError(f"reference {ref} is {size} bytes; upstream accepts at most "
+                                 f"{MAX_REF_BYTES} (8 MiB of base64)")
+            with ref.open("rb") as f:
+                data = f.read(MAX_REF_BYTES + 1)
+            if not data or len(data) > MAX_REF_BYTES:
+                raise ValueError(f"reference {ref} changed size while reading")
+            voice_b64 = base64.b64encode(data).decode("ascii")
+        except (OSError, ValueError) as e:
+            emit({"ok": False, "run_index": 0, "error": f"reference rejected: {e}"})
+            return 1
+        # Upstream decodes reference audio through FFmpeg (ffprobe + ffmpeg); without
+        # it even a valid PCM wav is rejected as invalid audio.
+        if not (shutil.which("ffprobe") and shutil.which("ffmpeg")):
+            emit({"ok": False, "run_index": 0,
+                  "error": "cloning needs ffmpeg/ffprobe on PATH (upstream decodes references with FFmpeg)"})
             return 1
     mossformer = args.device == "cuda"   # upstream's per-device default, made explicit
 
@@ -140,6 +184,11 @@ def main() -> int:
             logging.getLogger("VibeVoice.vibevoice.modular.modular_vibevoice_tokenizer").setLevel(logging.ERROR)
             import soundfile as sf
             from app.main import synthesize, TTSRequest, _get_engine
+            from app.model_sources import resolve_codebook_model_paths
+            paths = resolve_codebook_model_paths()
+            if MODEL_REVISION not in paths[0] or not (Path(paths[0]).parent / "int4" / "bundle.json").is_file():
+                raise RuntimeError(f"codebooks resolved to {paths[0]}, not the pinned int4 snapshot "
+                                   f"{MODEL_REPO}@{MODEL_REVISION}")
             await _get_engine()
         except Exception as e:
             emit({"ok": False, "run_index": 0, "error": f"load failed: {type(e).__name__}: {e}"})
