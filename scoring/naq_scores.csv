@@ -594,3 +594,7 @@ windows-default,flock_junco_cpu_p1.wav,flock_junco,1,49.7
 windows-default,flock_junco_cpu_p2.wav,flock_junco,2,52.2
 windows-default,flock_junco_cpu_p3.wav,flock_junco,3,42.9
 windows-default,flock_junco_cpu_p4.wav,flock_junco,4,38.9
+linux-default,tontaube_cuda_p1.wav,tontaube,1,74.5
+linux-default,tontaube_cuda_p2.wav,tontaube,2,52.1
+linux-default,tontaube_cuda_p3.wav,tontaube,3,42.2
+linux-default,tontaube_cuda_p4.wav,tontaube,4,45.9
