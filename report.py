@@ -538,6 +538,7 @@ MODEL_DISPLAY_NAMES = {
     "chatterbox_turbo": "Chatterbox Turbo",
     "dia":           "Dia 1.6B-0626",
     "omnivoice":     "OmniVoice",
+    "reverb":        "Reverb-TTS",
     "zipvoice":      "ZipVoice 123M",
     "piper":         "Piper",
     "kokoro":        "Kokoro",
@@ -603,6 +604,7 @@ MODEL_SIZE = {
     "vibevoice":     "0.5B",
     "vibevoice_15b": "1.5B",
     "omnivoice":     "~1B",
+    "reverb":        "297M",   # 297,234,184 over its own fp16 model.safetensors (computed; card headline agrees)
     "zipvoice":      "123M",
     "voxcpm":        "2B",
     "magpie":        "357M",
@@ -723,6 +725,7 @@ MODEL_URL = {
     "vibevoice_15b": _HF + "microsoft/VibeVoice-1.5B",
     "vibevoice_7b":  _HF + "vibevoice/VibeVoice-7B",
     "omnivoice":     _HF + "k2-fsa/OmniVoice",
+    "reverb":        _HF + "software-mansion/Reverb-TTS",
     "zipvoice":      _HF + "k2-fsa/ZipVoice",
     "voxcpm":        _HF + "openbmb/VoxCPM2",
     "magpie":        _HF + "nvidia/magpie_tts_multilingual_357m",
@@ -864,6 +867,7 @@ MODEL_KIND = {
     "hojo_40m":      "predefined",  # 15 voices, no cloning
     "hojo_80m":      "cloning",     # no preset voice; no-reference path clones the house ref
     "omnivoice":     "cloning",
+    "reverb":        "cloning",
     "zipvoice":      "cloning",
     "voxcpm":        "cloning",
     "coqui":         "cloning",
@@ -946,6 +950,7 @@ MODEL_RELEASE = {
     "vibevoice_15b": "2025-08",
     "vibevoice_7b":  "2025-09",
     "omnivoice":     "2026-03",
+    "reverb":        "2026-11",  # GitHub repo 2026-11-06, HF card 2026-11-19
     "zipvoice":      "2025-06",
     "voxcpm":        "2026-04",
     "magpie":        "2025-12",
@@ -1126,7 +1131,7 @@ MODEL_SR = {
     "longcat_1b": "24k", "longcat_3p5b": "24k", "mars5": "24k", "metavoice": "48k",
     "miotts_01b": "44.1k", "miotts_06b": "44.1k", "miratts": "48k", "miso": "24k", "ming": "44.1k", "ming_tiny": "44.1k",
     "moss_tts": "24k", "moss_tts_v15": "24k", "moss_tts_nano": "48k",
-    "neutts_air": "24k", "neutts_nano": "24k", "omnivoice": "24k", "openvoice": "22.05k",
+    "neutts_air": "24k", "neutts_nano": "24k", "omnivoice": "24k", "reverb": "24k", "openvoice": "22.05k",
     "pocket": "24k", "qwentts": "24k", "qwentts_06b": "24k", "qwentts_06b_custom": "24k",
     "qwentts_fast": "24k", "sopro": "24k", "sopro_streaming": "24k",
     "audio8": "44.1k", "audio8_fast": "44.1k", "audio8_01b": "44.1k", "audio8_realistic": "44.1k", "sesame": "24k",
@@ -1173,7 +1178,7 @@ MODEL_EXPRESSIVE = {
     "ming": "tags + desc",
     "ming_tiny": "tags + desc",
     "moss_tts": "—", "moss_tts_v15": "tags (pause)", "moss_tts_nano": "—", "neutts_air": "—",
-    "neutts_nano": "—", "omnivoice": "tags*", "openvoice": "knob", "pocket": "—",
+    "neutts_nano": "—", "omnivoice": "tags*", "reverb": "—", "openvoice": "knob", "pocket": "—",
     "qwentts": "—", "qwentts_06b": "—",
     # CustomVoice instruct control is unverified pending a runtime check (card/table conflict).
     "qwentts_06b_custom": "—", "qwentts_fast": "—",
@@ -1223,6 +1228,7 @@ MODEL_LICENSE = {
     "moss_tts": "Apache 2.0", "moss_tts_v15": "Apache 2.0", "moss_tts_nano": "Apache 2.0",
     "neutts_air": "Apache 2.0", "neutts_nano": "Apache 2.0",
     "omnivoice": "Apache 2.0 code / CC-BY-NC weights",
+    "reverb": "Apache 2.0 code / CC-BY-NC 4.0 weights",
     "openvoice": "MIT", "pocket": "Apache 2.0", "qwentts": "Apache 2.0",
     "qwentts_06b": "Apache 2.0", "qwentts_06b_custom": "Apache 2.0", "qwentts_fast": "Apache 2.0 weights / MIT wrapper",
     "sopro": "Apache 2.0", "sopro_streaming": "Apache 2.0",
@@ -1261,7 +1267,7 @@ MODEL_LANGS = {
     "longcat_1b": "✓ (zh+en)", "longcat_3p5b": "✓ (zh+en)", "mars5": "—", "metavoice": "—",
     "miotts_01b": "✓ (en+ja)", "miotts_06b": "✓ (en+ja)", "miratts": "—", "miso": "— (en)", "ming": "✓ (7)", "ming_tiny": "✓ (7)",
     "moss_tts": "✓ (20)", "moss_tts_v15": "✓ (31)", "moss_tts_nano": "✓ (zh+en)",
-    "neutts_air": "—", "neutts_nano": "✓ (4)", "omnivoice": "✓ (600+)", "openvoice": "✓",
+    "neutts_air": "—", "neutts_nano": "✓ (4)", "omnivoice": "✓ (600+)", "reverb": "✓ (7)", "openvoice": "✓",
     "pocket": "✓ (7)", "qwentts": "✓ (10)", "qwentts_06b": "✓ (10)", "qwentts_06b_custom": "✓ (10)",
     "qwentts_fast": "✓ (10)", "sopro": "✓ (4)", "sopro_streaming": "✓ (4)",
     "audio8": "✓ (11)", "audio8_fast": "✓ (11)", "audio8_01b": "✓ (11)", "audio8_realistic": "✓ (23)",
@@ -1363,7 +1369,7 @@ MODEL_CROSSLINGUAL = {
     "auk_base", "auk_flash",
     "coqui", "cosyvoice", "dots_tts", "f5tts", "higgs_v3", "indextts", "indextts25", "moss_tts",
     "ming", "ming_tiny", "moss_tts_v15", "omnivoice", "openvoice", "outetts", "qwentts", "qwentts_06b",
-    "qwentts_fast", "zonos",
+    "qwentts_fast", "reverb", "zonos",
 }
 
 

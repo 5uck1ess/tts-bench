@@ -85,7 +85,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 
 ---
 
-## Models tracked (102)
+## Models tracked (103)
 
 #### Predefined voices
 
@@ -124,6 +124,7 @@ This is one listener's ranking, not a vote count. For crowd preference see the l
 | [Piper](https://github.com/OHF-Voice/piper1-gpl) | ~15M | Jan 2023 | ✓ | — | ✓ | 22.05k | — | GPL-3.0 |
 | [PiVo-1.4M](https://huggingface.co/empero-ai/PiVo-1.4M) | 1.40M (585K acoustic + 817K vocoder) | Nov 2026 | ✓ (2) | — | — (en) | 16k | knob | Apache 2.0 + BSD (vocoder) |
 | [Qwen3-TTS 0.6B CustomVoice](https://huggingface.co/Qwen/Qwen3-TTS-12Hz-0.6B-CustomVoice) | 0.6B | Jan 2026 | ✓ (9) | — | ✓ (10) | 24k | — | Apache 2.0 |
+| [Reverb-TTS](https://huggingface.co/software-mansion/Reverb-TTS) | 297M | Nov 2026 | ✓ (16) | ✓ | ✓ (7) | 24k | — | Apache 2.0 code / CC-BY-NC 4.0 weights |
 | [ribt](https://huggingface.co/municipal-robotics/ribt) | 54M (18.65M acoustic + 21.88M flow + 13.5M vocoder) | Nov 2026 | ✓ (1) | ✓ | — (en) | 24k | — | MIT |
 | [sanoTTS Amy](https://huggingface.co/ampixa/sanoTTS) | 1.46M | Jul 2026 | ✓ (1) | — | — (en) | 22.05k | knob | GPL-3.0 |
 | [sanoTTS Heart-Nano](https://huggingface.co/ampixa/sanoTTS) | 294K | Sep 2026 | ✓ (1) | — | — (en) | 24k | knob | GPL-3.0 |
@@ -212,7 +213,7 @@ Full per-model gotchas + license details: **[docs/known-issues.md](docs/known-is
 
 ## Voice cloning
 
-**64 of the 102 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
+**65 of the 103 tracked models can clone** a voice from a reference clip. Three reference formats supported (wav only / wav + transcript / HF-gated wav). Drop a reference into `reference/`, then `python bench.py --reference reference/myvoice.wav`.
 
 Reference-format docs + the blind-vote cloning ranking (28 cloning models, human-preference A/B, frozen at 397 votes; the [live arena](https://5uck1ess-tts-arena.hf.space) board now has 2,094 cloning votes): **[docs/cloning.md](docs/cloning.md)**.
 

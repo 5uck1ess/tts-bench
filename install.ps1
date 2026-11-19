@@ -652,6 +652,18 @@ if (-not (Want "omnivoice")) { Write-Host "omnivoice: skipped (not in install fi
     Write-Host "omnivoice: already installed" -ForegroundColor Gray
 }
 
+Step "Reverb-TTS (Software Mansion, 297M distilled OmniVoice, presets + cloning)"
+if (-not (Want "reverb")) { Write-Host "reverb: skipped (not in install filter)" -ForegroundColor DarkGray
+} elseif (-not (Test-Path "venvs\reverb\Scripts\python.exe")) {
+    Invoke-Checked "uv venv reverb" { uv venv venvs\reverb --python 3.11 }
+    Invoke-Checked "uv pip install reverb-tts" { uv pip install --python venvs\reverb\Scripts\python.exe "reverb-tts==1.0.0" soundfile numpy }
+    # cu128 torch LAST (Blackwell sm_120); PyPI torch on Windows is CPU-only.
+    Invoke-Checked "torch cu128 for reverb" { uv pip install --python venvs\reverb\Scripts\python.exe --reinstall torch torchaudio --index-url https://download.pytorch.org/whl/cu128 }
+    Write-Host "reverb: ok (16 presets + cloning, weights auto-download from HF on first use)" -ForegroundColor Green
+} else {
+    Write-Host "reverb: already installed" -ForegroundColor Gray
+}
+
 Step "ZipVoice (k2-fsa, 123M, flow matching, zero-shot cloning)"
 if (-not (Want "zipvoice")) { Write-Host "zipvoice: skipped (not in install filter)" -ForegroundColor DarkGray
 } elseif (-not (Test-Path "venvs\zipvoice\Scripts\python.exe")) {

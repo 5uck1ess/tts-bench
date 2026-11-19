@@ -60,9 +60,10 @@ _CPU_OK = frozenset(row[0] for row in _HARNESS_MODELS if "cpu" in row[4])
 # kittentts2: 115 built-in voices (default Bruno, the repo's own default_voice).
 # ribt: default = upstream's bundled af_heart ref.wav (the voice it was fine-tuned on).
 # zonos3_mini: shipped preset voices, per language (Wyatt / Gaspard / Rodrigo; 27 ship with the weights).
+# reverb: 16 shipped preset voices, pinned per language (en_male_narrator_1 / fr_male_standard / es_male_standard_1).
 _PRESET_AND_CLONE = {"outetts", "voxtral", "audio8", "audio8_fast", "audio8_01b",
                      "audio8_realistic", "steertts", "steertts_noflow", "ming", "ming_tiny", "kittentts2",
-                     "ribt", "zonos3_mini"}
+                     "ribt", "zonos3_mini", "reverb"}
 
 # Models that synthesize more than English — derived from report.MODEL_LANGS (the
 # single source of truth) so the Listen badge can never disagree with the
