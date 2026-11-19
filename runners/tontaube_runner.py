@@ -90,42 +90,67 @@ MODEL_REVISION = "2cff8331a357cdd50b05c823f5172eaa3ac6c121"   # = tag v1.1.0
 MAX_REF_BYTES = 8 * 1024 * 1024 // 4 * 3
 
 
-def _clear_stale_build_lock(emit_note) -> None:
-    """Remove a native-kernels build lock left by a killed first CPU build.
-
-    The CPU path JIT-builds upstream's C++ kernels with torch.utils.cpp_extension,
-    which guards the build dir with a bare `lock` file (FileBaton: no PID, removed in
-    a `finally`). harness.run_cell kills the runner on cell timeout, which skips that
-    `finally`, and every later load then waits on the orphaned file until it, too,
-    times out. The lock is stale when no live process is building in that dir: ninja
-    runs with it as cwd and the compiler/linker get its paths on the command line.
-    Benches run cells sequentially, so a concurrent first build isn't a case here.
-    """
+def _build_dir() -> Path:
     root = Path(os.getenv("TONTAUBE_CACHE_DIR",
                           Path(os.getenv("XDG_CACHE_HOME", Path.home() / ".cache")) / "tontaube")).expanduser()
-    build = root / "native-kernels"
-    lock = build / "lock"
-    if not lock.exists():
-        return
+    return root / "native-kernels"
+
+
+def _builder_alive(build: Path) -> bool:
+    """True while any process is compiling in `build` (ninja runs with it as cwd;
+    the compiler/linker get its paths on the command line)."""
     needle = str(build)
-    proc = Path("/proc")
-    if not proc.is_dir():
-        return
-    for pid_dir in proc.iterdir():
-        if not pid_dir.name.isdigit() or pid_dir.name == str(os.getpid()):
+    me = str(os.getpid())
+    for pid_dir in Path("/proc").iterdir():
+        if not pid_dir.name.isdigit() or pid_dir.name == me:
             continue
         try:
             if needle in (pid_dir / "cmdline").read_bytes().decode("utf-8", "replace"):
-                return
+                return True
             if os.readlink(pid_dir / "cwd").startswith(needle):
-                return
+                return True
         except OSError:
             continue
-    try:
-        lock.unlink()
-        emit_note(f"tontaube: removed stale build lock {lock} (no build process alive)")
-    except FileNotFoundError:
-        pass
+    return False
+
+
+def _build_native_kernels_locked(note) -> None:
+    """Build upstream's CPU C++ kernels under a runner-owned flock, recovering a
+    PyTorch build lock orphaned by a killed run.
+
+    torch.utils.cpp_extension guards the build dir with a bare `lock` file
+    (FileBaton: no owner PID, removed in a `finally`). harness.run_cell kills the
+    runner on cell timeout, which skips that `finally` and can leave ninja running;
+    every later load would then wait on the orphaned file until it times out too.
+
+    Ownership comes from an fcntl.flock on a sidecar file instead: the kernel drops
+    it when its holder dies, so holding it proves no live *runner* owns `lock`. We
+    then wait for any orphaned compiler from a killed run to exit (so two builds never
+    share the dir), and only then remove a leftover `lock`. The build itself
+    (app.native.kernels(), normally triggered lazily inside engine load) is forced
+    while we hold the flock, so a second runner blocks on the flock rather than
+    racing the lock file. Covers runner-vs-runner; a `tontaube serve` building in the
+    same cache dir at that moment is not coordinated (not a bench scenario).
+    """
+    import fcntl
+
+    build = _build_dir()
+    build.mkdir(parents=True, exist_ok=True)
+    with open(build / ".tontaube_runner.flock", "w") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)          # waits for a live runner's build
+        waited = False
+        while _builder_alive(build):            # orphaned ninja/c++ from a killed run
+            waited = True
+            time.sleep(0.5)
+        if waited:
+            note("tontaube: waited for an orphaned native-kernels build to exit")
+        lock = build / "lock"
+        if lock.exists():
+            lock.unlink()
+            note(f"tontaube: removed stale build lock {lock} (no live owner)")
+        from app.native import kernels
+        kernels()                               # build (or load the cached .so) now
+        # flock released on close; the extension is cached in-process from here.
 
 
 def main() -> int:
@@ -216,9 +241,6 @@ def main() -> int:
             return 1
     mossformer = args.device == "cuda"   # upstream's per-device default, made explicit
 
-    if args.device == "cpu":
-        _clear_stale_build_lock(emit_note=lambda m: print(m, file=sys.stderr))
-
     async def run() -> int:
         try:
             import logging
@@ -230,6 +252,8 @@ def main() -> int:
             if MODEL_REVISION not in paths[0] or not (Path(paths[0]).parent / "int4" / "bundle.json").is_file():
                 raise RuntimeError(f"codebooks resolved to {paths[0]}, not the pinned int4 snapshot "
                                    f"{MODEL_REPO}@{MODEL_REVISION}")
+            if args.device == "cpu":
+                _build_native_kernels_locked(lambda m: print(m, file=sys.stderr))
             await _get_engine()
         except Exception as e:
             emit({"ok": False, "run_index": 0, "error": f"load failed: {type(e).__name__}: {e}"})
