@@ -1066,6 +1066,36 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/qwentts_06b_custom_cuda_p5.wav"
         },
         {
+          "model": "reverb",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/reverb_cuda_p1.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/reverb_cuda_p2.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/reverb_cuda_p3.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/reverb_cuda_p4.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-default/reverb_cuda_p5.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-default/reverb_cuda_p6.wav"
+        },
+        {
           "model": "ribt",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/ribt_cuda_p1.wav"
@@ -2569,6 +2599,36 @@
           "model": "qwentts_fast",
           "prompt": 6,
           "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/qwentts_fast_cuda_p6.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/reverb_cuda_p1.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/reverb_cuda_p2.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/reverb_cuda_p3.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/reverb_cuda_p4.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/reverb_cuda_p5.wav"
+        },
+        {
+          "model": "reverb",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/windows-es-cloning/reverb_cuda_p6.wav"
         },
         {
           "model": "ribt",
@@ -4816,6 +4876,10 @@
     "qwentts_fast": {
       "name": "Qwen3-TTS 1.7B (CUDA-graph)",
       "url": "https://huggingface.co/Qwen/Qwen3-TTS-12Hz-1.7B-Base"
+    },
+    "reverb": {
+      "name": "Reverb-TTS",
+      "url": "https://huggingface.co/software-mansion/Reverb-TTS"
     },
     "ribt": {
       "name": "ribt",
