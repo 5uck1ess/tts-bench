@@ -15,7 +15,11 @@ API (reverb-tts 1.0.0, PyPI):
     voice = tts.preset_voice("en_male_narrator_1")                    # preset
     audio = tts.generate(text, voice, language="en", seed=42)          # float32 @ 24 kHz
 
-Choices / gotchas (measured 2026-11-19, HF sha 9c0da9dd):
+Choices / gotchas (measured 2026-11-19; weights + presets pinned to the v1.0.0
+tag, HF sha 72be799c — see REVISION):
+- Presets are loaded by `_load_preset` (UTF-8, pinned revision, no Hub listing),
+  not `tts.preset_voice()` — see its docstring for the cp1252 mojibake trap.
+- Reference language for transcript normalization: sibling `<ref>.lang`, else en.
 - Weights: package default variant `int8` (per-channel int8 safetensors). Every
   variant is upcast to the compute dtype at load (bf16 on CUDA, fp32 on CPU),
   so variant changes numerics only, not speed. The card's quality table uses
@@ -48,6 +52,11 @@ import _meminfo
 
 SAMPLE_RATE = 24000
 REPO = "software-mansion/Reverb-TTS"
+# The v1.0.0 tag the package defaults to, pinned by SHA so a moved tag can't
+# silently change the row. Weights AND preset JSONs both come from here (the
+# package itself fetches presets from `main`; the three we use are byte-identical
+# at main 9c0da9dd, so rows benched before this pin are the same voices).
+REVISION = "72be799c8fb6d56a206d260b425c48bf3bd5943d"
 SEED = 42
 PRESETS = {"en": "en_male_narrator_1", "fr": "fr_male_standard", "es": "es_male_standard_1"}
 
@@ -57,6 +66,34 @@ def _read_ref_transcript(ref_wav):
         return None
     txt = Path(ref_wav).with_suffix(".txt")
     return txt.read_text(encoding="utf-8").strip() if txt.exists() else None
+
+
+def _read_ref_language(ref_wav):
+    """Language of the REFERENCE recording (drives Verbalis normalization of its
+    transcript) — not the text's language, which may differ (cross-lingual).
+    The harness has no channel for it, so: a sibling `<ref>.lang` file holding a
+    code like `fr`, else English (every house reference is English)."""
+    lang = Path(ref_wav).with_suffix(".lang")
+    return lang.read_text(encoding="utf-8").strip() if lang.exists() else "en"
+
+
+def _load_preset(name):
+    """Preset voice from the pinned revision, parsed as UTF-8.
+
+    Not `tts.preset_voice()`: it lists the Hub repo on every call (breaks
+    HF_HUB_OFFLINE with a full cache, and ran inside each warm iteration), and
+    `Voice.load` reads the JSON with the locale codec — cp1252 on Windows, which
+    turns the fr/es transcripts' é/ñ into mojibake that conditions generation.
+    Mirrors Voice.load's JSON branch otherwise."""
+    import json as _json
+    import torch
+    from huggingface_hub import hf_hub_download
+    from reverb_tts.text import check_language
+    from reverb_tts.tts import CODEBOOKS, Voice
+    path = hf_hub_download(REPO, f"voices/{name}.json", revision=REVISION)
+    data = _json.loads(Path(path).read_text(encoding="utf-8"))
+    codes = torch.tensor(data["codes"], dtype=torch.long).view(CODEBOOKS, -1)
+    return Voice(codes, data["transcript"], check_language(data["language"]), data.get("speech_frames"))
 
 
 def main() -> int:
@@ -88,9 +125,14 @@ def main() -> int:
         import soundfile as sf
         from reverb_tts import TTS
 
-        tts = TTS.from_pretrained(REPO, device=args.device)
-        # Reference language: the house ref is English. Encode once at load.
-        clone_voice = tts.voice(args.reference, ref_text, language="en") if args.reference else None
+        tts = TTS.from_pretrained(REPO, device=args.device, revision=REVISION)
+        # Encode the reference / load the presets once, at load (outside timing).
+        if args.reference:
+            clone_voice = tts.voice(args.reference, ref_text, language=_read_ref_language(args.reference))
+            presets = {}
+        else:
+            clone_voice = None
+            presets = {lang: _load_preset(name) for lang, name in PRESETS.items()}
     except Exception as e:
         print(json.dumps({"ok": False, "run_index": 0,
                           "error": f"load failed: {type(e).__name__}: {e}"}))
@@ -99,7 +141,7 @@ def main() -> int:
     def _voice_for(lang):
         if clone_voice is not None:
             return clone_voice
-        return tts.preset_voice(PRESETS.get(lang, PRESETS["en"]))
+        return presets.get(lang, presets["en"])
 
     def _one(text, out_path, lang, run_index, write_wav):
         try:
