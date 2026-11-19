@@ -1351,6 +1351,36 @@
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/tinyvoca_cuda_p4.wav"
         },
         {
+          "model": "tontaube",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/tontaube_cuda_p1.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/tontaube_cuda_p2.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/tontaube_cuda_p3.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/tontaube_cuda_p4.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/tontaube_cuda_p5.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-default/tontaube_cuda_p6.wav"
+        },
+        {
           "model": "vaniq",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/windows-default/vaniq_cuda_p1.wav"
@@ -2799,6 +2829,36 @@
           "model": "styletts2",
           "prompt": 4,
           "url": "https://5uck1ess.github.io/tts-bench/windows-cloning/styletts2_cuda_p4.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/tontaube_cuda_p1.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/tontaube_cuda_p2.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/tontaube_cuda_p3.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/tontaube_cuda_p4.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/tontaube_cuda_p5.wav"
+        },
+        {
+          "model": "tontaube",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/linux-cloning/tontaube_cuda_p6.wav"
         },
         {
           "model": "vibevoice_15b",
@@ -4940,6 +5000,10 @@
     "tinyvoca": {
       "name": "tiny-voca",
       "url": "https://huggingface.co/n4ze3m/tiny-voca"
+    },
+    "tontaube": {
+      "name": "TontaubeV1.1 (int4)",
+      "url": "https://huggingface.co/TontaubeAI/TontaubeV1.1-int4"
     },
     "vaniq": {
       "name": "Vaniq-Edge",
