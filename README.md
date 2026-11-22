@@ -261,6 +261,7 @@ If you reproduce on different hardware, file an issue or PR with your results an
 - [Tasks & pending work](docs/tasks.md) — open issues, planned features
 - [Methodology](docs/methodology.md) — what's measured, why cold + warm, why reproducible
 - [Hosted APIs](docs/hosted.md) — the paid-API board: roster, collector, speed sampling, cloning rules
+- [Spanish long-form](docs/spanish-longform.md) - preset-voice models reading four public-domain Spanish passages on Apple M4 Max (WER per chunk, RTFx)
 
 ---
 
