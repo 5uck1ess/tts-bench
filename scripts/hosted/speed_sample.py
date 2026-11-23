@@ -104,7 +104,10 @@ def main():
             t = time.monotonic()
             try:
                 sample(slug, classes, pass_id, rows)
-            except SystemExit as e:  # keys.get: no cache / missing field
+            except keys.MissingKey as e:  # cache predates this vendor: skip it, keep the pass
+                log.write(f"{pass_id} {slug} SKIP {e}\n")
+                continue
+            except SystemExit as e:  # keys.get: no cache at all
                 log.write(f"{pass_id} {slug} ABORT {e}\n")
                 return 1
             except Exception:  # noqa: BLE001

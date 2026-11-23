@@ -18,6 +18,7 @@
 """
 
 import base64
+import binascii
 import json
 
 from ..core import Adapter
@@ -45,6 +46,17 @@ class PhonicMerritt(Adapter):
 
     def audio_chunks(self, raw_iter):
         body = json.loads(b"".join(raw_iter))
-        if not body.get("audio"):
+        b64 = body.get("audio") if isinstance(body, dict) else None
+        if not isinstance(b64, str) or not b64:
             raise RuntimeError(f"{self.slug}: no audio in response: {str(body)[:300]}")
-        yield base64.b64decode(body["audio"])
+        try:
+            pcm = base64.b64decode(b64, validate=True)
+        except (binascii.Error, ValueError) as e:
+            raise RuntimeError(f"{self.slug}: audio is not valid base64: {e}") from None
+        # The docs promise ONE base64 string. Older decoders stop at the first padding and drop
+        # the rest silently, so require that the bytes re-encode to exactly what was sent.
+        if base64.b64encode(pcm).decode("ascii") != b64:
+            raise RuntimeError(f"{self.slug}: audio is not one canonical base64 string")
+        if len(pcm) % 2:
+            raise RuntimeError(f"{self.slug}: odd byte count {len(pcm)} for PCM16")
+        yield pcm
