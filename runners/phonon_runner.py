@@ -1,7 +1,7 @@
 """Phonon runner (Gradium; Rust `xn` inference runtime via the `ptts` PyPI wheel, no torch).
 
-Benched on **ptts 0.4.0**. Phonon is a Pocket-TTS derivative (Kyutai's CALM line,
-the same family as our `pocket` row) re-implemented on the `xn` Rust tensor
+Benched on **ptts 0.7.1** (re-bench 2026-11-23; first benched on 0.4.0, 2026-10-20).
+Phonon is a Pocket-TTS derivative (Kyutai's CALM line, the same family as our `pocket` row) re-implemented on the `xn` Rust tensor
 runtime. Two sizes, one runner; --variant picks the checkpoint family:
 
     31m  gradium/phonon-31m-en              English only          Apache-2.0
@@ -12,9 +12,17 @@ The 40m row uses upstream's per-language checkpoints (their headline config), no
 (approval is automatic) with the account whose token this machine uses.
 
 Every checkpoint is pinned by revision below — upstream ships new weights under the
-same repo name. The 31m pin is the one `ptts.DEFAULT_MODEL` carries in 0.4.0.
+same repo name. The 31m pin is the one `ptts.DEFAULT_MODEL` carries in 0.7.1 (the repo's
+later commit only adds a LICENSE file).
 
-API (ptts 0.4.0):
+What the 0.7.1 re-bench changed (weights did NOT move; every commit since the 0.4.0 pins is
+model-card or default-voice only, checked on each repo's HF commit list 2026-11-23):
+  - default voices: 31m Bla6SbVM -> Reuben; 40m en -> Micah, fr -> Helene, es -> Marcos.
+    The runner uses each checkpoint's own default voice, so the published voices changed.
+  - runtime: Mimi's streaming attention now covers `context` positions, not one more (0.5.0,
+    "output changes slightly, toward the reference"); CUDA decoding several times faster (0.7.0).
+
+API (ptts 0.7.1, unchanged since 0.4.0):
     import ptts
     tts = ptts.TTS("hf://gradium/phonon-31m-en@<sha>", lang="en", seed=..., temperature=...)
     pcm = tts.synth(text)                       # float32 mono, tts.sample_rate (24 kHz)
@@ -31,7 +39,7 @@ Each checkpoint's own default voice is used.
 
 Devices: the PyPI wheels for Windows/Linux are CPU-only (`ptts.available_devices()`
 == ['cpu']). CUDA/Vulkan exist only as Cargo features in a from-source build, so on
-Linux `install.sh` builds the same 0.4.0 sdist with `--features cuda` when nvcc and
+Linux `install.sh` builds the same sdist with `--features cuda` when nvcc and
 cargo are present. That build's CPU path matches the PyPI wheel (31m warm: 8.6x vs
 8.4x RTF on the 5900XT), so one venv serves both cells. A --device the installed
 build does not list is reported as a failed run, not silently run on another device.
@@ -44,7 +52,7 @@ fastest setting here: prompt 3 measured ~7x RTF at 32 threads vs ~10-12x at 4-16
 calling it after load silently changes nothing).
 
 Determinism: seed and temperature are passed explicitly at upstream's 0.4.0
-defaults, so reruns of a prompt produce identical audio.
+defaults (unchanged in 0.7.1), so reruns of a prompt produce identical audio.
 """
 
 import argparse
@@ -56,14 +64,14 @@ import _meminfo
 
 
 CHECKPOINTS = {
-    ("31m", "en"): "gradium/phonon-31m-en@8c64b55ec301728e2d1695bfea87a08a267d0c2d",
-    ("40m", "en"): "gradium/phonon-40m-en@9b95393286eaeeebf1330b2ae90a14a2074c415d",
-    ("40m", "fr"): "gradium/phonon-40m-fr@65b5b451d235a8c24245f51d2774ec9806a9443f",
-    ("40m", "es"): "gradium/phonon-40m-es@eceb8758b5ed899bd661febecffdc6be61d8e1e6",
+    ("31m", "en"): "gradium/phonon-31m-en@92741c5b07d085ff840e26fea8ce43110b87852f",
+    ("40m", "en"): "gradium/phonon-40m-en@bc7e8ae7e543a7a3e4604753e42fbda76ddf0781",
+    ("40m", "fr"): "gradium/phonon-40m-fr@d91086970206b88efd2c88ca971d0628b5968f0f",
+    ("40m", "es"): "gradium/phonon-40m-es@e5e052b26e31abd5918ade71d3135e69d51a66f8",
 }
 DEFAULT_VARIANT = "31m"
 
-# ptts 0.4.0 TTS() defaults, pinned so a future default change can't move a row.
+# ptts TTS() defaults (same in 0.4.0 and 0.7.1), pinned so a future default change can't move a row.
 SEED = 4242424242424242
 TEMPERATURE = 0.3
 

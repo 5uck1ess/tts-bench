@@ -268,7 +268,7 @@ if (-not (Want "ptts")) { Write-Host "ptts: skipped (not in install filter)" -Fo
     Invoke-Checked "uv venv ptts" { uv venv venvs\ptts --python 3.11 }
     # CPU-only wheel (CUDA/Vulkan are from-source Cargo features). Checkpoints are
     # pinned by revision in runners/phonon_runner.py and download on first load.
-    Invoke-Checked "uv pip install ptts" { uv pip install --python venvs\ptts\Scripts\python.exe "ptts==0.4.0" "huggingface-hub>=0.36" numpy soundfile psutil }
+    Invoke-Checked "uv pip install ptts" { uv pip install --python venvs\ptts\Scripts\python.exe "ptts==0.7.1" "huggingface-hub>=0.36" numpy soundfile psutil }
     Write-Host "ptts: ok" -ForegroundColor Green
 } else {
     Write-Host "ptts: already installed" -ForegroundColor Gray
