@@ -51,6 +51,12 @@ Added 2026-11-18 (Tym): **Voicefinder Voyager 1** (`voyager-1`, HTTP, API instan
 generated and signed, so the row has no first-speech time. Every file carries a watermark and a
 trailing C2PA chunk, which the collector keeps byte-for-byte (`Adapter.keep_bytes`).
 
+Added 2026-11-23 (Tym): **Phonic Merritt** (`merritt`, HTTP). Phonic's product is speech-to-speech
+agents (Phonic-1.1 released the same day), which answer rather than read and so can't take the bench
+prompts. Its documented TTS is the voice "Preview" endpoint (`POST /v1/tts`): synchronous, base64
+PCM16 at 44.1 kHz, so no first-speech time. Not priced on its own (Phonic bills conversation
+minutes). No self-serve cloning: custom voices are provisioned by Phonic.
+
 Waiting: Qwen-Audio-3.1-TTS-Plus, until it is offered outside Alibaba's ID-verified Model Studio.
 
 Dropped: Gemini Flash-Lite (cheap tier of the same vendor); Hume Octave 2 (Hume is shutting down its
@@ -96,6 +102,7 @@ minute of speech and marked ≈. Re-check each against the vendor page on publis
 | Gradium | $35.9–57.8 | by plan | PC | |
 | Async Flash v1.5 | ≈$9.3 | $0.50 per hour of generated audio | docs.async.com Billing & Pricing (10-30) | prepaid wallet; Pro v1.0 $1.00/hr |
 | Voicefinder Voyager 1 | $60 | $0.06/1k API balance | voicefinder.io/app/developers/docs (11-18) | launch price until 2026-12-18, then $0.08/1k |
+| Phonic Merritt | — | not priced on its own | phonic.ai/pricing (11-23) | Phonic bills speech-to-speech minutes ($0.07/min Starter) |
 
 Already collected: Fish Drama 3 web-app clips in `hosted/drama-3-webapp/` (fidelity check for the `drama3`
 port). These are web-app clips, not API clips, and stay out of the hosted board.
@@ -208,6 +215,11 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
     output and building "competing products" such as voice banks or datasets; 7.1 limits Free-plan output
     to personal, non-commercial use; 7.7 requires the speaker's consent to clone. **Cleared with
     Voicefinder's owner directly (Tym, 2026-11-18).**
+  - **Phonic, read 2026-11-23** (phonic.ai/legal/terms-of-service, effective 2025-06-15): no
+    benchmarking clause. Its Starter Grant terms 8.3 do bar using grant credit "primarily for the
+    purpose of benchmarking"; that binds grant credit only (an application program), not the
+    ordinary account. Published Outputs need
+    attribution to Phonic unless the plan allows commercial use; the linked AUP URL returned 404.
   - **Decided 2026-11-01 (Tym): publish all vendors**, after the cloning lens is done; pull any vendor that objects.
 - **Cloning consent.** See open question 1; several vendors require you to attest you have rights to
   the cloned voice.
