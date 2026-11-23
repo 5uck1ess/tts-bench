@@ -1314,3 +1314,6 @@
 {"pass": "20261104T142852Z", "ts": "2026-11-04T14:33:46+00:00", "slug": "resemble_ultra", "transport": "http", "call": 1, "ttfa_speech_ms": 334.9, "ttfa_ms": 334.5, "total_ms": 933.6, "cold": false, "error": null}
 {"pass": "20261104T142852Z", "ts": "2026-11-04T14:33:47+00:00", "slug": "resemble_ultra", "transport": "http", "call": 2, "ttfa_speech_ms": 276.6, "ttfa_ms": 276.6, "total_ms": 1139.6, "cold": false, "error": null}
 {"pass": "20261104T142852Z", "ts": "2026-11-04T14:33:48+00:00", "slug": "resemble_ultra", "transport": "http", "call": 3, "ttfa_speech_ms": 398.7, "ttfa_ms": 339.6, "total_ms": 1138.9, "cold": false, "error": null}
+{"pass": "20261123T233640Z", "ts": "2026-11-23T23:36:43+00:00", "slug": "phonic_merritt", "transport": "http", "call": 1, "ttfa_speech_ms": null, "ttfa_ms": null, "total_ms": 1834.9, "cold": false, "error": null}
+{"pass": "20261123T233640Z", "ts": "2026-11-23T23:36:44+00:00", "slug": "phonic_merritt", "transport": "http", "call": 2, "ttfa_speech_ms": null, "ttfa_ms": null, "total_ms": 1772.3, "cold": false, "error": null}
+{"pass": "20261123T233640Z", "ts": "2026-11-23T23:36:46+00:00", "slug": "phonic_merritt", "transport": "http", "call": 3, "ttfa_speech_ms": null, "ttfa_ms": null, "total_ms": 1799.9, "cold": false, "error": null}
