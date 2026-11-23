@@ -2,8 +2,9 @@
 
 The bench's Spanish coverage is one short prompt: p6, about 6 s of speech. The Windows 5090 rig scores it
 (`docs/known-issues.md`: default-lens median WER 0.0000, mean UTMOS 3.73). This page adds **long-form**
-Spanish. Seven preset-voice models were run on four public-domain passages of a minute or more each; six
-completed. That
+Spanish. Seven preset-voice models were run on four public-domain passages of 100-180 words each (about
+40-75 s of speech per passage, about 3-5 minutes per model when all chunks complete; the measured totals are
+in the table). That
 exercises chunking, number and ordinal reading, dialogue, and older literary register, which a single
 sentence cannot. All runs are on one Mac.
 
@@ -51,32 +52,38 @@ Reproduce:
 
 ```
 python scripts/spanish_longform.py --out results/es-longform
-venvs/scoring/bin/python scripts/spanish_longform.py --score results/es-longform/results.csv
-python scripts/spanish_longform.py --render-table results/es-longform/results.csv
+venvs/scoring/bin/python scripts/spanish_longform.py --score results/es-longform/es_longform.csv
+python scripts/spanish_longform.py --render-table results/es-longform/es_longform.csv
 ```
 
 ## Results
 
+Measured 2026-11-22 with `scripts/spanish_longform.py` on all seven models, then scored with `--score`.
+
 | model | voice | chunks | failed | WER | Health-flagged chunks | audio (s) | RTFx |
 |---|---|---:|---:|---:|---:|---:|---:|
-| qwentts_06b_custom | aiden | 19 | 0 | 0.0275 | 0 | 273.7 | 0.73 |
-| kokoro_mlx | em_alex | 19 | 0 | 0.0361 | 0 | 191.1 | 45.47 |
-| supertonic | M4 | 19 | 0 | 0.0464 | 0 | 227.7 | 6.86 |
-| paradee | builtin | 19 | 0 | 0.0481 | 0 | 195.8 | 66.28 |
-| lfm3_audio | male | 19 | 0 | 0.0515 | 0 | 191.5 | 0.10 |
-| reverb | builtin | 19 | 0 | 0.0825 | 0 | 189.1 | 4.41 |
-| zonos3_mini | builtin | 4 | 4 | n/a | 0 | 0.0 | n/a |
+| qwentts_06b_custom | aiden | 19 | 0 | 0.0275 | 0 | 262.1 | 0.50 |
+| zonos3_mini | builtin | 14 | 2 | 0.0307 | 0 | 130.6 | 0.20 |
+| kokoro_mlx | em_alex | 19 | 0 | 0.0344 | 0 | 191.0 | 43.51 |
+| paradee | builtin | 19 | 0 | 0.0413 | 0 | 196.2 | 62.84 |
+| lfm3_audio | male | 19 | 0 | 0.0448 | 0 | 191.7 | 0.06 |
+| supertonic | M4 | 19 | 0 | 0.0740 | 0 | 227.2 | 6.16 |
+| reverb | builtin | 19 | 0 | 0.0757 | 0 | 189.1 | 4.85 |
 
 Read the WER column with these notes:
 
-- **One chunk dominates `reverb`.** In `pd_cadiz` chunk 1, a 9.6 s clip with continuous speech energy, Whisper
-  returned only "Artículo 4º", the last two words. That one chunk costs 23 of `reverb`'s 48 edits; without it,
-  `reverb` is at 0.0448. This looks like an ASR failure rather than a dropped reading, but it is not confirmed by ear.
-- **Every model shares the `pd_cervantes` errors.** "della" is heard as "de ella" and "sayo" as "ensayo". These
-  are 17th-century forms that Whisper normalizes, so they show up for all six models that completed.
-- **Speed.** `kokoro_mlx` and `paradee` run 45-66x faster than realtime on this Mac. `qwentts_06b_custom` and
-  `lfm3_audio` run below realtime on CPU (0.73x and 0.10x).
-
+- **One chunk accounts for half of the `reverb` and `supertonic` totals.** This is `pd_cadiz` chunk 1.
+  - For both models Whisper returned only "Artículo 4º", the last two words of a 24-word chunk. That costs 22 edits.
+  - Both clips have continuous speech energy, and the same chunk fails in the same way on two different engines.
+    So the failure is on the ASR side, not a dropped reading.
+  - Without that chunk, `reverb` is at 0.0395 and `supertonic` at 0.0377.
+- **The `pd_cervantes` errors are shared by every model that read it.** Whisper hears "della" as "de ella" and
+  "sayo" as "ensayo". These are 17th-century forms that Whisper normalizes.
+- **RTFx was measured while other workloads ran on the Mac** (load average around 10 to 16). Read it as an
+  order of magnitude:
+  - `kokoro_mlx` and `paradee`: 40-60x realtime.
+  - `supertonic` and `reverb`: about 5-6x.
+  - `qwentts_06b_custom`, `zonos3_mini` and `lfm3_audio`: below realtime on CPU.
 
 ## Caveats
 
@@ -89,16 +96,15 @@ Read the WER column with these notes:
 
 ## What failed or degraded on macOS ARM
 
-- **`zonos3_mini` (ggml Q4, CPU): no usable long-form run.**
-  - In a book-length run, one chunk passed the 300 s runner timeout, and the server's own log showed ZAC decode
-    RTF climbing from 26 to 39.
-  - The next start failed with "zonos3-server not ready after 300s". Its ready probe never finished.
-  - Two shorter chunks carried Health flags. The default-lens short prompt (p6) did run.
-- **`lfm3_audio` (CPU): works, but at RTFx 0.10.** A 125-minute book would take about 21 h on this Mac.
-- **Spanish speaker note for `qwentts_06b_custom`.** The CustomVoice checkpoint read Spanish cleanly with
-  `--language es` and a male speaker (`aiden`; the four other male speakers had a similar WER on a two-passage
-  screen). The model's `harness.MODELS` row lists `{"en", "fr"}` only, so the bench's own p6 Spanish lens never
-  runs it.
+- **`zonos3_mini` (ggml Q4, CPU): partial long-form run.**
+  - It completed `pd_galdos` and `pd_becquer` and the first `pd_cervantes` chunk: 12 chunks, all scored.
+  - The next chunk passed the 300 s runner timeout.
+  - The runner was then restarted for `pd_cadiz` and timed out again. Its server log showed ZAC decode RTF climbing
+    from 26 to 39 in an earlier attempt.
+  - Both failures are recorded as failed rows; the other models' results are kept.
+- **`lfm3_audio` (CPU): works, but at RTFx 0.06-0.10** depending on host load.
+- **Spanish speaker note for `qwentts_06b_custom`.** The CustomVoice checkpoint reads Spanish cleanly with
+  `--language es` and the male speaker `aiden`; its four other male speakers had a similar WER on a two-passage
+  screen. Its `harness.MODELS` row lists `{"en", "fr"}` only, so the bench's own p6 Spanish lens never runs it.
 - **Every install worked.** The selectors `supertonic`, `kokoro_mlx`, `paradee`, `reverb`, `lfm3_audio`,
   `qwentts`, `zonos3_mini` and `scoring` each installed on macOS ARM with `./install.sh <slug>`.
-

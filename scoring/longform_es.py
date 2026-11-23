@@ -36,10 +36,10 @@ PASSAGES = [
     },
     {
         'id': 'pd_cadiz',
-        'source': "Constitución política de la Monarquía española (Cádiz, 1812), Título I, arts. 1-5. es.wikisource 'Constitución española de 1812' revid 1455980. 'Art. N.' written out as 'Artículo <ordinal>.'.",
+        'source': "Constitución política de la Monarquía española (Cádiz, 1812), Título I, arts. 1-5. es.wikisource 'Constitución española de 1812' revid 1455980. 'Art. N.' written out as 'Artículo <ordinal>.'; the Wikisource '[editar]' link removed and the heading 'CAPÍTULO II' written out as 'Capítulo segundo.'.",
         'license': 'Public domain (1812 government text)',
-        'sha256': 'd8a5a6a9b765d4124e69133fd6630da14a8e38349807300d5fce801a67510a77',
-        'text': 'Artículo primero. La Nación española es la reunión de todos los españoles de ambos hemisferios. Artículo segundo. La Nación española es libre e independiente, y no es ni puede ser patrimonio de ninguna familia ni persona. Artículo tercero. La soberanía reside esencialmente en la Nación, y por lo mismo pertenece a ésta exclusivamente el derecho de establecer sus leyes fundamentales. Artículo cuarto. La Nación está obligada a conservar y proteger por leyes sabias y justas la libertad civil, la propiedad y los demás derechos legítimos de todos los individuos que la componen. CAPÍTULO II: De los españoles[editar] Artículo quinto. Son españoles: Primero. Todos los hombres libres nacidos y avecindados en los dominios de las Españas, y los hijos de éstos.',
+        'sha256': '0c77267dacf32cad4348eb7782f24a1114448b9f5f0719bf45aac67a10f72a01',
+        'text': 'Artículo primero. La Nación española es la reunión de todos los españoles de ambos hemisferios. Artículo segundo. La Nación española es libre e independiente, y no es ni puede ser patrimonio de ninguna familia ni persona. Artículo tercero. La soberanía reside esencialmente en la Nación, y por lo mismo pertenece a ésta exclusivamente el derecho de establecer sus leyes fundamentales. Artículo cuarto. La Nación está obligada a conservar y proteger por leyes sabias y justas la libertad civil, la propiedad y los demás derechos legítimos de todos los individuos que la componen. Capítulo segundo: De los españoles. Artículo quinto. Son españoles: Primero. Todos los hombres libres nacidos y avecindados en los dominios de las Españas, y los hijos de éstos.',
     },
 ]
 
@@ -53,6 +53,8 @@ _TENS = {30: "treinta", 40: "cuarenta", 50: "cincuenta", 60: "sesenta", 70: "set
          90: "noventa"}
 _HUND = {100: "ciento", 200: "doscientos", 300: "trescientos", 400: "cuatrocientos", 500: "quinientos",
          600: "seiscientos", 700: "setecientos", 800: "ochocientos", 900: "novecientos"}
+_DIGITS = _UNITS[:10]
+MAX_SPELLED = 10 ** 12  # below this, cardinal words ("novecientos mil millones"); at or above, digit by digit
 
 
 def _below_1000(n):
@@ -67,27 +69,34 @@ def _below_1000(n):
     return _HUND[h * 100] + ("" if r == 0 else " " + _below_1000(r))
 
 
-def es_int_words(n):
-    """0 <= n < 1e9, Spanish cardinal (apocope 'un' before mil/millón)."""
-    if not 0 <= n < 1_000_000_000:
-        raise ValueError(n)
-    if n < 1000:
-        return _below_1000(n)
-    if n < 1_000_000:
-        th, r = divmod(n, 1000)
-        head = "mil" if th == 1 else _apocope(_below_1000(th)) + " mil"
-        return head + ("" if r == 0 else " " + _below_1000(r))
-    mi, r = divmod(n, 1_000_000)
-    head = "un millón" if mi == 1 else _apocope(es_int_words(mi)) + " millones"
-    return head + ("" if r == 0 else " " + es_int_words(r))
-
-
 def _apocope(words):
     if words.endswith("veintiuno"):
         return words[:-len("veintiuno")] + "veintiún"
     if words.endswith("uno"):
         return words[:-3] + "un"
     return words
+
+
+def _below_million(n):
+    if n < 1000:
+        return _below_1000(n)
+    th, r = divmod(n, 1000)
+    head = "mil" if th == 1 else _apocope(_below_1000(th)) + " mil"
+    return head + ("" if r == 0 else " " + _below_1000(r))
+
+
+def es_int_words(n):
+    """Spanish cardinal for any n >= 0 (long scale: 10**9 is 'mil millones'). From MAX_SPELLED up, the digits
+    are read one by one, so no hypothesis can make the scorer raise."""
+    if n < 0:
+        raise ValueError(n)
+    if n >= MAX_SPELLED:
+        return " ".join(_DIGITS[int(d)] for d in str(n))
+    if n < 1_000_000:
+        return _below_million(n)
+    mi, r = divmod(n, 1_000_000)
+    head = "un millón" if mi == 1 else _apocope(_below_million(mi)) + " millones"
+    return head + ("" if r == 0 else " " + _below_million(r))
 
 
 def es_number_words(tok):
@@ -104,8 +113,37 @@ def es_number_words(tok):
     return f"{whole} coma {' '.join(parts)}"
 
 
+_ORD_1_9 = ["", "primero", "segundo", "tercero", "cuarto", "quinto", "sexto", "séptimo", "octavo", "noveno"]
+_ORD_TENS = ["", "décimo", "vigésimo", "trigésimo", "cuadragésimo", "quincuagésimo", "sexagésimo",
+             "septuagésimo", "octogésimo", "nonagésimo"]
+_ORD_SPECIAL = {11: "undécimo", 12: "duodécimo", 13: "decimotercero", 14: "decimocuarto", 15: "decimoquinto",
+                16: "decimosexto", 17: "decimoséptimo", 18: "decimoctavo", 19: "decimonoveno"}
+
+
+def es_ordinal_words(n, feminine=False):
+    """'4º' -> 'cuarto', '4ª' -> 'cuarta' for 1-99; other values fall back to the cardinal."""
+    if not 1 <= n <= 99:
+        return es_int_words(n)
+    if n in _ORD_SPECIAL:
+        w = _ORD_SPECIAL[n]
+    elif n < 10:
+        w = _ORD_1_9[n]
+    else:
+        t, u = divmod(n, 10)
+        w = _ORD_TENS[t] + ("" if u == 0 else " " + _ORD_1_9[u])
+    if feminine:
+        w = " ".join(x[:-1] + "a" if x.endswith("o") else x for x in w.split())
+    return w
+
+
 def spell_digits(text):
-    text = re.sub(r"(\d)[.,](\d{3})(?!\d)", r"\1\2", text)  # 1.200 / 1,500 -> 1200 / 1500 (thousands)
+    """Spell digit groups in Spanish: '72 vergas' -> 'setenta y dos vergas', 'Artículo 4º' -> 'Artículo cuarto'."""
+    text = re.sub(r"\b\d{1,3}(?:\.\d{3})+,\d+\b", lambda m: m.group(0).replace(".", ""), text)  # 1.200,50
+    text = re.sub(r"\b\d{1,3}(?:,\d{3})+\.\d+\b", lambda m: m.group(0).replace(",", ""), text)  # 1,200.50
+    text = re.sub(r"\d{1,3}(?:[.,]\d{3})+(?![.,]?\d)",
+                  lambda m: re.sub(r"[.,]", "", m.group(0)), text)  # 1.000.000 / 1,500 -> 1000000 / 1500
+    text = re.sub(r"(\d+)\.?\s*([ºª])",
+                  lambda m: " " + es_ordinal_words(int(m.group(1)), m.group(2) == "ª") + " ", text)
     text = re.sub(r"(?<=\d)\s*%", " por ciento", text)
     text = re.sub(r"(?<=\d)\s*[x×]\s*(?=\d)", " por ", text)
     text = re.sub(r"(?<=[A-Za-z])(?=\d)|(?<=\d)(?=[A-Za-z])", " ", text)  # AC12 -> AC 12
@@ -113,5 +151,5 @@ def spell_digits(text):
 
 
 def join_letter_runs(text):
-    """'A C' / 'P R' (spaced diagram labels in the narration text) -> 'AC' / 'PR', as Whisper writes them."""
+    """'A C' / 'P R' (spaced diagram labels) -> 'AC' / 'PR', as Whisper writes them."""
     return re.sub(r"\b[A-Z](?: [A-Z])+\b", lambda m: m.group(0).replace(" ", ""), text)

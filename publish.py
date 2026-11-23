@@ -36,7 +36,7 @@ if hasattr(sys.stderr, "reconfigure"):
 from report import (
     STYLE, CONTROLS, SCRIPT, PROMPT_INFO, MODEL_SIZE, MODEL_KIND, MODEL_URL,
     MODEL_SR, MODEL_EXPRESSIVE, MODEL_LICENSE, MODEL_LANGS,
-    _ds, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
+    _ds, _is_bench_csv, _read_csv, _read_meta, _rig_summary, _sort_prompt_ids, build_report,
     _build_context, _speed_table_html, _display_name, _release_label, _release_td, _size_td,
     _is_multilingual, _is_commercial, _sr_hz, _is_crosslingual, MODEL_LANGS,
     HOUSE_REF_LABEL, display_ref,
@@ -473,7 +473,7 @@ FAVICON_LINK = (
 def _canonical_dir(name):
     """Return WORKTREE/name if it's a published run dir (has results.csv), else None."""
     d = WORKTREE / name
-    return d if (d.is_dir() and (d / "results.csv").exists()) else None
+    return d if (d.is_dir() and _is_bench_csv(d / "results.csv")) else None
 
 
 def _ok_models(name):
@@ -1567,7 +1567,7 @@ def build_archive_index():
         if not d.is_dir() or d.name.startswith("."):
             continue
         csv_path = d / "results.csv"
-        if not csv_path.exists():
+        if not _is_bench_csv(csv_path):
             continue
         try:
             rows = _read_csv(csv_path)
@@ -1837,7 +1837,7 @@ def rebuild_all(no_push: bool = False) -> None:
     ensure_worktree()
     dirs = sorted(
         [d for d in (REPO / "results").iterdir()
-         if d.is_dir() and (d / "results.csv").exists()],
+         if d.is_dir() and _is_bench_csv(d / "results.csv")],
         reverse=True,
     )
     if not dirs:
