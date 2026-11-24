@@ -71,6 +71,8 @@ CHECKPOINTS = {
 }
 DEFAULT_VARIANT = "31m"
 
+PTTS_VERSION = "0.7.1"  # the runtime the checkpoint pins were benched on; keep in step with install.*
+
 # ptts TTS() defaults (same in 0.4.0 and 0.7.1), pinned so a future default change can't move a row.
 SEED = 4242424242424242
 TEMPERATURE = 0.3
@@ -103,6 +105,13 @@ def main() -> int:
         import ptts
         import soundfile as sf
 
+        if getattr(ptts, "__version__", None) != PTTS_VERSION:
+            # An older venv would load the new checkpoints on the old runtime and publish audio
+            # that matches neither version (0.5.0 changed Mimi's attention window).
+            print(json.dumps({"ok": False, "run_index": 0,
+                              "error": f"ptts {getattr(ptts, '__version__', '?')} installed, runner "
+                                       f"pinned to {PTTS_VERSION}; rerun the installer"}))
+            return 1
         if args.device not in ptts.available_devices():
             print(json.dumps({"ok": False, "run_index": 0,
                               "error": f"this ptts build has no device={args.device} "

@@ -270,8 +270,12 @@ if (-not (Want "ptts")) { Write-Host "ptts: skipped (not in install filter)" -Fo
     # pinned by revision in runners/phonon_runner.py and download on first load.
     Invoke-Checked "uv pip install ptts" { uv pip install --python venvs\ptts\Scripts\python.exe "ptts==0.7.1" "huggingface-hub>=0.36" numpy soundfile psutil }
     Write-Host "ptts: ok" -ForegroundColor Green
+} elseif ((& venvs\ptts\Scripts\python.exe -c "import ptts; print(ptts.__version__)" 2>$null) -ne "0.7.1") {
+    # A venv from an older pin would otherwise be kept and bench the new checkpoints on the old runtime.
+    Invoke-Checked "uv pip install ptts (upgrade to pin)" { uv pip install --python venvs\ptts\Scripts\python.exe "ptts==0.7.1" }
+    Write-Host "ptts: upgraded to 0.7.1" -ForegroundColor Green
 } else {
-    Write-Host "ptts: already installed" -ForegroundColor Gray
+    Write-Host "ptts: already installed (0.7.1)" -ForegroundColor Gray
 }
 
 Step "LinnetTTS (VoxRT Rust runtime, no torch; wheel built from pinned source — needs rustup + MSVC Build Tools)"

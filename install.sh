@@ -384,19 +384,23 @@ else
         uv pip install --python venvs/ptts/bin/python "huggingface-hub>=0.36" numpy soundfile psutil \
             || die "uv pip install ptts deps"
     fi
-    if venvs/ptts/bin/python -c "import ptts, sys; sys.exit('cuda' not in ptts.available_devices())" 2>/dev/null; then
-        echo "ptts: already installed (cuda build)"
+    # Every "already installed" branch also requires the pinned version: a venv from an older pin
+    # would otherwise be kept and bench the new checkpoints on the old runtime.
+    PTTS_VER=0.7.1
+    PTTS_OK="import ptts, sys; sys.exit(ptts.__version__ != '$PTTS_VER')"
+    if venvs/ptts/bin/python -c "$PTTS_OK; sys.exit('cuda' not in ptts.available_devices())" 2>/dev/null; then
+        echo "ptts: already installed (cuda build, $PTTS_VER)"
     elif PATH="$PTTS_PATH" command -v nvcc >/dev/null 2>&1 && PATH="$PTTS_PATH" command -v cargo >/dev/null 2>&1; then
         # ~1 min compile. --reinstall replaces a CPU wheel already in the venv.
         PATH="$PTTS_PATH" MATURIN_PEP517_ARGS="--features cuda" \
-            uv pip install --python venvs/ptts/bin/python --reinstall-package ptts --no-binary ptts "ptts==0.7.1" \
+            uv pip install --python venvs/ptts/bin/python --reinstall-package ptts --no-binary ptts "ptts==$PTTS_VER" \
             || die "uv pip install ptts (cuda source build)"
         green "ptts: ok (cuda build)"
-    elif venvs/ptts/bin/python -c "import ptts" 2>/dev/null; then
-        echo "ptts: already installed (CPU wheel; no nvcc+cargo for a cuda build)"
+    elif venvs/ptts/bin/python -c "$PTTS_OK" 2>/dev/null; then
+        echo "ptts: already installed (CPU wheel $PTTS_VER; no nvcc+cargo for a cuda build)"
     else
         yellow "ptts: no nvcc+cargo -> CPU-only PyPI wheel (no phonon cuda cell)"
-        uv pip install --python venvs/ptts/bin/python "ptts==0.7.1" || die "uv pip install ptts"
+        uv pip install --python venvs/ptts/bin/python "ptts==$PTTS_VER" || die "uv pip install ptts"
         green "ptts: ok"
     fi
 fi
