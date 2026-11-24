@@ -24,6 +24,16 @@ import json
 from ..core import Adapter
 
 
+def _no_duplicate_keys(pairs):
+    """json.loads keeps the LAST of repeated keys silently; a response with two "audio" fields is
+    malformed (the docs define one), so it must fail instead of picking one."""
+    keys = [k for k, _ in pairs]
+    dup = {k for k in keys if keys.count(k) > 1}
+    if dup:
+        raise RuntimeError(f"phonic_merritt: duplicate field(s) {sorted(dup)} in response")
+    return dict(pairs)
+
+
 class PhonicMerritt(Adapter):
     slug = "phonic_merritt"
     provider = "phonic"
@@ -45,7 +55,7 @@ class PhonicMerritt(Adapter):
                           "output_format": f"pcm_{self.sr}", "languages": [lang]})
 
     def audio_chunks(self, raw_iter):
-        body = json.loads(b"".join(raw_iter))
+        body = json.loads(b"".join(raw_iter), object_pairs_hook=_no_duplicate_keys)
         b64 = body.get("audio") if isinstance(body, dict) else None
         if not isinstance(b64, str) or not b64:
             raise RuntimeError(f"{self.slug}: no audio in response: {str(body)[:300]}")

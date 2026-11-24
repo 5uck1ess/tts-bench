@@ -28,6 +28,13 @@ def test_malformed_audio_is_an_error_not_a_clip(audio):
         _decode({"audio": audio})
 
 
+def test_duplicate_audio_fields_are_an_error():
+    good = base64.b64encode(b"" * 50).decode()
+    raw = ('{"audio": "%s", "audio": "%s"}' % (base64.b64encode(b"abc").decode(), good)).encode()
+    with pytest.raises(RuntimeError, match="duplicate"):
+        b"".join(PhonicMerritt("k").audio_chunks(iter([raw])))
+
+
 def test_sampler_skips_vendor_missing_from_key_cache(tmp_path, monkeypatch):
     """A key cache made before a vendor was added must not fail the unattended pass."""
     monkeypatch.setattr(speed_sample, "OUT", tmp_path)
