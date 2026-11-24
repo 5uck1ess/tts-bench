@@ -387,8 +387,11 @@ else
     # Every "already installed" branch also requires the pinned version: a venv from an older pin
     # would otherwise be kept and bench the new checkpoints on the old runtime.
     PTTS_VER=0.7.1
-    PTTS_OK="import ptts, sys; sys.exit(ptts.__version__ != '$PTTS_VER')"
-    if venvs/ptts/bin/python -c "$PTTS_OK; sys.exit('cuda' not in ptts.available_devices())" 2>/dev/null; then
+    # Each check is ONE sys.exit on the whole condition: chaining two sys.exit calls made the
+    # version check exit 0 before the cuda check ever ran.
+    PTTS_IS_PIN="import ptts, sys; pin = ptts.__version__ == '$PTTS_VER'"
+    PTTS_OK="$PTTS_IS_PIN; sys.exit(not pin)"
+    if venvs/ptts/bin/python -c "$PTTS_IS_PIN; sys.exit(not (pin and 'cuda' in ptts.available_devices()))" 2>/dev/null; then
         echo "ptts: already installed (cuda build, $PTTS_VER)"
     elif PATH="$PTTS_PATH" command -v nvcc >/dev/null 2>&1 && PATH="$PTTS_PATH" command -v cargo >/dev/null 2>&1; then
         # ~1 min compile. --reinstall replaces a CPU wheel already in the venv.
