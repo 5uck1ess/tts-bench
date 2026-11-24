@@ -27,8 +27,9 @@ from ..core import Adapter
 def _no_duplicate_keys(pairs):
     """json.loads keeps the LAST of repeated keys silently; a response with two "audio" fields is
     malformed (the docs define one), so it must fail instead of picking one."""
-    keys = [k for k, _ in pairs]
-    dup = {k for k in keys if keys.count(k) > 1}
+    seen, dup = set(), set()  # one pass: a per-key count() is quadratic in the field count
+    for k, _ in pairs:
+        (dup if k in seen else seen).add(k)
     if dup:
         raise RuntimeError(f"phonic_merritt: duplicate field(s) {sorted(dup)} in response")
     return dict(pairs)
@@ -67,6 +68,10 @@ class PhonicMerritt(Adapter):
         # the rest silently, so require that the bytes re-encode to exactly what was sent.
         if base64.b64encode(pcm).decode("ascii") != b64:
             raise RuntimeError(f"{self.slug}: audio is not one canonical base64 string")
+        # We request headerless pcm_44100. A RIFF/WAV body would be re-read by core.to_wav at its
+        # embedded rate (dropping an odd data byte), so it is a malformed response, not audio.
+        if pcm[:4] == b"RIFF":
+            raise RuntimeError(f"{self.slug}: got a WAV container, requested headerless PCM16")
         if len(pcm) % 2:
             raise RuntimeError(f"{self.slug}: odd byte count {len(pcm)} for PCM16")
         yield pcm
