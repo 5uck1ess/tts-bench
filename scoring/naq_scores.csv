@@ -598,3 +598,15 @@ linux-default,tontaube_cuda_p1.wav,tontaube,1,74.5
 linux-default,tontaube_cuda_p2.wav,tontaube,2,52.1
 linux-default,tontaube_cuda_p3.wav,tontaube,3,42.2
 linux-default,tontaube_cuda_p4.wav,tontaube,4,45.9
+phonic_merritt/default,p1_t1.wav,phonic_merritt,1,86.7
+phonic_merritt/default,p1_t2.wav,phonic_merritt,1,82.1
+phonic_merritt/default,p1_t3.wav,phonic_merritt,1,91.8
+phonic_merritt/default,p2_t1.wav,phonic_merritt,2,87.2
+phonic_merritt/default,p2_t2.wav,phonic_merritt,2,79.1
+phonic_merritt/default,p2_t3.wav,phonic_merritt,2,82.7
+phonic_merritt/default,p3_t1.wav,phonic_merritt,3,63.9
+phonic_merritt/default,p3_t2.wav,phonic_merritt,3,65.2
+phonic_merritt/default,p3_t3.wav,phonic_merritt,3,68.9
+phonic_merritt/default,p4_t1.wav,phonic_merritt,4,56.9
+phonic_merritt/default,p4_t2.wav,phonic_merritt,4,62.2
+phonic_merritt/default,p4_t3.wav,phonic_merritt,4,65.0
