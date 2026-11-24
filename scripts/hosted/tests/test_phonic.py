@@ -31,11 +31,11 @@ def test_malformed_audio_is_an_error_not_a_clip(audio):
 def test_duplicate_audio_fields_are_an_error():
     good = base64.b64encode(b"\x01\x02" * 50).decode()  # valid PCM16: the LAST field alone would pass
     raw = ('{"audio": "%s", "audio": "%s"}' % (base64.b64encode(b"abc").decode(), good)).encode()
-    with pytest.raises(RuntimeError, match="duplicate"):
+    with pytest.raises(RuntimeError, match="not exactly"):
         b"".join(PhonicMerritt("k").audio_chunks(iter([raw])))
 
 
-def test_wav_container_is_an_error():
+def _wav16k():
     import io
     import wave
     buf = io.BytesIO()
@@ -44,17 +44,41 @@ def test_wav_container_is_an_error():
         w.setsampwidth(2)
         w.setframerate(16000)
         w.writeframes(b"\x00" * 8821)  # odd data chunk + pad byte: even total, still not PCM
-    with pytest.raises(RuntimeError, match="WAV"):
-        _decode({"audio": base64.b64encode(buf.getvalue()).decode()})
+    return buf.getvalue()
 
 
-def test_many_fields_parse_in_linear_time():
+@pytest.mark.parametrize("magic", [b"RIFF", b"RIFX", b"RF64", b"BW64", b"FORM", b"OggS", b"fLaC",
+                                   b"ID3\x04"])
+def test_audio_containers_are_an_error(magic):
+    payload = magic + _wav16k()[4:]  # a real WAV body under each container's signature
+    with pytest.raises(RuntimeError, match="container"):
+        _decode({"audio": base64.b64encode(payload).decode()})
+
+
+def test_extra_fields_rejected_fast():
+    """Any field besides "audio" is rejected by one linear match, however many there are."""
     import time
-    fields = ",".join(f'"f{i}": 0' for i in range(50000))
+    fields = ",".join(f'"f{i}": 0' for i in range(1_500_000))  # ~18 MB, the reviewer's case
     raw = ('{%s, "audio": "%s"}' % (fields, base64.b64encode(b"\x01\x02" * 10).decode())).encode()
     t = time.perf_counter()
-    assert b"".join(PhonicMerritt("k").audio_chunks(iter([raw]))) == b"\x01\x02" * 10
-    assert time.perf_counter() - t < 2.0  # the quadratic count() version took minutes here
+    with pytest.raises(RuntimeError):
+        b"".join(PhonicMerritt("k").audio_chunks(iter([raw])))
+    assert time.perf_counter() - t < 1.0
+
+
+def test_body_size_capped():
+    from scripts.hosted.providers import phonic
+    chunks = iter([b"x" * (1 << 20)] * (phonic.MAX_BODY // (1 << 20) + 1))
+    with pytest.raises(RuntimeError, match="over"):
+        b"".join(PhonicMerritt("k").audio_chunks(chunks))
+
+
+def test_escaped_slash_in_base64_is_accepted():
+    pcm = bytes([0xFF, 0xFE]) * 30  # base64 of this contains "/"
+    b64 = base64.b64encode(pcm).decode()
+    assert "/" in b64
+    raw = ('{"audio": "%s"}' % b64.replace("/", "\\/")).encode()
+    assert b"".join(PhonicMerritt("k").audio_chunks(iter([raw]))) == pcm
 
 
 def test_sampler_skips_vendor_missing_from_key_cache(tmp_path, monkeypatch):
