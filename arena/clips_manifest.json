@@ -3636,6 +3636,36 @@
           "url": "https://5uck1ess.github.io/tts-bench/hosted/palabra_tts/default/p6_t1.wav"
         },
         {
+          "model": "hosted:phonic_merritt",
+          "prompt": 1,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/phonic_merritt/default/p1_t1.wav"
+        },
+        {
+          "model": "hosted:phonic_merritt",
+          "prompt": 2,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/phonic_merritt/default/p2_t1.wav"
+        },
+        {
+          "model": "hosted:phonic_merritt",
+          "prompt": 3,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/phonic_merritt/default/p3_t1.wav"
+        },
+        {
+          "model": "hosted:phonic_merritt",
+          "prompt": 4,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/phonic_merritt/default/p4_t1.wav"
+        },
+        {
+          "model": "hosted:phonic_merritt",
+          "prompt": 5,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/phonic_merritt/default/p5_t1.wav"
+        },
+        {
+          "model": "hosted:phonic_merritt",
+          "prompt": 6,
+          "url": "https://5uck1ess.github.io/tts-bench/hosted/phonic_merritt/default/p6_t1.wav"
+        },
+        {
           "model": "hosted:resemble_ultra",
           "prompt": 1,
           "url": "https://5uck1ess.github.io/tts-bench/hosted/resemble_ultra/default/p1_t1.wav"
@@ -4727,6 +4757,10 @@
     },
     "hosted:palabra_tts": {
       "name": "Palabra TTS",
+      "url": null
+    },
+    "hosted:phonic_merritt": {
+      "name": "Phonic Merritt",
       "url": null
     },
     "hosted:resemble_ultra": {
