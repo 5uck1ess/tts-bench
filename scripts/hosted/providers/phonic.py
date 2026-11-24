@@ -15,6 +15,8 @@
 - Price: none for TTS on its own. Phonic bills speech-to-speech conversation minutes ($0.07/min
   Starter, phonic.ai/pricing 2026-11-23); the preview endpoint isn't priced separately.
 - Cloning: no self-serve API. Custom voices are provisioned for a workspace by Phonic.
+- Error messages never quote the response body (a diagnostic body can echo request headers,
+  i.e. the API key, and errors are written to published sidecars and samples.jsonl).
 - Response validation (anything else is an error, never a saved clip): the body must parse as
   JSON (a real parser, so escapes and whitespace follow RFC 8259) into exactly one object with
   one "audio" key (duplicates rejected) holding one canonical base64 string of headerless
@@ -57,14 +59,21 @@ _RATES = {3: (44100, 48000, 32000), 2: (22050, 24000, 16000), 0: (11025, 12000, 
 _MPEG_FRAMES = 3  # consecutive valid frames required: ~3 x 20 constrained header bits
 
 
+_FREE = -1        # frame length for a free-format header (bitrate index 0): not in the header
+_FREE_MAX = 6000  # free format tops out at 640 kbps: <= 5,760-byte frames at the lowest rates
+
+
 def _mpeg_frame_len(b, i):
-    """Length of the MPEG audio frame whose header starts at b[i], or None if none does."""
+    """Length of the MPEG audio frame whose header starts at b[i]; _FREE for a valid
+    free-format header; None if no valid header starts there."""
     if i + 4 > len(b) or b[i] != 0xFF or b[i + 1] & 0xE0 != 0xE0:
         return None
     ver, layer_bits = (b[i + 1] >> 3) & 3, (b[i + 1] >> 1) & 3
     br_idx, sr_idx, pad = b[i + 2] >> 4, (b[i + 2] >> 2) & 3, (b[i + 2] >> 1) & 1
-    if ver == 1 or layer_bits == 0 or br_idx in (0, 15) or sr_idx == 3 or b[i + 3] & 3 == 2:
+    if ver == 1 or layer_bits == 0 or br_idx == 15 or sr_idx == 3 or b[i + 3] & 3 == 2:
         return None
+    if br_idx == 0:
+        return _FREE
     layer, v1 = 4 - layer_bits, ver == 3
     bps, rate = _KBPS[(v1, layer)][br_idx - 1] * 1000, _RATES[ver][sr_idx]
     if layer == 1:
@@ -72,10 +81,41 @@ def _mpeg_frame_len(b, i):
     return (144 if v1 or layer == 2 else 72) * bps // rate + pad
 
 
+def _same_stream(b, i, j):
+    # Free-format frames repeat the header; only the padding bit (0x02 of byte 2) may differ.
+    return b[j:j + 2] == b[i:i + 2] and b[j + 2] | 2 == b[i + 2] | 2 and b[j + 3] == b[i + 3]
+
+
+_FREE_MIN = 48  # header + Layer III side info (<= 36 bytes) + some main data
+_FREE_FRAMES = 8  # a 12.7 KB free-format clip has ~10+; quiet PCM tails can fake 3 short frames
+
+
+def _is_free_format(b):
+    """Free-format MPEG: its frame length is the distance to the next identical header. A free-
+    format header is weak evidence on its own (low-level PCM such as samples -1, 0 parses as one
+    and repeats in quiet passages), so the frame chain must run through the WHOLE body at that
+    spacing (+/-1 byte for padding), at least _FREE_FRAMES frames, with plausible frame lengths."""
+    end = min(len(b) - 4, _FREE_MAX)
+    j = next((j for j in range(_FREE_MIN, end + 1)
+              if b[j] == 0xFF and _same_stream(b, 0, j)), None)
+    if j is None:
+        return False
+    i, frames = j, 2
+    while len(b) - i > j + 1:  # another whole frame fits after this one
+        nxt = next((k for k in (i + j, i + j + 1, i + j - 1)
+                    if k + 4 <= len(b) and _same_stream(b, 0, k)), None)
+        if nxt is None:
+            return False
+        i, frames = nxt, frames + 1
+    return frames >= _FREE_FRAMES
+
+
 def _is_mpeg(b):
     i = 0
     for _ in range(_MPEG_FRAMES):
         n = _mpeg_frame_len(b, i)
+        if n == _FREE:
+            return i == 0 and _is_free_format(b)
         if not n:
             return False
         i += n
@@ -107,7 +147,7 @@ def _is_container(b):
 def _single_key(pairs):
     keys = [k for k, _ in pairs]
     if keys != ["audio"]:
-        raise ValueError(f"keys {keys[:5]}")
+        raise ValueError(f"{len(keys)} key(s), expected only \"audio\"")
     return dict(pairs)
 
 
@@ -120,6 +160,7 @@ class PhonicMerritt(Adapter):
     streaming = False
     fmt = "pcm16"
     sr = 44100
+    raw_pcm = True  # audio_chunks rejects containers itself, so to_wav must not sniff b"RIFF"
     VOICE = "sabrina"  # the endpoint's documented default voice_id
 
     def voice(self, lang):
@@ -141,11 +182,11 @@ class PhonicMerritt(Adapter):
             obj = json.loads(body, object_pairs_hook=_single_key)
         except (ValueError, UnicodeDecodeError) as e:  # JSONDecodeError is a ValueError
             raise RuntimeError(f"{self.slug}: response is not exactly {{\"audio\": <base64>}} "
-                               f"({e}): {bytes(body[:200])!r}") from None
+                               f"({e}; {len(body)} bytes)") from None
         b64 = obj.get("audio") if isinstance(obj, dict) else None
         if not isinstance(b64, str) or not b64:
-            raise RuntimeError(f"{self.slug}: response is not exactly {{\"audio\": <base64>}}: "
-                               f"{bytes(body[:200])!r}")
+            raise RuntimeError(f"{self.slug}: response is not exactly {{\"audio\": <base64>}} "
+                               f"(\"audio\" is {type(b64).__name__}, {len(body)} bytes)")
         try:
             pcm = base64.b64decode(b64, validate=True)
         except (binascii.Error, ValueError) as e:
@@ -155,8 +196,7 @@ class PhonicMerritt(Adapter):
         if base64.b64encode(pcm).decode("ascii") != b64:
             raise RuntimeError(f"{self.slug}: audio is not one canonical base64 string")
         if _is_container(pcm):
-            raise RuntimeError(f"{self.slug}: got an audio container ({pcm[:4]!r}), "
-                               "requested headerless PCM16")
+            raise RuntimeError(f"{self.slug}: got an audio container, requested headerless PCM16")
         if len(pcm) % 2:
             raise RuntimeError(f"{self.slug}: odd byte count {len(pcm)} for PCM16")
         yield pcm

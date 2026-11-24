@@ -63,6 +63,9 @@ class Adapter:
     # terms forbid stripping embedded AI marks/metadata (Voicefinder's C2PA chunk): to_wav()
     # still decodes it for the duration/SR checks, but the file on disk is what the vendor sent.
     keep_bytes = False
+    # True = the adapter guarantees headerless PCM (it rejects container bodies itself), so
+    # to_wav() must not sniff a leading b"RIFF": real PCM can start with those bytes.
+    raw_pcm = False
 
     def create_clone(self, client, ref):
         """Create a cloned voice from `ref` (see prepare_clone) and return its voice id."""
@@ -158,20 +161,14 @@ def _wav_walk(data):
     return None, rate, len(data)
 
 
-def is_wav(data):
-    """A RIFF/WAVE header: "RIFF" + size + "WAVE". Four bytes alone would misread headerless PCM
-    whose first two samples happen to be 18770, 17990 as a WAV."""
-    return data[:4] == b"RIFF" and data[8:12] == b"WAVE"
-
-
-def to_wav(data, fmt, sr):
+def to_wav(data, fmt, sr, raw_pcm=False):
     """Return (wav_bytes, sr, duration_s). pcm16 gets a header; wav/mp3 are decoded to check."""
     if fmt == "pcm_f32":
         import numpy as np
         f = np.frombuffer(data[:len(data) // 4 * 4], dtype="<f4")
         data = (np.clip(f, -1.0, 1.0) * 32767).astype("<i2").tobytes()
         fmt = "pcm16"
-    if fmt == "pcm16" and is_wav(data):  # vendor wrapped it in WAV after all
+    if fmt == "pcm16" and not raw_pcm and data[:4] == b"RIFF":  # vendor wrapped it in WAV
         head, rate, end = _wav_walk(data)
         if head is None:
             raise RuntimeError("WAV stream ended before its data chunk")
@@ -202,7 +199,7 @@ def _first_speech_ms(data, fmt, arrivals):
     per byte offset)."""
     import numpy as np
     head = 0
-    if fmt == "pcm16" and is_wav(data):  # Deepgram / Resemble wrap PCM16 in WAV
+    if fmt == "pcm16" and data[:4] == b"RIFF":  # Deepgram / Resemble wrap PCM16 in WAV
         head, _, end = _wav_walk(data)
         if head is None:
             return None
@@ -224,7 +221,23 @@ def _first_speech_ms(data, fmt, arrivals):
     return None
 
 
+class CallTimeout(RuntimeError):
+    """The call passed MAX_CALL_S."""
+
+
 def synth(client, ad, text, lang):
+    """One timed call. Any error message is scrubbed of the adapter's API key: diagnostics can
+    echo response bodies, and the collector/sampler write errors to published files."""
+    try:
+        return _synth(client, ad, text, lang)
+    except Exception as e:
+        key = getattr(ad, "key", None)
+        if isinstance(key, str) and len(key) >= 8 and key in str(e):
+            raise type(e)(str(e).replace(key, "[redacted]")) if isinstance(e, RuntimeError)                 else RuntimeError(f"{type(e).__name__}: " + str(e).replace(key, "[redacted]"))                 from None
+        raise
+
+
+def _synth(client, ad, text, lang):
     # Rate-limit pacing happens before the clock starts, so it never lands in a timing.
     wait = ad._last_start + ad.min_interval - time.monotonic()
     if wait > 0:
@@ -266,12 +279,12 @@ def synth(client, ad, text, lang):
                     guard(nbytes, t0, ad.slug)
                     arrivals.append((nbytes, now))
         except Exception as e:
-            # A buffering adapter decodes after the last byte; if that work carried the call past
-            # the deadline, report the deadline, not whatever the decoder then complained about.
-            if time.perf_counter() - t0 > MAX_CALL_S and "call over" not in str(e):
-                raise RuntimeError(f"{ad.slug}: call over {MAX_CALL_S} s, aborted") from e
-            raise
-        guard(nbytes, t0, ad.slug)  # an adapter that yields nothing still gets the time check
+            # A buffering adapter decodes after the last byte. If the call is past the deadline
+            # by the time anything fails, the deadline is the result, whatever the decoder said.
+            if isinstance(e, CallTimeout) or time.perf_counter() - t0 <= MAX_CALL_S:
+                raise
+            raise CallTimeout(f"{ad.slug}: call over {MAX_CALL_S} s, aborted") from e
+        guard(nbytes, t0, ad.slug)  # also covers an adapter whose decode finished past the limit
         total = (time.perf_counter() - t0) * 1000
         headers = dict(r.headers)
         http_version = r.http_version
@@ -377,7 +390,7 @@ def run_cell(client, ad, lens, pid, lang, text, take):
         return base
     try:
         res = synth(client, ad, text, lang)
-        wav, sr, dur = to_wav(res["data"], ad.fmt, ad.sr)
+        wav, sr, dur = to_wav(res["data"], ad.fmt, ad.sr, raw_pcm=ad.raw_pcm)
         if ad.keep_bytes:
             if ad.fmt != "wav" or res["data"][:4] != b"RIFF":
                 raise RuntimeError(f"{ad.slug}: keep_bytes needs a WAV body")
@@ -431,7 +444,7 @@ def guard(nbytes, t0, slug, limit=None):
     if nbytes > limit:
         raise RuntimeError(f"{slug}: response over {limit // 2**20} MB, aborted")
     if time.perf_counter() - t0 > MAX_CALL_S:
-        raise RuntimeError(f"{slug}: call over {MAX_CALL_S} s, aborted")
+        raise CallTimeout(f"{slug}: call over {MAX_CALL_S} s, aborted")
 
 
 def bounded(it, t0, slug, limit=None):

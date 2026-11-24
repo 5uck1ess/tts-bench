@@ -174,7 +174,7 @@ def test_riff_prefixed_pcm_survives_wav_conversion():
     """Headerless PCM starting with samples 18770, 17990 (b"RIFF") is saved as 44.1 kHz PCM."""
     from scripts.hosted import core
     pcm = b"RIFF" + b"\x07\x00" * 4410
-    wav, sr, dur = core.to_wav(pcm, "pcm16", 44100)
+    wav, sr, dur = core.to_wav(pcm, "pcm16", 44100, raw_pcm=PhonicMerritt.raw_pcm)
     assert sr == 44100 and wav.endswith(pcm) and abs(dur - len(pcm) / 2 / 44100) < 1e-9
 
 
@@ -204,7 +204,8 @@ class _Client:
         return _Resp(self.body)
 
 
-def test_decode_past_the_deadline_reports_the_deadline(monkeypatch):
+@pytest.mark.parametrize("body", [b'{"nope": 1}', b'{"call over": 1}'])
+def test_decode_past_the_deadline_reports_the_deadline(monkeypatch, body):
     """Parsing that carries the call past MAX_CALL_S is a timeout, even if the parse then fails."""
     from scripts.hosted import core
     from scripts.hosted.providers import phonic
@@ -218,5 +219,48 @@ def test_decode_past_the_deadline_reports_the_deadline(monkeypatch):
 
     monkeypatch.setattr(phonic.json, "loads", slow_loads)
     ad = PhonicMerritt("k")
-    with pytest.raises(RuntimeError, match="call over"):
-        core.synth(_Client(b'{"nope": 1}'), ad, "hi", "en")
+    with pytest.raises(core.CallTimeout):  # the type, not text a response could contain
+        core.synth(_Client(body), ad, "hi", "en")
+
+
+def test_free_format_mp3_is_an_error():
+    # MPEG-1 Layer III, 44.1 kHz, bitrate index 0 (free format): length = distance to next header
+    frame = b"\xff\xfb\x00\x64" + b"\x11" * 496
+    with pytest.raises(RuntimeError, match="container"):
+        _decode({"audio": base64.b64encode(frame * 12).decode()})
+
+
+def test_free_format_header_alone_is_kept_as_pcm():
+    pcm = b"\xff\xfb\x00\x64" + b"\x11" * 996
+    assert _decode({"audio": base64.b64encode(pcm).decode()}) == pcm
+
+
+def test_other_vendors_still_reject_a_riff_body_that_is_not_wav():
+    """raw_pcm is Phonic's opt-in; a pcm16 vendor's RIFF/AVI body is still an error."""
+    from scripts.hosted import core
+    avi = b"RIFF" + (1000).to_bytes(4, "little") + b"AVI LIST" + b"\x00" * 992
+    with pytest.raises(RuntimeError, match="data chunk"):
+        core.to_wav(avi, "pcm16", 48000)
+
+
+def test_errors_never_quote_the_body_or_the_key():
+    key = "sk-test-0123456789abcdef"
+    ad = PhonicMerritt(key)
+    body = ('{"error": "bad", "echo": "Authorization: Bearer %s"}' % key).encode()
+    with pytest.raises(RuntimeError) as e:
+        b"".join(ad.audio_chunks(iter([body])))
+    assert key not in str(e.value) and "Bearer" not in str(e.value)
+
+
+def test_synth_scrubs_the_key_from_any_adapter_error():
+    from scripts.hosted import core
+    key = "sk-test-0123456789abcdef"
+
+    class Leaky(PhonicMerritt):
+        def audio_chunks(self, raw_iter):
+            raise RuntimeError(f"vendor said: Bearer {self.key}")
+            yield b""
+
+    with pytest.raises(RuntimeError) as e:
+        core.synth(_Client(b"{}"), Leaky(key), "hi", "en")
+    assert key not in str(e.value) and "[redacted]" in str(e.value)
