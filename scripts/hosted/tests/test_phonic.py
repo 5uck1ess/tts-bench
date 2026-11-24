@@ -153,3 +153,70 @@ def test_sampler_skips_vendor_missing_from_key_cache(tmp_path, monkeypatch):
     assert speed_sample.main() == 0
     assert calls == ["phonic_merritt", "rime_coda"]
     assert "SKIP" in (tmp_path / "sampler.log").read_text()
+
+
+def _mp3_frames(n=3):
+    # MPEG-1 Layer III, 128 kbps, 44.1 kHz, no padding: 144 * 128000 // 44100 = 417 bytes/frame
+    return (b"\xff\xfb\x90\x64" + b"\x00" * 413) * n
+
+
+def test_untagged_mp3_is_an_error():
+    with pytest.raises(RuntimeError, match="container"):
+        _decode({"audio": base64.b64encode(_mp3_frames()).decode()})
+
+
+def test_one_frame_sync_alone_is_kept_as_pcm():
+    pcm = _mp3_frames(1)[:416] +b"\x05\x00" * 300  # one header, then no second frame
+    assert _decode({"audio": base64.b64encode(pcm).decode()}) == pcm
+
+
+def test_riff_prefixed_pcm_survives_wav_conversion():
+    """Headerless PCM starting with samples 18770, 17990 (b"RIFF") is saved as 44.1 kHz PCM."""
+    from scripts.hosted import core
+    pcm = b"RIFF" + b"\x07\x00" * 4410
+    wav, sr, dur = core.to_wav(pcm, "pcm16", 44100)
+    assert sr == 44100 and wav.endswith(pcm) and abs(dur - len(pcm) / 2 / 44100) < 1e-9
+
+
+class _Resp:
+    status_code = 200
+    headers = {"content-type": "application/json"}
+    http_version = "HTTP/1.1"
+
+    def __init__(self, body):
+        self.body = body
+
+    def iter_bytes(self):
+        yield self.body
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *a):
+        return False
+
+
+class _Client:
+    def __init__(self, body):
+        self.body = body
+
+    def stream(self, *a, **k):
+        return _Resp(self.body)
+
+
+def test_decode_past_the_deadline_reports_the_deadline(monkeypatch):
+    """Parsing that carries the call past MAX_CALL_S is a timeout, even if the parse then fails."""
+    from scripts.hosted import core
+    from scripts.hosted.providers import phonic
+    now = {"t": 0.0}
+    monkeypatch.setattr(core.time, "perf_counter", lambda: now["t"])
+    real_loads = phonic.json.loads
+
+    def slow_loads(*a, **k):
+        now["t"] = core.MAX_CALL_S + 0.1  # the parse is what crosses the deadline
+        return real_loads(*a, **k)
+
+    monkeypatch.setattr(phonic.json, "loads", slow_loads)
+    ad = PhonicMerritt("k")
+    with pytest.raises(RuntimeError, match="call over"):
+        core.synth(_Client(b'{"nope": 1}'), ad, "hi", "en")

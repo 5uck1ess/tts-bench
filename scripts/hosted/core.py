@@ -158,6 +158,12 @@ def _wav_walk(data):
     return None, rate, len(data)
 
 
+def is_wav(data):
+    """A RIFF/WAVE header: "RIFF" + size + "WAVE". Four bytes alone would misread headerless PCM
+    whose first two samples happen to be 18770, 17990 as a WAV."""
+    return data[:4] == b"RIFF" and data[8:12] == b"WAVE"
+
+
 def to_wav(data, fmt, sr):
     """Return (wav_bytes, sr, duration_s). pcm16 gets a header; wav/mp3 are decoded to check."""
     if fmt == "pcm_f32":
@@ -165,7 +171,7 @@ def to_wav(data, fmt, sr):
         f = np.frombuffer(data[:len(data) // 4 * 4], dtype="<f4")
         data = (np.clip(f, -1.0, 1.0) * 32767).astype("<i2").tobytes()
         fmt = "pcm16"
-    if fmt == "pcm16" and data[:4] == b"RIFF":  # vendor wrapped it in WAV after all
+    if fmt == "pcm16" and is_wav(data):  # vendor wrapped it in WAV after all
         head, rate, end = _wav_walk(data)
         if head is None:
             raise RuntimeError("WAV stream ended before its data chunk")
@@ -196,7 +202,7 @@ def _first_speech_ms(data, fmt, arrivals):
     per byte offset)."""
     import numpy as np
     head = 0
-    if fmt == "pcm16" and data[:4] == b"RIFF":  # Deepgram / Resemble wrap PCM16 in WAV
+    if fmt == "pcm16" and is_wav(data):  # Deepgram / Resemble wrap PCM16 in WAV
         head, _, end = _wav_walk(data)
         if head is None:
             return None
@@ -249,15 +255,23 @@ def synth(client, ad, text, lang):
         # iter_raw would hand back compressed bytes. Neither applies a fixed read size.
         arrivals = []  # (byte offset where the chunk ends, arrival ms)
         nbytes = 0
-        for chunk in ad.audio_chunks(bounded(r.iter_bytes(), t0, ad.slug)):
-            if chunk:
-                now = (time.perf_counter() - t0) * 1000
-                if ttfa is None:
-                    ttfa = now
-                chunks.append(chunk)
-                nbytes += len(chunk)
-                guard(nbytes, t0, ad.slug)
-                arrivals.append((nbytes, now))
+        try:
+            for chunk in ad.audio_chunks(bounded(r.iter_bytes(), t0, ad.slug)):
+                if chunk:
+                    now = (time.perf_counter() - t0) * 1000
+                    if ttfa is None:
+                        ttfa = now
+                    chunks.append(chunk)
+                    nbytes += len(chunk)
+                    guard(nbytes, t0, ad.slug)
+                    arrivals.append((nbytes, now))
+        except Exception as e:
+            # A buffering adapter decodes after the last byte; if that work carried the call past
+            # the deadline, report the deadline, not whatever the decoder then complained about.
+            if time.perf_counter() - t0 > MAX_CALL_S and "call over" not in str(e):
+                raise RuntimeError(f"{ad.slug}: call over {MAX_CALL_S} s, aborted") from e
+            raise
+        guard(nbytes, t0, ad.slug)  # an adapter that yields nothing still gets the time check
         total = (time.perf_counter() - t0) * 1000
         headers = dict(r.headers)
         http_version = r.http_version

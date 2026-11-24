@@ -22,6 +22,7 @@
   and the parse + decode work done after the last byte arrives (core.guard checks the call
   deadline per chunk, so a body finishing just under it is still reported as over).
 - Decoded audio that is really a container file (WAV/RF64/BW64/RIFX, Wave64, AIFF, Ogg, FLAC,
+  untagged MP3 = three consecutive valid MPEG frames,
   ID3-tagged MP3) is rejected: core.to_wav would read a WAV at its embedded rate, or save the
   header as 44.1 kHz samples. Each signature is matched on its STRUCTURE (form type, version and
   size fields), not a 3-4 byte prefix, because headerless PCM can start with any 4 bytes
@@ -42,8 +43,51 @@ MAX_BODY = 4 * 1024 * 1024
 _W64_RIFF = bytes.fromhex("72696666 2e91cf11 a5d628db 04c10000".replace(" ", ""))
 
 
+# MPEG audio frame headers, for untagged MP3/MP2. kbps by (version is MPEG-1, layer) for indices
+# 1-14; MPEG-2/2.5 share a table for layers II and III.
+_KBPS = {
+    (True, 1): (32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448),
+    (True, 2): (32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384),
+    (True, 3): (32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320),
+    (False, 1): (32, 48, 56, 64, 80, 96, 112, 128, 144, 160, 176, 192, 224, 256),
+    (False, 2): (8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160),
+}
+_KBPS[(False, 3)] = _KBPS[(False, 2)]
+_RATES = {3: (44100, 48000, 32000), 2: (22050, 24000, 16000), 0: (11025, 12000, 8000)}
+_MPEG_FRAMES = 3  # consecutive valid frames required: ~3 x 20 constrained header bits
+
+
+def _mpeg_frame_len(b, i):
+    """Length of the MPEG audio frame whose header starts at b[i], or None if none does."""
+    if i + 4 > len(b) or b[i] != 0xFF or b[i + 1] & 0xE0 != 0xE0:
+        return None
+    ver, layer_bits = (b[i + 1] >> 3) & 3, (b[i + 1] >> 1) & 3
+    br_idx, sr_idx, pad = b[i + 2] >> 4, (b[i + 2] >> 2) & 3, (b[i + 2] >> 1) & 1
+    if ver == 1 or layer_bits == 0 or br_idx in (0, 15) or sr_idx == 3 or b[i + 3] & 3 == 2:
+        return None
+    layer, v1 = 4 - layer_bits, ver == 3
+    bps, rate = _KBPS[(v1, layer)][br_idx - 1] * 1000, _RATES[ver][sr_idx]
+    if layer == 1:
+        return (12 * bps // rate + pad) * 4
+    return (144 if v1 or layer == 2 else 72) * bps // rate + pad
+
+
+def _is_mpeg(b):
+    i = 0
+    for _ in range(_MPEG_FRAMES):
+        n = _mpeg_frame_len(b, i)
+        if not n:
+            return False
+        i += n
+    return True
+
+
 def _is_container(b):
-    """True when b starts with a recognised audio container header (structure-checked)."""
+    """True when b starts with a recognised audio container header (structure-checked), or with
+    consecutive MPEG audio frames (untagged MP3). One frame-sync word alone is NOT enough: as
+    little-endian PCM16, 0xFF 0xEx is just a small negative sample."""
+    if _is_mpeg(b):
+        return True
     if b[:4] in (b"RIFF", b"RIFX", b"RF64", b"BW64") and b[8:12] == b"WAVE":
         return True
     if b[:16] == _W64_RIFF:                                   # Sony Wave64 'riff' GUID
