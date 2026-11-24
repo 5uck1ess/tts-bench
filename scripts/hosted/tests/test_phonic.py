@@ -29,7 +29,7 @@ def test_malformed_audio_is_an_error_not_a_clip(audio):
 
 
 def test_duplicate_audio_fields_are_an_error():
-    good = base64.b64encode(b"" * 50).decode()
+    good = base64.b64encode(b"\x01\x02" * 50).decode()  # valid PCM16: the LAST field alone would pass
     raw = ('{"audio": "%s", "audio": "%s"}' % (base64.b64encode(b"abc").decode(), good)).encode()
     with pytest.raises(RuntimeError, match="duplicate"):
         b"".join(PhonicMerritt("k").audio_chunks(iter([raw])))
