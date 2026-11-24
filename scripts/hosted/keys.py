@@ -83,11 +83,17 @@ def refresh():
     _load(refresh=True)
 
 
+class MissingKey(SystemExit):
+    """The cache/1Password item has no field for this provider. A SystemExit, so one-off runs still
+    stop with the message; the unattended sampler catches it and skips just that vendor (a cache
+    made before a vendor was added must not fail the whole pass)."""
+
+
 def get(provider, stale_ok=False):
     label = FIELD.get(provider, provider)
     key = _load(stale_ok=stale_ok).get(label)
     if not key:
-        raise SystemExit(f"no '{label}' field in 1Password item '{OP_ITEM}'")
+        raise MissingKey(f"no '{label}' field in 1Password item '{OP_ITEM}'")
     return key.strip()
 
 

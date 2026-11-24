@@ -38,6 +38,8 @@ CATALOG = {
     "palabra_tts": ("Palabra TTS", "$12", ""),
     "resemble_ultra": ("Resemble Ultra", "≈$33", "$0.0005 per second of audio (Flex)"),
     "voicefinder_voyager1": ("Voicefinder Voyager 1", "$60", "API balance; $80 after 2026-12-18"),
+    "phonic_merritt": ("Phonic Merritt", "—",
+                       "TTS not priced on its own; Phonic bills speech-to-speech minutes ($0.07/min)"),
 }
 
 
@@ -74,6 +76,7 @@ MODEL_ID = {
     "palabra_tts": "auto",
     "resemble_ultra": "resemble-ultra",
     "voicefinder_voyager1": "voyager-1",
+    "phonic_merritt": "merritt",
 }
 
 

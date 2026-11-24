@@ -57,6 +57,7 @@ NO_CLONE = {
     "openai_realtime21": "custom voices are limited to approved customers",
     "mai_voice21": "needs Microsoft Limited Access approval",
     "minimax_speech28hd": "no cloning through OpenRouter (our route)",
+    "phonic_merritt": "no self-serve cloning; custom voices are provisioned by Phonic",
 }
 
 STYLE = """<style>
