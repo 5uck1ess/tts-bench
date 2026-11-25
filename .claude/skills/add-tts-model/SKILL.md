@@ -182,7 +182,8 @@ misleading. Build the comparison so that question is answerable side by side.
 The ship bar is **"is the runner correct"**, not "is the output good". A model that sounds
 bad through a correct runner still publishes — showing the defect is the bench. Don't hold
 a publish on the listen unless it points at a runner bug. If a broken clip would put voters on
-near-silence, add it to `HOLD_CLIPS` in `arena/build_manifest.py` instead: the board keeps it.
+near-silence, add `(model, prompt)` to `HOLD_CLIPS` in `arena/build_manifest.py` instead. That holds the
+prompt in both lenses, and the board keeps it.
 
 ## Phase 8 — Publish
 
@@ -301,8 +302,8 @@ Three things go wrong on the Linux side:
   `git -C _gh-pages reset --hard origin/gh-pages` before scoring, or pass `--gh-root` to score a staged tree (SIM still reads its references from
   `_gh-pages/*-cloning/_reference.wav`).
 - **Scores are keyed by `(dir, wav)`, and the board looks a score up under the clip it
-  picks.** It walks `publish.py`'s `LISTEN_*_DIRS` in order (Windows, then Linux, then
-  `windows-es-*`), so score every dir the pick can land on, not just the rig you benched.
+  picks.** It walks `publish.py`'s `LISTEN_*_DIRS` in order (Windows, Linux, `mac-default` on the
+  default lens, then `windows-es-*`), so a staged tree needs every dir the pick can land on.
 
 `score_all` skips every clip already in `scores.csv`, including one whose WER cell came back
 blank. Drop those rows, or use `--rescore`, before rerunning.
