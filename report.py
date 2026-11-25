@@ -1933,6 +1933,23 @@ def build_report(run_dir: Path) -> Path:
     return run_dir / "index.html"
 
 
+BENCH_CSV_COLUMNS = {"prompt_id", "model", "device", "ok"}
+
+
+def _is_bench_csv(csv_path) -> bool:
+    """False for a missing CSV or one whose readable header lacks bench.py's columns (an older
+    scripts/spanish_longform.py run wrote such a results.csv). A CSV that exists but cannot be decoded counts as a
+    bench CSV, so the per-run handlers still see it and warn, as they did before this check."""
+    try:
+        with open(csv_path, newline="", encoding="utf-8") as f:
+            header = next(csv.reader(f), [])
+    except OSError:
+        return False
+    except (UnicodeError, csv.Error):
+        return True
+    return BENCH_CSV_COLUMNS.issubset(header)
+
+
 def build_index() -> Path:
     if not RESULTS.exists():
         raise SystemExit(f"No results dir at {RESULTS}")
@@ -1942,7 +1959,7 @@ def build_index() -> Path:
         if not d.is_dir():
             continue
         csv_path = d / "results.csv"
-        if not csv_path.exists():
+        if not _is_bench_csv(csv_path):
             continue
         try:
             rows = _read_csv(csv_path)
@@ -2029,7 +2046,7 @@ def main() -> int:
 
     if args.all:
         for d in sorted(RESULTS.iterdir(), reverse=True):
-            if not d.is_dir() or not (d / "results.csv").exists():
+            if not d.is_dir() or not _is_bench_csv(d / "results.csv"):
                 continue
             html = build_report(d)
             print(f"  wrote {html.relative_to(REPO)} (+ 3 lens pages)")
