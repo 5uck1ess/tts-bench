@@ -1,6 +1,6 @@
 # Tasks & pending work
 
-> Open issues + planned features that aren't yet GitHub issues. Move to GitHub when they sharpen into actionable items.
+> Open work and planned features. Our own bench findings go in `docs/known-issues.md`, not GitHub issues; GitHub issues are for reports from other people.
 
 ## Active
 

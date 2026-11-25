@@ -15,9 +15,9 @@ knew the individual facts. Read the whole flow before starting.
 
 ## Phase 0 — Scope decision (do this before installing anything)
 
-Check the four inclusion bars in `docs/considered.md` and the `bench-scope-decisions`
-memory. A model is in scope if it: installs cross-platform in a self-contained venv;
-has a clean single-process Python API (text in, wav out); has a license permitting
+Check the inclusion bars (the first three are in `docs/considered.md`). A model is in scope if it: installs cross-platform in a self-contained venv;
+fits the runner protocol, text in, wav out, in one process (a CLI binary counts; Linux server-backed rows are the
+exception in `docs/considered.md`); has a license permitting
 redistribution of benchmark outputs; and brings value the board doesn't already have.
 CPU support is preferred, not required.
 
@@ -25,6 +25,9 @@ CPU support is preferred, not required.
 are independent metrics.** NISQA emits MOS + noisiness + coloration + discontinuity
 together — counting them as four wins inflates the case fourfold. Gepard 1.0 was
 skipped on exactly this, plus a SIM score outside the field.
+
+The bars are advice to the repo owner, not a veto. Once the owner says add, add it without
+re-arguing the value bar.
 
 **A skip is a deliverable.** Write it into `docs/considered.md` with the reasoning and
 a concrete revisit condition. Half this file's value is stopping the same model from
@@ -59,9 +62,13 @@ than from the card:
 - Does cloning work, and does it need a transcript? (convention: sibling `.txt`)
 - Does the long prompt complete?
 
+When you pick or change a cloner's reference cut, judge it on speaker similarity as well
+as WER. A clip can say every word right in the model's default voice (Hojo 80M did).
+
 **Use `bench.py`'s actual `PROMPTS`, especially prompt 3.** Short test text has hidden a
 hard failure that would otherwise have shipped. Prompt 3 is where token caps, duration
-estimators, and chunking break.
+estimators, and chunking break. The smoke gate is every canonical English prompt returning
+`ok: true` with a valid wav, and it applies again after any checkpoint or backend swap.
 
 **The generation-cap trap.** Many models default to a `max_new_tokens` that looks
 generous and isn't. Compute the ceiling in seconds — `cap ÷ frames_per_second` — and
@@ -81,7 +88,10 @@ Copy the shape of an existing runner (`runners/inflect_runner.py` for a simple o
 - failures emit `{"ok": false, "error": ...}` and exit cleanly — never crash the cell
 - non-streaming models report `ttfa_ms == gen_s`; say so in the docstring so the number
   isn't read as a streaming latency
-- pin seeds and any voice selector so reruns are reproducible
+- pin seeds and any voice selector so reruns are reproducible. If the pinned seed lands the
+  model at the bottom of a metric, sweep ~8 seeds before publishing or defending the number.
+  Seed at load too if loading draws randoms (a reference encode can). Check determinism on
+  decoded samples, not bytes: libsndfile writes a timestamp into the WAV `PEAK` chunk.
 
 Document *why* in the module docstring — the gotchas you hit are the most valuable
 thing in the file, and the next person is usually you.
@@ -105,7 +115,9 @@ It does not cover the README.
 2. **All nine registries in `report.py`**: `MODEL_DISPLAY_NAMES`, `MODEL_SIZE`, `MODEL_URL`,
    `MODEL_KIND`, `MODEL_RELEASE`, `MODEL_SR`, `MODEL_EXPRESSIVE`, `MODEL_LICENSE`, `MODEL_LANGS`.
    `MODEL_CROSSLINGUAL` is curated — add only on positive evidence of cloning in one
-   language and speaking another.
+   language and speaking another. The guard checks that values exist, not that they're right:
+   `MODEL_RELEASE` is the checkpoint repo's creation month (see the comment above it), and a split
+   licence gets a two-part cell.
 3. `publish.py` — `NO_PRESET_VOICE` (cloning-only, no real default voice) or
    `_PRESET_AND_CLONE` (has both; fills both lenses). Keep in sync with
    `arena/build_manifest.py`, which mirrors these sets.
@@ -114,7 +126,11 @@ It does not cover the README.
    sentence. Add the table row to the right section, alphabetically by display name.
 
 **Params come from the model card or from computing over the safetensors — never
-from a sibling model.** A NeuTTS variant was mislabeled for exactly that reason.
+from a sibling model.** A NeuTTS variant was mislabeled for exactly that reason. Count the
+whole stack: a headline that covers only the acoustic model or LM leaves out the vocoder or
+codec. The licence comes from the checkpoint's own repo too: a smaller sibling can ship under a
+different licence. On a merge conflict over the README counts, take master's counts and let
+the tests decide.
 
 ## Phase 5 — Tests
 
@@ -125,6 +141,12 @@ python -m pytest scoring/tests/
 Run this *before* benching, not before publishing. It catches README count drift and
 registry gaps in under a second. `scyllasband` shipped live with zero registries because
 this was skipped.
+
+CI (`.github/workflows/ci.yml`) runs more than that: the whole `pytest -q` (including
+`arena/tests`, which need fastapi/httpx), `compileall`, and `ruff check .`. For the full gate,
+build a throwaway venv from `requirements-dev.txt`. Run the tests from inside the tree you
+changed: from a worktree, `../tts-bench/scoring/tests` imports the main checkout's
+`report.py` and passes on code you never touched.
 
 ## Phase 6 — Bench at CANONICAL parameters
 
@@ -159,13 +181,16 @@ misleading. Build the comparison so that question is answerable side by side.
 
 The ship bar is **"is the runner correct"**, not "is the output good". A model that sounds
 bad through a correct runner still publishes — showing the defect is the bench. Don't hold
-a publish on the listen unless it points at a runner bug.
+a publish on the listen unless it points at a runner bug. If a broken clip would put voters on
+near-silence, add `(model, prompt)` to `HOLD_CLIPS` in `arena/build_manifest.py` instead. That holds the
+prompt in both lenses, and the board keeps it.
 
 ## Phase 8 — Publish
 
 **PR first, gh-pages second.** Open the PR for the code changes and publish only after its
 review comes back READY. Publishing from an unmerged branch puts rows live that the review
-may still change.
+may still change. Once it is READY or merged, publish right away; don't wait for a second
+go-ahead.
 
 ```
 git -C _gh-pages reset --hard origin/gh-pages     # FIRST. Always.
@@ -175,8 +200,17 @@ python publish.py results/<rig>-default
 python publish.py results/<rig>-cloning
 ```
 
-Spanish (prompt 6) lives in separate `results/<rig>-es-default` / `-es-cloning` dirs; merge
-and publish those too when the model claims `"es"`.
+On Windows, Spanish (prompt 6) lives in separate `results/windows-es-default` /
+`-es-cloning` dirs (`publish.py` `LISTEN_*_DIRS`). Split p6 out of the scratch run, then merge
+and publish those dirs too when the model claims `"es"`. Linux has no es dirs, so p6 stays in
+`linux-default` / `linux-cloning` there.
+
+`publish.py` pushes as well as commits. Fix anything after it with a new `_gh-pages` commit,
+never `--amend`, or the next push is rejected.
+
+Before the reset, run `git -C _gh-pages log origin/gh-pages..gh-pages`. A local publish
+commit that never got pushed (an interrupted run, a parallel session) is destroyed by the
+reset. Tag it or push it first.
 
 **`publish.py` pushes the whole local canonical dir, not just your model.** Anything else
 sitting unpublished in it goes live with your push. Diff the dir against what gh-pages
@@ -204,7 +238,9 @@ Pushed ≠ served. Check the Pages build reports `built` on your commit
 (`gh api repos/<owner>/<repo>/pages/builds`), then fetch the live pages **with a
 cache-buster** — a plain fetch will hand you a stale CDN copy and make a correct deploy
 look broken. Confirm the display name renders (a raw slug means a missing registry) and
-that a published wav returns 200.
+that a published wav returns 200. The CDN can serve the old page for a few minutes even with
+a cache-buster. If `git -C _gh-pages show HEAD:<file>` has the change, wait and re-fetch
+before calling the deploy broken.
 
 ## Phase 10 — Arena
 
@@ -248,7 +284,8 @@ manifest-only upload after confirming the schema is unchanged.
 ## Phase 11 — Record it
 
 - `docs/known-issues.md` — the traps, with the measurements that prove them
-- memory: scope decision, shipped state, new SHAs, model count
+- `docs/considered.md` — the scope call, for adds as well as skips
+
 ## Phase 12 — Linux pass (part of the add, not a follow-up)
 
 Run the bench on the Linux rig (ryzen-ai) yourself and publish its rows, then run the
@@ -256,6 +293,22 @@ objective scoring there: UTMOS / WER / **SIM** can only be produced on Linux, be
 fairseq stack does not run on Windows. Commit the new `scoring/scores.csv` rows through a
 PR and republish. Don't hand this off as a task for later; the add isn't done until both
 rigs and the Scores board have the model.
+
+Three things go wrong on the Linux side:
+- **The Linux rig's local `results/linux-*` dirs go stale.** Before merging new rows,
+  make sure they hold every row and clip already live on Pages: the publish replaces each dir from
+  the local copy, so anything missing there is rolled back or deleted. Reconcile by hand, never by
+  wholesale copy either way: some local dirs deliberately hold newer audio than Pages (Pocket, see
+  known-issues).
+- **By default the scorers scan only `_gh-pages/`.** Run `git -C _gh-pages fetch origin gh-pages`, then
+  `git -C _gh-pages reset --hard origin/gh-pages` before scoring, or pass `--gh-root` to score a staged tree (SIM still reads its references from
+  `_gh-pages/*-cloning/_reference.wav`).
+- **Scores are keyed by `(dir, wav)`, and the board looks a score up under the clip it
+  picks.** It walks `publish.py`'s `LISTEN_*_DIRS` in order (Windows, Linux, `mac-default` on the
+  default lens, then `windows-es-*`), so a staged tree needs every dir the pick can land on.
+
+`score_all` skips every clip already in `scores.csv`, including one whose WER cell came back
+blank. Drop those rows, or use `--rescore`, before rerunning.
 
 The Default Scores board's NAQ column fills from a separate private scoring pass that
 isn't in this repo; a new model shows a dash there until that pass runs.
@@ -268,11 +321,22 @@ Write predictions down before the Linux run where you have them (expected RTFx o
 A model whose upstream shipped a fix is **not** a fresh add. The phases above still
 apply, but four things differ, and three of them fail silently.
 
+New row or replace? A new generation or a separately named checkpoint gets its own slug.
+A new release of the same model is re-benched in place. Ask the repo owner when it's unclear.
+
+**A pin bump may not reach an existing venv.** Most installer blocks skip a venv that already
+exists ("already installed"); only a few re-check the pin, and weights fetched inside that guard
+are skipped too. Check the commit or package version inside the venv before benching.
+
 **Preserve the old rows before touching the venv.** Copy the model's rows + wavs out of
 both canonical dirs into `results/_preserved_<model>_<version>/`. Without it the by-ear
 listen has nothing to compare against — and the honest question is not "is this good",
 it's "is this better than what we already published". Stage the A/B on **prompt 3**, old
 vs new.
+
+**Check a speed delta against the audio.** If the deterministic path reproduces bit-for-bit
+but the timings moved and the runner's timing code did not change, the machine was loaded; don't
+publish those numbers. A deliberate timing fix (LFM3-Audio's TTFA, see known-issues) is the exception.
 
 **Confirm the weights actually moved.** Record
 `~/.cache/huggingface/hub/models--<org>--<repo>/refs/main` before the first load and

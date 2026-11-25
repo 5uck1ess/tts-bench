@@ -54,5 +54,25 @@ git add arena/clips_manifest.json && git commit -m "chore(arena): refresh clip m
 ```
 
 ## Deploy
-Push the `arena/` tree to the HF Space git remote (Docker SDK). Set the secrets
-above. The Space builds the Dockerfile and serves on port 7860.
+The Space files live at the Space repo root, and a GitHub push does not deploy them.
+Upload with the Python API, using a **write** token:
+`HfApi().upload_file(..., repo_type="space")` for the manifest alone, or
+`upload_folder` on a staged copy of the tree (`git archive HEAD:arena`, which leaves out the
+gitignored `.env`, `arena.db` and `backups/`).
+- Don't use `hf upload`. It calls the repo-create endpoint first, which has returned 402 for
+  Docker Spaces on a free account even when the Space already exists.
+- Don't `git push` to the Space remote. It hangs on a credential prompt in a non-interactive
+  shell.
+
+Set the secrets above. The Space builds the Dockerfile and serves on port 7860, and it reads
+the manifest only at startup.
+
+Before uploading a manifest:
+- Check that every new clip URL already returns 200 from gh-pages.
+- Diff it against the live deployed manifest, not just the repo copy.
+
+To debug the running Space, read its logs from `GET https://huggingface.co/api/spaces/<id>/logs/run`
+(server-sent events, with a bearer token).
+
+If the live board shows 0 votes, check whether Turso's free tier suspended the idle database
+(seen 2026-07-05). It came back on its own and no data was lost.
