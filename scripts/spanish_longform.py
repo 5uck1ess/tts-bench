@@ -23,6 +23,7 @@ generation time over the warm chunks.
 """
 
 import argparse
+import contextlib
 import csv
 import json
 import os
@@ -156,26 +157,38 @@ def _opt_name(token, option):
     return name.startswith("--") and len(name) > 2 and option.startswith(name)
 
 
-def check_argv_voice(model, voice, argv):
-    """The recorded voice label must be what the final argv applies (also after --argv-json)."""
-    flag = MODELS[model][3]
-    tail = argv[1:]
-    if flag is None:
-        if voice != "builtin":
-            raise SystemExit(f"{model}: only the builtin preset can be recorded")
-        if any(_opt_name(a, o) for a in tail for o in ("--reference", "--speaker")):
-            raise SystemExit(f"{model}: 'builtin' is recorded but the runner argv selects a reference/speaker")
-        return
-    applied = []
+def _values(tail, option):
+    """Every value the argv gives `option` (separate, =value, or abbreviated form)."""
+    got = []
     for i, a in enumerate(tail):
-        if not _opt_name(a, flag):
-            continue
-        if "=" in a:
-            applied.append(a.split("=", 1)[1])
-        elif i + 1 < len(tail):
-            applied.append(tail[i + 1])
-    if applied != [voice]:
-        raise SystemExit(f"{model}: recorded voice {voice!r} but the runner argv applies {applied or 'no voice'}")
+        if _opt_name(a, option):
+            if "=" in a:
+                got.append(a.split("=", 1)[1])
+            elif i + 1 < len(tail):
+                got.append(tail[i + 1])
+            else:
+                got.append("")
+    return got
+
+
+def check_argv_voice(model, voice, argv):
+    """The recorded voice label must be what the final argv applies (also after --argv-json): the model's own voice
+    flag selects exactly the recorded voice, no other voice-selecting option appears, and a fixed --variant is kept."""
+    fixed, flag = MODELS[model][2], MODELS[model][3]
+    tail = argv[1:]
+    if flag is None and voice != "builtin":
+        raise SystemExit(f"{model}: only the builtin preset can be recorded")
+    for other in ("--reference", "--speaker"):
+        if other != flag and _values(tail, other):
+            raise SystemExit(f"{model}: {voice!r} is recorded but the runner argv selects a {other[2:]}")
+    if "--variant" in fixed:
+        want = fixed[fixed.index("--variant") + 1]
+        if _values(tail, "--variant") != [want]:
+            raise SystemExit(f"{model}: the runner argv changes --variant from {want!r}")
+    if flag is not None:
+        applied = _values(tail, flag)
+        if applied != [voice]:
+            raise SystemExit(f"{model}: recorded voice {voice!r} but the runner argv applies {applied or 'no voice'}")
 
 
 def wav_seconds(path):
@@ -197,7 +210,9 @@ def synthesize(model, voice, argv, passages, out, ready_timeout=READY_TIMEOUT_S,
     try:
         runner = Runner(argv, ready_timeout)
         (out / "_warmup").mkdir(parents=True, exist_ok=True)
-        runner.say(WARMUP, out / "_warmup" / f"{model}.wav", chunk_timeout)
+        warm = runner.say(WARMUP, out / "_warmup" / f"{model}.wav", chunk_timeout)
+        if not warm.get("ok"):  # a rejected warm-up leaves the model cold: its first take would skew warm RTFx
+            raise RuntimeError(f"warm-up rejected: {str(warm.get('error', ''))[:200]}")
         for p in passages:
             current = p["id"]
             pdir = mdir / p["id"] / run_tag
@@ -242,6 +257,28 @@ def synthesize(model, voice, argv, passages, out, ready_timeout=READY_TIMEOUT_S,
         if runner is not None:
             runner.close(graceful=not any("TimeoutError" in str(r.get("error", "")) for r in rows))
     return rows
+
+
+@contextlib.contextmanager
+def manifest_lock(directory):
+    """One collector or scorer per output directory. An overlapping run would write a stale manifest snapshot over
+    the other's committed rows (and prune audio the snapshot still points at), so a second one is refused."""
+    directory = Path(directory)
+    directory.mkdir(parents=True, exist_ok=True)
+    f = open(directory / ".es_longform.lock", "a+")
+    try:
+        try:
+            if os.name == "nt":
+                import msvcrt
+                msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+            else:
+                import fcntl
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except OSError:
+            raise SystemExit(f"{directory}: another spanish_longform run is using this directory; wait for it")
+        yield
+    finally:
+        f.close()  # closing releases the lock
 
 
 def prune_passage_dirs(out, rows, model, voice, passage_ids):
@@ -296,28 +333,41 @@ def score(csv_path, wer=None, health=None):
         header = next(csv.reader(f), [])
     if header != FIELDS:
         raise SystemExit(f"{csv_path}: not an es-longform manifest (expected columns {FIELDS}); nothing written")
-    rows = read_rows(csv_path)
-    try:
-        for r in rows:
-            if r["ok"] != "True":
-                continue
-            try:
-                dur = wav_seconds(r["wav"])
-                if dur > MAX_AUDIO_S:  # Whisper sees only the first 30 s: never score a longer take as complete
-                    r.update(hyp="", edits="", ref_words="", wer="", health_flags="",
-                             error=f"score: audio {dur:.1f}s over {MAX_AUDIO_S:.0f}s, left unscored")
+    with manifest_lock(Path(csv_path).resolve().parent):
+        rows = read_rows(csv_path)
+        try:
+            for r in rows:
+                if r["ok"] != "True":
                     continue
-                ref = normalize_intl(join_letter_runs(Path(r["wav"]).with_suffix(".txt").read_text(encoding="utf-8")))
-                hyp = wer.transcribe(r["wav"], "es")
-                m = jiwer.process_words(ref, normalize_intl(join_letter_runs(spell_digits(hyp))))
-                edits = m.substitutions + m.deletions + m.insertions
-                r.update(hyp=hyp, edits=edits, ref_words=len(ref.split()), error="",
-                         wer=f"{edits / max(1, len(ref.split())):.4f}", health_flags=health.score(r["wav"]))
-            except Exception as e:  # one bad clip must not cost the rest of the scores
-                r.update(hyp="", edits="", ref_words="", wer="", health_flags="",
-                         error=f"score: {type(e).__name__}: {e}"[:300])
-    finally:
-        write_rows(csv_path, rows)
+                notes = []
+                try:
+                    dur = wav_seconds(r["wav"])
+                except Exception as e:
+                    r.update(hyp="", edits="", ref_words="", wer="", health_flags="",
+                             error=f"score: {type(e).__name__}: {e}"[:300])
+                    continue
+                r.update(hyp="", edits="", ref_words="", wer="", health_flags="", error="")
+                if dur > MAX_AUDIO_S:  # Whisper sees only the first 30 s: never score a longer take as complete
+                    notes.append(f"audio {dur:.1f}s over {MAX_AUDIO_S:.0f}s, WER left unscored")
+                else:
+                    try:
+                        ref = normalize_intl(join_letter_runs(
+                            Path(r["wav"]).with_suffix(".txt").read_text(encoding="utf-8")))
+                        hyp = wer.transcribe(r["wav"], "es")
+                        m = jiwer.process_words(ref, normalize_intl(join_letter_runs(spell_digits(hyp))))
+                        edits = m.substitutions + m.deletions + m.insertions
+                        r.update(hyp=hyp, edits=edits, ref_words=len(ref.split()),
+                                 wer=f"{edits / max(1, len(ref.split())):.4f}")
+                    except Exception as e:  # a WER failure must not cost the Health result, and vice versa
+                        notes.append(f"wer: {type(e).__name__}: {e}")
+                try:
+                    r["health_flags"] = health.score(r["wav"])
+                except Exception as e:
+                    notes.append(f"health: {type(e).__name__}: {e}")
+                if notes:
+                    r["error"] = ("score: " + "; ".join(notes))[:300]
+        finally:
+            write_rows(csv_path, rows)
 
 
 def render_table(csv_path):
@@ -334,12 +384,12 @@ def render_table(csv_path):
             continue
         a["audio"] += float(r["audio_s"])  # speed counts every successful synthesis, scored or not
         a["gen"] += float(r["gen_s"])
+        a["flag"] += bool(r.get("health_flags"))  # Health is independent of WER
         if r.get("wer", "") == "":
             a["failed"] += 1  # synthesized but could not be scored: kept out of WER only
             continue
         a["e"] += int(r["edits"])
         a["w"] += int(r["ref_words"])
-        a["flag"] += bool(r["health_flags"])
     lines = ["| model | voice | chunks | failed | WER | Health-flagged chunks | audio (s) | RTFx |",
              "|---|---|---:|---:|---:|---:|---:|---:|"]
 
@@ -386,7 +436,11 @@ def main(argv=None):
         check_argv_voice(model, voice, argv)
         plan.append((model, voice, argv))
     out = Path(a.out).expanduser().resolve()
-    out.mkdir(parents=True, exist_ok=True)
+    with manifest_lock(out):
+        return collect(plan, passages, out)
+
+
+def collect(plan, passages, out):
     manifest = out / MANIFEST
     rows = read_rows(manifest)
     for model, voice, argv in plan:

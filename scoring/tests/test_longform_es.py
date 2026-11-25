@@ -39,6 +39,9 @@ STUB = textwrap.dedent('''
         job = json.loads(line)
         if mode == "hang" and i >= 1:
             time.sleep(60)
+        if mode == "warmfail" and i == 0:
+            print(json.dumps({"ok": False, "error": "no warmup"}), flush=True)
+            continue
         wav(job["out"], secs)
         print(json.dumps({"ok": True, "run_index": i, "audio_s": secs, "gen_s": secs / 10}), flush=True)
 ''')
@@ -413,12 +416,30 @@ def test_unattempted_passages_are_recorded_as_skipped(stub, tmp_path):
 
 
 def test_undecodable_sibling_csv_does_not_abort_indexes(tmp_path, monkeypatch):
+    ordinary = tmp_path / "2026-11-01_0000"
+    ordinary.mkdir()
+    (ordinary / "results.csv").write_text(
+        "prompt_id,model,device,variant,can_clone,run_index,is_cold,ttfa_ms,gen_s,audio_s,rtf,peak_mem_mb,"
+        "peak_vram_mb,wall_s,ok,error\n1,kokoro,cpu,,False,0,True,10,0.1,1.0,10,1,,0.2,True,\n", encoding="utf-8")
     bad = tmp_path / "2026-11-02_0000"
     bad.mkdir()
     (bad / "results.csv").write_bytes("prompt_id,model\n".encode("utf-16"))
-    assert report._is_bench_csv(bad / "results.csv") is False
+    monkeypatch.setattr(report, "RESULTS", tmp_path)
+    assert "2026-11-01_0000" in report.build_index().read_text(encoding="utf-8")
     publish = importlib.import_module("publish")
-    assert publish._is_bench_csv(bad / "results.csv") is False
+    monkeypatch.setattr(publish, "WORKTREE", tmp_path)
+    publish.build_archive_index()
+    assert "2026-11-01_0000" in (tmp_path / "archive.html").read_text(encoding="utf-8")
+
+
+def test_unreadable_canonical_csv_still_warns_in_publish(tmp_path, monkeypatch, capsys):
+    publish = importlib.import_module("publish")
+    d = tmp_path / "mac-default"
+    d.mkdir()
+    (d / "results.csv").write_bytes("prompt_id,model\n".encode("utf-16"))
+    monkeypatch.setattr(publish, "WORKTREE", tmp_path)
+    assert publish._ok_models("mac-default") == set()
+    assert "WARNING: failed to read" in capsys.readouterr().err
 
 
 def test_render_table_speed_counts_clips_whose_scoring_failed(tmp_path):
@@ -431,3 +452,71 @@ def test_render_table_speed_counts_clips_whose_scoring_failed(tmp_path):
     ]
     spanish_longform.write_rows(path, rows)
     assert spanish_longform.render_table(path).splitlines()[2] == "| a | v | 2 | 1 | 0.0000 | 0 | 20.0 | 2.00 |"
+
+
+# ---------------------------------------------------------------- round-4 review fixes
+
+def test_overlapping_runs_on_one_directory_are_refused(stub, tmp_path, monkeypatch):
+    monkeypatch.setattr(spanish_longform, "runner_argv", lambda m, v: stub("ok"))
+    monkeypatch.setattr(spanish_longform, "check_argv_voice", lambda m, v, a: None)
+    monkeypatch.setattr(spanish_longform, "MODELS", {"good": (None, None, [], None, "builtin", None)})
+    out = tmp_path / "o"
+    spanish_longform.main(["--models", "good", "--passages", "pd_galdos", "--out", str(out)])
+    before = (out / spanish_longform.MANIFEST).read_text(encoding="utf-8")
+    with spanish_longform.manifest_lock(out):
+        with pytest.raises(SystemExit):
+            spanish_longform.main(["--models", "good", "--passages", "pd_galdos", "--out", str(out)])
+        with pytest.raises(SystemExit):
+            spanish_longform.score(out / spanish_longform.MANIFEST, wer=_Wer(["x"]), health=_Health())
+    assert (out / spanish_longform.MANIFEST).read_text(encoding="utf-8") == before
+
+
+def test_qwen_clone_override_is_rejected_for_the_preset_label():
+    base = spanish_longform.runner_argv("qwentts_06b_custom", "aiden")
+    spanish_longform.check_argv_voice("qwentts_06b_custom", "aiden", base)
+    for extra in (["--variant=base_06b", "--reference=reference/jo.wav"], ["--reference", "x.wav"],
+                  ["--variant", "base_06b"]):
+        with pytest.raises(SystemExit):
+            spanish_longform.check_argv_voice("qwentts_06b_custom", "aiden", base + extra)
+
+
+def test_rejected_warmup_fails_the_model(stub, tmp_path):
+    rows = spanish_longform.synthesize("m", "builtin", stub("warmfail"), ONE, tmp_path, ready_timeout=5)
+    assert rows and all(r["ok"] is False and "warm-up rejected" in r["error"] for r in rows)
+
+
+class _BadHealth:
+    def score(self, wav):
+        raise RuntimeError("health down")
+
+
+class _BadWer:
+    def transcribe(self, wav, lang):
+        raise RuntimeError("asr down")
+
+
+def _one_row(stub, tmp_path):
+    rows = spanish_longform.synthesize("m", "builtin", stub("ok"), [{"id": "p", "text": "Uno."}], tmp_path,
+                                       ready_timeout=5)
+    path = tmp_path / spanish_longform.MANIFEST
+    spanish_longform.write_rows(path, rows)
+    return path
+
+
+def test_health_failure_keeps_the_wer(stub, tmp_path):
+    path = _one_row(stub, tmp_path)
+    spanish_longform.score(path, wer=_Wer(["Uno."]), health=_BadHealth())
+    row = list(csv.DictReader(open(path, encoding="utf-8")))[0]
+    assert row["wer"] == "0.0000" and "health" in row["error"]
+
+
+def test_wer_failure_keeps_the_health_flag(stub, tmp_path):
+    path = _one_row(stub, tmp_path)
+
+    class Flag:
+        def score(self, wav):
+            return "silent"
+    spanish_longform.score(path, wer=_BadWer(), health=Flag())
+    row = list(csv.DictReader(open(path, encoding="utf-8")))[0]
+    assert row["wer"] == "" and row["health_flags"] == "silent" and "wer" in row["error"]
+    assert "| m | builtin | 1 | 1 | n/a | 1 |" in spanish_longform.render_table(path)

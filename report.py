@@ -1937,13 +1937,16 @@ BENCH_CSV_COLUMNS = {"prompt_id", "model", "device", "ok"}
 
 
 def _is_bench_csv(csv_path) -> bool:
-    """True when the CSV carries bench.py's columns. Other CSVs that happen to be named results.csv (an older
-    scripts/spanish_longform.py run wrote one) are skipped instead of crashing --index / --all."""
+    """False for a missing CSV or one whose readable header lacks bench.py's columns (an older
+    scripts/spanish_longform.py run wrote such a results.csv). A CSV that exists but cannot be decoded counts as a
+    bench CSV, so the per-run handlers still see it and warn, as they did before this check."""
     try:
         with open(csv_path, newline="", encoding="utf-8") as f:
             header = next(csv.reader(f), [])
-    except (OSError, UnicodeError, csv.Error):  # unreadable or not UTF-8: skip it like the per-run handler does
+    except OSError:
         return False
+    except (UnicodeError, csv.Error):
+        return True
     return BENCH_CSV_COLUMNS.issubset(header)
 
 
