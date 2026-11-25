@@ -295,10 +295,11 @@ PR and republish. Don't hand this off as a task for later; the add isn't done un
 rigs and the Scores board have the model.
 
 Three things go wrong on the Linux side:
-- **The Linux rig's local `results/linux-*` dirs go stale.** Refresh their result rows
-  (`results.csv`) from `_gh-pages/linux-*` before merging new rows, or the publish rolls back rows
-  that are already live. Don't copy wavs back: some local dirs deliberately hold newer audio than
-  Pages (Pocket, see known-issues).
+- **The Linux rig's local `results/linux-*` dirs go stale.** Before merging new rows,
+  make sure they hold every row and clip already live on Pages: the publish replaces each dir from
+  the local copy, so anything missing there is rolled back or deleted. Reconcile by hand, never by
+  wholesale copy either way: some local dirs deliberately hold newer audio than Pages (Pocket, see
+  known-issues).
 - **By default the scorers scan only `_gh-pages/`.** Run `git -C _gh-pages fetch origin gh-pages`, then
   `git -C _gh-pages reset --hard origin/gh-pages` before scoring, or pass `--gh-root` to score a staged tree (SIM still reads its references from
   `_gh-pages/*-cloning/_reference.wav`).
@@ -334,7 +335,8 @@ it's "is this better than what we already published". Stage the A/B on **prompt 
 vs new.
 
 **Check a speed delta against the audio.** If the deterministic path reproduces bit-for-bit
-but the timings moved, the machine was loaded; don't publish those numbers.
+but the timings moved and the runner's timing code did not change, the machine was loaded; don't
+publish those numbers. A deliberate timing fix (LFM3-Audio's TTFA, see known-issues) is the exception.
 
 **Confirm the weights actually moved.** Record
 `~/.cache/huggingface/hub/models--<org>--<repo>/refs/main` before the first load and
