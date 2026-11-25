@@ -121,7 +121,8 @@ or request bodies. Here:
    chosen voice id and every non-default parameter are written in the row. No hunting for each vendor's
    best voice.
 3. **Cloning lens = one shared reference** for every provider (see open question 1), sent through each
-   API's own instant-clone path. The clone id is recorded.
+   API's own instant-clone path. The clone id is recorded. A clone made in the vendor's own console or web
+   app counts too; `NO_CLONE` is only for vendors with no self-serve cloning on our route.
 4. **We call the APIs ourselves.** No vendor-submitted samples, Giggy included.
 5. **3 takes per cell, all published.** No cherry-picking; failures (truncation, wrong language,
    silence) ship as defects, the same as the local board.
@@ -186,12 +187,15 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
 - `scripts/collect_hosted.py` → a provider-adapter layout: one small `synth()` per provider returning
   `(audio, request_logged, headers, ttfa, total)`, sharing `save()` / the sidecar / the CLI. Add `--stream`
   for TTFA and `--runs`.
-- `scripts/run_hosted.ps1` → decrypts only the key for the provider being run, from
-  `$HOME\.<provider>_api_key.dpapi` (masked entry by Tym, never in chat). Nothing is stored except an
-  8-char fingerprint.
+- `scripts/hosted/keys.py` → API keys come from 1Password, cached DPAPI-encrypted (12 h for interactive runs; the unattended speed sampler accepts any age), and are
+  never printed or written in plaintext. Sidecars carry an 8-char fingerprint at most. Never ask for a
+  key in chat. (`scripts/run_hosted.ps1` is the older Fish-only DPAPI path.)
 - `hosted/<model>/<lens>/p<N>_t<take>.wav` (+ `.json`). Results go to a separate `results_hosted/` CSV
   that `merge.py` never reads.
 - `report.py` → a "Hosted" tab rendered from `results_hosted/` only.
+- Publishing: rebuild with `publish.py --rebuild-pages`, which doesn't commit. It writes new
+  `hosted/<slug>/` clip dirs and `hosted/_reference.wav` into `_gh-pages`, and they must be committed together with `hosted.html`,
+  or the clips 404. The rebuild also adds float-rounding noise to other pages; leave that out of the commit.
 - Every adapter gets a `--probe` like Fish's: confirm the model id we send is the model we get (Fish
   silently falls back to its default on an unknown id), and that the response is the expected SR/format.
 

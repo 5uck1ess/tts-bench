@@ -8,6 +8,10 @@ Open TTS models advertise speed numbers from cherry-picked hardware, often confu
 - **Samples** — every model × prompt rendered with an inline audio player so you can pick by ear. Sourced from a single rig per model (see "Speed is per-rig; samples are single-source" below), not duplicated across rigs.
 - **Voice cloning** — same prompts, same reference voice, ranked subjectively. See [cloning.md](cloning.md).
 
+`scoring/wer.py` knows only en/fr/es; any other language is transcribed as English. To score Japanese, use kana CER: convert both transcripts with `pyopenjtalk.g2p(kana=True)` before comparing, since WER needs word boundaries.
+
+**A new Scores column has to beat UTMOS at predicting held-out arena votes**, with models held out of training. Agreement on the votes it was fit to doesn't count. That's why there is no prosody column: when the F0 features were tested against the arena votes on 2026-11-10, none of them cleared that bar. With this few prompts, UTMOS and SIM rank models usefully, but WER only flags failures (truncation, runaways, wrong language). It can't rank the clean models; a rough estimate is that separating a 0.04 WER gap would take about 40 prompts.
+
 NAQ is not computed during a run. It is scored offline over the saved wavs by a private model trained on the arena's blind votes, and only the per-clip scores are published (`scoring/naq_scores.csv`, default voice, English prompts 1–4). `naq` = the chance (0–100) that a listener prefers the clip over a typical bench clip. Models added after the last NAQ scoring pass show a blank until the next one.
 
 ## Speed is per-rig; samples are single-source
