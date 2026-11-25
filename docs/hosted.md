@@ -197,8 +197,9 @@ gates, nonce and Turnstile as the local pools. Pairs are drawn only within a poo
   `hosted/<slug>/` clip dirs and `hosted/_reference.wav` into `_gh-pages`, and they must be committed together with `hosted.html`,
   or the clips 404. The rebuild also adds float-rounding noise to other pages; leave that out of the commit.
   Hosted is rebuilt only where the collector's `hosted/*/default/p1_t1.json` sidecars exist (the Windows
-  collector); anywhere else the rebuild exits 0 and leaves `hosted.html` untouched. Run it with an interpreter that has `httpx`
-  (`arena/requirements.txt`); without it the Hosted step fails on import and the rebuild still exits 0.
+  collector); anywhere else the rebuild exits 0 and leaves `hosted.html` untouched. The exit code proves nothing: if any hosted provider's
+  import is missing (`httpx`, `websockets`, ...) it prints `skip hosted.html` and still exits 0, so check the
+  output for that line.
 - Every adapter gets a `--probe` like Fish's: confirm the model id we send is the model we get (Fish
   silently falls back to its default on an unknown id), and that the response is the expected SR/format.
 

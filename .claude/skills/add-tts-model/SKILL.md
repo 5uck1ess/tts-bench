@@ -295,9 +295,10 @@ PR and republish. Don't hand this off as a task for later; the add isn't done un
 rigs and the Scores board have the model.
 
 Three things go wrong on the Linux side:
-- **The Linux rig's local `results/linux-*` dirs go stale.** Rebuild them from
-  `_gh-pages/linux-*` before merging new rows, or the publish rolls back rows that are
-  already live.
+- **The Linux rig's local `results/linux-*` dirs go stale.** Refresh their result rows
+  (`results.csv`) from `_gh-pages/linux-*` before merging new rows, or the publish rolls back rows
+  that are already live. Don't copy wavs back: some local dirs deliberately hold newer audio than
+  Pages (Pocket, see known-issues).
 - **By default the scorers scan only `_gh-pages/`.** Run `git -C _gh-pages fetch origin gh-pages`, then
   `git -C _gh-pages reset --hard origin/gh-pages` before scoring, or pass `--gh-root` to score a staged tree (SIM still reads its references from
   `_gh-pages/*-cloning/_reference.wav`).
