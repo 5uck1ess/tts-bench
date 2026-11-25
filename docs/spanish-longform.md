@@ -52,6 +52,9 @@ Reproduce:
 
 ```
 python scripts/spanish_longform.py --out results/es-longform
+# zonos3_mini: a runner failure in one passage records the later passages as "skipped"; to reproduce the
+# historical result, retry the skipped passage on its own (a fresh runner):
+python scripts/spanish_longform.py --models zonos3_mini --passages pd_cadiz --out results/es-longform
 venvs/scoring/bin/python scripts/spanish_longform.py --score results/es-longform/es_longform.csv
 python scripts/spanish_longform.py --render-table results/es-longform/es_longform.csv
 ```
@@ -99,7 +102,7 @@ Read the WER column with these notes:
 - **`zonos3_mini` (ggml Q4, CPU): partial long-form run.**
   - It completed `pd_galdos` and `pd_becquer` and the first `pd_cervantes` chunk: 12 chunks, all scored.
   - The next chunk passed the 300 s runner timeout.
-  - The runner was then restarted for `pd_cadiz` and timed out again. Its server log showed ZAC decode RTF climbing
+  - The runner was then restarted for `pd_cadiz` (a separate `--passages pd_cadiz` run; a single run records it as `skipped`) and timed out again. Its server log showed ZAC decode RTF climbing
     from 26 to 39 in an earlier attempt.
   - Both failures are recorded as failed rows; the other models' results are kept.
 - **`lfm3_audio` (CPU): works, but at RTFx 0.06-0.10** depending on host load.

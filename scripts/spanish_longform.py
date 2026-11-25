@@ -149,6 +149,13 @@ class Runner:
             self.p.wait()
 
 
+def _opt_name(token, option):
+    """True when argv token is `option` itself, `option=value`, or an unambiguous argparse abbreviation of it
+    (runners use argparse, which accepts --ref and --reference=x as well as --reference x)."""
+    name = token.split("=", 1)[0]
+    return name.startswith("--") and len(name) > 2 and option.startswith(name)
+
+
 def check_argv_voice(model, voice, argv):
     """The recorded voice label must be what the final argv applies (also after --argv-json)."""
     flag = MODELS[model][3]
@@ -156,10 +163,17 @@ def check_argv_voice(model, voice, argv):
     if flag is None:
         if voice != "builtin":
             raise SystemExit(f"{model}: only the builtin preset can be recorded")
-        if any(a in ("--reference", "--speaker") for a in tail):
+        if any(_opt_name(a, o) for a in tail for o in ("--reference", "--speaker")):
             raise SystemExit(f"{model}: 'builtin' is recorded but the runner argv selects a reference/speaker")
         return
-    applied = [tail[i + 1] for i, a in enumerate(tail[:-1]) if a == flag]
+    applied = []
+    for i, a in enumerate(tail):
+        if not _opt_name(a, flag):
+            continue
+        if "=" in a:
+            applied.append(a.split("=", 1)[1])
+        elif i + 1 < len(tail):
+            applied.append(tail[i + 1])
     if applied != [voice]:
         raise SystemExit(f"{model}: recorded voice {voice!r} but the runner argv applies {applied or 'no voice'}")
 
@@ -175,18 +189,18 @@ def synthesize(model, voice, argv, passages, out, ready_timeout=READY_TIMEOUT_S,
     (one per passage not finished) so the other models' results still get written."""
     rows = []
     mdir = out / f"{model}__{voice}"
-    for p in passages:  # replace only the passages being re-run; other passages keep their WAVs
-        if (mdir / p["id"]).exists():
-            shutil.rmtree(mdir / p["id"])
+    run_tag = f"r{time.time_ns()}"  # new takes go in their own directory; old ones stay until main() commits
     base = {"model": model, "voice": voice, "argv": json.dumps(argv[1:])}
     runner = None
     done = set()
+    current = None
     try:
         runner = Runner(argv, ready_timeout)
         (out / "_warmup").mkdir(parents=True, exist_ok=True)
         runner.say(WARMUP, out / "_warmup" / f"{model}.wav", chunk_timeout)
         for p in passages:
-            pdir = mdir / p["id"]
+            current = p["id"]
+            pdir = mdir / p["id"] / run_tag
             pdir.mkdir(parents=True, exist_ok=True)
             queue, seq = list(chunk(p["text"])), 0
             while queue:
@@ -213,14 +227,41 @@ def synthesize(model, voice, argv, passages, out, ready_timeout=READY_TIMEOUT_S,
                 seq += 1
             done.add(p["id"])
     except Exception as e:  # any runner or WAV problem becomes failure rows; earlier models are already saved
+        ids = [p["id"] for p in passages]
         for p in passages:
-            if p["id"] not in done:
-                rows.append({**base, "passage_id": p["id"], "chunk_seq": len([r for r in rows if r["passage_id"] == p["id"]]),
-                             "ok": False, "error": f"{type(e).__name__}: {e}"[:300]})
+            if p["id"] in done:
+                continue
+            if current is not None and ids.index(p["id"]) > ids.index(current):
+                msg = f"skipped: not attempted after the runner failed on {current} ({type(e).__name__})"
+            else:
+                msg = f"{type(e).__name__}: {e}"
+            rows.append({**base, "passage_id": p["id"],
+                         "chunk_seq": len([r for r in rows if r["passage_id"] == p["id"]]),
+                         "ok": False, "error": msg[:300]})
     finally:
         if runner is not None:
             runner.close(graceful=not any("TimeoutError" in str(r.get("error", "")) for r in rows))
     return rows
+
+
+def prune_passage_dirs(out, rows, model, voice, passage_ids):
+    """Delete takes of the re-run passages that no manifest row references. Called only after the manifest that
+    replaces them has been written, so an interrupted rerun never leaves a saved row pointing at deleted audio."""
+    keep = set()
+    for r in rows:
+        if r.get("wav"):
+            w = Path(r["wav"]).resolve()
+            keep |= {w, w.with_suffix(".txt")}
+    for pid in passage_ids:
+        root = out / f"{model}__{voice}" / pid
+        if not root.is_dir():
+            continue
+        for child in root.iterdir():
+            if child.is_dir():
+                if not any(k.is_relative_to(child.resolve()) for k in keep):
+                    shutil.rmtree(child, ignore_errors=True)
+            elif child.resolve() not in keep:
+                child.unlink(missing_ok=True)
 
 
 def read_rows(path):
@@ -288,14 +329,17 @@ def render_table(csv_path):
         a = agg.setdefault((r["model"], r["voice"]), {"e": 0, "w": 0, "flag": 0, "audio": 0.0, "gen": 0.0,
                                                       "chunks": 0, "failed": 0})
         a["chunks"] += 1
-        if r["ok"] != "True" or r.get("wer", "") == "":
+        if r["ok"] != "True":
             a["failed"] += 1
+            continue
+        a["audio"] += float(r["audio_s"])  # speed counts every successful synthesis, scored or not
+        a["gen"] += float(r["gen_s"])
+        if r.get("wer", "") == "":
+            a["failed"] += 1  # synthesized but could not be scored: kept out of WER only
             continue
         a["e"] += int(r["edits"])
         a["w"] += int(r["ref_words"])
         a["flag"] += bool(r["health_flags"])
-        a["audio"] += float(r["audio_s"])
-        a["gen"] += float(r["gen_s"])
     lines = ["| model | voice | chunks | failed | WER | Health-flagged chunks | audio (s) | RTFx |",
              "|---|---|---:|---:|---:|---:|---:|---:|"]
 
@@ -350,6 +394,7 @@ def main(argv=None):
         rerun = {p["id"] for p in passages}
         rows = [r for r in rows if not ((r["model"], r["voice"]) == (model, voice) and r["passage_id"] in rerun)] + new
         write_rows(manifest, rows)
+        prune_passage_dirs(out, rows, model, voice, rerun)
         bad = sum(1 for r in new if str(r.get("ok")) != "True")
         print(f"{model}/{voice}: {len(new)} rows, {bad} failed", flush=True)
     meta = {"set": "es-longform-pd", "rig_os": platform.platform(), "machine": platform.machine(),

@@ -1942,7 +1942,7 @@ def _is_bench_csv(csv_path) -> bool:
     try:
         with open(csv_path, newline="", encoding="utf-8") as f:
             header = next(csv.reader(f), [])
-    except OSError:
+    except (OSError, UnicodeError, csv.Error):  # unreadable or not UTF-8: skip it like the per-run handler does
         return False
     return BENCH_CSV_COLUMNS.issubset(header)
 

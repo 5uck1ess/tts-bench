@@ -353,3 +353,81 @@ def test_publish_discovery_skips_legacy_spanish_results_csv(tmp_path):
     spanish_longform.write_rows(legacy / "results.csv", [{"model": "m", "voice": "v", "passage_id": "p",
                                                           "chunk_seq": 0, "ok": True}])
     assert not publish._is_bench_csv(legacy / "results.csv")
+
+
+# ---------------------------------------------------------------- round-3 review fixes
+
+def test_interrupted_rerun_keeps_saved_audio(stub, tmp_path, monkeypatch):
+    monkeypatch.setattr(spanish_longform, "runner_argv", lambda m, v: stub("ok"))
+    monkeypatch.setattr(spanish_longform, "check_argv_voice", lambda m, v, a: None)
+    monkeypatch.setattr(spanish_longform, "MODELS", {"good": (None, None, [], None, "builtin", None)})
+    out = tmp_path / "o"
+    spanish_longform.main(["--models", "good", "--passages", "pd_galdos", "--out", str(out)])
+    before = list(csv.DictReader(open(out / spanish_longform.MANIFEST, encoding="utf-8")))
+
+    def boom(*a, **k):
+        raise KeyboardInterrupt
+    monkeypatch.setattr(spanish_longform, "Runner", boom)
+    with pytest.raises(KeyboardInterrupt):
+        spanish_longform.main(["--models", "good", "--passages", "pd_galdos", "--out", str(out)])
+    after = list(csv.DictReader(open(out / spanish_longform.MANIFEST, encoding="utf-8")))
+    assert after == before and all(Path(r["wav"]).exists() for r in after)
+
+
+def test_rerun_prunes_replaced_takes(stub, tmp_path, monkeypatch):
+    monkeypatch.setattr(spanish_longform, "runner_argv", lambda m, v: stub("ok"))
+    monkeypatch.setattr(spanish_longform, "check_argv_voice", lambda m, v, a: None)
+    monkeypatch.setattr(spanish_longform, "MODELS", {"good": (None, None, [], None, "builtin", None)})
+    out = tmp_path / "o"
+    for _ in range(2):
+        spanish_longform.main(["--models", "good", "--passages", "pd_galdos", "--out", str(out)])
+    rows = list(csv.DictReader(open(out / spanish_longform.MANIFEST, encoding="utf-8")))
+    assert len(list((out / "good__builtin" / "pd_galdos").iterdir())) == 1
+    assert all(Path(r["wav"]).exists() for r in rows)
+
+
+@pytest.mark.parametrize("extra", [["--reference=reference/jo.wav"], ["--ref", "x.wav"], ["--reference=x"],
+                                   ["--speaker=aiden"]])
+def test_builtin_label_rejects_equals_and_abbreviated_forms(extra):
+    argv = spanish_longform.runner_argv("reverb", "builtin") + extra
+    with pytest.raises(SystemExit):
+        spanish_longform.check_argv_voice("reverb", "builtin", argv)
+
+
+def test_voice_flag_equals_form_is_checked():
+    argv = spanish_longform.runner_argv("supertonic", "M4") + ["--reference=F1"]
+    with pytest.raises(SystemExit):
+        spanish_longform.check_argv_voice("supertonic", "M4", argv)
+    spanish_longform.check_argv_voice("supertonic", "M4", spanish_longform.runner_argv("supertonic", "M4"))
+
+
+def test_unattempted_passages_are_recorded_as_skipped(stub, tmp_path):
+    passages = [{"id": "a", "text": "Uno. Dos."}, {"id": "b", "text": "Tres."}, {"id": "c", "text": "Cuatro."}]
+    rows = spanish_longform.synthesize("m", "builtin", stub("hang"), passages, tmp_path, ready_timeout=5,
+                                       chunk_timeout=0.5)
+    by = {}
+    for r in rows:
+        by.setdefault(r["passage_id"], []).append(r)
+    assert "TimeoutError" in by["a"][-1]["error"]
+    assert all(r["error"].startswith("skipped") for r in by["b"] + by["c"])
+
+
+def test_undecodable_sibling_csv_does_not_abort_indexes(tmp_path, monkeypatch):
+    bad = tmp_path / "2026-11-02_0000"
+    bad.mkdir()
+    (bad / "results.csv").write_bytes("prompt_id,model\n".encode("utf-16"))
+    assert report._is_bench_csv(bad / "results.csv") is False
+    publish = importlib.import_module("publish")
+    assert publish._is_bench_csv(bad / "results.csv") is False
+
+
+def test_render_table_speed_counts_clips_whose_scoring_failed(tmp_path):
+    path = tmp_path / "es_longform.csv"
+    rows = [
+        {"model": "a", "voice": "v", "passage_id": "p", "chunk_seq": 0, "ok": True, "audio_s": "10.0",
+         "gen_s": "1.0", "edits": 0, "ref_words": 20, "wer": "0.0", "health_flags": ""},
+        {"model": "a", "voice": "v", "passage_id": "p", "chunk_seq": 1, "ok": True, "audio_s": "10.0",
+         "gen_s": "9.0", "edits": "", "ref_words": "", "wer": "", "health_flags": "", "error": "score: boom"},
+    ]
+    spanish_longform.write_rows(path, rows)
+    assert spanish_longform.render_table(path).splitlines()[2] == "| a | v | 2 | 1 | 0.0000 | 0 | 20.0 | 2.00 |"
